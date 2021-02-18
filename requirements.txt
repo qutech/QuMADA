@@ -1,1 +1,1 @@
-qcodes==0.22.0
+-e ./libs/qcodes
