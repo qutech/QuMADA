@@ -25,7 +25,7 @@ from qcodes.utils.validators import Numbers
 
 from qcodes.plots.qcmatplotlib import MatPlot
 #%%
-from . import input_mapping as im
+from . import gate_mapping as gm
 from . import get_from_station as gfs
 
 import numpy as np

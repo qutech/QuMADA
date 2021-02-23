@@ -1,0 +1,17 @@
+instruments:
+    counter:
+        type: qcodes.tests.instrument_mocks.DummyInstrument
+        enable_forced_reconnect: true
+        init:
+            name: dummy1
+            gates: {"Ch0"}
+        add_parameters:
+            count: {source: "Ch0", unit: "Brokkoavocadosilium", initial_value: 0, monitor : True}
+    counter2:
+            type: qcodes.tests.instrument_mocks.DummyInstrument
+            enable_forced_reconnect: true
+            init:
+                name: dummy2
+                gates: {"Ch0"}
+            add_parameters:
+                count: {source: "Ch0", unit: "Brokkoavocadosilium", initial_value: 5, monitor : True}
