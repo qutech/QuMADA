@@ -1,1 +1,4 @@
 -e ./libs/qcodes
+
+pyqt5
+qtconsole
