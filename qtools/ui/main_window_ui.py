@@ -4,6 +4,7 @@ Main Window UI
 """
 
 from typing import Dict
+import typing
 from PyQt5 import QtWidgets, uic, QtGui
 from qtconsole.console_widget import ConsoleWidget
 from qtconsole.rich_jupyter_widget import RichJupyterWidget
@@ -15,16 +16,21 @@ class Ui(QtWidgets.QMainWindow):
     def __init__(self):
         super(Ui, self).__init__()
         uic.loadUi("qtools/ui/main_window.ui", self)
-        self.setup_ipython_console()
+        self.add_gate_widgets()
         self.connect_signal_slots()
 
-    def setup_ipython_console(self):
-        pass
+    def add_gate_widgets(self):
+        self.gates = [GateWidget(self) for x in range(6)]
+        for gate in self.gates:
+            self.gateOverview.addWidget(gate)
 
     def connect_signal_slots(self):
         pass
 
 class MyConsoleWidget(RichJupyterWidget,ConsoleWidget):
+    """
+    qConsole Jupyter Widget to be embedded as QWidget.
+    """
     def __init__(self, *args, **kwargs):
 
         super(MyConsoleWidget, self).__init__(*args, **kwargs)
@@ -68,6 +74,12 @@ class MyConsoleWidget(RichJupyterWidget,ConsoleWidget):
         Execute a command in the frame of the console widget
         """
         self._execute(command, False)
+
+
+class GateWidget(QtWidgets.QWidget):
+    def __init__(self, parent=None):
+        QtWidgets.QWidget.__init__(self, parent=parent)
+        uic.loadUi("qtools/ui/gate_widget.ui", self)
 
 
 if __name__ == "__main__":
