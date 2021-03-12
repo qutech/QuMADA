@@ -8,9 +8,6 @@ from typing import Any, List
 
 from qtools.data.domain import DomainObject
 
-# TODO: generalize nested creation of dataclasses
-# https://stackoverflow.com/questions/51564841/creating-nested-dataclass-objects-in-python
-# Maybe look at dacite: https://github.com/konradhalas/dacite/
 
 @dataclass
 class Factory(DomainObject):
