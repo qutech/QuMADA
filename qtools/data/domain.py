@@ -3,8 +3,9 @@
 General Object class for the domain.
 """
 
+from collections.abc import Mapping
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, is_dataclass
 
 @dataclass
 class DomainObject:
@@ -18,6 +19,14 @@ class DomainObject:
     def to_json(self):
         return json.dumps(self, default=lambda o: o.__dict__,
                           sort_keys=True, indent=4)
+
+    def __post_init__(self):
+        # for nested dataclass creation:
+        # Select all variables, that should be a dataclass, but are a dict and
+        # turn them into the respective objects
+        objects = {k: v.type(**self.__dict__[k]) for k, v in self.__dataclass_fields__.items()
+                        if is_dataclass(v.type) and isinstance(self.__dict__[k], Mapping)}
+        self.__dict__.update(objects)
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__

@@ -28,9 +28,6 @@ class Sample(DomainObject):
     description: str
     wafer: Wafer
 
-    def __post_init__(self):
-        self.wafer = Wafer(**self.wafer)
-
 
 @dataclass
 class Design(DomainObject):
@@ -40,12 +37,7 @@ class Design(DomainObject):
     mask: str
     creator: str
     allowedMeasurementTypes: List[Any] = field(default_factory=list)
-
-    def __post_init__(self):
-        self.wafer = Wafer(**self.wafer)
-        self.factory = Factory(**self.factory)
-        self.sample = Sample(**self.sample)
-        # TODO: MeasurementTypes
+    # TODO: MeasurementTypes
 
     
 
@@ -53,8 +45,4 @@ class Design(DomainObject):
 class Device(DomainObject):
     design: Design
     sample: Sample
-    
-    def __post_init__(self):
-        self.design = Design(**self.design)
-        self.sample = Sample(**self.sample)
     
