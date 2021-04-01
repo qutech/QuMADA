@@ -3,7 +3,6 @@
 Representations of domain objects (Measurements).
 """
 
-from _typeshed import FileDescriptor
 from dataclasses import dataclass, field
 from qtools.data.device import Device
 from qtools.data.domain import DomainObject
