@@ -8,7 +8,8 @@
 
 
 from typing import Dict
-from qcodes import  InstrumentChannel, ChannelList, BufferedSweepableParameter, SweepFixedValues
+from qcodes import  InstrumentChannel, ChannelList, SweepFixedValues
+from qcodes.instrument.parameter import BufferedSweepableParameter
 from qcodes.utils import validators as vals
 from qcodes.instrument.visa import VisaInstrument
 
