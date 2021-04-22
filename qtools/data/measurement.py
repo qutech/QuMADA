@@ -3,6 +3,8 @@
 Representations of domain objects (Measurements).
 """
 
+from enum import Enum
+
 from dataclasses import dataclass, field
 from qtools.data.device import Device
 from qtools.data.domain import DomainObject
@@ -26,9 +28,16 @@ class MeasurementSetting(DomainObject):
     script: MeasurementSettingScript
 
 
+class FunctionType(Enum):
+    VOLTAGE_SOURCE = 0
+    VOLTAGE_SENSE = 1
+    CURRENT_SOURCE = 2
+    CURRENT_SENSE = 3
+
+
 @dataclass
 class EquipmentFunction(DomainObject):
-    pass
+    functionType: FunctionType
 
 
 @dataclass
