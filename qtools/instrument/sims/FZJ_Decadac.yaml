@@ -18,12 +18,12 @@ devices:
         default: 0
         setter:
           q: "B{};"
-          r: OK
+          r: "B{}!"
       selected_channel:
         default: 0
         setter:
           q: "C{};"
-          r: OK
+          r: "C{}!"
     channels:
       channel:
         ids: [0, 1, 2, 3]
@@ -34,10 +34,10 @@ devices:
             default: 0
             getter:
               q: "d;"
-              r: "{}"
+              r: "d{}!"
             setter:
               q: "D{};"
-              r: OK
+              r: "D{}!"
             specs:
               min: 0
               max: 65536
@@ -46,7 +46,7 @@ devices:
             default: 65536
             setter:
               q: "U{};"
-              r: OK
+              r: "U{}!"
             specs:
               min: 0
               max: 65536
@@ -55,7 +55,7 @@ devices:
             default: 0
             setter:
               q: "L{};"
-              r: OK
+              r: "L{}!"
             specs:
               min: 0
               max: 65536
@@ -64,7 +64,7 @@ devices:
             default: 0
             setter:
               q: "G{};"
-              r: OK
+              r: "G{}!"
             specs:
               valid: [0, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15]
               type: int
@@ -72,7 +72,7 @@ devices:
             default: 0
             setter:
               q: "S{};"
-              r: OK
+              r: "S{}!"
             specs:
               min: -4294967296
               max: 4294967296
@@ -81,7 +81,7 @@ devices:
             default: 1000
             setter:
               q: "T{};"
-              r: OK
+              r: "T{}!"
             specs:
               min: 50
               max: 65535
@@ -89,13 +89,13 @@ devices:
       slot:
         ids: [0, 1, 2, 3, 4]
         can_select: False
-        select_property: selected_slot
+        select_property: "selected_slot"
         properties:
           slot_mode:
             default: 2
             setter:
               q: "M{};"
-              r: OK
+              r: "M{}!"
             specs:
               min: 0
               max: 2

@@ -262,7 +262,7 @@ class DacChannel(InstrumentChannel, DacBase):
         
         self.switch_pos.set(self._default_switch_pos)
         
-        warnings.warn('All parameters of the Dacadac "{}" have been reset to their defaults.'.format(self.name))
+        warnings.warn('All parameters of the Decadac "{}" have been reset to their defaults.'.format(self.name))
         
         return (DacBase._COMMAND_SET_UPPER_LIMIT.format(self._upper_limit)
               + DacBase._COMMAND_SET_LOWER_LIMIT.format(self._lower_limit)

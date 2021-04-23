@@ -1,6 +1,6 @@
 -e ./libs/qcodes
 
-pyvisa-sim
+-e ../pyvisa-sim
 
 pyqt5
 qtconsole
