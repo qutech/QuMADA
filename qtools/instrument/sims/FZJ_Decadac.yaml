@@ -18,14 +18,17 @@ devices:
         default: 0
         setter:
           q: "B{};"
+          r: OK
       selected_channel:
         default: 0
         setter:
           q: "C{};"
+          r: OK
     channels:
       channel:
         ids: [0, 1, 2, 3]
         can_select: False
+        select_property: "selected_channel"
         properties:
           volt:
             default: 0
@@ -34,6 +37,7 @@ devices:
               r: "{}"
             setter:
               q: "D{};"
+              r: OK
             specs:
               min: 0
               max: 65536
@@ -42,6 +46,7 @@ devices:
             default: 65536
             setter:
               q: "U{};"
+              r: OK
             specs:
               min: 0
               max: 65536
@@ -50,6 +55,7 @@ devices:
             default: 0
             setter:
               q: "L{};"
+              r: OK
             specs:
               min: 0
               max: 65536
@@ -58,6 +64,7 @@ devices:
             default: 0
             setter:
               q: "G{};"
+              r: OK
             specs:
               valid: [0, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15]
               type: int
@@ -65,6 +72,7 @@ devices:
             default: 0
             setter:
               q: "S{};"
+              r: OK
             specs:
               min: -4294967296
               max: 4294967296
@@ -73,6 +81,7 @@ devices:
             default: 1000
             setter:
               q: "T{};"
+              r: OK
             specs:
               min: 50
               max: 65535
@@ -80,11 +89,13 @@ devices:
       slot:
         ids: [0, 1, 2, 3, 4]
         can_select: False
+        select_property: selected_slot
         properties:
           slot_mode:
             default: 2
             setter:
               q: "M{};"
+              r: OK
             specs:
               min: 0
               max: 2
