@@ -1,0 +1,17 @@
+image: python:3.9
+
+stages:
+  - static_analysis
+  - test
+
+before_script:
+  - python -V  # Print out python version for debugging
+  - pip install virtualenv
+  - virtualenv venv
+  - source venv/bin/activate
+  - pip install -r dev_requirements.txt
+
+flake8:
+  stage: static_analysis
+  script:
+  - flake8 --max-line-length=120 --extend-exclude "libs"
