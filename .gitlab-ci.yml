@@ -18,3 +18,8 @@ flake8:
   stage: static_analysis
   script:
   - flake8 --max-line-length=120 --extend-exclude libs,venv
+
+pylint:
+  stage: static_analysis
+  script:
+  - pylint --ignore=libs,venv main.py qtools
