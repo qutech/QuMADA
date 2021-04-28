@@ -4,6 +4,9 @@ stages:
   - static_analysis
   - test
 
+variables:
+  GIT_SUBMODULE_STRATEGY: normal
+
 before_script:
   - python -V  # Print out python version for debugging
   - pip install virtualenv
