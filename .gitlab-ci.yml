@@ -12,7 +12,7 @@ before_script:
   - pip install virtualenv
   - virtualenv venv
   - source venv/bin/activate
-  - pip install -r dev_requirements.txt
+  - pip install -r ci_requirements.txt
 
 flake8:
   stage: static_analysis

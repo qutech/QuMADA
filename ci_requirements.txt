@@ -1,0 +1,7 @@
+flake8
+
+-e ./libs/qcodes
+
+pyvisa-sim
+pyqt5
+qtconsole
