@@ -19,7 +19,12 @@ keithley_visalib = qcsims.__file__.replace('__init__.py', 'Keithley_2450.yaml@si
 sr830_visalib = qcsims.__file__.replace('__init__.py', 'SR830.yaml@sim')
 
 def _initialize_instruments() -> MutableMapping[Any, EquipmentInstance]:
-    # initialize instruments
+    """
+    Initializes the instruments as qcodes components.
+
+    Returns:
+        MutableMapping[Any, EquipmentInstance]: Instruments, that can be loaded into qcodes Station.
+    """
     # TODO: Maybe do this in UI
     instruments = {}
     # instruments["clock"] = 

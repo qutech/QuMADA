@@ -42,6 +42,21 @@ properties = {
 }
 
 def setup():
+    """
+    Setup your virtual gates here. Create the gate objects and
+    add functions to them.
+
+    Valid functions are:
+    - Voltage Source
+    - Voltage Sense
+    - Current Source
+    - Current Sense
+
+    FunctionType is available at qtools.data.measurement.FunctionType
+
+    Returns:
+        [dict]: Virtual Gates with their respective names
+    """
     # initialize gates and their functions
     source_drain = VirtualGate()
     source_drain.functions.append(ft.VOLTAGE_SOURCE)
@@ -63,6 +78,9 @@ def run(topgate: VirtualGate,
         source_drain: VirtualGate,
         barriers: Sequence[VirtualGate],
         **kwargs):
+    """
+    Run the measurements. Use your created virtual gates as parameters.
+    """
     volt_start = properties["volt_start"]
     volt_end = properties["volt_end"]
     volt_step = properties["volt_step"]
