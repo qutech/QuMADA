@@ -3,6 +3,7 @@ import pytest
 import json
 from qtools.data.device import Wafer
 
+
 def ordered(obj):
     if isinstance(obj, dict):
         return sorted((k, ordered(v)) for k, v in obj.items())
@@ -10,6 +11,7 @@ def ordered(obj):
         return sorted(ordered(x) for x in obj)
     else:
         return obj
+
 
 @pytest.fixture
 def json_wafer():
@@ -25,6 +27,7 @@ def json_wafer():
             "pid": "89738c4a-e46b-40de-b2fd-c5aaeea7175c"
         }
         """)
+
 
 class TestWafer:
     def test_Wafer_from_json(self, json_wafer):

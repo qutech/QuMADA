@@ -1,24 +1,25 @@
 #!/usr/bin/env python3
 
-from qtools.data.measurement import EquipmentInstance
-from typing import Mapping, Sequence, MutableMapping, Any
+from typing import Mapping, MutableMapping, Any
+from collections.abc import Iterable
 
-from itertools import chain
-
-from qtools.measurement.measurement import Station
-from qcodes.tests.instrument_mocks import DummyInstrument, DummyInstrumentWithMeasurement
-
-from qtools.instrument_drivers.Harvard.FZJ_Decadac import Decadac, DacBase
+from qcodes.instrument.visa import VisaInstrument
 from qcodes.instrument_drivers.stanford_research.SR830 import SR830
 from qcodes.instrument_drivers.tektronix.Keithley_2450 import Keithley2450
 
+from qtools.data.measurement import FunctionType as ft
+from qtools.measurement.measurement import Station
+from qtools.instrument_drivers.Harvard.FZJ_Decadac import Decadac, DacBase
+
 import qtools.instrument.sims as qtsims
 import qcodes.instrument.sims as qcsims
-decadac_visalib = qtsims.__file__.replace('__init__.py', 'FZJ_Decadac.yaml@sim')
-keithley_visalib = qcsims.__file__.replace('__init__.py', 'Keithley_2450.yaml@sim')
-sr830_visalib = qcsims.__file__.replace('__init__.py', 'SR830.yaml@sim')
 
-def _initialize_instruments() -> MutableMapping[Any, EquipmentInstance]:
+DECADAC_VISALIB = qtsims.__file__.replace('__init__.py', 'FZJ_Decadac.yaml@sim')
+KEITHLEY_VISALIB = qcsims.__file__.replace('__init__.py', 'Keithley_2450.yaml@sim')
+SR830_VISALIB = qcsims.__file__.replace('__init__.py', 'SR830.yaml@sim')
+
+
+def _initialize_instruments() -> MutableMapping[Any, VisaInstrument]:
     """
     Initializes the instruments as qcodes components.
 
@@ -26,49 +27,51 @@ def _initialize_instruments() -> MutableMapping[Any, EquipmentInstance]:
         MutableMapping[Any, EquipmentInstance]: Instruments, that can be loaded into qcodes Station.
     """
     # TODO: Maybe do this in UI
-    instruments = {}
-    # instruments["clock"] = 
-    dac = instruments["dac"] = Decadac("dac", "GPIB::1::INSTR", default_switch_pos=DacBase.SWITCH_RIGHT, visalib=decadac_visalib)
+    instruments: dict[str, VisaInstrument] = {}
+
+    dac = instruments["dac"] = Decadac("dac",
+                                       "GPIB::1::INSTR",
+                                       default_switch_pos=DacBase.SWITCH_RIGHT,
+                                       visalib=DECADAC_VISALIB)
     dac.channels.switch_pos.set(1)
     dac.channels.update_period.set(50)
-    dac.channels.ramp(0,0.3)
+    dac.channels.ramp(0, 0.3)
 
-    instruments["lockin"] = SR830("lockin", "GPIB::8::INSTR", terminator="\n", visalib=sr830_visalib)
-    instruments["keithley"] = Keithley2450("keithley", "GPIB::2::INSTR", visalib=keithley_visalib)
+    instruments["lockin"] = SR830("lockin", "GPIB::8::INSTR", terminator="\n", visalib=SR830_VISALIB)
+    instruments["keithley"] = Keithley2450("keithley", "GPIB::2::INSTR", visalib=KEITHLEY_VISALIB)
     return instruments
+
 
 def _load_script_template():
     import qtools.measurement.example_template_script as script
     return script
 
-def _map_gates_to_instruments(components, gates: Mapping):
-    from qtools.data.measurement import FunctionType as ft
 
-    from collections.abc import Iterable
-    def flatten(l):
-        for el in l:
-            if isinstance(el, Iterable) and not isinstance(el, (str, bytes)):
-                yield from flatten(el)
+def _map_gates_to_instruments(components, gates: Mapping):
+
+    def flatten(iterable):
+        for elem in iterable:
+            if isinstance(elem, Iterable) and not isinstance(elem, (str, bytes)):
+                yield from flatten(elem)
             else:
-                yield el
+                yield elem
 
     # flatten gate list
     gate_list = list(flatten(gates.values()))
-    
+
     # instruments
-    dac = instruments["dac"]
-    keithley = instruments["keithley"]
+    dac = components["dac"]
 
     # VOLTAGE_SOURCE
     gates_voltage_source = [gate for gate in gate_list if ft.VOLTAGE_SOURCE in gate.functions]
     for idx, gate in enumerate(gates_voltage_source):
         try:
             gate.volt = dac.channels[idx].volt
-            
+
         except:
             # Not enough channels
             raise
-    
+
     # VOLTAGE_SENSE
     gates_voltage_sense = [gate for gate in gate_list if ft.VOLTAGE_SENSE in gate.functions]
     for gate in gates_voltage_sense:
@@ -106,6 +109,3 @@ if __name__ == "__main__":
 
     # run script
     script.run(**gates)
-    
-
-    
