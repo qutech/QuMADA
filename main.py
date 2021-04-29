@@ -8,7 +8,7 @@ from itertools import chain
 from qtools.measurement.measurement import Station
 from qcodes.tests.instrument_mocks import DummyInstrument, DummyInstrumentWithMeasurement
 
-from qtools.instrument_drivers.Harvard.FZJ_Decadac import Decadac, DacBase
+from qcodes.instrument_drivers.Harvard.Decadac import Decadac
 from qcodes.instrument_drivers.stanford_research.SR830 import SR830
 from qcodes.instrument_drivers.tektronix.Keithley_2450 import Keithley2450
 
@@ -28,7 +28,7 @@ def _initialize_instruments() -> MutableMapping[Any, EquipmentInstance]:
     # TODO: Maybe do this in UI
     instruments = {}
     # instruments["clock"] = 
-    dac = instruments["dac"] = Decadac("dac", "GPIB::1::INSTR", default_switch_pos=DacBase.SWITCH_RIGHT, visalib=decadac_visalib)
+    dac = instruments["dac"] = Decadac("dac", "GPIB::1::INSTR", visalib=decadac_visalib)
     dac.channels.switch_pos.set(1)
     dac.channels.update_period.set(50)
     dac.channels.ramp(0,0.3)
