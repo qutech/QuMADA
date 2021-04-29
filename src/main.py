@@ -71,7 +71,7 @@ def _map_gates_to_instruments(components, gates: Mapping):
         try:
             gate.volt = dac.channels[idx].volt
 
-        except:
+        except Exception:
             # Not enough channels
             raise
 
