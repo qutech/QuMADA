@@ -23,3 +23,8 @@ pylint:
   stage: static_analysis
   script:
   - pylint src
+
+mypy:
+  stage: static_analysis
+  script:
+  - mypy src
