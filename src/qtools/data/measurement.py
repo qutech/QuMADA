@@ -4,19 +4,21 @@ Representations of domain objects (Measurements).
 """
 
 from enum import Enum
-
 from dataclasses import dataclass, field
+
 from qtools.data.device import Device
 from qtools.data.domain import DomainObject
 
 
 @dataclass
 class TemplateParameter(DomainObject):
+    """Represents the database entry of a template parameter."""
     type: str
 
 
 @dataclass
 class MeasurementSettingScript(DomainObject):
+    """Represents the database entry of a measurement setting script."""
     script: str
     language: str
     allowedParameters: list[TemplateParameter] = field(default_factory=list)
@@ -25,10 +27,12 @@ class MeasurementSettingScript(DomainObject):
 
 @dataclass
 class MeasurementSetting(DomainObject):
+    """Represents the database entry of a measurement setting."""
     script: MeasurementSettingScript
 
 
 class FunctionType(Enum):
+    """Possible equipment functions"""
     VOLTAGE_SOURCE = 0
     VOLTAGE_SENSE = 1
     CURRENT_SOURCE = 2
@@ -37,11 +41,13 @@ class FunctionType(Enum):
 
 @dataclass
 class EquipmentFunction(DomainObject):
+    """Represents the database entry of a equipment function."""
     functionType: FunctionType
 
 
 @dataclass
 class Equipment(DomainObject):
+    """Represents the database entry of an equipment."""
     description: str
     parameters: str
     functions: list[EquipmentFunction]
@@ -50,12 +56,14 @@ class Equipment(DomainObject):
 
 @dataclass
 class EquipmentInstance(DomainObject):
+    """Represents the database entry of an equipment instance."""
     type: Equipment
     parameter: str
 
 
 @dataclass
 class MeasurementType(DomainObject):
+    """Represents the database entry of a measurement type."""
     model: str
     scriptTemplate: MeasurementSettingScript
     extractableParameters: str
@@ -66,6 +74,7 @@ class MeasurementType(DomainObject):
 
 @dataclass
 class Experiment(DomainObject):
+    """Represents the database entry of an experiment."""
     description: str
     user: str
     group: str
@@ -77,6 +86,7 @@ class Experiment(DomainObject):
 
 @dataclass
 class Measurement(DomainObject):
+    """Represents the database entry of a measurement."""
     device: Device
     experiment: Experiment
     setting: MeasurementSetting

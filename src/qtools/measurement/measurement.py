@@ -7,8 +7,8 @@ from typing import MutableMapping, MutableSequence, Optional
 from dataclasses import dataclass
 from enum import Enum, auto
 
-from libs.qcodes.qcodes.dataset.experiment_container import Experiment
-from libs.qcodes.qcodes.utils.metadata import Metadatable
+from qcodes.dataset.experiment_container import Experiment
+from qcodes.utils.metadata import Metadatable
 from qcodes import Station, Parameter
 from qcodes.logger.logger import start_all_logging
 

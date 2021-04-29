@@ -1,0 +1,35 @@
+image: python:3.9
+
+stages:
+  - static_analysis
+  - test
+
+variables:
+  GIT_SUBMODULE_STRATEGY: normal
+
+before_script:
+  - python -V  # Print out python version for debugging
+  - pip install virtualenv
+  - virtualenv venv
+  - source venv/bin/activate
+  - pip install -r ci_requirements.txt
+
+flake8:
+  stage: static_analysis
+  script:
+  - flake8 --max-line-length=120 src
+
+pylint:
+  stage: static_analysis
+  script:
+  - pylint --max-line-length=120 src
+
+mypy:
+  stage: static_analysis
+  script:
+  - mypy src
+
+unit_test:
+  stage: test
+  script:
+  - pytest
