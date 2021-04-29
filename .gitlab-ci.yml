@@ -28,3 +28,8 @@ mypy:
   stage: static_analysis
   script:
   - mypy src
+
+unit_test:
+  stage: test
+  script:
+  - pytest
