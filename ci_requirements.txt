@@ -1,8 +1,3 @@
-flake8
-mypy
-pylint
-pytest
-
 -e ./libs/qcodes
 -e .
 
