@@ -3,29 +3,25 @@
 Measurement
 """
 
-from typing import MutableMapping, MutableSequence, Optional
-from dataclasses import dataclass
-from enum import Enum, auto
+from typing import MutableSequence
 
-from qcodes.dataset.experiment_container import Experiment
-from qcodes.utils.metadata import Metadatable
-from qcodes import Station, Parameter
-from qcodes.logger.logger import start_all_logging
+from qcodes import Station
 
 from qtools.data.measurement import EquipmentInstance
-import qtools.data.measurement as dm
 
 
-class Station(Station):
-    pass
+class QtoolsStation(Station):
+    """Station object, inherits from qcodes Station."""
 
 
 class VirtualGate():
+    """Virtual Gate"""
     def __init__(self):
         self._functions = []
-    
+
     @property
     def functions(self):
+        """List of equipment Functions, the virtual gate shall have."""
         return self._functions
 
     @functions.setter
@@ -34,8 +30,12 @@ class VirtualGate():
 
 
 class ExperimentHandler():
+    """Experiment Handler"""
     def __init__(self, station: Station = None,
                  equipmentInstances: MutableSequence[EquipmentInstance] = None) -> None:
+        if equipmentInstances is None:
+            equipmentInstances = []
+
         if station:
             self._station = station
         else:

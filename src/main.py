@@ -8,7 +8,7 @@ from qcodes.instrument_drivers.stanford_research.SR830 import SR830
 from qcodes.instrument_drivers.tektronix.Keithley_2450 import Keithley2450
 
 from qtools.data.measurement import FunctionType as ft
-from qtools.measurement.measurement import Station
+from qtools.measurement.measurement import QtoolsStation as Station
 from qcodes.tests.instrument_mocks import DummyInstrument, DummyInstrumentWithMeasurement
 
 from qcodes.instrument_drivers.Harvard.Decadac import Decadac
