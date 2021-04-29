@@ -22,7 +22,7 @@ flake8:
 pylint:
   stage: static_analysis
   script:
-  - pylint src
+  - pylint --max-line-length=120 src
 
 mypy:
   stage: static_analysis
