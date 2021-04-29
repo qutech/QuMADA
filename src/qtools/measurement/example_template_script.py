@@ -3,17 +3,15 @@
 Example template measurement script
 """
 
-from re import M
-from typing import MutableMapping, Mapping, Sequence
-
-from numpy import source
-
-from qtools.measurement.measurement import VirtualGate
-from qtools.data.measurement import EquipmentFunction, FunctionType as ft
+from typing import Any, Sequence
 
 from qcodes.utils.dataset.doNd import do1d
 
-properties = {
+from qtools.measurement.measurement import VirtualGate
+from qtools.data.measurement import FunctionType as ft
+
+
+properties: dict[Any, Any] = {
     "sample_name": "s20210434",
     "device_name": "d01",
     "volt_start": 0,
@@ -41,16 +39,11 @@ properties = {
     "safety_limit_curr": 1e-6
 }
 
+
 def setup():
     """
     Setup your virtual gates here. Create the gate objects and
     add functions to them.
-
-    Valid functions are:
-    - Voltage Source
-    - Voltage Sense
-    - Current Source
-    - Current Sense
 
     FunctionType is available at qtools.data.measurement.FunctionType
 
@@ -76,28 +69,35 @@ def setup():
 
 def run(topgate: VirtualGate,
         source_drain: VirtualGate,
-        barriers: Sequence[VirtualGate],
-        **kwargs):
+        barriers: Sequence[VirtualGate]):
     """
     Run the measurements. Use your created virtual gates as parameters.
     """
-    volt_start = properties["volt_start"]
-    volt_end = properties["volt_end"]
-    volt_step = properties["volt_step"]
-    volt_delay = properties["volt_delay"]
-    num_points = int((volt_end-volt_start)/volt_step)
+    volt_start = float(properties["volt_start"])
+    volt_end = float(properties["volt_end"])
+    volt_step = float(properties["volt_step"])
+    volt_delay = float(properties["volt_delay"])
+    num_points = int((volt_end - volt_start)/volt_step)
 
     repetitions = properties["repetitions"]
 
     for i in range(repetitions):
-        data_up = do1d(topgate.volt, volt_start, volt_end, num_points, 
-                      volt_delay, source_drain.current)
-                       
+        data_up = do1d(topgate.volt, volt_start, volt_end, num_points,
+                       volt_delay, source_drain.current)
+        print(data_up)
+
         data_down = do1d(topgate.volt, volt_end, volt_start, num_points,
                          volt_delay, source_drain.current)
+        print(data_down)
+
 
 def break_condition(topgate: VirtualGate,
                     source_drain: VirtualGate,
-                    barriers: Sequence[VirtualGate],
-                    **kwargs) -> bool:
+                    barriers: Sequence[VirtualGate]) -> bool:
+    """
+    Break condition for the measurement. Use your created virtual gates as parameters.
+
+    Returns:
+        bool: True, if break condition is met, False otherwise.
+    """
     return False
