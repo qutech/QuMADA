@@ -1,0 +1,107 @@
+spec: "1.1"
+devices:
+  fzj_decadac:
+    delimiter: ";_" # Disable standard delimiter ";"
+    eom:
+      ASRL INSTR:
+        q: "\r\n"
+        r: "\n"
+      GPIB INSTR:
+        q: "\n"
+        r: "\n"
+    error: ERROR
+    dialogues:
+      - q: "*IDN?"
+        r: "QCoDeS, FZJ Decadac, v.??"
+    properties:
+      selected_slot:
+        default: 0
+        setter:
+          q: "B{};"
+          r: "B{}!"
+      selected_channel:
+        default: 0
+        setter:
+          q: "C{};"
+          r: "C{}!"
+    channels:
+      channel:
+        ids: [0, 1, 2, 3]
+        can_select: False
+        select_property: "selected_channel"
+        properties:
+          volt:
+            default: 0
+            getter:
+              q: "d;"
+              r: "d{}!"
+            setter:
+              q: "D{};"
+              r: "D{}!"
+            specs:
+              min: 0
+              max: 65536
+              type: int
+          upper_limit:
+            default: 65536
+            setter:
+              q: "U{};"
+              r: "U{}!"
+            specs:
+              min: 0
+              max: 65536
+              type: int
+          lower_limit:
+            default: 0
+            setter:
+              q: "L{};"
+              r: "L{}!"
+            specs:
+              min: 0
+              max: 65536
+              type: int
+          trig_mode:
+            default: 0
+            setter:
+              q: "G{};"
+              r: "G{}!"
+            specs:
+              valid: [0, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15]
+              type: int
+          slope:
+            default: 0
+            setter:
+              q: "S{};"
+              r: "S{}!"
+            specs:
+              min: -4294967296
+              max: 4294967296
+              type: int
+          update_period:
+            default: 1000
+            setter:
+              q: "T{};"
+              r: "T{}!"
+            specs:
+              min: 50
+              max: 65535
+              type: int
+      slot:
+        ids: [0, 1, 2, 3, 4]
+        can_select: False
+        select_property: "selected_slot"
+        properties:
+          slot_mode:
+            default: 2
+            setter:
+              q: "M{};"
+              r: "M{}!"
+            specs:
+              min: 0
+              max: 2
+              type: int
+
+
+resources:
+  GPIB::1::INSTR:
+    device: fzj_decadac

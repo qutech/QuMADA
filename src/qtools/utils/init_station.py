@@ -5,7 +5,7 @@ Created on Tue Feb 23 21:34:38 2021
 @author: till3
 """
 
-#%%
+
 def get_station_instr(station):
     """
     Lists all instruments listed in a qcodes station config yaml.
@@ -15,10 +15,8 @@ def get_station_instr(station):
     for elem in station.__dict__['_added_methods']:
         result.append(elem.strip('load_'))
     return result
-        
 
 
-#%%
 def instance_instr(station):
     """
     Creates instances of all instruments listed in qcodes stations qconfig yaml
@@ -29,4 +27,3 @@ def instance_instr(station):
     for elem in get_station_instr(station):
         instruments.append(station.load_instrument(elem))
     return instruments
-        

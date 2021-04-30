@@ -8,7 +8,8 @@
 
 
 from typing import Dict
-from qcodes import  InstrumentChannel, ChannelList, BufferedSweepableParameter, SweepFixedValues
+from qcodes import  InstrumentChannel, ChannelList, SweepFixedValues
+from qcodes.instrument.parameter import BufferedSweepableParameter
 from qcodes.utils import validators as vals
 from qcodes.instrument.visa import VisaInstrument
 
@@ -261,7 +262,7 @@ class DacChannel(InstrumentChannel, DacBase):
         
         self.switch_pos.set(self._default_switch_pos)
         
-        warnings.warn('All parameters of the Dacadac "{}" have been reset to their defaults.'.format(self.name))
+        warnings.warn('All parameters of the Decadac "{}" have been reset to their defaults.'.format(self.name))
         
         return (DacBase._COMMAND_SET_UPPER_LIMIT.format(self._upper_limit)
               + DacBase._COMMAND_SET_LOWER_LIMIT.format(self._lower_limit)

@@ -2,29 +2,37 @@
 """
 Main Window UI
 """
-
+import sys
 from typing import Dict
-from PyQt5 import QtWidgets, uic, QtGui
+
+from PyQt5 import QtWidgets, uic
 from qtconsole.console_widget import ConsoleWidget
 from qtconsole.rich_jupyter_widget import RichJupyterWidget
 from qtconsole.inprocess import QtInProcessKernelManager
 
-import sys
 
 class Ui(QtWidgets.QMainWindow):
+    """Main Window of the UI."""
     def __init__(self):
         super(Ui, self).__init__()
         uic.loadUi("qtools/ui/main_window.ui", self)
-        self.setup_ipython_console()
+        self.add_gate_widgets()
         self.connect_signal_slots()
 
-    def setup_ipython_console(self):
-        pass
+    def add_gate_widgets(self):
+        """Adds 6 dummy GateWidgets."""
+        self.gates = [GateWidget(self) for x in range(6)]
+        for gate in self.gates:
+            self.gateOverview.addWidget(gate)
 
     def connect_signal_slots(self):
-        pass
+        """Not yet implemented."""
 
-class MyConsoleWidget(RichJupyterWidget,ConsoleWidget):
+
+class MyConsoleWidget(RichJupyterWidget, ConsoleWidget):
+    """
+    qConsole Jupyter Widget to be embedded as QWidget.
+    """
     def __init__(self, *args, **kwargs):
 
         super(MyConsoleWidget, self).__init__(*args, **kwargs)
@@ -68,6 +76,13 @@ class MyConsoleWidget(RichJupyterWidget,ConsoleWidget):
         Execute a command in the frame of the console widget
         """
         self._execute(command, False)
+
+
+class GateWidget(QtWidgets.QWidget):
+    """Gate widget, that incorporates a measurement view"""
+    def __init__(self, parent=None):
+        QtWidgets.QWidget.__init__(self, parent=parent)
+        uic.loadUi("qtools/ui/gate_widget.ui", self)
 
 
 if __name__ == "__main__":
