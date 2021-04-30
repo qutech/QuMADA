@@ -55,4 +55,4 @@ unit_test:
   stage: test
   script:
   - pip install pytest
-  - pytest
+  - pytest src/tests
