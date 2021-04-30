@@ -57,6 +57,12 @@ def create_or_load_mapping(mapping):
             """
             filename = browsefiles.browsefiles(filetypes=(("json", ".json"),
                                                           ("All files", "*.*")))
+            try:
+                f = open(filename, "r")
+            except OSError:
+                # TODO: Handle File error
+                pass
+            f.close()
             return None
 
     return MapGenerator
