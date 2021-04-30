@@ -50,6 +50,7 @@ pylint:
 
 unit_test:
   stage: test
+  before_script:
+  - pip install pytest pytest-cov
   script:
-  - pip install pytest
-  - pytest src/tests
+  - pytest --cov=src src/tests
