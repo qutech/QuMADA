@@ -1,8 +1,5 @@
 -e ./libs/qcodes
 -e ../pyvisa-sim
 
-flake8
-pytest
-
 pyqt5
 qtconsole
