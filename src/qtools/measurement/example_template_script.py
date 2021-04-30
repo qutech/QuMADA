@@ -63,7 +63,8 @@ def setup():
     for barrier in barriers:
         barrier.functions.append(ft.VOLTAGE_SOURCE)
 
-    # Parameter scaling
+    # TODO: Parameter scaling
+
     return {"source_drain": source_drain, "topgate": topgate, "barriers": barriers}
 
 

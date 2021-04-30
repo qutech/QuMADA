@@ -33,13 +33,13 @@ flake8:
   stage: static_analysis
   script:
   - pip install flake8
-  - flake8 --max-line-length=120 src
+  - flake8 src
 
 pylint:
   stage: static_analysis
   script:
   - pip install pylint
-  - pylint --max-line-length=120 src
+  - pylint src
 
 mypy:
   stage: static_analysis
