@@ -12,7 +12,7 @@ variables:
 # them in a virtualenv and cache it as well.
 cache:
   key:
-    $CI_COMMIT_REF_SLUG
+    $CI_COMMIT_BRANCH
   paths:
     - .cache/pip
 
