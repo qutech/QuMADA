@@ -34,9 +34,23 @@ class MeasurementSetting(DomainObject):
 class FunctionType(Enum):
     """Possible equipment functions"""
     VOLTAGE_SOURCE = 0
-    VOLTAGE_SENSE = 1
-    CURRENT_SOURCE = 2
-    CURRENT_SENSE = 3
+    VOLTAGE_SOURCE_AC = 1
+    VOLTAGE_SENSE = 2
+    CURRENT_SOURCE = 3
+    CURRENT_SENSE = 4
+    CURRENT_SENSE_AC = 5
+
+
+class VirtualParameter:
+    pass
+
+
+class VoltageSourceACParameter(VirtualParameter):
+    def __init__(self, amplitude: Parameter, frequency: Parameter):
+        self.amplitude = amplitude
+        self.frequency = frequency
+        self.time_constant = time_constant
+        self.sensitivity
 
 
 @dataclass

@@ -52,7 +52,7 @@ def setup():
     """
     # initialize gates and their functions
     source_drain = VirtualGate()
-    source_drain.functions.append(ft.VOLTAGE_SOURCE)
+    source_drain.functions.append(ft.VOLTAGE_SOURCE_AC)
     source_drain.functions.append(ft.CURRENT_SENSE)
 
     topgate = VirtualGate()
