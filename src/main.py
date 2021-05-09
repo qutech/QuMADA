@@ -10,8 +10,8 @@ from qcodes.instrument_drivers.stanford_research.SR830 import SR830
 from qcodes.instrument_drivers.tektronix.Keithley_2450 import Keithley2450
 # from qcodes.tests.instrument_mocks import DummyInstrument, DummyInstrumentWithMeasurement
 
-from qtools.data.measurement import FunctionType as ft
-from qtools.measurement.measurement import VirtualGate
+from qtools.data.measurement import FunctionType as ft, VirtualParameter
+from qtools.measurement.measurement import FunctionMapping, VirtualGate
 from qtools.measurement.measurement import QtoolsStation as Station
 
 import qtools.instrument.sims as qtsims
@@ -51,77 +51,40 @@ def _load_script_template():
 
 
 def _map_gates_to_instruments(components, gates: Mapping):
-
-    def flatten(iterable):
-        for elem in iterable:
-            if isinstance(elem, Iterable) and not isinstance(elem, (str, bytes)):
-                yield from flatten(elem)
-            else:
-                yield elem
-
-
-    # flatten gate list
-    gate_list = list(flatten(gates.values()))
-
     # instruments
     dac = components["dac"]
     keithley = components["keithley"]
     lockin = components["lockin"]
 
-    # mapping: list[tuple[str, ft, VirtualGate, dict[Parameter]]] = [("volt",
-    #                                                           (ft.VOLTAGE_SOURCE, ft.CURRENT_SENSE),
-    #                                                           gate_list[0],
-    #                                                           parameter)]
-    mapping: list[tuple[str, ft, VirtualGate, Parameter]] = [
-        ("voltage_source_ac", ft.VOLTAGE_SOURCE_AC,
-         gates["source_drain"],
-         {"amplitude": lockin.amplitude,
-          "frequency": lockin.frequency,
-          "output_enable": None,
-         }),
-        ("current_sense_ac", ft.CURRENT_SENSE_AC,
-         gates["source_drain"],
-         {"current": lockin.R,
-          "time_constant": lockin.time_constant,
-          "sensitivity": lockin.sensitivity,
-         }),
-        ("voltage_source", ft.VOLTAGE_SOURCE,
-         gates["topgate"],
-         {"voltage": keithley.source.voltage,
-          "current_limit": keithley.source.limit,
-          "output_enable": keithley.output_enabled}),
-        ("current_sense", ft.CURRENT_SENSE,
-         gates["topgate"],
-         {"current": keithley.sense.current})
+    mapping: list[FunctionMapping] = [
+        FunctionMapping("voltage_source_ac", ft.VOLTAGE_SOURCE_AC,
+                        gates["source_drain"],
+                        {"amplitude": lockin.amplitude,
+                         "frequency": lockin.frequency,
+                         "output_enable": None}
+                        ),
+        FunctionMapping("current_sense_ac", ft.CURRENT_SENSE_AC,
+                        gates["source_drain"],
+                        {"current": lockin.R,
+                         "time_constant": lockin.time_constant,
+                         "sensitivity": lockin.sensitivity}
+                        ),
+        FunctionMapping("voltage_source", ft.VOLTAGE_SOURCE,
+                        gates["topgate"],
+                        {"voltage": keithley.source.voltage,
+                         "current_limit": keithley.source.limit,
+                         "output_enable": keithley.output_enabled}
+                        ),
+        FunctionMapping("current_sense", ft.CURRENT_SENSE,
+                        gates["topgate"],
+                        {"current": keithley.sense.current})
     ]
 
-    # VOLTAGE_SOURCE
-    # gates_voltage_source = [gate for gate in gate_list if ft.VOLTAGE_SOURCE in gate.functions]
-    # for idx, gate in enumerate(gates_voltage_source):
-    #     try:
-    #         gate.volt = dac.channels[idx].volt
-
-    #     except Exception:
-    #         # Not enough channels
-    #         raise
-
-    # # VOLTAGE_SENSE
-    # gates_voltage_sense = [gate for gate in gate_list if ft.VOLTAGE_SENSE in gate.functions]
-    # for gate in gates_voltage_sense:
-    #     # TODO
-    #     gate.volt = property()
-
-    # # CURRENT_SOURCE
-    # gates_current_source = [gate for gate in gate_list if ft.CURRENT_SOURCE in gate.functions]
-    # for gate in gates_current_source:
-    #     # TODO
-    #     gate.current = property()
-
-    # # CURRENT_SENSE
-    # gates_current_sense = [gate for gate in gate_list if ft.CURRENT_SENSE in gate.functions]
-    # for gate in gates_current_sense:
-    #     # TODO
-    #     gate.current = property()
+    for fm in mapping:
+        temp = VirtualParameter()
+        for name, parameter in fm.parameters.items():
+            setattr(temp, name, parameter)
+        setattr(fm.gate, fm.name, temp)
 
 
 if __name__ == "__main__":

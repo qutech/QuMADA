@@ -3,11 +3,12 @@
 Measurement
 """
 
-from typing import MutableSequence
+from dataclasses import dataclass, field
+from typing import MutableSequence, Mapping
 
-from qcodes import Station
+from qcodes import Station, Parameter
 
-from qtools.data.measurement import EquipmentInstance
+from qtools.data.measurement import EquipmentInstance, FunctionType
 
 
 class QtoolsStation(Station):
@@ -27,6 +28,21 @@ class VirtualGate():
     @functions.setter
     def functions(self, functions: MutableSequence):
         self._functions = functions
+
+
+class VirtualParameter():
+    pass
+
+
+@dataclass
+class FunctionMapping():
+    """Data structure, that holds the mapping of several instrument parameters
+    that correspond to one specific FunctionType.
+    """
+    name: str
+    function_type: FunctionType
+    gate: VirtualGate
+    parameters: Mapping[Parameter] = field(default_factory=dict)
 
 
 class ExperimentHandler():
