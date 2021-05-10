@@ -38,8 +38,8 @@ from qcodes.instrument_drivers.tektronix.Keithley_2450 import Keithley2450
 from qcodes.instrument_drivers.tektronix.Keithley_2400 import Keithley_2400
 
 
-# import qtools.utils.browsefiles as bf
-# import qtools.measurement.gate_mapping as gm
+# import src.qtools.utils.browsefiles as bf
+# import src.qtools.measurement.gate_mapping as gm
 
 #%%
 start_all_logging()
@@ -66,7 +66,7 @@ keithley=Keithley_2400('keithley', 'GPIB1::26::INSTR')
 
 station = qc.Station(dac, lockin, keithley)
 #%% define channels here
-sample_name = "AL809789_D2-SD7_QBB36_1_2_SET1"
+sample_name = "AL809789_D2-SD7_QBB36_1_2_SET2"
 topgate = keithley
 left_barrier = dac.channels[0]
 right_barrier = dac.channels[1]
@@ -113,7 +113,7 @@ initialise_or_create_database_at(path)
 def inducing_measurement(topgate = topgate, left_barrier = left_barrier,
                          right_barrier = right_barrier,
                          source_drain = source_drain, topgate_range = [0, 3.5],
-                         datapoints = 500, delay = 0.03,
+                         datapoints = 250, delay = 0.03,
                          barrier_voltage = 2, source_drain_bias = 1,
                          source_drain_frequency = 173, 
                          experiment_name = "4K_Inducing_measurement",
@@ -213,9 +213,4 @@ def pinchoff_measurement_1d(topgate = topgate, left_barrier = left_barrier,
                             source_drain_bias = 1, source_drain_frequency = 173,
                             experiment_name_prefix = "4K_pinchoff_measurement", 
                             sample = sample_name):
-
-        
-
-
-        
-            
+    pass

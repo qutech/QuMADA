@@ -4,9 +4,10 @@ Measurement
 """
 
 from dataclasses import dataclass, field
-from typing import MutableSequence, Mapping
+from typing import MutableSequence, MutableMapping, Any
 
-from qcodes import Station, Parameter
+from qcodes import Station
+from qcodes.instrument import Parameter
 
 from qtools.data.measurement import EquipmentInstance, FunctionType
 
@@ -42,7 +43,7 @@ class FunctionMapping():
     name: str
     function_type: FunctionType
     gate: VirtualGate
-    parameters: Mapping[Parameter] = field(default_factory=dict)
+    parameters: MutableMapping[Any, Parameter] = field(default_factory=dict)
 
 
 class ExperimentHandler():

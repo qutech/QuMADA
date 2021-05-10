@@ -7,10 +7,11 @@ from qcodes.instrument import Parameter
 from qcodes.instrument.visa import VisaInstrument
 from qcodes.instrument_drivers.Harvard.Decadac import Decadac
 from qcodes.instrument_drivers.stanford_research.SR830 import SR830
-from qcodes.instrument_drivers.tektronix.Keithley_2450 import Keithley2450
+from qcodes.instrument_drivers.tektronix.Keithley_2400 import Keithley_2400
+# from qcodes.instrument_drivers.tektronix.Keithley_2450 import Keithley2450
 # from qcodes.tests.instrument_mocks import DummyInstrument, DummyInstrumentWithMeasurement
 
-from qtools.data.measurement import FunctionType as ft, VirtualParameter
+from qtools.data.measurement import FunctionType as ft
 from qtools.measurement.measurement import FunctionMapping, VirtualGate
 from qtools.measurement.measurement import QtoolsStation as Station
 
@@ -41,7 +42,7 @@ def _initialize_instruments() -> MutableMapping[Any, VisaInstrument]:
     dac.channels.ramp(0, 0.3)
 
     instruments["lockin"] = SR830("lockin", "GPIB1::12::INSTR")
-    instruments["keithley"] = Keithley2450("keithley", "GPIB1::11::INSTR")
+    instruments["keithley"] = Keithley_2400("keithley", "GPIB1::26::INSTR")
     return instruments
 
 
@@ -56,6 +57,13 @@ def _map_gates_to_instruments(components, gates: Mapping):
     keithley = components["keithley"]
     lockin = components["lockin"]
 
+    # TODO: Create class for parameter sets and add interfacing functions
+    parameter_sets: dict[set[FunctionType], dict] = {
+        (ft.VOLTAGE_SOURCE, ft.CURRENT_SENSE): {"a": 1,
+                                                "b": 2}
+    }
+
+    # TODO: Parameter Mapping for specific function sets
     mapping: list[FunctionMapping] = [
         FunctionMapping("voltage_source_ac", ft.VOLTAGE_SOURCE_AC,
                         gates["source_drain"],
@@ -71,20 +79,18 @@ def _map_gates_to_instruments(components, gates: Mapping):
                         ),
         FunctionMapping("voltage_source", ft.VOLTAGE_SOURCE,
                         gates["topgate"],
-                        {"voltage": keithley.source.voltage,
-                         "current_limit": keithley.source.limit,
-                         "output_enable": keithley.output_enabled}
+                        {"voltage": keithley.volt,
+                         "current_limit": keithley.compliancei,
+                         "output_enable": keithley.output}
                         ),
         FunctionMapping("current_sense", ft.CURRENT_SENSE,
                         gates["topgate"],
-                        {"current": keithley.sense.current})
+                        {"current": keithley.curr,
+                         ""})
     ]
 
     for fm in mapping:
-        temp = VirtualParameter()
-        for name, parameter in fm.parameters.items():
-            setattr(temp, name, parameter)
-        setattr(fm.gate, fm.name, temp)
+        pass
 
 
 if __name__ == "__main__":

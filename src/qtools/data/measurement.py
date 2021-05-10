@@ -39,10 +39,10 @@ class FunctionType(Enum):
     CURRENT_SOURCE = 3
     CURRENT_SENSE = 4
     CURRENT_SENSE_AC = 5
+    
 
-
-class VirtualParameter:
-    pass
+# class VirtualParameter:
+#     pass
 
 
 # class VoltageSourceACParameter(VirtualParameter):
