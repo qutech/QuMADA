@@ -6,8 +6,8 @@ Created on Thu Dec 17 18:38:47 2020
 """
 import json     # Used to store mappings until DB is functional
 
-from qtools.utils import browsefiles
-from qtools.measurement import get_from_station as gfs
+from src.qtools.utils import browsefiles
+from src.qtools.measurement import get_from_station as gfs
 
 
 def create_or_load_mapping(mapping):
@@ -20,27 +20,28 @@ def create_or_load_mapping(mapping):
         """
         def __init__(self, station, **kwargs):
             # Get access to GateMapping methods
-            self.wrap = mapping(station, **kwargs)
-            self.get_method()
-
-        def get_method(self):
+            self.get_method(station)
+            #self.wrap = mapping(station, **kwargs)
+            
+        def get_method(self, station):
             """
             User input to decide whether a mapping should be loaded from file
             or a new one should be created. DB support to be added
             """
             method = input("Do you want to load an existing mapping? (y/n)\n")
             if method.lower() == "y":
-                pass    # add function for loading here
+                return self.load_mapping(station)
             elif method.lower() == "n":
-                return self.create_mapping()    # Create new mapping
+                return self.create_mapping(station)    # Create new mapping
             else:
                 print("Please enter y or n")
                 return self.get_method()
 
-        def create_mapping(self):
+        def create_mapping(self, station):
             """
             Create a new GateMapping with user input
             """
+            self.wrap = mapping(station)
             try:
                 gate_number = int(input("Please enter number of gates: \n"))
             except ValueError:
@@ -49,22 +50,26 @@ def create_or_load_mapping(mapping):
             for i in range(0, gate_number):
                 self.wrap.add_gate()
 
-        def load_mapping(self):
+        def load_mapping(self, station):
             """
             Used to load a mapping from file (DB support to be added)
-            Not functional yet, have to find a way to store/restore Qcodes
-            objects like Instruments/Stations beforehand
+            Loading from json files works now, however, a new station object has
+            to be passed as the original one cannot be saved to a json file. 
+            Should work as long as both station objects contain the same
+            instruments.
+            ToDo: Check whether old and new station object are compatible
             """
             filename = browsefiles.browsefiles(filetypes=(("json", ".json"),
                                                           ("All files", "*.*")))
             try:
-                f = open(filename, "r")
+                with open(filename, "r") as read_file:
+                    loaded_mapping = json.load(read_file)
             except OSError:
                 # TODO: Handle File error
-                pass
-            f.close()
-            return None
-
+                print("An OS error occured. Please check, whether you chose a valid file")
+            loaded_mapping["station"] = station
+            self.wrap = mapping(**loaded_mapping)
+            
     return MapGenerator
 
 
@@ -76,15 +81,16 @@ class GateMapping():
     Requires user input.
     To Do:
         - Version without user input
-        - Loading/Saving
         - Measurement device types
         - Think about dictionary structure
+        - Does not fit to our new concept of "Functionalities"- Probably direct
+        interaction with station object does not belong here anymore.
     '''
     def __init__(self, station, **kwargs):
         self.station = station
         self.gate_number = kwargs.get('gate_number', 0)
-        self.gates = {}     # Mapping gate name <=> list with device channels: [0]=voltage, [1]=current
-        self.gate_types = self._load_gate_types()
+        self.gates = kwargs.get('gates', {})     # Mapping gate name <=> list with device channels: [0]=voltage, [1]=current
+        self.gate_types = kwargs.get('gate_types', self._load_gate_types())
         # self.add_gates()
 
     def _load_gate_types(self, file="./gate_types.dat"):
@@ -159,14 +165,14 @@ class GateMapping():
         Checks whether chosen gate type is valid. Necessary to rely on gate_type
         variable in the measurement script.
         '''
-        print("Valid gate types are: \n" + str(gate_types))
+        print("Valid gate types are: \n %s" %gate_types)
         if gate_type in gate_types:
             return gate_type
         elif gate_type is None:
             gate_type = input("Please enter gate type: \n")
             return self._gate_type_validator(gate_types, gate_type)
         else:
-            print("Invalid gate type. Known gate types are \n" + str(gate_types))
+            print("Invalid gate type. Known gate types are \n %s" %gate_types)
             print("You can use 'other' for unspecified gates. Support for adding new types will be added later")
             return self._gate_type_validator(gate_types)
 
@@ -179,7 +185,9 @@ class GateMapping():
         """
         dictionary = self.__dict__
         dictionary["station"] = None
+        dictionary["gate_types"] = list(dictionary['gate_types'])
         text = json.dumps(dictionary)
-        file = browsefiles.browsesavefile(filetypes=("Json", ".json"))
+        file = browsefiles.browsesavefile(filetypes=(("Json", "*.json*"),
+                                                     ("All files", "*.*")))
         file.write(text)
         file.close()
