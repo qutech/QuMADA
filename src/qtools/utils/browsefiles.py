@@ -11,6 +11,7 @@ Created on Tue Feb 23 16:04:17 2021
 # import filedialog module
 import tkinter
 from tkinter import filedialog
+from os import curdir
 
 
 # Function for opening the file explorer window
@@ -22,7 +23,7 @@ def browsefiles(**kwargs):
         filetypes ([tuple([str:label],[str: suffix])], def: txt and all files):
             Selectable filetypes
     '''
-    initialdir = kwargs.get("initialdir", "/")
+    initialdir = kwargs.get("initialdir", curdir)
     filetypes = kwargs.get("filetypes", (("Text files", "*.txt*"),
                                          ("all files", "*.*")))
     # Make a top-level instance and hide since it is ugly and big.
@@ -55,7 +56,7 @@ def browsesavefile(**kwargs):
             Selectable filetypes
 
     """
-    initialdir = kwargs.get("initialdir", "/")
+    initialdir = kwargs.get("initialdir", curdir)
     filetypes = kwargs.get("filetypes", (("Text files", "*.txt*"),
                                          ("all files", "*.*")))
     # Make a top-level instance and hide since it is ugly and big.

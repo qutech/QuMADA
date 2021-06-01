@@ -8,7 +8,8 @@ import json     # Used to store mappings until DB is functional
 
 from src.qtools.utils import browsefiles
 from src.qtools.measurement import get_from_station as gfs
-
+import src.qtools.utils.load_save_config as lsc
+import re
 
 def create_or_load_mapping(mapping):
     class MapGenerator:
@@ -60,7 +61,12 @@ def create_or_load_mapping(mapping):
             ToDo: Check whether old and new station object are compatible
             """
             filename = browsefiles.browsefiles(filetypes=(("json", ".json"),
-                                                          ("All files", "*.*")))
+                                                          ("All files", "*.*")),
+                                               initialdir = lsc.load_from_config(
+                                                   "gate_mapping","save_directory"))
+            #Save last directory used in config so you dont have to search for it.
+            directory = '/'.join(filename.split('/')[0:-1])
+            lsc.save_to_config("gate_mapping", "save_directory", directory)
             try:
                 with open(filename, "r") as read_file:
                     loaded_mapping = json.load(read_file)
@@ -188,6 +194,10 @@ class GateMapping():
         dictionary["gate_types"] = list(dictionary['gate_types'])
         text = json.dumps(dictionary)
         file = browsefiles.browsesavefile(filetypes=(("Json", "*.json*"),
-                                                     ("All files", "*.*")))
+                                                     ("All files", "*.*")),
+                                          initialdir = lsc.load_from_config(
+                                              "gate_mapping","save_directory"))
+        directory = '/'.join(file.strip('/')[0:-1])
+        lsc.save_to_config('gate_mapping', 'save_directory', directory)
         file.write(text)
         file.close()
