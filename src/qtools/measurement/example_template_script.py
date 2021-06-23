@@ -3,7 +3,7 @@
 Example template measurement script
 """
 
-from typing import Any, Sequence
+from typing import Any, Dict, Sequence
 
 from qcodes.instrument import Parameter, channel
 from qcodes.utils.dataset.doNd import do1d
@@ -14,8 +14,8 @@ from qtools.data.measurement import FunctionType as ft
 
 class MeasurementScript():
     def __init__(self):
-        self.properties: dict[Any, Any] = {}
-        self.channels: dict[Any, Parameter] = {}
+        self.properties: Dict[Any, Any] = {}
+        self.channels: Dict[Any, Parameter] = {}
 
     def setup(self):
         """
@@ -65,7 +65,7 @@ class MeasurementScript():
         Run the measurements.
         """
         # Sort channels
-        def channels_by_keys(keys: Sequence, prefix="", suffix="") -> dict[Any, Parameter]:
+        def channels_by_keys(keys: Sequence, prefix="", suffix="") -> Dict[Any, Parameter]:
             """
             Filters self.channels by the given keys and returns a separate dictionary.
             It is possible to remove prefixes or suffixes from the original keys.

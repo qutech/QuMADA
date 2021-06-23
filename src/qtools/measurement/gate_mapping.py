@@ -5,11 +5,12 @@ Created on Thu Dec 17 18:38:47 2020
 @author: Huckemann
 """
 import json     # Used to store mappings until DB is functional
-
-from src.qtools.utils import browsefiles
-from src.qtools.measurement import get_from_station as gfs
-import src.qtools.utils.load_save_config as lsc
 import re
+
+from qtools.utils import browsefiles
+from qtools.measurement import get_from_station as gfs
+import qtools.utils.load_save_config as lsc
+
 
 def create_or_load_mapping(mapping):
     class MapGenerator:
@@ -195,7 +196,7 @@ class GateMapping():
         text = json.dumps(dictionary)
         file = browsefiles.browsesavefile(filetypes=(("Json", "*.json*"),
                                                      ("All files", "*.*")),
-                                          initialdir = lsc.load_from_config(
+                                          initialdir=lsc.load_from_config(
                                               "gate_mapping","save_directory"))
         directory = '/'.join(file.strip('/')[0:-1])
         lsc.save_to_config('gate_mapping', 'save_directory', directory)
