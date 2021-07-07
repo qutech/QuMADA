@@ -13,15 +13,14 @@ from qtools.measurement.measurement import MeasurementScript
 class InducingMeasurementScript(MeasurementScript):
     def setup(self):
         # Define gates and gate parameters
-        self.gate_parameters["test"] = None
-        self.gate_parameters["source_drain"] = dict.fromkeys(["amplitude",
-                                                              "frequency",
-                                                              "current"])
-        self.gate_parameters["topgate"] = dict.fromkeys(["voltage",
-                                                         "current",
-                                                         "current_compliance"])
-        self.gate_parameters["barrier1"] = dict.fromkeys(["voltage"])
-        self.gate_parameters["barrier2"] = dict.fromkeys(["voltage"])
+        self.add_gate_parameter("amplitude", "source_drain")
+        self.add_gate_parameter("frequency", "source_drain")
+        self.add_gate_parameter("current", "source_drain")
+        self.add_gate_parameter("voltage", "topgate")
+        self.add_gate_parameter("current", "topgate")
+        self.add_gate_parameter("current_compliance", "topgate")
+        self.add_gate_parameter("voltage", "barrier1")
+        self.add_gate_parameter("voltage", "barrier2")
 
         self.properties = {
             "start": 0.0,
