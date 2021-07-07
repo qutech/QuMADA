@@ -39,18 +39,6 @@ class FunctionType(Enum):
     CURRENT_SOURCE = 3
     CURRENT_SENSE = 4
     CURRENT_SENSE_AC = 5
-    
-
-# class VirtualParameter:
-#     pass
-
-
-# class VoltageSourceACParameter(VirtualParameter):
-#     def __init__(self, amplitude: Parameter, frequency: Parameter):
-#         self.amplitude = amplitude
-#         self.frequency = frequency
-#         self.time_constant = time_constant
-#         self.sensitivity = sensitivity
 
 
 @dataclass

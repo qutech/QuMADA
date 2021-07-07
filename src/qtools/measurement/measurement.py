@@ -4,16 +4,48 @@ Measurement
 """
 
 from dataclasses import dataclass, field
-from typing import MutableSequence, MutableMapping, Any
+from typing import Dict, MutableSequence, MutableMapping, Any, Set, Union
 
 from qcodes import Station
 from qcodes.instrument import Parameter
+from qcodes.station import PARAMETER_ATTRIBUTES
 
 from qtools.data.measurement import EquipmentInstance, FunctionType
 
 
 class QtoolsStation(Station):
     """Station object, inherits from qcodes Station."""
+
+
+class MeasurementScript():
+    PARAMETER_NAMES: Set[str] = {"voltage",
+                                 "current",
+                                 "current_compliance",
+                                 "amplitude",
+                                 "frequency"}
+
+    def __init__(self):
+        self.properties: Dict[Any, Any] = {}
+        self.gate_parameters: Dict[Any, Union[Dict[Any, Parameter], Parameter]] = {}
+
+    def add_gate_parameter(self,
+                           parameter_name: str,
+                           gate_name: str = None,
+                           parameter: Parameter = None) -> None:
+        """
+        Adds a gate parameter to self.gate_parameters.
+
+        Args:
+            parameter_name (str): Name of the parameter. Has to be in MeasurementScript.PARAMETER_NAMES.
+            gate_name (str): Name of the parameter's gate. Set this, if you want to define the parameter under a specific gate. Defaults to None.
+            parameter (Parameter): Custom parameter. Set this, if you want to set a custom parameter. Defaults to None.
+        """
+        if parameter_name not in MeasurementScript.PARAMETER_NAMES:
+            raise NameError(f"parameter_name \"{parameter_name}\" not in MeasurementScript.PARAMETER_NAMES.")
+        if not gate_name:
+            self.gate_parameters[parameter_name] = parameter
+        else:
+            self.gate_parameters.setdefault(gate_name, {})[parameter_name] = parameter
 
 
 class VirtualGate():

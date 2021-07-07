@@ -3,102 +3,104 @@
 Example template measurement script
 """
 
-from typing import Any, Sequence
+from typing import Any, Dict, Sequence
+from qcodes.dataset.experiment_container import load_or_create_experiment
 
+from qcodes.instrument import Parameter, channel
 from qcodes.utils.dataset.doNd import do1d
 
-from qtools.measurement.measurement import VirtualGate
+from qtools.measurement.measurement import MeasurementScript, VirtualGate
 from qtools.data.measurement import FunctionType as ft
 
+# TODO: Abstract MeasurementScript Class
 
-properties: dict[Any, Any] = {
-    "sample_name": "s20210434",
-    "device_name": "d01",
-    "volt_start": 0,
-    "volt_end": 2,
-    "volt_step": .1,
-    "volt_delay": .05,
-    "repetitions": 1,
-    "backsweep": True,
-    "source_drain": {
-        "frequency": 173,
-        "amplitude": 1,
-        "voltage_divider": 1e-4,
-        "sensitivity": "",
-        "reserve": "",
-        "time_constant": 1e-3
-    },
-    "topgate": {
-        "current_range": "auto",
-    },
-    "barriers": {
-        "voltage": 2,
-        "wait": 2
-    },
-    "safety_limit_leakage": 1e-8,
-    "safety_limit_curr": 1e-6
-}
+class ExampleMeasurementScript(MeasurementScript):
+    def __init__(self):
+        super().__init__()
 
+    def setup(self):
+        """
+        Setup your channels here.
+        """
 
-def setup():
-    """
-    Setup your virtual gates here. Create the gate objects and
-    add functions to them.
+        # define empty channels, that have to be mapped later
+        self.gate_parameters = dict.fromkeys(["sd_amplitude",
+                                              "sd_frequency",
+                                              "sd_current",
+                                              "sd_output_enable",
+                                              "tg_voltage",
+                                              "tg_current",
+                                              "b1_voltage",
+                                              "b2_voltage"])
 
-    FunctionType is available at qtools.data.measurement.FunctionType
+        # Set Measurement properties
+        self.properties = {
+            "sample_name": "s20210434",
+            "device_name": "d01",
+            "volt_start": 0,
+            "volt_end": 2,
+            "volt_step": .1,
+            "volt_delay": .05,
+            "repetitions": 1,
+            "backsweep": True,
+            "source_drain": {
+                "frequency": 173,
+                "amplitude": 1,
+                "voltage_divider": 1e-4,
+                "sensitivity": "",
+                "reserve": "",
+                "time_constant": 1e-3
+            },
+            "topgate": {
+                "current_range": "auto",
+            },
+            "barriers": {
+                "voltage": 2,
+                "wait": 2
+            },
+            "safety_limit_leakage": 1e-8,
+            "safety_limit_curr": 1e-6
+        }
 
-    Returns:
-        [dict]: Virtual Gates with their respective names
-    """
-    # initialize gates and their functions
-    source_drain = VirtualGate()
-    source_drain.functions.append(ft.VOLTAGE_SOURCE_AC)
-    source_drain.functions.append(ft.CURRENT_SENSE)
+        load_or_create_experiment("example", "test")
 
-    topgate = VirtualGate()
-    topgate.functions.append(ft.VOLTAGE_SOURCE)
-    topgate.functions.append(ft.CURRENT_SENSE)
+    def run(self):
+        """
+        Run the measurements.
+        """
+        # Sort channels
+        def channels_by_keys(keys: Sequence, prefix="", suffix="") -> Dict[Any, Parameter]:
+            """
+            Filters self.channels by the given keys and returns a separate dictionary.
+            It is possible to remove prefixes or suffixes from the original keys.
 
-    barriers = [VirtualGate() for i in range(2)]
-    for barrier in barriers:
-        barrier.functions.append(ft.VOLTAGE_SOURCE)
+            Args:
+                keys (Sequence): List of the desired entries from self.channels
+                prefix (str, optional): prefix that shall be removed from the keys. Defaults to "".
+                suffix (str, optional): suffix that shall be removed from the keys. Defaults to "".
 
-    # TODO: Parameter scaling
+            Returns:
+                dict[Any, Parameter]: Dictionary with the matched channels.
+            """
+            return {x.removeprefix(prefix).removesuffix(suffix): self.channels[x] for x in keys}
 
-    return {"source_drain": source_drain, "topgate": topgate, "barriers": barriers}
+        source_drain = channels_by_keys(["sd_amplitude", "sd_frequency", "sd_current", "sd_output_enable"], prefix="sd_")
+        topgate = channels_by_keys(["tg_voltage", "tg_current"], prefix="tg_")
+        barriers = [channels_by_keys([f"b{i}_voltage"], prefix=f"b{i}_") for i in range(2)]
 
+        volt_start = float(self.properties["volt_start"])
+        volt_end = float(self.properties["volt_end"])
+        volt_step = float(self.properties["volt_step"])
+        volt_delay = float(self.properties["volt_delay"])
+        num_points = int((volt_end - volt_start)/volt_step)
 
-def run(topgate: VirtualGate,
-        source_drain: VirtualGate,
-        barriers: Sequence[VirtualGate]):
-    """
-    Run the measurements. Use your created virtual gates as parameters.
-    """
-    volt_start = float(properties["volt_start"])
-    volt_end = float(properties["volt_end"])
-    volt_step = float(properties["volt_step"])
-    volt_delay = float(properties["volt_delay"])
-    num_points = int((volt_end - volt_start)/volt_step)
+        repetitions = self.properties["repetitions"]
 
-    repetitions = properties["repetitions"]
+        for i in range(repetitions):
+            data_up = do1d(topgate["voltage"], volt_start, volt_end, num_points,
+                           volt_delay, source_drain["current"])
+            print(data_up)
 
-    for i in range(repetitions):
-        data_up = do1d(topgate.volt, volt_start, volt_end, num_points,
-                       volt_delay, source_drain.current)
-        print(data_up)
-
-        data_down = do1d(topgate.volt, volt_end, volt_start, num_points,
-                         volt_delay, source_drain.current)
-        print(data_down)
-
-
-def break_condition(topgate: VirtualGate,
-                    source_drain: VirtualGate,
-                    barriers: Sequence[VirtualGate]) -> bool:
-    """
-    Break condition for the measurement. Use your created virtual gates as parameters.
-
-    Returns:
-        bool: True, if break condition is met, False otherwise.
-    """
-    return False
+            data_down = do1d(topgate["voltage"], volt_end, volt_start, num_points,
+                             volt_delay, source_drain["current"])
+            print(data_down)

@@ -1,29 +1,33 @@
 #!/usr/bin/env python3
 
-from typing import Mapping, MutableMapping, Any
-from collections.abc import Iterable
+from typing import Dict, Iterable, Mapping, MutableMapping, Any, Set, Tuple
+from xml.dom.minicompat import StringTypes
+from numpy import isin
 
 from qcodes.instrument import Parameter
-from qcodes.instrument.visa import VisaInstrument
-from qcodes.instrument_drivers.Harvard.Decadac import Decadac
+from qcodes.instrument.base import Instrument, InstrumentBase
+from qcodes.instrument.channel import ChannelList
+# from qcodes.instrument_drivers.Harvard.Decadac import Decadac
 from qcodes.instrument_drivers.stanford_research.SR830 import SR830
-from qcodes.instrument_drivers.tektronix.Keithley_2400 import Keithley_2400
-# from qcodes.instrument_drivers.tektronix.Keithley_2450 import Keithley2450
-# from qcodes.tests.instrument_mocks import DummyInstrument, DummyInstrumentWithMeasurement
+# from qcodes.instrument_drivers.tektronix.Keithley_2400 import Keithley_2400
+from qcodes.instrument_drivers.tektronix.Keithley_2450 import Keithley2450
+from qcodes.tests.instrument_mocks import DummyInstrument, DummyInstrumentWithMeasurement
+from qcodes.utils.metadata import Metadatable
 
 from qtools.data.measurement import FunctionType as ft
+from qtools.measurement.measurement_for_immediate_use.inducing_measurement import InducingMeasurementScript
 from qtools.measurement.measurement import FunctionMapping, VirtualGate
 from qtools.measurement.measurement import QtoolsStation as Station
 
-import qtools.instrument.sims as qtsims
+# import qtools.instrument.sims as qtsims
 import qcodes.instrument.sims as qcsims
 
 # DECADAC_VISALIB = qtsims.__file__.replace('__init__.py', 'FZJ_Decadac.yaml@sim')
-# KEITHLEY_VISALIB = qcsims.__file__.replace('__init__.py', 'Keithley_2450.yaml@sim')
+KEITHLEY_VISALIB = qcsims.__file__.replace('__init__.py', 'Keithley_2450.yaml@sim')
 # SR830_VISALIB = qcsims.__file__.replace('__init__.py', 'SR830.yaml@sim')
 
 
-def _initialize_instruments() -> MutableMapping[Any, VisaInstrument]:
+def _initialize_instruments() -> MutableMapping[Any, Instrument]:
     """
     Initializes the instruments as qcodes components.
 
@@ -31,66 +35,85 @@ def _initialize_instruments() -> MutableMapping[Any, VisaInstrument]:
         MutableMapping[Any, EquipmentInstance]: Instruments, that can be loaded into qcodes Station.
     """
     # TODO: Maybe do this in UI
-    instruments: dict[str, VisaInstrument] = {}
+    instruments: dict[str, Instrument] = {}
 
-    dac = instruments["dac"] = Decadac("dac",
-                                       "ASRL6::INSTR",
-                                       min_val=-10, max_val=10,
-                                       terminator="\n")
+    # dac = instruments["dac"] = Decadac("dac",
+    #                                    "ASRL6::INSTR",
+    #                                    min_val=-10, max_val=10,
+    #                                    terminator="\n")
     # dac.channels.switch_pos.set(1)
-    dac.channels.update_period.set(50)
-    dac.channels.ramp(0, 0.3)
+    # dac.channels.update_period.set(50)
+    # dac.channels.ramp(0, 0.3)
+    dac = instruments["dac"] = DummyInstrument("dac", ("voltage", "current"))
+    instruments["dmm"] = DummyInstrumentWithMeasurement("dmm", dac)
 
-    instruments["lockin"] = SR830("lockin", "GPIB1::12::INSTR")
-    instruments["keithley"] = Keithley_2400("keithley", "GPIB1::26::INSTR")
+    # instruments["lockin"] = SR830("lockin", "GPIB1::12::INSTR")
+    instruments["keithley"] = Keithley2450("keithley", "GPIB::2::INSTR", visalib=KEITHLEY_VISALIB)
     return instruments
 
 
-def _load_script_template():
-    import qtools.measurement.example_template_script as script
-    return script
+def _map_gates_to_instruments(components: Mapping[Any, Metadatable], gate_parameters: Mapping[Any, Parameter]) -> None:
+    """
+    Maps the gate parameters, that were defined in the MeasurementScript to the instruments, that are initialized in QCoDeS.
 
+    Args:
+        components ([type]): Instruments/Components in QCoDeS
+        gate_parameters (Mapping[Any, Parameter]): gate parameters, as defined in the measurement script
+    """
+    instrument_parameters: Dict[Any, Parameter] = {}
+    seen: Set[int] = set()
 
-def _map_gates_to_instruments(components, gates: Mapping):
-    # instruments
-    dac = components["dac"]
-    keithley = components["keithley"]
-    lockin = components["lockin"]
+    def _filter_flatten_parameters(node) -> None:
+        """
+        Recursively filters objects of Parameter types from data structure, that consists of dicts, lists and Metadatable.
 
-    # TODO: Create class for parameter sets and add interfacing functions
-    parameter_sets: dict[set[FunctionType], dict] = {
-        (ft.VOLTAGE_SOURCE, ft.CURRENT_SENSE): {"a": 1,
-                                                "b": 2}
-    }
+        Args:
+            node (Union[Dict, List, Metadatable]): Current/starting node in the data structure
+        """
+        # TODO: Handle InstrumentChannel
+        values = list(node.values()) if isinstance(node, dict) else list(node)
 
-    # TODO: Parameter Mapping for specific function sets
-    mapping: list[FunctionMapping] = [
-        FunctionMapping("voltage_source_ac", ft.VOLTAGE_SOURCE_AC,
-                        gates["source_drain"],
-                        {"amplitude": lockin.amplitude,
-                         "frequency": lockin.frequency,
-                         "output_enable": None}
-                        ),
-        FunctionMapping("current_sense_ac", ft.CURRENT_SENSE_AC,
-                        gates["source_drain"],
-                        {"current": lockin.R,
-                         "time_constant": lockin.time_constant,
-                         "sensitivity": lockin.sensitivity}
-                        ),
-        FunctionMapping("voltage_source", ft.VOLTAGE_SOURCE,
-                        gates["topgate"],
-                        {"voltage": keithley.volt,
-                         "current_limit": keithley.compliancei,
-                         "output_enable": keithley.output}
-                        ),
-        FunctionMapping("current_sense", ft.CURRENT_SENSE,
-                        gates["topgate"],
-                        {"current": keithley.curr,
-                         ""})
-    ]
+        for value in values:
+            if isinstance(value, Parameter):
+                instrument_parameters[value.full_name] = value
+            else:
+                if isinstance(value, Iterable) and not isinstance(value, StringTypes):
+                    _filter_flatten_parameters(value)
+                elif isinstance(value, Metadatable):
+                    # Object of some Metadatable type, try to get __dict__ and _filter_flatten_parameters
+                    try:
+                        value_hash = hash(value)
+                        if value_hash not in seen:
+                            seen.add(value_hash)
+                            _filter_flatten_parameters(vars(value))
+                    except TypeError:
+                        # End of tree
+                        pass
 
-    for fm in mapping:
-        pass
+    _filter_flatten_parameters(components)
+
+    # This is ugly
+    for key_g, gate in gate_parameters.items():
+        if gate is None:
+            gate = {"": gate}
+        for key_gp, gate_parameter in gate.items():
+            if gate_parameter is None:
+                keys_ip = list(instrument_parameters.keys())
+                values_ip = list(instrument_parameters.values())
+                print("Possible instrument parameters:")
+                for idx, key_ip in enumerate(keys_ip):
+                    print(f"{idx}: {key_ip}")
+                chosen = None
+                while True:
+                    try:
+                        chosen = int(input(f"Please choose an instrument parameter for gate parameter \"{key_g}_{key_gp}\": "))
+                        try:
+                            gate_parameters[key_g][key_gp] = values_ip[int(chosen)]
+                        except:
+                            gate_parameters[key_g] = values_ip[int(chosen)]
+                        break
+                    except (IndexError, ValueError):
+                        continue
 
 
 if __name__ == "__main__":
@@ -101,13 +124,11 @@ if __name__ == "__main__":
         station.add_component(instrument)
 
     # Load measuring script template
-    script = _load_script_template()
-
-    # setup measurement
-    gates = script.setup()
+    script = InducingMeasurementScript()
+    script.setup()
 
     # map gate functions to instruments
-    _map_gates_to_instruments(station.components, gates)
+    _map_gates_to_instruments(station.components, script.gate_parameters)
 
     # run script
-    script.run(**gates)
+    script.run()
