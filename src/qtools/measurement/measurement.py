@@ -4,7 +4,7 @@ Measurement
 """
 
 from dataclasses import dataclass, field
-from typing import MutableSequence, MutableMapping, Any
+from typing import Dict, MutableSequence, MutableMapping, Any
 
 from qcodes import Station
 from qcodes.instrument import Parameter
@@ -14,6 +14,12 @@ from qtools.data.measurement import EquipmentInstance, FunctionType
 
 class QtoolsStation(Station):
     """Station object, inherits from qcodes Station."""
+
+
+class MeasurementScript():
+    def __init__(self):
+        self.properties: Dict[Any, Any] = {}
+        self.channels: Dict[Any, Parameter] = {}
 
 
 class VirtualGate():

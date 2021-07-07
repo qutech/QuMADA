@@ -11,6 +11,7 @@ from qcodes.utils.dataset.doNd import do1d
 from qtools.measurement.measurement import VirtualGate
 from qtools.data.measurement import FunctionType as ft
 
+# TODO: Abstract MeasurementScript Class
 
 class MeasurementScript():
     def __init__(self):
@@ -100,12 +101,3 @@ class MeasurementScript():
             data_down = do1d(topgate["voltage"], volt_end, volt_start, num_points,
                              volt_delay, source_drain["current"])
             print(data_down)
-
-    def break_condition(self) -> bool:
-        """
-        Break condition for the measurement.
-
-        Returns:
-            bool: True, if break condition is met, False otherwise.
-        """
-        return False
