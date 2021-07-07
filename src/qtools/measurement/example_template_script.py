@@ -4,24 +4,35 @@ Example template measurement script
 """
 
 from typing import Any, Dict, Sequence
+from qcodes.dataset.experiment_container import load_or_create_experiment
 
 from qcodes.instrument import Parameter, channel
 from qcodes.utils.dataset.doNd import do1d
 
-from qtools.measurement.measurement import VirtualGate
+from qtools.measurement.measurement import MeasurementScript, VirtualGate
 from qtools.data.measurement import FunctionType as ft
 
 # TODO: Abstract MeasurementScript Class
 
-class MeasurementScript():
+class ExampleMeasurementScript(MeasurementScript):
     def __init__(self):
-        self.properties: Dict[Any, Any] = {}
-        self.channels: Dict[Any, Parameter] = {}
+        super().__init__()
 
     def setup(self):
         """
         Setup your channels here.
         """
+
+        # define empty channels, that have to be mapped later
+        self.gate_parameters = dict.fromkeys(["sd_amplitude",
+                                              "sd_frequency",
+                                              "sd_current",
+                                              "sd_output_enable",
+                                              "tg_voltage",
+                                              "tg_current",
+                                              "b1_voltage",
+                                              "b2_voltage"])
+
         # Set Measurement properties
         self.properties = {
             "sample_name": "s20210434",
@@ -51,15 +62,7 @@ class MeasurementScript():
             "safety_limit_curr": 1e-6
         }
 
-        # define empty channels, that have to be mapped later
-        self.channels = dict.fromkeys(["sd_amplitude",
-                                       "sd_frequency",
-                                       "sd_current",
-                                       "sd_output_enable",
-                                       "tg_voltage",
-                                       "tg_current",
-                                       "b1_voltage",
-                                       "b2_voltage"])
+        load_or_create_experiment("example", "test")
 
     def run(self):
         """

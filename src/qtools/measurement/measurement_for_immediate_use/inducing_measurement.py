@@ -11,18 +11,17 @@ from qtools.measurement.measurement import MeasurementScript
 
 
 class InducingMeasurementScript(MeasurementScript):
-    def __init__(self):
-        super().__init__()
-
     def setup(self):
-        self.gate_parameters = dict.fromkeys(["sd_amplitude",
-                                              "sd_frequency",
-                                              "sd_current",
-                                              "tg_voltage",
-                                              "tg_current",
-                                              "tg_current_compliance",
-                                              "b1_voltage",
-                                              "b2_voltage"])
+        # Define gates and gate parameters
+        self.gate_parameters["test"] = None
+        self.gate_parameters["source_drain"] = dict.fromkeys(["amplitude",
+                                                              "frequency",
+                                                              "current"])
+        self.gate_parameters["topgate"] = dict.fromkeys(["voltage",
+                                                         "current",
+                                                         "current_compliance"])
+        self.gate_parameters["barrier1"] = dict.fromkeys(["voltage"])
+        self.gate_parameters["barrier2"] = dict.fromkeys(["voltage"])
 
         self.properties = {
             "start": 0.0,
@@ -34,23 +33,26 @@ class InducingMeasurementScript(MeasurementScript):
         load_or_create_experiment("inducing", "test")
 
     def run(self):
-        channels = self.channels
-        channels["sd_amplitude"].set(0.0)
-        channels["tg_voltage"].set(0.0)
-        channels["b1_voltage"].set(0.0)
-        channels["b2_voltage"].set(0.0)
+        source_drain = self.gate_parameters["source_drain"]
+        topgate = self.gate_parameters["topgate"]
+        barrier1 = self.gate_parameters["barrier1"]
+        barrier2 = self.gate_parameters["barrier2"]
+        source_drain["amplitude"].set(0.0)
+        topgate["voltage"].set(0.0)
+        barrier1["voltage"].set(0.0)
+        barrier2["voltage"].set(0.0)
 
-        channels["sd_amplitude"].set(1.0) # Filter function in background (e.g. 10mV real voltage)
-        channels["sd_frequency"].set(73)
+        source_drain["amplitude"].set(1.0) # Filter function in background (e.g. 10mV real voltage)
+        source_drain["frequency"].set(73)
 
-        channels["b1_voltage"].ramp(2.0)
-        channels["b2_voltage"].ramp(2.0)
+        barrier1["voltage"].ramp(2.0)
+        barrier2["voltage"].ramp(2.0)
 
         time.sleep(5)
 
         # sweep up
-        param_meas = (channels["sd_current"], channels["tg_current"])
-        data_up = do1d(channels["tg_voltage"],
+        param_meas = (source_drain["current"], topgate["current"])
+        data_up = do1d(topgate["voltage"],
                        param_meas=param_meas,
                        **self.properties)
 
@@ -59,6 +61,6 @@ class InducingMeasurementScript(MeasurementScript):
         properties_down["start"] = self.properties["stop"]
         properties_down["stop"] = self.properties["start"]
         # sweep down
-        data_down = do1d(channels["tg_voltage"],
-                         param_meas=(channels["sd_current"], channels["tg_current"]),
+        data_down = do1d(topgate["voltage"],
+                         param_meas=(source_drain["current"], topgate["current"]),
                          **properties_down)

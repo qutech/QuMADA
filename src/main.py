@@ -15,7 +15,7 @@ from qcodes.tests.instrument_mocks import DummyInstrument, DummyInstrumentWithMe
 from qcodes.utils.metadata import Metadatable
 
 from qtools.data.measurement import FunctionType as ft
-from qtools.measurement.example_template_script import MeasurementScript
+from qtools.measurement.measurement_for_immediate_use.inducing_measurement import InducingMeasurementScript
 from qtools.measurement.measurement import FunctionMapping, VirtualGate
 from qtools.measurement.measurement import QtoolsStation as Station
 
@@ -93,21 +93,27 @@ def _map_gates_to_instruments(components: Mapping[Any, Metadatable], gate_parame
     _filter_flatten_parameters(components)
 
     # This is ugly
-    for key_gp, gate_parameter in gate_parameters.items():
-        if gate_parameter is None:
-            keys_ip = list(instrument_parameters.keys())
-            values_ip = list(instrument_parameters.values())
-            print("Possible instrument parameters:")
-            for idx, key_ip in enumerate(keys_ip):
-                print(f"{idx}: {key_ip}")
-            chosen = None
-            while True:
-                try:
-                    chosen = int(input(f"Please choose an instrument parameter for gate parameter \"{key_gp}\": "))
-                    gate_parameters[key_gp] = values_ip[int(chosen)]
-                    break
-                except (IndexError, ValueError):
-                    continue
+    for key_g, gate in gate_parameters.items():
+        if gate is None:
+            gate = {"": gate}
+        for key_gp, gate_parameter in gate.items():
+            if gate_parameter is None:
+                keys_ip = list(instrument_parameters.keys())
+                values_ip = list(instrument_parameters.values())
+                print("Possible instrument parameters:")
+                for idx, key_ip in enumerate(keys_ip):
+                    print(f"{idx}: {key_ip}")
+                chosen = None
+                while True:
+                    try:
+                        chosen = int(input(f"Please choose an instrument parameter for gate parameter \"{key_g}_{key_gp}\": "))
+                        try:
+                            gate_parameters[key_g][key_gp] = values_ip[int(chosen)]
+                        except:
+                            gate_parameters[key_g] = values_ip[int(chosen)]
+                        break
+                    except (IndexError, ValueError):
+                        continue
 
 
 if __name__ == "__main__":
@@ -118,11 +124,11 @@ if __name__ == "__main__":
         station.add_component(instrument)
 
     # Load measuring script template
-    script = MeasurementScript()
+    script = InducingMeasurementScript()
     script.setup()
 
     # map gate functions to instruments
-    _map_gates_to_instruments(station.components, script.channels)
+    _map_gates_to_instruments(station.components, script.gate_parameters)
 
     # run script
     script.run()

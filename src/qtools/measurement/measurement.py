@@ -4,7 +4,7 @@ Measurement
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, MutableSequence, MutableMapping, Any
+from typing import Dict, MutableSequence, MutableMapping, Any, Union
 
 from qcodes import Station
 from qcodes.instrument import Parameter
@@ -19,7 +19,7 @@ class QtoolsStation(Station):
 class MeasurementScript():
     def __init__(self):
         self.properties: Dict[Any, Any] = {}
-        self.channels: Dict[Any, Parameter] = {}
+        self.gate_parameters: Dict[Any, Union[Dict[Any, Parameter], Parameter]] = {}
 
 
 class VirtualGate():
