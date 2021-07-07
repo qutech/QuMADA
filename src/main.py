@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
 
-from typing import Dict, Mapping, MutableMapping, Any, Tuple
+from typing import Dict, Iterable, Mapping, MutableMapping, Any, Set, Tuple
+from xml.dom.minicompat import StringTypes
 from numpy import isin
 
 from qcodes.instrument import Parameter
-from qcodes.instrument.base import Instrument
+from qcodes.instrument.base import Instrument, InstrumentBase
+from qcodes.instrument.channel import ChannelList
 # from qcodes.instrument_drivers.Harvard.Decadac import Decadac
 from qcodes.instrument_drivers.stanford_research.SR830 import SR830
 # from qcodes.instrument_drivers.tektronix.Keithley_2400 import Keithley_2400
 from qcodes.instrument_drivers.tektronix.Keithley_2450 import Keithley2450
 from qcodes.tests.instrument_mocks import DummyInstrument, DummyInstrumentWithMeasurement
+from qcodes.utils.metadata import Metadatable
 
 from qtools.data.measurement import FunctionType as ft
 from qtools.measurement.example_template_script import MeasurementScript
@@ -49,45 +52,62 @@ def _initialize_instruments() -> MutableMapping[Any, Instrument]:
     return instruments
 
 
-def _map_gates_to_instruments(station: Station, components: Mapping[Any, Instrument], channels: Mapping[Any, Parameter]) -> None:
+def _map_gates_to_instruments(components: Mapping[Any, Metadatable], gate_parameters: Mapping[Any, Parameter]) -> None:
     """
-    Maps the channels, that were defined in the MeasurementScript to the instruments, that are initialized in QCoDeS.
+    Maps the gate parameters, that were defined in the MeasurementScript to the instruments, that are initialized in QCoDeS.
 
     Args:
         components ([type]): Instruments/Components in QCoDeS
-        channels (Mapping[Any, Parameter]): Channels, as defined in the measurement script
+        gate_parameters (Mapping[Any, Parameter]): gate parameters, as defined in the measurement script
     """
-    def fltr(node, types: Tuple):
-        if isinstance(node, dict):
-            ret_val = {}
-            for key, val in node.items():
-                if isinstance(val, types):
-                    ret_val[key] = node[key]
-                elif isinstance(node[key], list) or isinstance(node[key], dict):
-                    child = fltr(node[key], types)
-                    if child:
-                        ret_val[key] = child
-            if ret_val:
-                return ret_val
-            else:
-                return None
-        elif isinstance(node, list):
-            ret_val = []
-            for entry in node:
-                child = fltr(entry, types)
-                if child:
-                    ret_val.append(child)
-            if ret_val:
-                return ret_val
-            else:
-                return None
+    instrument_parameters: Dict[Any, Parameter] = {}
+    seen: Set[int] = set()
 
+    def _filter_flatten_parameters(node) -> None:
+        """
+        Recursively filters objects of Parameter types from data structure, that consists of dicts, lists and Metadatable.
 
-    # Get all instruments from station components
-    instruments = {key: item.__dict__ for key, item in components.items() if isinstance(item, Instrument)}
-    # TODO: Recursively get parameters from Channels
-    parameters = fltr(instruments, Parameter)
-    pass
+        Args:
+            node (Union[Dict, List, Metadatable]): Current/starting node in the data structure
+        """
+        # TODO: Handle InstrumentChannel
+        values = list(node.values()) if isinstance(node, dict) else list(node)
+
+        for value in values:
+            if isinstance(value, Parameter):
+                instrument_parameters[value.full_name] = value
+            else:
+                if isinstance(value, Iterable) and not isinstance(value, StringTypes):
+                    _filter_flatten_parameters(value)
+                elif isinstance(value, Metadatable):
+                    # Object of some Metadatable type, try to get __dict__ and _filter_flatten_parameters
+                    try:
+                        value_hash = hash(value)
+                        if value_hash not in seen:
+                            seen.add(value_hash)
+                            _filter_flatten_parameters(vars(value))
+                    except TypeError:
+                        # End of tree
+                        pass
+
+    _filter_flatten_parameters(components)
+
+    # This is ugly
+    for key_gp, gate_parameter in gate_parameters.items():
+        if gate_parameter is None:
+            keys_ip = list(instrument_parameters.keys())
+            values_ip = list(instrument_parameters.values())
+            print("Possible instrument parameters:")
+            for idx, key_ip in enumerate(keys_ip):
+                print(f"{idx}: {key_ip}")
+            chosen = None
+            while True:
+                try:
+                    chosen = int(input(f"Please choose an instrument parameter for gate parameter \"{key_gp}\": "))
+                    gate_parameters[key_gp] = values_ip[int(chosen)]
+                    break
+                except (IndexError, ValueError):
+                    continue
 
 
 if __name__ == "__main__":
@@ -102,7 +122,7 @@ if __name__ == "__main__":
     script.setup()
 
     # map gate functions to instruments
-    _map_gates_to_instruments(station, station.components, script.channels)
+    _map_gates_to_instruments(station.components, script.channels)
 
     # run script
     script.run()
