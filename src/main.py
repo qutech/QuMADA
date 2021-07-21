@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 
 from typing import Dict, Iterable, Mapping, MutableMapping, Any, Set, Tuple
-from xml.dom.minicompat import StringTypes
-from numpy import isin
 
 from qcodes.instrument import Parameter
 from qcodes.instrument.base import Instrument, InstrumentBase
@@ -15,6 +13,7 @@ from qcodes.tests.instrument_mocks import DummyInstrument, DummyInstrumentWithMe
 from qcodes.utils.metadata import Metadatable
 
 from qtools.data.measurement import FunctionType as ft
+from qtools.instrument.mapping.base import filter_flatten_parameters
 from qtools.measurement.measurement_for_immediate_use.inducing_measurement import InducingMeasurementScript
 from qtools.measurement.measurement import FunctionMapping, VirtualGate
 from qtools.measurement.measurement import QtoolsStation as Station
@@ -60,37 +59,7 @@ def _map_gates_to_instruments(components: Mapping[Any, Metadatable], gate_parame
         components ([type]): Instruments/Components in QCoDeS
         gate_parameters (Mapping[Any, Parameter]): gate parameters, as defined in the measurement script
     """
-    instrument_parameters: Dict[Any, Parameter] = {}
-    seen: Set[int] = set()
-
-    def _filter_flatten_parameters(node) -> None:
-        """
-        Recursively filters objects of Parameter types from data structure, that consists of dicts, lists and Metadatable.
-
-        Args:
-            node (Union[Dict, List, Metadatable]): Current/starting node in the data structure
-        """
-        # TODO: Handle InstrumentChannel
-        values = list(node.values()) if isinstance(node, dict) else list(node)
-
-        for value in values:
-            if isinstance(value, Parameter):
-                instrument_parameters[value.full_name] = value
-            else:
-                if isinstance(value, Iterable) and not isinstance(value, StringTypes):
-                    _filter_flatten_parameters(value)
-                elif isinstance(value, Metadatable):
-                    # Object of some Metadatable type, try to get __dict__ and _filter_flatten_parameters
-                    try:
-                        value_hash = hash(value)
-                        if value_hash not in seen:
-                            seen.add(value_hash)
-                            _filter_flatten_parameters(vars(value))
-                    except TypeError:
-                        # End of tree
-                        pass
-
-    _filter_flatten_parameters(components)
+    instrument_parameters = filter_flatten_parameters(components)
 
     # This is ugly
     for key_g, gate in gate_parameters.items():
