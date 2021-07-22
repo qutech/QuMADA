@@ -50,12 +50,12 @@ def filter_flatten_parameters(node) -> Dict[Any, Parameter]:
     return instrument_parameters
 
 
-def load_instrument_mapping(path: str) -> Any:
+def _load_instrument_mapping(path: str) -> Any:
     """
     Loads instrument mapping from mapping JSON file.
 
     Args:
-        path (str): Path to the file
+        path (str): Path to the file.
 
     Returns:
         Any: Parsed JSON-object
@@ -64,7 +64,25 @@ def load_instrument_mapping(path: str) -> Any:
         return json.load(file)
 
 
-def generate_mapping_stub(instrument: Instrument,
+def add_mapping_to_instrument(instrument: Instrument,
+                              path: str) -> None:
+    """
+    Loads instrument mapping from mapping JSON file and adds it as instrument attribute
+
+    instr._mapping
+
+    Args:
+        instrument (Instrument): Instrument, the mapping is added to.
+        path (str): Path to the JSON file.
+    """
+    mapping = _load_instrument_mapping(path)
+    parameters: Dict[Any, Parameter] = filter_flatten_parameters(instrument)
+    mapped_parameters = ((key, parameter) for key, parameter in parameters.items() if key in mapping["parameter_names"])
+    for key, parameter in mapped_parameters:
+        parameter.__setattr__("_mapping", mapping["parameter_names"][key])
+
+
+def _generate_mapping_stub(instrument: Instrument,
                           path: str) -> None:
     """
     Generates JSON stub of instrument parametes and saves it under the provided path. Overwrites existing files by default.
