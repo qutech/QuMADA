@@ -71,6 +71,7 @@ def _map_gates_to_instruments(components: Mapping[Any, Metadatable], gate_parame
         for key_gp, gate_parameter in gate.items():
             if gate_parameter is None:
                 # Filter instrument parameters, if _mapping attribute is equal to key_gp
+                # if there is no mapping provided, append those parameters to the list
                 filtered_parameters = {key: parameter for key, parameter in mapped_parameters.items() if parameter._mapping == key_gp} | unmapped_parameters
                 keys_ip = list(filtered_parameters.keys())
                 values_ip = list(filtered_parameters.values())
