@@ -22,7 +22,8 @@ class MeasurementScript():
                                  "current",
                                  "current_compliance",
                                  "amplitude",
-                                 "frequency"}
+                                 "frequency",
+                                 "output_enabled"}
 
     def __init__(self):
         self.properties: Dict[Any, Any] = {}

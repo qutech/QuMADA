@@ -2,6 +2,8 @@
 
 import time
 
+from copy import deepcopy
+
 from qcodes.dataset.experiment_container import load_or_create_experiment
 from qcodes.instrument import Parameter
 
@@ -18,6 +20,7 @@ class InducingMeasurementScript(MeasurementScript):
         self.add_gate_parameter("current", "source_drain")
         self.add_gate_parameter("voltage", "topgate")
         self.add_gate_parameter("current", "topgate")
+        self.add_gate_parameter("output_enabled", "topgate")
         self.add_gate_parameter("current_compliance", "topgate")
         self.add_gate_parameter("voltage", "barrier1")
         self.add_gate_parameter("voltage", "barrier2")
@@ -36,7 +39,8 @@ class InducingMeasurementScript(MeasurementScript):
         topgate = self.gate_parameters["topgate"]
         barrier1 = self.gate_parameters["barrier1"]
         barrier2 = self.gate_parameters["barrier2"]
-        source_drain["amplitude"].set(0.0)
+        source_drain["amplitude"].set(0.004)
+        topgate["output_enabled"].set(True)
         topgate["voltage"].set(0.0)
         barrier1["voltage"].set(0.0)
         barrier2["voltage"].set(0.0)
@@ -44,22 +48,30 @@ class InducingMeasurementScript(MeasurementScript):
         source_drain["amplitude"].set(1.0) # Filter function in background (e.g. 10mV real voltage)
         source_drain["frequency"].set(73)
 
-        barrier1["voltage"].ramp(2.0)
-        barrier2["voltage"].ramp(2.0)
+        barrier1["voltage"].set(2.0)
+        barrier2["voltage"].set(2.0)
 
         time.sleep(5)
 
         # sweep up
-        param_meas = (source_drain["current"], topgate["current"])
+        # param_meas = (source_drain["current"], topgate["current"])
         data_up = do1d(topgate["voltage"],
-                       param_meas=param_meas,
-                       **self.properties)
+                       self.properties["start"],
+                       self.properties["stop"],
+                       self.properties["num_points"],
+                       self.properties["delay"],
+                       source_drain["current"],
+                       topgate["current"])
 
         # Switch start and stop properties
-        properties_down = self.properties
+        properties_down = deepcopy(self.properties)
         properties_down["start"] = self.properties["stop"]
         properties_down["stop"] = self.properties["start"]
         # sweep down
         data_down = do1d(topgate["voltage"],
-                         param_meas=(source_drain["current"], topgate["current"]),
-                         **properties_down)
+                         properties_down["start"],
+                         properties_down["stop"],
+                         properties_down["num_points"],
+                         properties_down["delay"],
+                         source_drain["current"],
+                         topgate["current"])
