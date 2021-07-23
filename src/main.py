@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 
 from typing import Dict, Iterable, Mapping, MutableMapping, Any, Set, Tuple
-from xml.dom.minicompat import StringTypes
-from numpy import isin
 
 from qcodes.instrument import Parameter
 from qcodes.instrument.base import Instrument, InstrumentBase
@@ -15,6 +13,7 @@ from qcodes.tests.instrument_mocks import DummyInstrument, DummyInstrumentWithMe
 from qcodes.utils.metadata import Metadatable
 
 from qtools.data.measurement import FunctionType as ft
+from qtools.instrument.mapping.base import filter_flatten_parameters, add_mapping_to_instrument
 from qtools.measurement.measurement_for_immediate_use.inducing_measurement import InducingMeasurementScript
 from qtools.measurement.measurement import FunctionMapping, VirtualGate
 from qtools.measurement.measurement import QtoolsStation as Station
@@ -48,7 +47,8 @@ def _initialize_instruments() -> MutableMapping[Any, Instrument]:
     instruments["dmm"] = DummyInstrumentWithMeasurement("dmm", dac)
 
     # instruments["lockin"] = SR830("lockin", "GPIB1::12::INSTR")
-    instruments["keithley"] = Keithley2450("keithley", "GPIB::2::INSTR", visalib=KEITHLEY_VISALIB)
+    keithley = instruments["keithley"] = Keithley2450("keithley", "GPIB::2::INSTR", visalib=KEITHLEY_VISALIB)
+    add_mapping_to_instrument(keithley, "src/qtools/instrument/mapping/tektronix/Keithley_2450.json")
     return instruments
 
 
@@ -60,37 +60,9 @@ def _map_gates_to_instruments(components: Mapping[Any, Metadatable], gate_parame
         components ([type]): Instruments/Components in QCoDeS
         gate_parameters (Mapping[Any, Parameter]): gate parameters, as defined in the measurement script
     """
-    instrument_parameters: Dict[Any, Parameter] = {}
-    seen: Set[int] = set()
-
-    def _filter_flatten_parameters(node) -> None:
-        """
-        Recursively filters objects of Parameter types from data structure, that consists of dicts, lists and Metadatable.
-
-        Args:
-            node (Union[Dict, List, Metadatable]): Current/starting node in the data structure
-        """
-        # TODO: Handle InstrumentChannel
-        values = list(node.values()) if isinstance(node, dict) else list(node)
-
-        for value in values:
-            if isinstance(value, Parameter):
-                instrument_parameters[value.full_name] = value
-            else:
-                if isinstance(value, Iterable) and not isinstance(value, StringTypes):
-                    _filter_flatten_parameters(value)
-                elif isinstance(value, Metadatable):
-                    # Object of some Metadatable type, try to get __dict__ and _filter_flatten_parameters
-                    try:
-                        value_hash = hash(value)
-                        if value_hash not in seen:
-                            seen.add(value_hash)
-                            _filter_flatten_parameters(vars(value))
-                    except TypeError:
-                        # End of tree
-                        pass
-
-    _filter_flatten_parameters(components)
+    instrument_parameters = filter_flatten_parameters(components)
+    mapped_parameters = {key: parameter for key, parameter in instrument_parameters.items() if hasattr(parameter, "_mapping")}
+    unmapped_parameters = {key: parameter for key, parameter in instrument_parameters.items() if not hasattr(parameter, "_mapping")}
 
     # This is ugly
     for key_g, gate in gate_parameters.items():
@@ -98,8 +70,11 @@ def _map_gates_to_instruments(components: Mapping[Any, Metadatable], gate_parame
             gate = {"": gate}
         for key_gp, gate_parameter in gate.items():
             if gate_parameter is None:
-                keys_ip = list(instrument_parameters.keys())
-                values_ip = list(instrument_parameters.values())
+                # Filter instrument parameters, if _mapping attribute is equal to key_gp
+                # if there is no mapping provided, append those parameters to the list
+                filtered_parameters = {key: parameter for key, parameter in mapped_parameters.items() if parameter._mapping == key_gp} | unmapped_parameters
+                keys_ip = list(filtered_parameters.keys())
+                values_ip = list(filtered_parameters.values())
                 print("Possible instrument parameters:")
                 for idx, key_ip in enumerate(keys_ip):
                     print(f"{idx}: {key_ip}")
