@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
-from typing import Dict, Iterable, Mapping, MutableMapping, Any, Set, Tuple
+from typing import Dict, Iterable, Mapping, MutableMapping, Any, Set, Tuple, Union
+from numpy import isin
 
 import qcodes as qc
 from qcodes.instrument import Parameter
@@ -14,7 +15,7 @@ from qcodes.tests.instrument_mocks import DummyInstrument, DummyInstrumentWithMe
 from qcodes.utils.metadata import Metadatable
 
 from qtools.data.measurement import FunctionType as ft
-from qtools.instrument.mapping.base import filter_flatten_parameters, add_mapping_to_instrument
+from qtools.instrument.mapping.base import MappingError, filter_flatten_parameters, add_mapping_to_instrument
 from qtools.measurement.measurement_for_immediate_use.inducing_measurement import InducingMeasurementScript
 from qtools.measurement.measurement import FunctionMapping, VirtualGate
 from qtools.measurement.measurement import QtoolsStation as Station
@@ -56,47 +57,96 @@ def _initialize_instruments() -> MutableMapping[Any, Instrument]:
     return instruments
 
 
-def _map_gates_to_instruments(components: Mapping[Any, Metadatable],
-                              gate_parameters: Mapping[Any, Parameter],
-                              append_unmapped_parameters=True) -> None:
+def map_gates_to_instruments(components: Mapping[Any, Metadatable],
+                             gate_parameters: Mapping[Any, Union[Mapping[Any, Parameter], Parameter]]) -> None:
     """
-    Maps the gate parameters, that were defined in the MeasurementScript to the instruments, that are initialized in QCoDeS.
+    Maps the gates, that were defined in the MeasurementScript to the instruments, that are initialized in QCoDeS.
 
     Args:
-        components ([type]): Instruments/Components in QCoDeS
-        gate_parameters (Mapping[Any, Parameter]): gate parameters, as defined in the measurement script
+        components (Mapping[Any, Metadatable]): Instruments/Components in QCoDeS
+        gate_parameters (Mapping[Any, Union[Mapping[Any, Parameter], Parameter]]): Gates, as defined in the measurement script
     """
-    instrument_parameters = filter_flatten_parameters(components)
+    for key, gate in gate_parameters.items():
+        if isinstance(gate, Parameter):
+            # map parameters
+            pass
+        else:
+            # map gate to instrument
+            print(f"Mapping gate {key} to one of the following instruments:")
+            for idx, instrument_key in enumerate(components.keys()):
+                print(f"{idx}: {instrument_key}")
+            chosen = None
+            while True:
+                try:
+                    chosen = int(input(f"Which instrument shall be mapped to gate \"{gate}\": "))
+                    chosen_instrument = list(components.values())[int(chosen)]
+                    try:
+                        _map_gate_to_instrument(gate, chosen_instrument)
+                    except MappingError:
+                        # Could not map instrument, do it manually
+                        # TODO: Map to multiple instruments
+                        _map_gate_parameters_to_instrument_parameters(gate, chosen_instrument)
+                    break
+                except (IndexError, ValueError):
+                    continue
+
+
+def _map_gate_to_instrument(gate: Mapping[Any, Parameter],
+                            instrument: Metadatable) -> None:
+    """
+    Maps the gate parameters of one specific gate to the parameters of one specific instrument.
+
+    Args:
+        gate (Mapping[Any, Parameter]): Gate parameters
+        instrument (Metadatable): Instrument in QCoDeS
+    """ 
+    instrument_parameters: Dict[Any, Parameter] = filter_flatten_parameters(instrument)
+    mapped_parameters = {key: parameter for key, parameter in instrument_parameters.items() if hasattr(parameter, "_mapping")}
+    for key, parameter in gate.items():
+        # Map only parameters, that are not set already
+        if parameter is None:
+            candidates = [parameter for parameter in mapped_parameters.values() if parameter._mapping == key and parameter not in gate.values()]
+            try:
+                gate[key] = candidates.pop()
+            except IndexError:
+                raise MappingError(f"No mapping candidate for \"{key}\" in instrument \"{instrument.name}\"")
+
+
+def _map_gate_parameters_to_instrument_parameters(gate_parameters: Mapping[Any, Parameter],
+                                                  instrument: Metadatable,
+                                                  append_unmapped_parameters=True) -> None:
+    """
+    Maps the gate parameters of one specific gate to the instrument parameters of one specific instrument.
+
+    Args:
+        gate_parameters (Mapping[Any, Parameter]): Gate parameters
+        instrument (Metadatable): Instrument in QCoDeS
+    """
+    instrument_parameters: Dict[Any, Parameter] = filter_flatten_parameters(instrument)
     mapped_parameters = {key: parameter for key, parameter in instrument_parameters.items() if hasattr(parameter, "_mapping")}
     unmapped_parameters = {key: parameter for key, parameter in instrument_parameters.items() if not hasattr(parameter, "_mapping")}
 
     # This is ugly
-    for key_g, gate in gate_parameters.items():
-        if gate is None:
-            gate = {"": gate}
-        for key_gp, gate_parameter in gate.items():
-            if gate_parameter is None:
-                # Filter instrument parameters, if _mapping attribute is equal to key_gp
-                # if there is no mapping provided, append those parameters to the list
-                filtered_parameters = {key: parameter for key, parameter in mapped_parameters.items() if parameter._mapping == key_gp}
-                if append_unmapped_parameters:
-                    filtered_parameters = filtered_parameters | unmapped_parameters
-                keys_ip = list(filtered_parameters.keys())
-                values_ip = list(filtered_parameters.values())
-                print("Possible instrument parameters:")
-                for idx, key_ip in enumerate(keys_ip):
-                    print(f"{idx}: {key_ip}")
-                chosen = None
-                while True:
-                    try:
-                        chosen = int(input(f"Please choose an instrument parameter for gate parameter \"{key_g}_{key_gp}\": "))
-                        try:
-                            gate_parameters[key_g][key_gp] = values_ip[int(chosen)]
-                        except:
-                            gate_parameters[key_g] = values_ip[int(chosen)]
-                        break
-                    except (IndexError, ValueError):
-                        continue
+    for key, parameter in gate_parameters.items():
+        if parameter is None:
+            # Filter instrument parameters, if _mapping attribute is equal to key_gp
+            # if there is no mapping provided, append those parameters to the list
+            candidates = {k: p for k, p in mapped_parameters.items() if p._mapping == key}
+            if append_unmapped_parameters:
+                candidates = candidates | unmapped_parameters
+            candidates_keys = list(candidates.keys())
+            candidates_values = list(candidates.values())
+            print("Possible instrument parameters:")
+            for idx, candidate_key in enumerate(candidates_keys):
+                print(f"{idx}: {candidate_key}")
+            chosen = None
+            while True:
+                try:
+                    chosen = int(input(f"Please choose an instrument parameter for gate parameter \"{key_gp}\": "))
+                    gate_parameters[key] = candidates_values[int(chosen)]
+                    break
+                except (IndexError, ValueError):
+                    continue
 
 
 if __name__ == "__main__":
@@ -114,7 +164,7 @@ if __name__ == "__main__":
     script.setup()
 
     # map gate functions to instruments
-    _map_gates_to_instruments(station.components, script.gate_parameters, append_unmapped_parameters=False)
+    map_gates_to_instruments(station.components, script.gate_parameters)
 
     # run script
     script.run()

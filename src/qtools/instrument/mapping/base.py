@@ -8,6 +8,11 @@ from qcodes.instrument.parameter import Parameter
 from qcodes.utils.metadata import Metadatable
 
 
+class MappingError(Exception):
+    """Exception is raised, if an error occured during Mapping."""
+    ...
+
+
 def filter_flatten_parameters(node) -> Dict[Any, Parameter]:
     """
     Recursively filters objects of Parameter types from data structure, that consists of dicts, lists and Metadatable.
