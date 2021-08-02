@@ -68,7 +68,8 @@ def map_gates_to_instruments(components: Mapping[Any, Metadatable],
     """
     for key, gate in gate_parameters.items():
         if isinstance(gate, Parameter):
-            # map parameters
+            # TODO: map single parameter
+            # _map_gate_parameters_to_instrument_parameters({key: gate}, )
             pass
         else:
             # map gate to instrument
