@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import json
-from typing import Any, Dict, Set, Iterable
+from typing import Any, Dict, Mapping, Set, Iterable, Union
 
 from qcodes.instrument.base import Instrument
 from qcodes.instrument.parameter import Parameter
@@ -88,7 +88,7 @@ def add_mapping_to_instrument(instrument: Instrument,
 
 
 def _generate_mapping_stub(instrument: Instrument,
-                          path: str) -> None:
+                           path: str) -> None:
     """
     Generates JSON stub of instrument parametes and saves it under the provided path. Overwrites existing files by default.
 
@@ -117,3 +117,99 @@ def _generate_mapping_stub(instrument: Instrument,
     # Dump JSON file
     with open(path, "w") as file:
         json.dump(mapping, file, indent=4, sort_keys=True)
+
+
+def map_gates_to_instruments(components: Mapping[Any, Metadatable],
+                             gate_parameters: Mapping[Any, Union[Mapping[Any, Parameter], Parameter]]) -> None:
+    """
+    Maps the gates, that were defined in the MeasurementScript to the instruments, that are initialized in QCoDeS.
+
+    Args:
+        components (Mapping[Any, Metadatable]): Instruments/Components in QCoDeS
+        gate_parameters (Mapping[Any, Union[Mapping[Any, Parameter], Parameter]]): Gates, as defined in the measurement script
+    """
+    for key, gate in gate_parameters.items():
+        if isinstance(gate, Parameter):
+            # TODO: map single parameter
+            # _map_gate_parameters_to_instrument_parameters({key: gate}, )
+            pass
+        else:
+            # map gate to instrument
+            print(f"Mapping gate {key} to one of the following instruments:")
+            for idx, instrument_key in enumerate(components.keys()):
+                print(f"{idx}: {instrument_key}")
+            chosen = None
+            while True:
+                try:
+                    chosen = int(input(f"Which instrument shall be mapped to gate \"{key}\" ({gate}): "))
+                    chosen_instrument = list(components.values())[int(chosen)]
+                    try:
+                        _map_gate_to_instrument(gate, chosen_instrument)
+                    except MappingError:
+                        # Could not map instrument, do it manually
+                        # TODO: Map to multiple instruments
+                        _map_gate_parameters_to_instrument_parameters(gate, chosen_instrument)
+                    break
+                except (IndexError, ValueError):
+                    continue
+
+
+def _map_gate_to_instrument(gate: Mapping[Any, Parameter],
+                            instrument: Metadatable) -> None:
+    """
+    Maps the gate parameters of one specific gate to the parameters of one specific instrument.
+
+    Args:
+        gate (Mapping[Any, Parameter]): Gate parameters
+        instrument (Metadatable): Instrument in QCoDeS
+    """ 
+    instrument_parameters: Dict[Any, Parameter] = filter_flatten_parameters(instrument)
+    mapped_parameters = {key: parameter for key, parameter in instrument_parameters.items() if hasattr(parameter, "_mapping")}
+    for key, parameter in gate.items():
+        # Map only parameters, that are not set already
+        if parameter is None:
+            candidates = [parameter for parameter in mapped_parameters.values() if parameter._mapping == key and parameter not in gate.values()]
+            try:
+                gate[key] = candidates.pop()
+            except IndexError:
+                raise MappingError(f"No mapping candidate for \"{key}\" in instrument \"{instrument.name}\"")
+
+
+def _map_gate_parameters_to_instrument_parameters(gate_parameters: Mapping[Any, Parameter],
+                                                  instrument: Metadatable,
+                                                  append_unmapped_parameters=True) -> None:
+    """
+    Maps the gate parameters of one specific gate to the instrument parameters of one specific instrument.
+
+    Args:
+        gate_parameters (Mapping[Any, Parameter]): Gate parameters
+        instrument (Metadatable): Instrument in QCoDeS
+    """
+    instrument_parameters: Dict[Any, Parameter] = filter_flatten_parameters(instrument)
+    mapped_parameters = {key: parameter for key, parameter in instrument_parameters.items() if hasattr(parameter, "_mapping")}
+    unmapped_parameters = {key: parameter for key, parameter in instrument_parameters.items() if not hasattr(parameter, "_mapping")}
+
+    # This is ugly
+    for key, parameter in gate_parameters.items():
+        if parameter is None:
+            # Filter instrument parameters, if _mapping attribute is equal to key_gp
+            # if there is no mapping provided, append those parameters to the list
+            # if there are no filtered candidates available, show all parameters
+            candidates = {k: p for k, p in mapped_parameters.items() if p._mapping == key}
+            if append_unmapped_parameters:
+                candidates = candidates | unmapped_parameters
+            if not len(candidates):
+                candidates = mapped_parameters | unmapped_parameters
+            candidates_keys = list(candidates.keys())
+            candidates_values = list(candidates.values())
+            print("Possible instrument parameters:")
+            for idx, candidate_key in enumerate(candidates_keys):
+                print(f"{idx}: {candidate_key}")
+            chosen = None
+            while True:
+                try:
+                    chosen = int(input(f"Please choose an instrument parameter for gate parameter \"{key}\": "))
+                    gate_parameters[key] = candidates_values[int(chosen)]
+                    break
+                except (IndexError, ValueError):
+                    continue
