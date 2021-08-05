@@ -58,6 +58,7 @@ def _initialize_instruments() -> MutableMapping[Any, Instrument]:
     keithley = instruments["keithley"] = Keithley2450("keithley", "GPIB::2::INSTR", visalib=KEITHLEY_2450_VISALIB)
     add_mapping_to_instrument(keithley, KEITHLEY_2450_MAPPING)
 
+    # initialize real instruments
     # dac = instruments["dac"] = Decadac("dac",
     #                                     "ASRL6::INSTR",
     #                                     min_val=-10, max_val=10,
