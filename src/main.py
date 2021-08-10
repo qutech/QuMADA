@@ -29,11 +29,7 @@ KEITHLEY_2450_VISALIB = qcsims.__file__.replace('__init__.py', 'Keithley_2450.ya
 SR830_VISALIB = qcsims.__file__.replace('__init__.py', 'SR830.yaml@sim')
 
 # Filenames for mapping files
-import qtools.instrument.mapping as qtmappings
-DECADAC_MAPPING = qtmappings.__file__.replace('__init__.py', 'Decadac.json')
-SR830_MAPPING = qtmappings.__file__.replace('__init__.py', 'lockin.json')
-KEITHLEY_2400_MAPPING = qtmappings.__file__.replace('__init__.py', 'tektronix/Keithley_2400.json')
-KEITHLEY_2450_MAPPING = qtmappings.__file__.replace('__init__.py', 'tektronix/Keithley_2450.json')
+from qtools.instrument.mapping import DECADAC_MAPPING, SR830_MAPPING, KEITHLEY_2400_MAPPING, KEITHLEY_2450_MAPPING
 
 
 def _initialize_instruments() -> MutableMapping[Any, Instrument]:
