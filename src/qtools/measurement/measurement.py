@@ -23,7 +23,8 @@ class MeasurementScript():
                                  "current_compliance",
                                  "amplitude",
                                  "frequency",
-                                 "output_enabled"}
+                                 "output_enabled",
+                                 "phase"}
 
     def __init__(self):
         self.properties: Dict[Any, Any] = {}
@@ -47,6 +48,8 @@ class MeasurementScript():
             self.gate_parameters[parameter_name] = parameter
         else:
             self.gate_parameters.setdefault(gate_name, {})[parameter_name] = parameter
+
+        
 
 
 class VirtualGate():
