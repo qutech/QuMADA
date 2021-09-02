@@ -10,22 +10,7 @@ from qcodes.utils.metadata import Metadatable
 
 class MappingError(Exception):
     """Exception is raised, if an error occured during Mapping."""
-    
     ...
-
-def flatten_list(l: list()):
-    """
-    Flattens nested lists
-    """
-    results = list()
-    def rec(sublist, results):
-        for entry in sublist:
-            if isinstance(entry, list):
-                rec(entry, results)
-            else:
-                results.append(entry)
-    rec(l, results)
-    return results
 
 
 def filter_flatten_parameters(node) -> Dict[Any, Parameter]:
@@ -143,15 +128,15 @@ def map_gates_to_instruments(components: Mapping[Any, Metadatable],
         components (Mapping[Any, Metadatable]): Instruments/Components in QCoDeS
         gate_parameters (Mapping[Any, Union[Mapping[Any, Parameter], Parameter]]): Gates, as defined in the measurement script
     """
-    chosen_parameters = list()
+    # get all parameters in one flat list for the mapping process
+    instrument_parameters = filter_flatten_parameters(components)
     for key, gate in gate_parameters.items():
         if isinstance(gate, Parameter):
             # TODO: map single parameter
             # _map_gate_parameters_to_instrument_parameters({key: gate}, )
-            pass
+            ...
         else:
             # map gate to instrument
-            # TODO: Find a proper way to handle multichannel instruments
             print(f"Mapping gate {key} to one of the following instruments:")
             for idx, instrument_key in enumerate(components.keys()):
                 print(f"{idx}: {instrument_key}")
@@ -160,54 +145,61 @@ def map_gates_to_instruments(components: Mapping[Any, Metadatable],
                 try:
                     chosen = int(input(f"Which instrument shall be mapped to gate \"{key}\" ({gate}): "))
                     chosen_instrument = list(components.values())[int(chosen)]
+                    chosen_instrument_parameters = {k: v for k, v in instrument_parameters.items() if v.root_instrument is chosen_instrument}
                     try:
-                        _map_gate_to_instrument(gate, chosen_instrument, chosen_parameters)
-                        chosen_parameters.append([param for param in gate.values()])
-                    except MappingError:
+                        # Only use chosen instrument's parameters for mapping
+                        _map_gate_to_instrument(gate, chosen_instrument_parameters)
+                        # Remove mapped parameters from parameter list
+                        keys_to_remove = (key for key in chosen_instrument_parameters.keys() if chosen_instrument_parameters[key] in gate.values)
+                        for key in keys_to_remove:
+                            instrument_parameters.pop(keys_to_remove, None)
+                        
+                    except MappingError as e:
                         # Could not map instrument, do it manually
                         # TODO: Map to multiple instruments
-                        _map_gate_parameters_to_instrument_parameters(gate, chosen_instrument)
+                        print(e)
+                        _map_gate_parameters_to_instrument_parameters(gate, chosen_instrument_parameters)
+                        # Remove mapped parameters from parameter list
+                        keys_to_remove = (key for key in chosen_instrument_parameters.keys() if chosen_instrument_parameters[key] in gate.values())
+                        for key in keys_to_remove:
+                            instrument_parameters.pop(key, None)
                     break
                 except (IndexError, ValueError):
                     continue
     print("Mapping:" + str(gate_parameters))
 
+
 def _map_gate_to_instrument(gate: Mapping[Any, Parameter],
-                            instrument: Metadatable,
-                            chosen_parameters: list) -> None:
+                            instrument_parameters: Mapping[Any, Parameter]) -> None:
     """
     Maps the gate parameters of one specific gate to the parameters of one specific instrument.
 
     Args:
         gate (Mapping[Any, Parameter]): Gate parameters
-        instrument (Metadatable): Instrument in QCoDeS
-        chosen_parameters (list): List of all instrument parameters chosen so far.
-        Checking only the parameters assigned to gate_parameters of the chosen gate 
-        causes problems when multichannel instruments like dacs are used.
-    """ 
-    instrument_parameters: Dict[Any, Parameter] = filter_flatten_parameters(instrument)
+        instrument_parameters (Mapping[Any, Parameter]): Instrument parameters available for mapping
+    """
     mapped_parameters = {key: parameter for key, parameter in instrument_parameters.items() if hasattr(parameter, "_mapping")}
     for key, parameter in gate.items():
         # Map only parameters that are not set already
         if parameter is None:
-            candidates = [parameter for parameter in mapped_parameters.values() if parameter._mapping == key and parameter not in flatten_list(chosen_parameters)]
+            candidates = [parameter for parameter in mapped_parameters.values() if parameter._mapping == key]
             try:
-                gate[key] = candidates.pop()
+                gate[key] = candidates.pop(0)
             except IndexError:
-                raise MappingError(f"No mapping candidate for \"{key}\" in instrument \"{instrument.name}\"")
+                instrument_name = next(iter(instrument_parameters.values())).instrument.name
+                raise MappingError(f"No mapping candidate for \"{key}\" in instrument \"{instrument_name}\" found.")
 
 
 def _map_gate_parameters_to_instrument_parameters(gate_parameters: Mapping[Any, Parameter],
-                                                  instrument: Metadatable,
+                                                  instrument_parameters: Mapping[Any, Parameter],
                                                   append_unmapped_parameters=True) -> None:
     """
     Maps the gate parameters of one specific gate to the instrument parameters of one specific instrument.
 
     Args:
         gate_parameters (Mapping[Any, Parameter]): Gate parameters
-        instrument (Metadatable): Instrument in QCoDeS
+        instrument_parameters (Mapping[Any, Parameter]): Instrument parameters available for mapping
     """
-    instrument_parameters: Dict[Any, Parameter] = filter_flatten_parameters(instrument)
     mapped_parameters = {key: parameter for key, parameter in instrument_parameters.items() if hasattr(parameter, "_mapping")}
     unmapped_parameters = {key: parameter for key, parameter in instrument_parameters.items() if not hasattr(parameter, "_mapping")}
 
