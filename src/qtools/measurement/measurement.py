@@ -49,7 +49,7 @@ class MeasurementScript():
         else:
             self.gate_parameters.setdefault(gate_name, {})[parameter_name] = parameter
 
-        
+
 
 
 class VirtualGate():

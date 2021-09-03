@@ -40,7 +40,7 @@ def _initialize_instruments() -> MutableMapping[Any, Instrument]:
         MutableMapping[Any, EquipmentInstance]: Instruments, that can be loaded into qcodes Station.#
     """
     qc.Instrument.close_all() # Remove all previous initialized instruments
-    
+
     # TODO: Maybe do this in UI
     instruments: dict[str, Instrument] = {}
 
@@ -63,7 +63,7 @@ def _initialize_instruments() -> MutableMapping[Any, Instrument]:
 
     lockin = instruments["lockin"] = SR830("lockin", "GPIB1::12::INSTR")
     add_mapping_to_instrument(lockin, SR830_MAPPING)
-    
+
     keithley = instruments["keithley"] = Keithley_2400("keithley", "GPIB1::27::INSTR")
     add_mapping_to_instrument(keithley, KEITHLEY_2400_MAPPING)
 
@@ -76,7 +76,7 @@ if __name__ == "__main__":
     instruments = _initialize_instruments()
     for name, instrument in instruments.items():
         station.add_component(instrument)
-    
+
     # Uncomment the following part, to generate a mapping stub file from an initialized instrument
     # from qtools.instrument.mapping.base import _generate_mapping_stub
     # _generate_mapping_stub(instruments["keithley"], "qtools/instrument/mapping/tektronix/Keithley_2400.json")

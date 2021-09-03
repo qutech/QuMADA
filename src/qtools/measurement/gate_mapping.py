@@ -24,7 +24,7 @@ def create_or_load_mapping(mapping):
             # Get access to GateMapping methods
             self.get_method(station)
             #self.wrap = mapping(station, **kwargs)
-            
+
         def get_method(self, station):
             """
             User input to decide whether a mapping should be loaded from file
@@ -56,7 +56,7 @@ def create_or_load_mapping(mapping):
             """
             Used to load a mapping from file (DB support to be added)
             Loading from json files works now, however, a new station object has
-            to be passed as the original one cannot be saved to a json file. 
+            to be passed as the original one cannot be saved to a json file.
             Should work as long as both station objects contain the same
             instruments.
             ToDo: Check whether old and new station object are compatible
@@ -76,7 +76,7 @@ def create_or_load_mapping(mapping):
                 print("An OS error occured. Please check, whether you chose a valid file")
             loaded_mapping["station"] = station
             self.wrap = mapping(**loaded_mapping)
-            
+
     return MapGenerator
 
 

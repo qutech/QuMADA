@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 '''
 Due to problems with the "old" qcodes I decided to get the most basic
-measurements running with the latest version, to perform measurements until 
-the qtools scripts are working. The measurements routines are not 
-yet compatible with the planned qtools-structure (e.g. functions still need 
+measurements running with the latest version, to perform measurements until
+the qtools scripts are working. The measurements routines are not
+yet compatible with the planned qtools-structure (e.g. functions still need
  instrument parameters rather than gate_mapping object) but can be adapted
 later on.
 '''
@@ -87,12 +87,12 @@ def set_db_location():
     WIP
     Todo:
         - Use QT based filebrowser instead of TKinter one
-        - Use filebrowser to specify location for new db  (so far user input 
+        - Use filebrowser to specify location for new db  (so far user input
                                                       in console is necessary)
         - Add exception handling
         - Add the possibility to abort creation
         - Check if database was created successfully
-        - Creating a new database causes an exception (although the db is 
+        - Creating a new database causes an exception (although the db is
                                                        created succesfully)
         - Move to utils?
     """
@@ -120,22 +120,22 @@ def inducing_measurement(topgate = topgate, left_barrier = left_barrier,
                          source_drain = source_drain, topgate_range = [0, 3.5],
                          datapoints = 250, delay = 0.1,
                          barrier_voltage = 2, source_drain_bias = 1,
-                         source_drain_frequency = 173, 
+                         source_drain_frequency = 173,
                          experiment_name = "4K_Inducing_measurement",
                          sample = sample_name):
-    
+
     """
     Inducing measurement based on do1d. Writes to database.
     Works only if Keithley2400/2401 is used to control the topgate, DecaDac to
     control the barriers and Stanford Lockin to apply source-drain bias.
-    Not yet tested.  
+    Not yet tested.
     """
 
     exp = load_or_create_experiment(experiment_name = experiment_name, sample_name = sample)
-    
+
     for barrier in barriers:
         barrier.ramp(barrier_voltage, 0.3)
-    
+
     topgate.volt.set(0)
     centergate.ramp(-1.5, 0.3)
     source_drain.amplitude.set(source_drain_bias)
@@ -150,12 +150,12 @@ def inducing_measurement(topgate = topgate, left_barrier = left_barrier,
          left_barrier.volt, right_barrier.volt, source_drain.R, source_drain.P,
          topgate.curr, centergate.volt,
          show_progress=True, do_plot = False, measurement_name = "downsweep", exp = exp)
-    
+
     #for barrier in barriers:
         #barrier.ramp(0, 0.3)
     #topgate.volt.set(0)
     #lockin.amplitude.set(0.004)
-        
+
     return dataset_up, dataset_down
 
 #%%
@@ -166,10 +166,10 @@ def pinchoff_measurement_1d(topgate = topgate, left_barrier = left_barrier,
                             datapoints = 350, delay = 0.1,
                             sweep_range = [0,2.5], source_drain = source_drain,
                             source_drain_bias = 1, source_drain_frequency = 173,
-                            experiment_name_prefix = "4K_pinchoff_measurement", 
+                            experiment_name_prefix = "4K_pinchoff_measurement",
                             sample = sample_name):
     """
-    Performs pinchoff measurements for all barriers listed in "barriers" one 
+    Performs pinchoff measurements for all barriers listed in "barriers" one
     after another. Same requirements as inducing_measurement()
     Not yet test.
     """
@@ -186,13 +186,13 @@ def pinchoff_measurement_1d(topgate = topgate, left_barrier = left_barrier,
     data = do1d(left_barrier.volt, sweep_range[0], sweep_range[1],
                 datapoints, delay, source_drain.R, source_drain.P, right_barrier.volt,
                 topgate.volt, topgate.curr, centergate.volt,
-                show_progress = True, do_plot = True, 
+                show_progress = True, do_plot = True,
                 measurement_name = "upsweep", exp = exp)
     datasets.append(data)
     data = do1d(left_barrier.volt, sweep_range[1], sweep_range[0],
                 datapoints, delay, source_drain.R, source_drain.P, right_barrier.volt,
                 topgate.volt, topgate.curr, centergate.volt,
-                show_progress = True, do_plot = True, 
+                show_progress = True, do_plot = True,
                 measurement_name = "downsweep", exp = exp)
     #Sweep right barrier
     right_barrier.ramp(0,0.3)
@@ -203,15 +203,15 @@ def pinchoff_measurement_1d(topgate = topgate, left_barrier = left_barrier,
     data = do1d(right_barrier.volt, sweep_range[0], sweep_range[1],
                 datapoints, delay, source_drain.R, source_drain.P, left_barrier.volt,
                 topgate.volt, topgate.curr, centergate.volt,
-                show_progress = True, do_plot = True, 
+                show_progress = True, do_plot = True,
                 measurement_name = "upsweep", exp = exp)
     datasets.append(data)
     data = do1d(right_barrier.volt, sweep_range[1], sweep_range[0],
                 datapoints, delay, source_drain.R, source_drain.P, left_barrier.volt,
                 topgate.volt, topgate.curr, centergate.volt,
-                show_progress = True, do_plot = True, 
+                show_progress = True, do_plot = True,
                 measurement_name = "downsweep", exp = exp)
-    
+
     datasets.append(data)
     return datasets
 
@@ -223,9 +223,9 @@ def pinchoff_measurement_2d(topgate = topgate, left_barrier = left_barrier,
                             sweep_range_lb = [0.55, 0.95], sweep_range_rb =[0.7, 1.1],
                             source_drain = source_drain
                             source_drain_bias = 1, source_drain_frequency = 173,
-                            experiment_name = "4K_2D_pinchoff_measurement", 
+                            experiment_name = "4K_2D_pinchoff_measurement",
                             sample_name = sample_name):
-    
+
     exp = load_or_create_experiment(experiment_name, sample_name = sample_name)
     left_barrier.ramp(sweep_range_lb[0], 0.2)
     right_barrier.ramp(sweep_range_rb[0], 0.2)
@@ -252,23 +252,23 @@ def gate_measurement_1d(topgate = topgate, left_barrier = left_barrier,
                         datapoints = 500, delay = 0.1,
                         sweep_range = [0,2.5], source_drain = source_drain,
                         source_drain_bias = 1, source_drain_frequency = 173,
-                        experiment_name_prefix = "4K_gate_measurement", 
+                        experiment_name_prefix = "4K_gate_measurement",
                         sample = sample_name):
     """
-    Performs gate measurements for all gates listed in "gates" one 
+    Performs gate measurements for all gates listed in "gates" one
     after another by sweeping the voltage of the active gate.
     """
     datasets = []
     topgate.volt.set(topgate_volt)
     source_drain.amplitude.set(source_drain_bias)
-    
+
     #Sweep active gate
     left_barrier.ramp(left_barrier_volt,0.3)
     right_barrier.ramp(right_barrier_volt,0.3)
-    
+
     for gate in gates:
         gates[gate].ramp(0, 0.3)
-    
+
     for active_gate in gates:
         sleep(5)
         experiment_name = experiment_name_prefix + "_" + str(active_gate)
@@ -276,16 +276,16 @@ def gate_measurement_1d(topgate = topgate, left_barrier = left_barrier,
         data = do1d(gates[active_gate].volt, sweep_range[0], sweep_range[1],
                     datapoints, delay, source_drain.R, source_drain.P, right_barrier.volt, left_barrier.volt,
                     topgate.volt, topgate.curr,
-                    show_progress = True, do_plot = True, 
+                    show_progress = True, do_plot = True,
                     measurement_name = "upsweep", exp = exp)
         datasets.append(data)
         data = do1d(gates[active_gate].volt, sweep_range[1], sweep_range[0],
                     datapoints, delay, source_drain.R, source_drain.P, right_barrier.volt, left_barrier.volt,
                     topgate.volt, topgate.curr,
-                    show_progress = True, do_plot = True, 
+                    show_progress = True, do_plot = True,
                     measurement_name = "downsweep", exp = exp)
         datasets.append(data)
-        
+
         gates[active_gate].ramp(0,0.3)
 
     return datasets
@@ -295,20 +295,20 @@ times = DummyInstrument('dac_times_1', gates=['ch1'])
 
 #%%
 def time_trace_SET(topgate = topgate, left_barrier = left_barrier,
-                   right_barrier = right_barrier, 
+                   right_barrier = right_barrier,
                    topgate_volt = 1.45, left_barrier_volt = 0.4, right_barrier_volt = 0.48,
                    datapoints = 600, delay = 1,
                    sweep_range = [0, 600], source_drain = source_drain,
                    source_drain_bias = 1, source_drain_frequency = 173,
-                   experiment_name_prefix = "4K_time_trace_measurement", 
+                   experiment_name_prefix = "4K_time_trace_measurement",
                    sample = sample_name):
     """
     Measures the time trace at a given sensitive point using a Dummy DAC channel as time variable.
     """
- 
+
     topgate.volt.set(topgate_volt)
     source_drain.amplitude.set(source_drain_bias)
-    
+
     left_barrier.ramp(left_barrier_volt,0.3)
     right_barrier.ramp(right_barrier_volt,0.3)
     sleep(5)
@@ -317,8 +317,6 @@ def time_trace_SET(topgate = topgate, left_barrier = left_barrier,
     data = do1d(times.ch1, sweep_range[0], sweep_range[1],
                 datapoints, delay, source_drain.R, source_drain.P, right_barrier.volt, left_barrier.volt,
                 topgate.volt, topgate.curr,
-                show_progress = True, do_plot = True, 
+                show_progress = True, do_plot = True,
                 measurement_name = "results", exp = exp)
     return data
-    
-    

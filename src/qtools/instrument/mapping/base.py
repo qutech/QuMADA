@@ -21,7 +21,7 @@ def filter_flatten_parameters(node) -> Dict[Any, Parameter]:
         node (Union[Dict, List, Metadatable]): Current/starting node in the data structure
 
     Returns:
-        Dict[Any, Parameter]: Flat dict of parameters 
+        Dict[Any, Parameter]: Flat dict of parameters
     """
     def recurse(node) -> None:
         """Recursive part of the function. Fills instrument_parameters dict."""
@@ -153,7 +153,7 @@ def map_gates_to_instruments(components: Mapping[Any, Metadatable],
                         keys_to_remove = (key for key in chosen_instrument_parameters.keys() if chosen_instrument_parameters[key] in gate.values())
                         for key in keys_to_remove:
                             instrument_parameters.pop(key, None)
-                                 
+
                     except MappingError as e:
                         # Could not map instrument, do it manually
                         # TODO: Map to multiple instruments
