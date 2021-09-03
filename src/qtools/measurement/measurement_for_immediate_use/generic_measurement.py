@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #!/usr/bin/env python3
 
 import time
@@ -52,7 +50,7 @@ class Generic_1D_Sweep(MeasurementScript):
         Sets all static/sweepable parameters to their value/start value.
         If parameters are both, static and sweepable, they will be set to the "value" property
         and not to the "start" property.
-        ToDo: 
+        ToDo:
         -Is there a more elegant way than to use ".find"? Integrate "type"
         into the gate_parameter class?
         -Add as method to Measurement_script class?
@@ -63,7 +61,7 @@ class Generic_1D_Sweep(MeasurementScript):
                     channel.set(self.properties[gate][parameter]["value"])
                 elif self.properties[gate][parameter]["type"].find("sweepable") >= 0:
                     channel.set(self.properties[gate][parameter]["start"])
-    
+
     def run(self):
         """
         Runs the measurement
@@ -74,15 +72,15 @@ class Generic_1D_Sweep(MeasurementScript):
         for gate, parameters in self.gate_parameters.items():
             for parameter, channel in parameters.items():
                 if self.properties[gate][parameter]["type"].find("gettable") >= 0:
-                    get_params.append(channel)                    
+                    get_params.append(channel)
         time.sleep(5)
         for gate, parameters in self.gate_parameters.items():
             for parameter, channel in parameters.items():
                 if self.properties[gate][parameter]["type"] == "sweepable":
                     active_param = self.properties[gate][parameter]
-                    sweep_params = (channel, 
-                                    active_param["start"], 
-                                    active_param["stop"], 
+                    sweep_params = (channel,
+                                    active_param["start"],
+                                    active_param["stop"],
                                     active_param["num_points"],
                                     active_param["delay"])
                     self.initialize()
@@ -90,4 +88,3 @@ class Generic_1D_Sweep(MeasurementScript):
                         do1d(*sweep_params,
                              *tuple(get_params)))
         return data
-                    

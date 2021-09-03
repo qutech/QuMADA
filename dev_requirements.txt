@@ -3,3 +3,6 @@
 
 pyqt5
 qtconsole
+
+pre-commit
+pyupgrade

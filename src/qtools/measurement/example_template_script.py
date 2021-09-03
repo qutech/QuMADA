@@ -69,7 +69,7 @@ class ExampleMeasurementScript(MeasurementScript):
         Run the measurements.
         """
         # Sort channels
-        def channels_by_keys(keys: Sequence, prefix="", suffix="") -> Dict[Any, Parameter]:
+        def channels_by_keys(keys: Sequence, prefix="", suffix="") -> dict[Any, Parameter]:
             """
             Filters self.channels by the given keys and returns a separate dictionary.
             It is possible to remove prefixes or suffixes from the original keys.

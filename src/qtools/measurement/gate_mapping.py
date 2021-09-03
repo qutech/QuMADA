@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Thu Dec 17 18:38:47 2020
 
@@ -24,7 +23,7 @@ def create_or_load_mapping(mapping):
             # Get access to GateMapping methods
             self.get_method(station)
             #self.wrap = mapping(station, **kwargs)
-            
+
         def get_method(self, station):
             """
             User input to decide whether a mapping should be loaded from file
@@ -56,7 +55,7 @@ def create_or_load_mapping(mapping):
             """
             Used to load a mapping from file (DB support to be added)
             Loading from json files works now, however, a new station object has
-            to be passed as the original one cannot be saved to a json file. 
+            to be passed as the original one cannot be saved to a json file.
             Should work as long as both station objects contain the same
             instruments.
             ToDo: Check whether old and new station object are compatible
@@ -69,14 +68,14 @@ def create_or_load_mapping(mapping):
             directory = '/'.join(filename.split('/')[0:-1])
             lsc.save_to_config("gate_mapping", "save_directory", directory)
             try:
-                with open(filename, "r") as read_file:
+                with open(filename) as read_file:
                     loaded_mapping = json.load(read_file)
             except OSError:
                 # TODO: Handle File error
                 print("An OS error occured. Please check, whether you chose a valid file")
             loaded_mapping["station"] = station
             self.wrap = mapping(**loaded_mapping)
-            
+
     return MapGenerator
 
 
@@ -108,7 +107,7 @@ class GateMapping():
         '''
         types = set()
         try:
-            f = open(file, 'r')
+            f = open(file)
         except OSError:
             print("Could not find file with gate types", file)
             print("Please select file")
