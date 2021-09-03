@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Thu Dec 17 18:38:47 2020
 
@@ -69,7 +68,7 @@ def create_or_load_mapping(mapping):
             directory = '/'.join(filename.split('/')[0:-1])
             lsc.save_to_config("gate_mapping", "save_directory", directory)
             try:
-                with open(filename, "r") as read_file:
+                with open(filename) as read_file:
                     loaded_mapping = json.load(read_file)
             except OSError:
                 # TODO: Handle File error
@@ -108,7 +107,7 @@ class GateMapping():
         '''
         types = set()
         try:
-            f = open(file, 'r')
+            f = open(file)
         except OSError:
             print("Could not find file with gate types", file)
             print("Please select file")

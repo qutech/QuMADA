@@ -14,7 +14,7 @@ from qtconsole.inprocess import QtInProcessKernelManager
 class Ui(QtWidgets.QMainWindow):
     """Main Window of the UI."""
     def __init__(self):
-        super(Ui, self).__init__()
+        super().__init__()
         uic.loadUi("qtools/ui/main_window.ui", self)
         self.add_gate_widgets()
         self.connect_signal_slots()
@@ -35,7 +35,7 @@ class MyConsoleWidget(RichJupyterWidget, ConsoleWidget):
     """
     def __init__(self, *args, **kwargs):
 
-        super(MyConsoleWidget, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         self.kernel_manager = QtInProcessKernelManager()
         self.kernel_manager.start_kernel(show_banner=False)
@@ -50,7 +50,7 @@ class MyConsoleWidget(RichJupyterWidget, ConsoleWidget):
 
         self.exit_requested.connect(stop)
 
-    def push_vars(self, variable_dict: Dict):
+    def push_vars(self, variable_dict: dict):
         """
         Given a dictionary containing name/value pairs,
         push those variables to the Jupyter console widget

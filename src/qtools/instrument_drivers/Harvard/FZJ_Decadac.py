@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 # Author: Johannes Dresen (jo.dressen@fz-juelich.de)
 #         Michael Wagener (m.wagener@fz-juelich.de)
 #         Lukas Lankes (l.lankes@fz-juelich.de)
@@ -23,7 +22,7 @@ class DACException(BaseException):
           super().__init__(*args, **kwargs)
 
 
-class DacBase(object):
+class DacBase:
 
     # Switch position values
     SWITCH_LEFT  = -1 # -10 <= U <=  0 [V]
@@ -97,7 +96,7 @@ class DacBase(object):
             (int): dac-code
         """
         if volt < min_volt or volt > max_volt:
-            raise ValueError("Cannot convert voltage {} V to a voltage code, value out of range ({} V - {} V).".format(volt, min_volt, max_volt))
+            raise ValueError(f"Cannot convert voltage {volt} V to a voltage code, value out of range ({min_volt} V - {max_volt} V).")
 
         frac = (volt - min_volt) / (max_volt - min_volt)
         val = int(round(frac * 65535))
@@ -105,7 +104,7 @@ class DacBase(object):
         # extra check to be absolutely sure that the instrument does nothing
         # receive an out-of-bounds value
         if val > 65535 or val < 0:
-            raise ValueError("Voltage ({} V) resulted in the voltage code {}, which is not within the allowed range.".format(volt, val))
+            raise ValueError(f"Voltage ({volt} V) resulted in the voltage code {val}, which is not within the allowed range.")
 
         return val
 
@@ -228,7 +227,7 @@ class DacChannel(InstrumentChannel, DacBase):
         """
         self._parent._sweep_parameter(self, parameter, sweep_values, layer)
 
-    def _send_buffer(self, layer) -> Dict:
+    def _send_buffer(self, layer) -> dict:
         """
         Waits until this function is called for all swept parameters. Then the
         buffer will be built and sent to the device.
@@ -262,7 +261,7 @@ class DacChannel(InstrumentChannel, DacBase):
 
         self.switch_pos.set(self._default_switch_pos)
 
-        warnings.warn('All parameters of the Decadac "{}" have been reset to their defaults.'.format(self.name))
+        warnings.warn(f'All parameters of the Decadac "{self.name}" have been reset to their defaults.')
 
         return (DacBase._COMMAND_SET_UPPER_LIMIT.format(self._upper_limit)
               + DacBase._COMMAND_SET_LOWER_LIMIT.format(self._lower_limit)
@@ -498,13 +497,13 @@ class DacVoltValidator(vals.Validator):
             context (str): context of the function call for error handling
         """
         if not isinstance(value, vals.Numbers.validtypes):
-            raise TypeError("{} is not an int or float.\n{}".format(repr(value), context))
+            raise TypeError(f"{repr(value)} is not an int or float.\n{context}")
 
         if self._parent._min_volt is None or self._parent._max_volt is None:
-            raise ValueError("No voltage interval is given for the Decadac instrument. Please set the switch_pos parameter.\n{}".format(context))
+            raise ValueError(f"No voltage interval is given for the Decadac instrument. Please set the switch_pos parameter.\n{context}")
 
         if not (self._parent._min_volt <= value <= self._parent._max_volt):
-            raise ValueError("DacVoltValidator is invalid: must be between {} and {} inclusive.\n{}".format(self._parent._min_volt, self._parent._max_volt, context))
+            raise ValueError(f"DacVoltValidator is invalid: must be between {self._parent._min_volt} and {self._parent._max_volt} inclusive.\n{context}")
 
 
 class DacSlot(InstrumentChannel, DacBase):
@@ -533,7 +532,7 @@ class DacSlot(InstrumentChannel, DacBase):
         channels = ChannelList(self, "Slot_Chans", DacChannel)
 
         for channel in range(4):
-            channels.append(DacChannel(self, "Chan{}".format(channel), channel, default_switch_pos=default_switch_pos))
+            channels.append(DacChannel(self, f"Chan{channel}", channel, default_switch_pos=default_switch_pos))
 
         self.add_submodule("channels", channels)
 
@@ -550,7 +549,7 @@ class DacSlot(InstrumentChannel, DacBase):
         """
         self._parent._sweep_parameter(obj, parameter, sweep_values, layer)
 
-    def _send_buffer(self, obj, layer) -> Dict:
+    def _send_buffer(self, obj, layer) -> dict:
         """
         Waits until this function is called for all swept parameters. Then the
         buffer will be built and sent to the device.
@@ -647,7 +646,7 @@ class Decadac(VisaInstrument):
         slots = ChannelList(self, "Slots", DacSlot)
 
         for slot in range(5):
-            slots.append(DacSlot(self, "Slot{}".format(slot), slot, default_switch_pos=default_switch_pos))
+            slots.append(DacSlot(self, f"Slot{slot}", slot, default_switch_pos=default_switch_pos))
             channels.extend(slots[slot].channels)
 
         slots.lock()
@@ -727,7 +726,7 @@ class Decadac(VisaInstrument):
             'ramp_num'   : ramp_num
         }
 
-    def _send_buffer(self, obj, layer) -> Dict:
+    def _send_buffer(self, obj, layer) -> dict:
         """
         Waits until this function is called for all swept parameters. Then the
         buffer will be built and sent to the device.
@@ -848,11 +847,11 @@ class Decadac(VisaInstrument):
         # The first letter of query and answer has to be equal otherwise the answer does not belong to the write-query. Maybe the device buffer is damaged.
         # The last letter of the answer has to be an exclamation mark ("!"). This means the write-query was handled successfully.
         if buf[0] != cmd[0]:
-            raise DACException("Could not write \"{}\" to the device. Please check the device buffer.".format(cmd))
+            raise DACException(f"Could not write \"{cmd}\" to the device. Please check the device buffer.")
         elif buf[-1] != '!':
-            raise DACException("Could not write \"{}\" to the device.".format(cmd))
+            raise DACException(f"Could not write \"{cmd}\" to the device.")
 
         if Decadac.enable_output:
-            print("Decadac._write(\"{}\") = {}".format(cmd, buf))
+            print(f"Decadac._write(\"{cmd}\") = {buf}")
 
         return buf

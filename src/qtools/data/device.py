@@ -37,7 +37,7 @@ class Design(DomainObject):
     sample: Sample
     mask: str
     creator: str
-    allowedMeasurementTypes: List[Any] = field(default_factory=list)
+    allowedMeasurementTypes: list[Any] = field(default_factory=list)
     # TODO: MeasurementTypes
 
 

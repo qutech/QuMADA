@@ -13,7 +13,7 @@ class MappingError(Exception):
     ...
 
 
-def filter_flatten_parameters(node) -> Dict[Any, Parameter]:
+def filter_flatten_parameters(node) -> dict[Any, Parameter]:
     """
     Recursively filters objects of Parameter types from data structure, that consists of dicts, lists and Metadatable.
 
@@ -49,8 +49,8 @@ def filter_flatten_parameters(node) -> Dict[Any, Parameter]:
                         # End of tree
                         pass
 
-    instrument_parameters: Dict[Any, Parameter] = {}
-    seen: Set[int] = set()
+    instrument_parameters: dict[Any, Parameter] = {}
+    seen: set[int] = set()
     recurse(node)
     return instrument_parameters
 
@@ -65,7 +65,7 @@ def _load_instrument_mapping(path: str) -> Any:
     Returns:
         Any: Parsed JSON-object
     """
-    with open(path, "r") as file:
+    with open(path) as file:
         return json.load(file)
 
 
@@ -81,7 +81,7 @@ def add_mapping_to_instrument(instrument: Instrument,
         path (str): Path to the JSON file.
     """
     mapping = _load_instrument_mapping(path)
-    parameters: Dict[Any, Parameter] = filter_flatten_parameters(instrument)
+    parameters: dict[Any, Parameter] = filter_flatten_parameters(instrument)
     mapped_parameters = ((key, parameter) for key, parameter in parameters.items() if key in mapping["parameter_names"])
     for key, parameter in mapped_parameters:
         parameter.__setattr__("_mapping", mapping["parameter_names"][key])
@@ -111,7 +111,7 @@ def _generate_mapping_stub(instrument: Instrument,
     """
     # Create mapping stub from flat dict of parameters
     mapping = {}
-    parameters: Dict[Any, Parameter] = filter_flatten_parameters(instrument)
+    parameters: dict[Any, Parameter] = filter_flatten_parameters(instrument)
     mapping["parameter_names"] = {key: value.name for key, value in parameters.items()}
 
     # Dump JSON file

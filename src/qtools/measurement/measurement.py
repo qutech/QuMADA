@@ -18,7 +18,7 @@ class QtoolsStation(Station):
 
 
 class MeasurementScript():
-    PARAMETER_NAMES: Set[str] = {"voltage",
+    PARAMETER_NAMES: set[str] = {"voltage",
                                  "current",
                                  "current_compliance",
                                  "amplitude",
@@ -27,8 +27,8 @@ class MeasurementScript():
                                  "phase"}
 
     def __init__(self):
-        self.properties: Dict[Any, Any] = {}
-        self.gate_parameters: Dict[Any, Union[Dict[Any, Parameter], Parameter]] = {}
+        self.properties: dict[Any, Any] = {}
+        self.gate_parameters: dict[Any, Union[dict[Any, Parameter], Parameter]] = {}
 
     def add_gate_parameter(self,
                            parameter_name: str,

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 '''
 Due to problems with the "old" qcodes I decided to get the most basic
 measurements running with the latest version, to perform measurements until
@@ -221,7 +220,7 @@ def pinchoff_measurement_2d(topgate = topgate, left_barrier = left_barrier,
                             topgate_volt = 3.0,
                             datapoints = 30, delay = 0.1,
                             sweep_range_lb = [0.55, 0.95], sweep_range_rb =[0.7, 1.1],
-                            source_drain = source_drain
+                            source_drain = source_drain,
                             source_drain_bias = 1, source_drain_frequency = 173,
                             experiment_name = "4K_2D_pinchoff_measurement",
                             sample_name = sample_name):

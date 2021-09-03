@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Tue Feb  9 19:08:46 2021
 
@@ -44,17 +43,14 @@ dac.channels.update_period.set(50)
 dac.channels.ramp(0,0.3)
 
 
-''' Issues:
-    -Need to set switch_position manually for each channel after initalization
-    -....ChanX.volt.set() is somewhy limited by the upper/lower ramp limit. You need to set
-         ChanX._set_upper_limit(val of max volt in dac code (usually 65535)) in order to use the set command.
-    -....ChanX.ramp(V,rate) does work, but requires ....ChanX.update_period() to
-     be set manually beforehand
+# Issues:
+# -Need to set switch_position manually for each channel after initalization
+# -....ChanX.volt.set() is somewhy limited by the upper/lower ramp limit. You need to set
+#         ChanX._set_upper_limit(val of max volt in dac code (usually 65535)) in order to use the set command.
+# -....ChanX.ramp(V,rate) does work, but requires ....ChanX.update_period() to
+#     be set manually beforehand
 
-     -> Updated driver available?
-
-
-'''
+#     -> Updated driver available?
 
 
 lockin=SR830("lockin",'GPIB1::12::INSTR')
