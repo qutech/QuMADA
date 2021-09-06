@@ -21,8 +21,10 @@ class Factory(DomainObject):
 
     @classmethod
     def create(cls, name: str, description: str, **kwargs):
-        kwargs["name"] = name
-        kwargs["description"] = description
+        kwargs.update({
+            "name": name,
+            "description": description,
+        })
         return super(cls, cls)._create(**kwargs)
 
     @classmethod
@@ -45,9 +47,11 @@ class Wafer(DomainObject):
 
     @classmethod
     def create(cls, name: str, description: str, productionDate: str, **kwargs):
-        kwargs["name"] = name
-        kwargs["description"] = description
-        kwargs["productionDate"] = productionDate
+        kwargs.update({
+            "name": name,
+            "description": description,
+            "productionDate": productionDate,
+        })
         return super(cls, cls)._create(**kwargs)
 
     @classmethod
@@ -71,9 +75,11 @@ class Sample(DomainObject):
 
     @classmethod
     def create(cls, name: str, description: str, wafer: Wafer, **kwargs):
-        kwargs["name"] = name
-        kwargs["description"] = description
-        kwargs["wafer"] = wafer
+        kwargs.update({
+            "name": name,
+            "description": description,
+            "wafer": wafer,
+        })
         return super(cls, cls)._create(**kwargs)
 
     @classmethod
@@ -101,14 +107,24 @@ class Design(DomainObject):
     # TODO: MeasurementTypes
 
     @classmethod
-    def create(cls, name: str, wafer: Wafer, factory: Factory, sample: Sample, mask: str, creator: str, allowedForMeasurementTypes: list[Any], **kwargs):
-        kwargs["name"] = name
-        kwargs["wafer"] = wafer
-        kwargs["factory"] = factory
-        kwargs["sample"] = sample
-        kwargs["mask"] = mask
-        kwargs["creator"] = creator
-        kwargs["allowedForMeasurementTypes"] = allowedForMeasurementTypes
+    def create(cls,
+               name: str,
+               wafer: Wafer,
+               factory: Factory,
+               sample: Sample,
+               mask: str,
+               creator: str,
+               allowedForMeasurementTypes: list[Any],
+               **kwargs):
+        kwargs.update({
+            "name": name,
+            "wafer": wafer,
+            "factory": factory,
+            "sample": sample,
+            "mask": mask,
+            "creator": creator,
+            "allowedForMeasurementTypes": allowedForMeasurementTypes,
+        })
         return super(cls, cls)._create(**kwargs)
 
     @classmethod
@@ -127,6 +143,7 @@ class Design(DomainObject):
                                          self.pid)
         self._handle_db_response(response)
 
+
 @dataclass
 class Device(DomainObject):
     """Represents the database entry of a device."""
@@ -135,9 +152,11 @@ class Device(DomainObject):
 
     @classmethod
     def create(cls, name: str, design: Design, sample: Sample, **kwargs):
-        kwargs["name"] = name
-        kwargs["design"] = design
-        kwargs["sample"] = sample
+        kwargs.update({
+            "name": name,
+            "design": design,
+            "sample": sample,
+        })
         return super(cls, cls)._create(**kwargs)
 
     @classmethod
