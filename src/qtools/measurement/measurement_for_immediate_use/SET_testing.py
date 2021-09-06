@@ -1,3 +1,4 @@
+#type: ignore
 '''
 Due to problems with the "old" qcodes I decided to get the most basic
 measurements running with the latest version, to perform measurements until

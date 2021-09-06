@@ -1,3 +1,4 @@
+#type: ignore
 """
 Created on Tue Feb  9 19:08:46 2021
 
