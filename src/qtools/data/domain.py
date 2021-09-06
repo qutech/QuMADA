@@ -6,6 +6,7 @@ General Object class for the domain.
 from collections.abc import Mapping
 import json
 from dataclasses import dataclass, is_dataclass
+from sqlite3 import DatabaseError
 
 
 @dataclass
@@ -39,3 +40,10 @@ class DomainObject:
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
+
+    def _handle_db_response(self, response):
+        if not response["status"]:
+            raise DatabaseError(response["errorMessage"])
+        # save pid
+        self.pid = response["id"]
+
