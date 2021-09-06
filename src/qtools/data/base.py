@@ -4,7 +4,7 @@
 from qtools.data.device import Wafer, Device, Sample, Design
 
 
-def create_metadata_structure() -> Device:
+def create_metadata_device() -> Device:
     """
     Creates a test metadata structure and returns it.
 

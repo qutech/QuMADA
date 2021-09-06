@@ -15,7 +15,7 @@ from qcodes.tests.instrument_mocks import DummyInstrument, DummyInstrumentWithMe
 from qcodes.utils.metadata import Metadatable
 
 from qtools.data.measurement import FunctionType as ft
-from qtools.data.base import create_metadata_structure
+from qtools.data.base import create_metadata_device
 import qtools.data.db as db
 from qtools.instrument.mapping.base import MappingError, add_mapping_to_instrument, map_gates_to_instruments
 from qtools.measurement.measurement_for_immediate_use.inducing_measurement import InducingMeasurementScript
@@ -90,7 +90,7 @@ if __name__ == "__main__":
 
     # Create Metadata structure
     db.api_url = "http://134.61.7.48:9123"
-    device = create_metadata_structure()
+    device = create_metadata_device()
     device.save_to_db()
 
     # map gate functions to instruments
