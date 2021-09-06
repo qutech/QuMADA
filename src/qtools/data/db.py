@@ -3,20 +3,15 @@
 Functions and classes regarding the database connection
 """
 
-from typing import Any, Dict, List, Union, Mapping
-import requests
+from typing import Mapping
 from urllib.parse import urljoin
+import requests
 
 
-# Return type for API responses
-JSONValue = Union[str, int, float, bool, None, dict[str, Any], list[Any]]
-JSONType = Union[dict[str, JSONValue], list[JSONValue]]
+api_url: str = ""
 
 
-api_url: str = None
-
-
-def _api_get(function_name: str, params: Mapping = None) -> JSONType:
+def _api_get(function_name: str, params: Mapping = None):
     """
     Sends a get request to the application server.
     Uses api_url as base url.
@@ -34,7 +29,7 @@ def _api_get(function_name: str, params: Mapping = None) -> JSONType:
     return response.json()
 
 
-def _api_put(function_name: str, data: Mapping) -> JSONType:
+def _api_put(function_name: str, data: Mapping):
     """
     Sends a put request to the application server-
     Uses api_url as base url.
@@ -92,19 +87,19 @@ def get_factory_by_id(pid: str):
     return _api_get("getFactoryById", {"pid": pid})
 
 
-def get_wafer_by_id(pid: str) -> JSONType:
+def get_wafer_by_id(pid: str):
     return _api_get("getWaferById", {"pid": pid})
 
 
-def get_sample_by_id(pid: str) -> JSONType:
+def get_sample_by_id(pid: str):
     return _api_get("getSampleById", {"pid": pid})
 
 
-def get_device_by_id(pid: str) -> JSONType:
+def get_device_by_id(pid: str):
     return _api_get("getDeviceById", {"pid": pid})
 
 
-def get_design_by_id(pid: str) -> JSONType:
+def get_design_by_id(pid: str):
     return _api_get("getDesignById", {"pid": pid})
 
 
@@ -126,7 +121,7 @@ def get_experiment_by_id(pid: str):
 
 def save_or_update_factory(description: str,
                            name: str,
-                           factory_id: str = None) -> JSONType:
+                           factory_id: str = None):
     """
     Creates or updates a factory on the database.
 
@@ -146,7 +141,7 @@ def save_or_update_factory(description: str,
 def save_or_update_wafer(description: str,
                          name: str,
                          production_date: str,
-                         wafer_id: str = None) -> JSONType:
+                         wafer_id: str = None):
     """
     Creates or updates a wafer on the database.
 
@@ -169,7 +164,7 @@ def save_or_update_wafer(description: str,
 def save_or_update_sample(description: str,
                           name: str,
                           wafer_name: str,
-                          sample_id: str = None) -> JSONType:
+                          sample_id: str = None):
     """
     Creates or updates a sample on the database.
 
@@ -195,7 +190,7 @@ def save_or_update_design(allowed_for_measurement_types: str,
                           name: str,
                           sample_name: str,
                           wafer_name: str,
-                          design_id: str = None) -> JSONType:
+                          design_id: str = None):
     """
     Creates or updates an design on the database.
 
@@ -224,7 +219,7 @@ def save_or_update_design(allowed_for_measurement_types: str,
 
 def save_or_update_device(name: str,
                           design_name: str,
-                          sample_name: str) -> JSONType:
+                          sample_name: str):
     """
     Creates or updates a device on the database.
 
@@ -245,7 +240,7 @@ def save_or_update_measurement(name: str,
                                device_name: str,
                                experiment_name: str,
                                measurement_settings_name: str,
-                               measurement_parameters) -> JSONType:
+                               measurement_parameters):
     """
     Creates or updates a measurement on the database.
 
@@ -270,7 +265,7 @@ def save_or_update_measurement_type(name: str,
                                     script_template_name: str,
                                     extractable_parameters: str,
                                     mapping: str,
-                                    equipment_names: str) -> JSONType:
+                                    equipment_names: str):
     """
     Creates or updates a measurement type on the database.
 
@@ -299,7 +294,7 @@ def save_or_update_experiment(name: str,
                               group: str,
                               software_noise_filters: str,
                               measurement_type_name: str,
-                              equipment_instance_names: str) -> JSONType:
+                              equipment_instance_names: str):
     """
     Creates or updates an experiment on the database.
 

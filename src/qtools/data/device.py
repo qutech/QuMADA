@@ -4,7 +4,7 @@ Representations of domain objects (Devices).
 """
 
 from dataclasses import dataclass, field
-from typing import Any, List
+from typing import Any
 
 from qtools.data.domain import DomainObject
 from qtools.data.db import (get_factory_by_id, save_or_update_factory,
@@ -23,7 +23,7 @@ class Factory(DomainObject):
     def create(cls, name: str, description: str, **kwargs):
         kwargs["name"] = name
         kwargs["description"] = description
-        return super(cls, cls).create(**kwargs)
+        return super(cls, cls)._create(**kwargs)
 
     @classmethod
     def load_from_db(cls, pid: str):
@@ -48,7 +48,7 @@ class Wafer(DomainObject):
         kwargs["name"] = name
         kwargs["description"] = description
         kwargs["productionDate"] = productionDate
-        return super(cls, cls).create(**kwargs)
+        return super(cls, cls)._create(**kwargs)
 
     @classmethod
     def load_from_db(cls, pid: str):
@@ -74,7 +74,7 @@ class Sample(DomainObject):
         kwargs["name"] = name
         kwargs["description"] = description
         kwargs["wafer"] = wafer
-        return super(cls, cls).create(**kwargs)
+        return super(cls, cls)._create(**kwargs)
 
     @classmethod
     def load_from_db(cls, pid: str):
@@ -109,7 +109,7 @@ class Design(DomainObject):
         kwargs["mask"] = mask
         kwargs["creator"] = creator
         kwargs["allowedForMeasurementTypes"] = allowedForMeasurementTypes
-        return super(cls, cls).create(**kwargs)
+        return super(cls, cls)._create(**kwargs)
 
     @classmethod
     def load_from_db(cls, pid: str):
@@ -138,7 +138,7 @@ class Device(DomainObject):
         kwargs["name"] = name
         kwargs["design"] = design
         kwargs["sample"] = sample
-        return super(cls, cls).create(**kwargs)
+        return super(cls, cls)._create(**kwargs)
 
     @classmethod
     def load_from_db(cls, pid: str):

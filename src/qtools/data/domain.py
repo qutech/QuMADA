@@ -19,7 +19,7 @@ class DomainObject:
     lastChangeDate: str
 
     @classmethod
-    def create(cls, name: str, **kwargs):
+    def _create(cls, name: str, **kwargs):
         """
         This factory function creates a DomainObject while ensuring, that the internal DB fields are all set to None.
         This function is usually not called directly, but by the factory function of a child class.
