@@ -16,8 +16,19 @@ JSONValue = Union[str, int, float, bool, None, Dict[str, Any], List[Any]]
 JSONType = Union[Dict[str, JSONValue], List[JSONValue]]
 
 
+def get_factories() -> JSONType:
+    response = requests.get(api_url.format("factories"))
+    return json.loads(response.content)
+
+
+def get_factory_by_id(pid: str) -> JSONType:
+    response = requests.get(api_url.format("getFactoryById"), {"pid": pid})
+    return json.loads(response.content)
+
+
 def save_or_update_factory(description: str,
-                           name: str) -> JSONType:
+                           name: str,
+                           factory_id: str = None) -> JSONType:
     """
     Creates or updates a factory on the database.
 
@@ -29,7 +40,19 @@ def save_or_update_factory(description: str,
         "description": description,
         "name": name
     }
+    if factory_id:
+        data["pid"] = factory_id
     response = requests.put(api_url.format("saveOrUpdateFactory"), data=data)
+    return json.loads(response.content)
+
+
+def get_wafers() -> JSONType:
+    response = requests.get(api_url.format("wafers"))
+    return json.loads(response.content)
+
+
+def get_wafer_by_id(pid: str) -> JSONType:
+    response = requests.get(api_url.format("getWaferById"), {"pid": pid})
     return json.loads(response.content)
 
 
@@ -52,14 +75,25 @@ def save_or_update_wafer(description: str,
         "productionDate": production_date
     }
     if wafer_id:
-        data["id"] = wafer_id
+        data["pid"] = wafer_id
     response = requests.put(api_url.format("saveOrUpdateWafer"), data=data)
+    return json.loads(response.content)
+
+
+def get_samples() -> JSONType:
+    response = requests.get(api_url.format("samples"))
+    return json.loads(response.content)
+
+
+def get_sample_by_id(pid: str) -> JSONType:
+    response = requests.get(api_url.format("getSampleById"), {"pid": pid})
     return json.loads(response.content)
 
 
 def save_or_update_sample(description: str,
                           name: str,
-                          wafer_name: str) -> JSONType:
+                          wafer_name: str,
+                          sample_id: str = None) -> JSONType:
     """
     Creates or updates a sample on the database.
 
@@ -73,7 +107,19 @@ def save_or_update_sample(description: str,
         "name": name,
         "waferName": wafer_name
     }
+    if sample_id:
+        data["pid"] = sample_id
     response = requests.put(api_url.format("saveOrUpdateSample"), data=data)
+    return json.loads(response.content)
+
+
+def get_designs() -> JSONType:
+    response = requests.get(api_url.format("designs"))
+    return json.loads(response.content)
+
+
+def get_design_by_id(pid: str) -> JSONType:
+    response = requests.get(api_url.format("getDesignById"), {"pid": pid})
     return json.loads(response.content)
 
 
@@ -83,7 +129,8 @@ def save_or_update_design(allowed_for_measurement_types: str,
                           mask: str,
                           name: str,
                           sample_name: str,
-                          wafer_name: str) -> JSONType:
+                          wafer_name: str,
+                          design_id: str = None) -> JSONType:
     """
     Creates or updates an design on the database.
 
@@ -105,7 +152,19 @@ def save_or_update_design(allowed_for_measurement_types: str,
         "sampleName": sample_name,
         "waferName": wafer_name
     }
+    if design_id:
+        data["pid"] = design_id
     response = requests.put(api_url.format("saveOrUpdateDesign"), data=data)
+    return json.loads(response.content)
+
+
+def get_devices() -> JSONType:
+    response = requests.get(api_url.format("devices"))
+    return json.loads(response.content)
+
+
+def get_device_by_id(pid: str) -> JSONType:
+    response = requests.get(api_url.format("getDeviceById"), {"pid": pid})
     return json.loads(response.content)
 
 
@@ -123,14 +182,7 @@ def save_or_update_device(name: str,
     data = {
         "name": name,
         "designName": design_name,
-        "sample_name": sample_name
+        "sampleName": sample_name
     }
     response = requests.put(api_url.format("saveOrUpdateDevice"), data=data)
     return json.loads(response.content)
-
-
-if __name__ == "__main__":
-    save_or_update_wafer("Testwafer 1", "W1", "20210824", wafer_id="081b0ae8-e0e1-45f9-84e7-9779340343b4")
-    save_or_update_sample("Testsample 1", "S1", "W1")
-    save_or_update_factory("Testfactory 1", "F1")
-    save_or_update_design("true", "DGrothe", "F1", "Mask", "Test123", "S1", "W1")
