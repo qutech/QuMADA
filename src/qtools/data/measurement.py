@@ -26,8 +26,8 @@ class MeasurementSettingScript(DomainObject):
 
 
 @dataclass
-class MeasurementSetting(DomainObject):
-    """Represents the database entry of a measurement setting."""
+class MeasurementSettings(DomainObject):
+    """Represents the database entry of the measurement settings."""
     script: MeasurementSettingScript
 
 
@@ -91,5 +91,5 @@ class Measurement(DomainObject):
     """Represents the database entry of a measurement."""
     device: Device
     experiment: Experiment
-    setting: MeasurementSetting
+    settings: MeasurementSettings
     measurementParameters: str

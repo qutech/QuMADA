@@ -72,6 +72,22 @@ def get_devices():
     return _api_get("devices")
 
 
+def get_measurements():
+    return _api_get("measurements")
+
+
+def get_measurement_types():
+    return _api_get("measurementTypes")
+
+
+def get_measurement_settings():
+    return _api_get("measurementSettings")
+
+
+def get_experiments():
+    return _api_get("experiments")
+
+
 def get_factory_by_id(pid: str):
     return _api_get("getFactoryById", {"pid": pid})
 
@@ -90,6 +106,22 @@ def get_device_by_id(pid: str) -> JSONType:
 
 def get_design_by_id(pid: str) -> JSONType:
     return _api_get("getDesignById", {"pid": pid})
+
+
+def get_measurement_by_id(pid: str):
+    return _api_get("getMeasurementById", {"pid": pid})
+
+
+def get_measurement_type_by_id(pid: str):
+    return _api_get("getMeasurementTypeById", {"pid": pid})
+
+
+def get_measurement_setting_by_id(pid: str):
+    return _api_get("getMeasurementSettingById", {"pid": pid})
+
+
+def get_experiment_by_id(pid: str):
+    return _api_get("getExperimentById", {"pid": pid})
 
 
 def save_or_update_factory(description: str,
@@ -207,3 +239,86 @@ def save_or_update_device(name: str,
         "sampleName": sample_name
     }
     return _api_put("saveOrUpdateDevice", data)
+
+
+def save_or_update_measurement(name: str,
+                               device_name: str,
+                               experiment_name: str,
+                               measurement_settings_name: str,
+                               measurement_parameters) -> JSONType:
+    """
+    Creates or updates a measurement on the database.
+
+    Args:
+        name (str): Measurement name
+        device_name (str): Device name
+        experiment_name (str): Experiment name
+        measurementParameters (str): Measurement parameters
+    """
+    data = {
+        "name": name,
+        "deviceName": device_name,
+        "experimentName": experiment_name,
+        "measurementSettingsName": measurement_settings_name,
+        "measurementParameters": measurement_parameters
+    }
+    return _api_put("saveOrUpdateMeasurement", data)
+
+
+def save_or_update_measurement_type(name: str,
+                                    model: str,
+                                    script_template_name: str,
+                                    extractable_parameters: str,
+                                    mapping: str,
+                                    equipment_names: str) -> JSONType:
+    """
+    Creates or updates a measurement type on the database.
+
+    Args:
+        name (str): MeasurementType name
+        model (str): Model
+        script_template_name (str): MeasurementSettingScript
+        extractable_parameters (str): extractable parameters
+        mapping (str): Mapping
+        equipment_names (str): List of used equipment (comma-separated)
+    """
+    data = {
+        "name": name,
+        "model": model,
+        "scriptTemplateName": script_template_name,
+        "extractableParameters": extractable_parameters,
+        "mapping": mapping,
+        "equipmentNames": equipment_names
+    }
+    return _api_put("saveOrUpdateMeasurementType", data)
+
+
+def save_or_update_experiment(name: str,
+                              description: str,
+                              user: str,
+                              group: str,
+                              software_noise_filters: str,
+                              measurement_type_name: str,
+                              equipment_instance_names: str) -> JSONType:
+    """
+    Creates or updates an experiment on the database.
+
+    Args:
+        name (str): Experiment name
+        description (str): Description
+        user (str): User
+        group (str): Research group of user
+        software_noise_filters (str): Used software filters
+        measurement_type_name (str): MeasurementType name
+        equipment_instance_names (str): List of used equipment instances
+    """
+    data = {
+        "name": name,
+        "description": description,
+        "user": user,
+        "group": group,
+        "softwareNoiseFilters": software_noise_filters,
+        "measurementTypeName": measurement_type_name,
+        "equipmentInstanceNames": equipment_instance_names
+    }
+    return _api_put("saveOrUpdateExperiment", data)
