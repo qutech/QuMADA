@@ -4,11 +4,10 @@ Measurement
 """
 
 from dataclasses import dataclass, field
-from typing import TypedDict, MutableSequence, MutableMapping, Any, Set, Union
+from typing import MutableSequence, MutableMapping, Any, Union
 
 from qcodes import Station
 from qcodes.instrument import Parameter
-from qcodes.station import PARAMETER_ATTRIBUTES
 
 from qtools.data.measurement import EquipmentInstance, FunctionType
 
@@ -39,7 +38,8 @@ class MeasurementScript():
 
         Args:
             parameter_name (str): Name of the parameter. Has to be in MeasurementScript.PARAMETER_NAMES.
-            gate_name (str): Name of the parameter's gate. Set this, if you want to define the parameter under a specific gate. Defaults to None.
+            gate_name (str): Name of the parameter's gate. Set this, if you want to define the parameter
+                             under a specific gate. Defaults to None.
             parameter (Parameter): Custom parameter. Set this, if you want to set a custom parameter. Defaults to None.
         """
         if parameter_name not in MeasurementScript.PARAMETER_NAMES:
