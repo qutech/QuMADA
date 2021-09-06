@@ -7,7 +7,11 @@ from dataclasses import dataclass, field
 from typing import Any, List
 
 from qtools.data.domain import DomainObject
-from qtools.data.db import DBConnector
+from qtools.data.db import (get_factory_by_id, save_or_update_factory,
+                            get_wafer_by_id, save_or_update_wafer,
+                            get_sample_by_id, save_or_update_sample,
+                            get_design_by_id, save_or_update_design,
+                            get_device_by_id, save_or_update_device)
 
 
 @dataclass
@@ -113,7 +117,7 @@ class Design(DomainObject):
         return cls(**data)
 
     def save_to_db(self):
-        response = save_or_update_design(",".join(self.allowedMeasurementTypes),
+        response = save_or_update_design(",".join(self.allowedForMeasurementTypes),
                                          self.creator,
                                          self.factory.name,
                                          self.mask,
@@ -146,10 +150,3 @@ class Device(DomainObject):
                                          self.design.name,
                                          self.sample.name)
         self._handle_db_response(response)
-
-if __name__ == "__main__":
-    db = DBConnector("http://134.61.7.48:9123/")
-    factories = db.get_factories()
-    f1 = db.get_factory_by_id("9471ed6c-24ac-443a-b89e-3073ef4cfc52")
-    print(f1)
-    print(factories)

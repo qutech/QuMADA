@@ -15,6 +15,8 @@ from qcodes.tests.instrument_mocks import DummyInstrument, DummyInstrumentWithMe
 from qcodes.utils.metadata import Metadatable
 
 from qtools.data.measurement import FunctionType as ft
+from qtools.data.base import create_metadata_structure
+import qtools.data.db as db
 from qtools.instrument.mapping.base import MappingError, add_mapping_to_instrument, map_gates_to_instruments
 from qtools.measurement.measurement_for_immediate_use.inducing_measurement import InducingMeasurementScript
 from qtools.measurement.measurement import FunctionMapping, VirtualGate
@@ -45,27 +47,27 @@ def _initialize_instruments() -> MutableMapping[Any, Instrument]:
     instruments: dict[str, Instrument] = {}
 
     # Initialize instruments for simulation
-    # dac = instruments["dac"] = DummyInstrument("dac", ("voltage1", "voltage2"))
-    # instruments["dmm"] = DummyInstrumentWithMeasurement("dmm", dac)
+    dac = instruments["dac"] = DummyInstrument("dac", ("voltage1", "voltage2"))
+    instruments["dmm"] = DummyInstrumentWithMeasurement("dmm", dac)
 
-    # lockin = instruments["lockin"] = DummyInstrument("lockin", ("amplitude", "frequency", "current"))
-    # instruments["dmm2"] = DummyInstrumentWithMeasurement("dmm2", lockin)
+    lockin = instruments["lockin"] = DummyInstrument("lockin", ("amplitude", "frequency", "current"))
+    instruments["dmm2"] = DummyInstrumentWithMeasurement("dmm2", lockin)
 
-    # keithley = instruments["keithley"] = Keithley2450("keithley", "GPIB::2::INSTR", visalib=KEITHLEY_2450_VISALIB)
-    # add_mapping_to_instrument(keithley, KEITHLEY_2450_MAPPING)
+    keithley = instruments["keithley"] = Keithley2450("keithley", "GPIB::2::INSTR", visalib=KEITHLEY_2450_VISALIB)
+    add_mapping_to_instrument(keithley, KEITHLEY_2450_MAPPING)
 
     # initialize real instruments
-    dac = instruments["dac"] = Decadac("dac",
-                                        "ASRL6::INSTR",
-                                        min_val=-10, max_val=10,
-                                        terminator="\n")
-    add_mapping_to_instrument(dac, DECADAC_MAPPING)
+    # dac = instruments["dac"] = Decadac("dac",
+    #                                     "ASRL6::INSTR",
+    #                                     min_val=-10, max_val=10,
+    #                                     terminator="\n")
+    # add_mapping_to_instrument(dac, DECADAC_MAPPING)
 
-    lockin = instruments["lockin"] = SR830("lockin", "GPIB1::12::INSTR")
-    add_mapping_to_instrument(lockin, SR830_MAPPING)
-
-    keithley = instruments["keithley"] = Keithley_2400("keithley", "GPIB1::27::INSTR")
-    add_mapping_to_instrument(keithley, KEITHLEY_2400_MAPPING)
+    # lockin = instruments["lockin"] = SR830("lockin", "GPIB1::12::INSTR")
+    # add_mapping_to_instrument(lockin, SR830_MAPPING)
+    
+    # keithley = instruments["keithley"] = Keithley_2400("keithley", "GPIB1::27::INSTR")
+    # add_mapping_to_instrument(keithley, KEITHLEY_2400_MAPPING)
 
     return instruments
 
@@ -85,6 +87,11 @@ if __name__ == "__main__":
     # Load measuring script template
     script = InducingMeasurementScript()
     script.setup()
+
+    # Create Metadata structure
+    db.api_url = "http://134.61.7.48:9123"
+    device = create_metadata_structure()
+    device.save_to_db()
 
     # map gate functions to instruments
     map_gates_to_instruments(station.components, script.gate_parameters)
