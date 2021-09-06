@@ -9,8 +9,8 @@ from urllib.parse import urljoin
 
 
 # Return type for API responses
-JSONValue = Union[str, int, float, bool, None, Dict[str, Any], List[Any]]
-JSONType = Union[Dict[str, JSONValue], List[JSONValue]]
+JSONValue = Union[str, int, float, bool, None, dict[str, Any], list[Any]]
+JSONType = Union[dict[str, JSONValue], list[JSONValue]]
 
 
 api_url: str = None
@@ -200,10 +200,10 @@ def save_or_update_design(allowed_for_measurement_types: str,
     Creates or updates an design on the database.
 
     Args:
-        allowed_for_measurement_types (str): 
+        allowed_for_measurement_types (str):
         creator (str): Creator of the design
         factory_name (str): Name of the factory
-        mask (str): 
+        mask (str):
         name (str): Design name
         sample_name (str): Sample name
         wafer_name (str): Wafer name

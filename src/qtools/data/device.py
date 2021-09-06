@@ -101,7 +101,7 @@ class Design(DomainObject):
     # TODO: MeasurementTypes
 
     @classmethod
-    def create(cls, name: str, wafer: Wafer, factory: Factory, sample: Sample, mask: str, creator: str, allowedForMeasurementTypes: List[Any], **kwargs):
+    def create(cls, name: str, wafer: Wafer, factory: Factory, sample: Sample, mask: str, creator: str, allowedForMeasurementTypes: list[Any], **kwargs):
         kwargs["name"] = name
         kwargs["wafer"] = wafer
         kwargs["factory"] = factory

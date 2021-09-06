@@ -65,7 +65,7 @@ def _initialize_instruments() -> MutableMapping[Any, Instrument]:
 
     # lockin = instruments["lockin"] = SR830("lockin", "GPIB1::12::INSTR")
     # add_mapping_to_instrument(lockin, SR830_MAPPING)
-    
+
     # keithley = instruments["keithley"] = Keithley_2400("keithley", "GPIB1::27::INSTR")
     # add_mapping_to_instrument(keithley, KEITHLEY_2400_MAPPING)
 
