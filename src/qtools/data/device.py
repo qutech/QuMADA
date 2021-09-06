@@ -7,17 +7,7 @@ from dataclasses import dataclass, field
 from typing import Any, List
 
 from qtools.data.domain import DomainObject
-from qtools.data.db import (api_url,
-                            get_design_by_id,
-                            get_device_by_id,
-                            get_factory_by_id,
-                            get_sample_by_id,
-                            get_wafer_by_id,
-                            save_or_update_design,
-                            save_or_update_device,
-                            save_or_update_factory,
-                            save_or_update_sample,
-                            save_or_update_wafer)
+from qtools.data.db import DBConnector
 
 
 @dataclass
@@ -158,10 +148,8 @@ class Device(DomainObject):
         self._handle_db_response(response)
 
 if __name__ == "__main__":
-    w = Wafer.create("W14", "Testwafer 14", "20210827")
-    f = Factory.create("Ftemp", "Temporary Factory")
-    s = Sample.create("S5", "Testsample 5", w)
-    d1 = Design.create("Design4", w, f, s, "", "DGrothe", [])
-    d2 = Device.create("Device5", d1, s)
-    l = Device.load_from_db("f3a4f564-d4e3-4953-b477-40b00dc81ccc")
-    pass
+    db = DBConnector("http://134.61.7.48:9123/")
+    factories = db.get_factories()
+    f1 = db.get_factory_by_id("9471ed6c-24ac-443a-b89e-3073ef4cfc52")
+    print(f1)
+    print(factories)
