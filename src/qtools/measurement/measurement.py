@@ -4,7 +4,7 @@ Measurement
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, MutableSequence, MutableMapping, Any, Set, Union
+from typing import TypedDict, MutableSequence, MutableMapping, Any, Set, Union
 
 from qcodes import Station
 from qcodes.instrument import Parameter
@@ -28,7 +28,7 @@ class MeasurementScript():
 
     def __init__(self):
         self.properties: dict[Any, Any] = {}
-        self.gate_parameters: dict[Any, Union[dict[Any, Parameter], Parameter]] = {}
+        self.gate_parameters: dict[Any, Union[dict[Any, Union[Parameter, None]], Parameter, None]] = {}
 
     def add_gate_parameter(self,
                            parameter_name: str,
@@ -47,9 +47,13 @@ class MeasurementScript():
         if not gate_name:
             self.gate_parameters[parameter_name] = parameter
         else:
-            self.gate_parameters.setdefault(gate_name, {})[parameter_name] = parameter
-
-
+            # Create gate dict if not existing
+            gate = self.gate_parameters.setdefault(gate_name, {})
+            # Raise Exception, if gate "gate_name" was populated with a parameter (or smth. else) before
+            if isinstance(gate, dict):
+                gate[parameter_name] = parameter
+            else:
+                raise Exception("Gate {gate_name} is not a dictionary.")
 
 
 class VirtualGate():
