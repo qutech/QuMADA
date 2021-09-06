@@ -48,74 +48,92 @@ def _api_put(function_name: str, data: Mapping):
 
 
 def get_factories():
+    """Gets a list of all factory entries on the db."""
     return _api_get("factories")
 
 
 def get_wafers():
+    """Gets a list of all wafer entries on the db."""
     return _api_get("wafers")
 
 
 def get_samples():
+    """Gets a list of all sample entries on the db."""
     return _api_get("samples")
 
 
 def get_designs():
+    """Gets a list of all design entries on the db."""
     return _api_get("designs")
 
 
 def get_devices():
+    """Gets a list of all device entries on the db."""
     return _api_get("devices")
 
 
 def get_measurements():
+    """Gets a list of all measurement entries on the db."""
     return _api_get("measurements")
 
 
 def get_measurement_types():
+    """Gets a list of all measurement type entries on the db."""
     return _api_get("measurementTypes")
 
 
 def get_measurement_settings():
+    """Gets a list of all measurement setting entries on the db."""
     return _api_get("measurementSettings")
 
 
 def get_experiments():
+    """Gets a list of all experiment entries on the db."""
     return _api_get("experiments")
 
 
 def get_factory_by_id(pid: str):
+    """Get a single factory entry by ID from the db."""
     return _api_get("getFactoryById", {"pid": pid})
 
 
 def get_wafer_by_id(pid: str):
+    """Get a single wafer entry by ID from the db."""
     return _api_get("getWaferById", {"pid": pid})
 
 
 def get_sample_by_id(pid: str):
+    """Get a single sample entry by ID from the db."""
     return _api_get("getSampleById", {"pid": pid})
 
 
 def get_device_by_id(pid: str):
+    """Get a single device entry by ID from the db."""
     return _api_get("getDeviceById", {"pid": pid})
 
 
 def get_design_by_id(pid: str):
+    """Get a single design entry by ID from the db."""
     return _api_get("getDesignById", {"pid": pid})
 
 
 def get_measurement_by_id(pid: str):
+    """Get a single measurement entry by ID from the db."""
     return _api_get("getMeasurementById", {"pid": pid})
 
 
 def get_measurement_type_by_id(pid: str):
+    """Get a single measurement type entry by ID from the db."""
     return _api_get("getMeasurementTypeById", {"pid": pid})
 
 
 def get_measurement_setting_by_id(pid: str):
+    """Get a single measurement setting entry by ID from the db."""
     return _api_get("getMeasurementSettingById", {"pid": pid})
 
 
 def get_experiment_by_id(pid: str):
+    """Get a single experiment entry by ID from the db."""
     return _api_get("getExperimentById", {"pid": pid})
 
 
@@ -149,7 +167,8 @@ def save_or_update_wafer(description: str,
         description (str): Description of the wafer
         name (str): Name of the wafer
         productionDate (str): Production date of the wafer
-        wafer_id (str, optional): Provide the unique ID of an existing wafer on the database to update it. Defaults to None.
+        wafer_id (str, optional): Provide the unique ID of an existing wafer on the database to update it.
+                                  Defaults to None.
     """
     data = {
         "description": description,

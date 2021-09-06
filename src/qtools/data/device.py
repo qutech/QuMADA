@@ -21,6 +21,7 @@ class Factory(DomainObject):
 
     @classmethod
     def create(cls, name: str, description: str, **kwargs):
+        """Creates a Factory object."""
         kwargs.update({
             "name": name,
             "description": description,
@@ -29,10 +30,12 @@ class Factory(DomainObject):
 
     @classmethod
     def load_from_db(cls, pid: str):
+        """Create a Factory object from an existing db entry."""
         data = get_factory_by_id(pid)
         return cls(**data)
 
     def save_to_db(self):
+        """Saves or updates the Factory object to the db."""
         response = save_or_update_factory(self.description,
                                           self.name,
                                           self.pid)
@@ -43,10 +46,15 @@ class Factory(DomainObject):
 class Wafer(DomainObject):
     """Represents the database entry of a wafer."""
     description: str
-    productionDate: str
+    productionDate: str  # pylint: disable=invalid-name
 
     @classmethod
-    def create(cls, name: str, description: str, productionDate: str, **kwargs):
+    def create(cls,
+               name: str,
+               description: str,
+               productionDate: str,
+               **kwargs):  # pylint: disable=invalid-name
+        """Creates a Wafer object."""
         kwargs.update({
             "name": name,
             "description": description,
@@ -56,10 +64,12 @@ class Wafer(DomainObject):
 
     @classmethod
     def load_from_db(cls, pid: str):
+        """Create a Wafer object from an existing db entry."""
         data = get_wafer_by_id(pid)
         return cls(**data)
 
     def save_to_db(self):
+        """Saves or updates the Wafer object to the db."""
         response = save_or_update_wafer(self.description,
                                         self.name,
                                         self.productionDate,
@@ -75,6 +85,7 @@ class Sample(DomainObject):
 
     @classmethod
     def create(cls, name: str, description: str, wafer: Wafer, **kwargs):
+        """Creates a Sample object."""
         kwargs.update({
             "name": name,
             "description": description,
@@ -84,10 +95,12 @@ class Sample(DomainObject):
 
     @classmethod
     def load_from_db(cls, pid: str):
+        """Create a Sample object from an existing db entry."""
         data = get_sample_by_id(pid)
         return cls(**data)
 
     def save_to_db(self):
+        """Saves or updates the Sample object to the db."""
         response = save_or_update_sample(self.description,
                                          self.name,
                                          self.wafer.name,
@@ -103,7 +116,7 @@ class Design(DomainObject):
     sample: Sample
     mask: str
     creator: str
-    allowedForMeasurementTypes: list[Any] = field(default_factory=list)
+    allowedForMeasurementTypes: list[Any] = field(default_factory=list)  # pylint: disable=invalid-name
     # TODO: MeasurementTypes
 
     @classmethod
@@ -115,7 +128,8 @@ class Design(DomainObject):
                mask: str,
                creator: str,
                allowedForMeasurementTypes: list[Any],
-               **kwargs):
+               **kwargs):  # pylint: disable=invalid-name
+        """Creates a Design object."""
         kwargs.update({
             "name": name,
             "wafer": wafer,
@@ -129,10 +143,12 @@ class Design(DomainObject):
 
     @classmethod
     def load_from_db(cls, pid: str):
+        """Create a Design object from an existing db entry."""
         data = get_design_by_id(pid)
         return cls(**data)
 
     def save_to_db(self):
+        """Saves or updates the Design object to the db."""
         response = save_or_update_design(",".join(self.allowedForMeasurementTypes),
                                          self.creator,
                                          self.factory.name,
@@ -152,6 +168,7 @@ class Device(DomainObject):
 
     @classmethod
     def create(cls, name: str, design: Design, sample: Sample, **kwargs):
+        """Creates a Device object."""
         kwargs.update({
             "name": name,
             "design": design,
@@ -161,10 +178,12 @@ class Device(DomainObject):
 
     @classmethod
     def load_from_db(cls, pid: str):
+        """Create a Device object from an existing db entry."""
         data = get_device_by_id(pid)
         return cls(**data)
 
     def save_to_db(self):
+        """Saves or updates the Device object to the db."""
         response = save_or_update_device(self.name,
                                          self.design.name,
                                          self.sample.name)

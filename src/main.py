@@ -1,25 +1,19 @@
 #!/usr/bin/env python3
 
-from typing import Dict, Iterable, Mapping, MutableMapping, Any, Set, Tuple, Union
-from numpy import isin
+from typing import MutableMapping, Any
 
 import qcodes as qc
-from qcodes.instrument import Parameter
-from qcodes.instrument.base import Instrument, InstrumentBase
-from qcodes.instrument.channel import ChannelList
+from qcodes.instrument.base import Instrument
 from qcodes.instrument_drivers.Harvard.Decadac import Decadac
 from qcodes.instrument_drivers.stanford_research.SR830 import SR830
 from qcodes.instrument_drivers.tektronix.Keithley_2400 import Keithley_2400
 from qcodes.instrument_drivers.tektronix.Keithley_2450 import Keithley2450
 from qcodes.tests.instrument_mocks import DummyInstrument, DummyInstrumentWithMeasurement
-from qcodes.utils.metadata import Metadatable
 
-from qtools.data.measurement import FunctionType as ft
 from qtools.data.base import create_metadata_device
 import qtools.data.db as db
-from qtools.instrument.mapping.base import MappingError, add_mapping_to_instrument, map_gates_to_instruments
+from qtools.instrument.mapping.base import add_mapping_to_instrument, map_gates_to_instruments
 from qtools.measurement.measurement_for_immediate_use.inducing_measurement import InducingMeasurementScript
-from qtools.measurement.measurement import FunctionMapping, VirtualGate
 from qtools.measurement.measurement import QtoolsStation as Station
 
 

@@ -13,10 +13,10 @@ class DomainObject:
     """Represents a database entry. Consists of the data fields, every db entry has."""
     name: str
     pid: str
-    creatorId: str
-    createDate: str
-    lastChangerId: str
-    lastChangeDate: str
+    creatorId: str          # pylint: disable=invalid-name
+    createDate: str         # pylint: disable=invalid-name
+    lastChangerId: str      # pylint: disable=invalid-name
+    lastChangeDate: str     # pylint: disable=invalid-name
 
     @classmethod
     def _create(cls, name: str, **kwargs):
