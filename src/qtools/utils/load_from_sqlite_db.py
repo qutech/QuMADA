@@ -9,8 +9,22 @@ import qcodes as qc
 import qtools as qt
 from qtools.utils.browsefiles import browsefiles
 from qcodes.dataset.plotting import plot_dataset
-from qtools.instrument.mapping.base import flatten_list
 from os import path
+#%%
+def flatten_list(l: list()) -> list:
+    """
+    Flattens nested lists
+    """
+    results = list()
+    def rec(sublist, results):
+        for entry in sublist:
+            if isinstance(entry, list):
+                rec(entry, results)
+            else:
+                results.append(entry)
+    rec(l, results)
+    return results
+
 #%%
 def load_db(filepath : str = None) -> None:
     """
