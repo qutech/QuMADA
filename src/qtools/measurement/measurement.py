@@ -28,6 +28,9 @@ class MeasurementScript():
     def __init__(self):
         self.properties: dict[Any, Any] = {}
         self.gate_parameters: dict[Any, Union[dict[Any, Union[Parameter, None]], Parameter, None]] = {}
+        self.gettable_parameters: list[str] = []
+        self.static_parameters: list[str] = []
+        self.dynamic_parameters: list[str] = []
 
     def add_gate_parameter(self,
                            parameter_name: str,
@@ -55,7 +58,70 @@ class MeasurementScript():
             else:
                 raise Exception("Gate {gate_name} is not a dictionary.")
 
+    def setup(self, 
+              parameters: dict, 
+              metadata: dict) -> None:
+        """
+        Adds all gate_parameters that are defined in the parameters argument to 
+        the measurement. Allows to pass metadata dictionary to measurement.
+        
+        Args:
+            parameters (dict): Dictionary containing parameters and their settings
+            metadata (dict): Dictionary containing metadata that should be
+                            available for the measurement.
+        """
+        self.metadata = metadata
+        for gate, vals in parameters.items():
+            self.properties[gate] = vals
+            for parameter, properties in vals.items():
+                self.add_gate_parameter(parameter, gate)
+                
+    def initialize(self) -> None:
+        """
+        Sets all static/sweepable parameters to their value/start value.
+        If parameters are both, static and dynamic, they will be set to the "value" property
+        and not to the "start" property.
+        Parameters that are marked "dynamic" and "gettable" will not be added 
+        to the "self.gettable_parameters" as they are recorded anyway and will 
+        cause issues with dond functions.
+        Provides gettable_parameters, static_parameters and dynamic parameters to
+        measurement class
+        TODO: Is there a more elegant way?
+        TODO: Handle dynamic parameters with custom setpoints
+        """
+        for gate, parameters in self.gate_parameters.items():
+            for parameter, channel in parameters.items():
+                if self.properties[gate][parameter]["type"].find("static") >= 0:
+                    channel.set(self.properties[gate][parameter]["value"])
+                    self.static_parameters.append({"gate":gate,
+                                                   "parameter":parameter})
 
+                if self.properties[gate][parameter]["type"].find("gettable") >= 0:
+                    self.gettable_parameters.append({"gate":gate,
+                                                     "parameter":parameter})
+                elif self.properties[gate][parameter]["type"].find("dynamic") >= 0:
+                    try:
+                        channel.set(self.properties[gate][parameter]["value"])
+                    except KeyError:
+                        channel.set(self.properties[gate][parameter]["start"])
+                    self.dynamic_parameter.append({"gate":gate,
+                                                   "parameter":parameter})
+                    
+    def reset(self) -> None:
+        """
+        Resets all static/dynamic parameters to their value/start value.
+        TODO: Handle dynamic parameters with custom setpoints
+        """
+        for gate, parameters in self.gate_parameters.items():
+            for parameter, channel in parameters.items():
+                if self.properties[gate][parameter]["type"].find("static") >= 0:
+                    channel.set(self.properties[gate][parameter]["value"])
+                elif self.properties[gate][parameter]["type"].find("dynamic") >= 0:
+                    try:
+                        channel.set(self.properties[gate][parameter]["value"])
+                    except KeyError:
+                        channel.set(self.properties[gate][parameter]["start"])
+                    
 class VirtualGate():
     """Virtual Gate"""
     def __init__(self):
