@@ -132,9 +132,34 @@ def get_measurement_setting_by_id(pid: str):
     return _api_get("getMeasurementSettingById", {"pid": pid})
 
 
+def get_measurement_setting_script_by_id(pid: str):
+    """Get a single measurement setting script entry by ID from the db."""
+    return _api_get("getMeasurementSettingScriptById", {"pid": pid})
+
+
 def get_experiment_by_id(pid: str):
     """Get a single experiment entry by ID from the db."""
     return _api_get("getExperimentById", {"pid": pid})
+
+
+def get_template_parameter_by_id(pid: str):
+    """Get a single template parameter entry by ID from the db."""
+    return _api_get("getTemplateParameterById", {"pid": pid})
+
+
+def get_equipment_function_by_id(pid: str):
+    """Get a single equipment function entry by ID from the db."""
+    return _api_get("getEquipmentFunctionById", {"pid": pid})
+
+
+def get_equipment_instance_by_id(pid: str):
+    """Get a single equipment instance entry by ID from the db."""
+    return _api_get("getEquipmentInstanceById", {"pid": pid})
+
+
+def get_equipment_by_id(pid: str):
+    """Get a single equipment entry by ID from the db."""
+    return _api_get("getEquipmentById", {"pid": pid})
 
 
 def save_or_update_factory(description: str,
@@ -279,6 +304,60 @@ def save_or_update_measurement(name: str,
     return _api_put("saveOrUpdateMeasurement", data)
 
 
+def save_or_update_measurement_setting(name: str,
+                                       script_id: str):
+    """
+    Creates or updates a measurement setting on the database.
+
+    Args:
+        name (str): Measurement name
+        script_id (str): pid of the MeasurementSettingScript
+    """
+    data = {
+        "name": name,
+        "script_id": script_id,
+    }
+    return _api_put("saveOrUpdateMeasurementSetting", data)
+
+
+def save_or_update_measurement_setting_script(name: str,
+                                              script: str,
+                                              language: str,
+                                              allowed_parameters: str):
+    """
+    Creates or updates a measurement setting script on the database.
+
+    Args:
+        name (str): Measurement name
+        script (str): Script content
+        language (str): Language of the script
+        allowed_parameters (str): comma-separated list of TemplateParameters
+    """
+    data = {
+        "name": name,
+        "script": script,
+        "language": language,
+        "allowedParameters": allowed_parameters,
+    }
+    return _api_put("saveOrUpdateMeasurementSettingScript", data)
+
+
+def save_or_update_template_parameter(name: str,
+                                      type: str):
+    """
+    Creates or updates a template parameter on the database.
+
+    Args:
+        name (str): Measurement name
+        type (str): Type of the template parameter
+    """
+    data = {
+        "name": name,
+        "type": type,
+    }
+    return _api_put("saveOrUpdateTemplateParameter", data)
+
+
 def save_or_update_measurement_type(name: str,
                                     model: str,
                                     script_template_name: str,
@@ -336,3 +415,60 @@ def save_or_update_experiment(name: str,
         "equipmentInstanceNames": equipment_instance_names
     }
     return _api_put("saveOrUpdateExperiment", data)
+
+
+def save_or_update_equipment_instance(name: str,
+                                      type: str,
+                                      parameter: str):
+    """
+    Creates or updates an equipment instance on the database.
+
+    Args:
+        name (str): Equipment instance name
+        type (str): Equipment pid
+        parameter (str): Parameter of the instance
+    """
+    data = {
+        "name": name,
+        "type": type,
+        "parameter": parameter,
+    }
+    return _api_put("saveOrUpdateEquipmentInstance", data)
+
+
+def save_or_update_equipment_function(name: str,
+                                      functionType: int):
+    """
+    Creates or updates an equipment function on the database.
+
+    Args:
+        name (str): ExperimentFunction name
+        functionType (int): FunctionType value
+    """
+    data = {
+        "name": name,
+        "functionType": functionType,
+    }
+    return _api_put("saveOrUpdateEquipmentFunction", data)
+
+
+def save_or_update_equipment(name: str,
+                             description: str,
+                             parameters: str,
+                             functions: str):
+    """
+    Creates or updates an equipment on the database.
+
+    Args:
+        name (str): Equipment name
+        description (str): Description
+        parameters (str): Parameters of the equipment
+        functions (str): Comma-separated list of EquipmentFunction-pid's
+    """
+    data = {
+        "name": name,
+        "type": type,
+        "parameters": parameters,
+        "functions": functions,
+    }
+    return _api_put("saveOrUpdateEquipment", data)
