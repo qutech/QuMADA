@@ -184,7 +184,7 @@ def save_or_update_factory(description: str,
 def save_or_update_wafer(description: str,
                          name: str,
                          production_date: str,
-                         wafer_id: str = None):
+                         pid: str = None):
     """
     Creates or updates a wafer on the database.
 
@@ -192,23 +192,23 @@ def save_or_update_wafer(description: str,
         description (str): Description of the wafer
         name (str): Name of the wafer
         productionDate (str): Production date of the wafer
-        wafer_id (str, optional): Provide the unique ID of an existing wafer on the database to update it.
-                                  Defaults to None.
+        pid (str, optional): Provide the unique ID of an existing wafer on the database to update it.
+                             Defaults to None.
     """
     data = {
         "description": description,
         "name": name,
         "productionDate": production_date
     }
-    if wafer_id:
-        data["pid"] = wafer_id
+    if pid:
+        data["pid"] = pid
     return _api_put("saveOrUpdateWafer", data)
 
 
 def save_or_update_sample(description: str,
                           name: str,
                           wafer_name: str,
-                          sample_id: str = None):
+                          pid: str = None):
     """
     Creates or updates a sample on the database.
 
@@ -216,14 +216,16 @@ def save_or_update_sample(description: str,
         description (str): Description of the sample
         name (str): Sample name
         wafer_name (str): Wafer name
+        pid (str, optional): Provide the unique ID of an existing sample on the database to update it.
+                             Defaults to None.
     """
     data = {
         "description": description,
         "name": name,
         "waferName": wafer_name
     }
-    if sample_id:
-        data["pid"] = sample_id
+    if pid:
+        data["pid"] = pid
     return _api_put("saveOrUpdateSample", data)
 
 
@@ -234,7 +236,7 @@ def save_or_update_design(allowed_for_measurement_types: str,
                           name: str,
                           sample_name: str,
                           wafer_name: str,
-                          design_id: str = None):
+                          pid: str = None):
     """
     Creates or updates an design on the database.
 
@@ -246,6 +248,8 @@ def save_or_update_design(allowed_for_measurement_types: str,
         name (str): Design name
         sample_name (str): Sample name
         wafer_name (str): Wafer name
+        pid (str, optional): Provide the unique ID of an existing design on the database to update it.
+                             Defaults to None.
     """
     data = {
         "allowedForMeasumentTypes": allowed_for_measurement_types,
@@ -256,14 +260,15 @@ def save_or_update_design(allowed_for_measurement_types: str,
         "sampleName": sample_name,
         "waferName": wafer_name
     }
-    if design_id:
-        data["pid"] = design_id
+    if pid:
+        data["pid"] = pid
     return _api_put("saveOrUpdateDesign", data)
 
 
 def save_or_update_device(name: str,
                           design_name: str,
-                          sample_name: str):
+                          sample_name: str,
+                          pid: str = None):
     """
     Creates or updates a device on the database.
 
@@ -271,12 +276,16 @@ def save_or_update_device(name: str,
         name (str): Device name
         design_name (str): Design name
         sample_name (str): Sample name
+        pid (str, optional): Provide the unique ID of an existing device on the database to update it.
+                             Defaults to None.
     """
     data = {
         "name": name,
         "designName": design_name,
         "sampleName": sample_name
     }
+    if pid:
+        data["pid"] = pid
     return _api_put("saveOrUpdateDevice", data)
 
 
@@ -284,7 +293,8 @@ def save_or_update_measurement(name: str,
                                device_name: str,
                                experiment_name: str,
                                measurement_settings_name: str,
-                               measurement_parameters):
+                               measurement_parameters: str,
+                               pid: str = None):
     """
     Creates or updates a measurement on the database.
 
@@ -293,6 +303,8 @@ def save_or_update_measurement(name: str,
         device_name (str): Device name
         experiment_name (str): Experiment name
         measurementParameters (str): Measurement parameters
+        pid (str, optional): Provide the unique ID of an existing measurement on the database to update it.
+                             Defaults to None.
     """
     data = {
         "name": name,
@@ -301,29 +313,37 @@ def save_or_update_measurement(name: str,
         "measurementSettingsName": measurement_settings_name,
         "measurementParameters": measurement_parameters
     }
+    if pid:
+        data["pid"] = pid
     return _api_put("saveOrUpdateMeasurement", data)
 
 
 def save_or_update_measurement_setting(name: str,
-                                       script_id: str):
+                                       script_id: str,
+                                       pid: str = None):
     """
     Creates or updates a measurement setting on the database.
 
     Args:
         name (str): Measurement name
         script_id (str): pid of the MeasurementSettingScript
+        pid (str, optional): Provide the unique ID of an existing measurement setting on the database to update it.
+                             Defaults to None.
     """
     data = {
         "name": name,
         "script_id": script_id,
     }
+    if pid:
+        data["pid"] = pid
     return _api_put("saveOrUpdateMeasurementSetting", data)
 
 
 def save_or_update_measurement_setting_script(name: str,
                                               script: str,
                                               language: str,
-                                              allowed_parameters: str):
+                                              allowed_parameters: str,
+                                              pid: str = None):
     """
     Creates or updates a measurement setting script on the database.
 
@@ -332,6 +352,8 @@ def save_or_update_measurement_setting_script(name: str,
         script (str): Script content
         language (str): Language of the script
         allowed_parameters (str): comma-separated list of TemplateParameters
+        pid (str, optional): Provide the unique ID of an existing measurement setting script on the database
+                             to update it. Defaults to None.
     """
     data = {
         "name": name,
@@ -339,17 +361,22 @@ def save_or_update_measurement_setting_script(name: str,
         "language": language,
         "allowedParameters": allowed_parameters,
     }
+    if pid:
+        data["pid"] = pid
     return _api_put("saveOrUpdateMeasurementSettingScript", data)
 
 
 def save_or_update_template_parameter(name: str,
-                                      type: str):
+                                      type: str,
+                                      pid: str = None):
     """
     Creates or updates a template parameter on the database.
 
     Args:
         name (str): Measurement name
         type (str): Type of the template parameter
+        pid (str, optional): Provide the unique ID of an existing template parameter on the database to update it.
+                             Defaults to None.
     """
     data = {
         "name": name,
@@ -363,7 +390,8 @@ def save_or_update_measurement_type(name: str,
                                     script_template_name: str,
                                     extractable_parameters: str,
                                     mapping: str,
-                                    equipment_names: str):
+                                    equipment_names: str,
+                                    pid: str = None):
     """
     Creates or updates a measurement type on the database.
 
@@ -374,6 +402,8 @@ def save_or_update_measurement_type(name: str,
         extractable_parameters (str): extractable parameters
         mapping (str): Mapping
         equipment_names (str): List of used equipment (comma-separated)
+        pid (str, optional): Provide the unique ID of an existing measurement type on the database to update it.
+                             Defaults to None.
     """
     data = {
         "name": name,
@@ -383,6 +413,8 @@ def save_or_update_measurement_type(name: str,
         "mapping": mapping,
         "equipmentNames": equipment_names
     }
+    if pid:
+        data["pid"] = pid
     return _api_put("saveOrUpdateMeasurementType", data)
 
 
@@ -391,8 +423,9 @@ def save_or_update_experiment(name: str,
                               user: str,
                               group: str,
                               software_noise_filters: str,
-                              measurement_type_name: str,
-                              equipment_instance_names: str):
+                              measurement_type_id: str,
+                              equipment_instance_ids: str,
+                              pid: str = None):
     """
     Creates or updates an experiment on the database.
 
@@ -402,8 +435,10 @@ def save_or_update_experiment(name: str,
         user (str): User
         group (str): Research group of user
         software_noise_filters (str): Used software filters
-        measurement_type_name (str): MeasurementType name
-        equipment_instance_names (str): List of used equipment instances
+        measurement_type_id (str): MeasurementType pid
+        equipment_instance_ids (str): List of pid's of used equipment instances
+        pid (str, optional): Provide the unique ID of an existing experiment on the database to update it.
+                             Defaults to None.
     """
     data = {
         "name": name,
@@ -411,15 +446,18 @@ def save_or_update_experiment(name: str,
         "user": user,
         "group": group,
         "softwareNoiseFilters": software_noise_filters,
-        "measurementTypeName": measurement_type_name,
-        "equipmentInstanceNames": equipment_instance_names
+        "measurementTypeId": measurement_type_id,
+        "equipmentInstanceIds": equipment_instance_ids
     }
+    if pid:
+        data["pid"] = pid
     return _api_put("saveOrUpdateExperiment", data)
 
 
 def save_or_update_equipment_instance(name: str,
                                       type: str,
-                                      parameter: str):
+                                      parameter: str,
+                                      pid: str = None):
     """
     Creates or updates an equipment instance on the database.
 
@@ -427,35 +465,45 @@ def save_or_update_equipment_instance(name: str,
         name (str): Equipment instance name
         type (str): Equipment pid
         parameter (str): Parameter of the instance
+        pid (str, optional): Provide the unique ID of an existing equipment instance on the database to update it.
+                             Defaults to None.
     """
     data = {
         "name": name,
         "type": type,
         "parameter": parameter,
     }
+    if pid:
+        data["pid"] = pid
     return _api_put("saveOrUpdateEquipmentInstance", data)
 
 
 def save_or_update_equipment_function(name: str,
-                                      functionType: int):
+                                      functionType: int,
+                                      pid: str = None):
     """
     Creates or updates an equipment function on the database.
 
     Args:
         name (str): ExperimentFunction name
         functionType (int): FunctionType value
+        pid (str, optional): Provide the unique ID of an existing equipment function on the database to update it.
+                             Defaults to None.
     """
     data = {
         "name": name,
         "functionType": functionType,
     }
+    if pid:
+        data["pid"] = pid
     return _api_put("saveOrUpdateEquipmentFunction", data)
 
 
 def save_or_update_equipment(name: str,
                              description: str,
                              parameters: str,
-                             functions: str):
+                             functions: str,
+                             pid: str = None):
     """
     Creates or updates an equipment on the database.
 
@@ -464,6 +512,8 @@ def save_or_update_equipment(name: str,
         description (str): Description
         parameters (str): Parameters of the equipment
         functions (str): Comma-separated list of EquipmentFunction-pid's
+        pid (str, optional): Provide the unique ID of an existing equipment on the database to update it.
+                             Defaults to None.
     """
     data = {
         "name": name,
@@ -471,4 +521,6 @@ def save_or_update_equipment(name: str,
         "parameters": parameters,
         "functions": functions,
     }
+    if pid:
+        data["pid"] = pid
     return _api_put("saveOrUpdateEquipment", data)

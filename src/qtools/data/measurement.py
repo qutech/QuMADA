@@ -3,6 +3,8 @@
 Representations of domain objects (Measurements).
 """
 
+from __future__ import annotations
+
 from enum import Enum
 from dataclasses import dataclass, field
 from qtools.data.db import (get_equipment_by_id,
@@ -189,7 +191,7 @@ class Equipment(DomainObject):
         """Creates an Equipment object."""
         kwargs.update({
             "name": name,
-            "description":description,
+            "description": description,
             "parameters": parameters,
             "functions": functions,
         })
@@ -239,8 +241,7 @@ class EquipmentInstance(DomainObject):
 
     def save_to_db(self):
         """Saves or updates the EquipmentInstance object to the db."""
-        response = save_or_update_equipment_instance(self.description,
-                                                     self.name,
+        response = save_or_update_equipment_instance(self.name,
                                                      self.type.pid,
                                                      self.parameter,
                                                      self.pid)
@@ -301,8 +302,8 @@ class Experiment(DomainObject):
     description: str
     user: str
     group: str
-    softwareNoiseFilters: str
     measurementType: MeasurementType
+    softwareNoiseFilters: str
     equipmentInstances: list[EquipmentInstance] = field(default_factory=list)
     # TODO: equipmentInstances
 
@@ -312,9 +313,9 @@ class Experiment(DomainObject):
                description: str,
                user: str,
                group: str,
-               softwareNoiseFilters: str,
                measurementType: MeasurementType,
-               equipmentInstances: list[EquipmentInstance],
+               softwareNoiseFilters: str | None = None,
+               equipmentInstances: list[EquipmentInstance] | None = None,
                **kwargs):
         """Creates an Experiment object."""
         kwargs.update({
@@ -381,8 +382,7 @@ class Measurement(DomainObject):
 
     def save_to_db(self):
         """Saves or updates the Measurement object to the db."""
-        response = save_or_update_measurement(self.description,
-                                              self.name,
+        response = save_or_update_measurement(self.name,
                                               self.device.name,
                                               self.experiment.name,
                                               self.settings.name,
