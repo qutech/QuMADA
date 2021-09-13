@@ -120,13 +120,16 @@ def _generate_mapping_stub(instrument: Instrument,
 
 
 def map_gates_to_instruments(components: Mapping[Any, Metadatable],
-                             gate_parameters: Mapping[Any, Union[Mapping[Any, Parameter], Parameter]]) -> None:
+                             gate_parameters: Mapping[Any, Union[Mapping[Any, Parameter], Parameter]],
+                             existing_gate_parameters: Mapping[Any, Union[Mapping[Any, Parameter], Parameter]] = {}) -> None:
     """
     Maps the gates, that were defined in the MeasurementScript to the instruments, that are initialized in QCoDeS.
 
     Args:
         components (Mapping[Any, Metadatable]): Instruments/Components in QCoDeS
         gate_parameters (Mapping[Any, Union[Mapping[Any, Parameter], Parameter]]): Gates, as defined in the measurement script
+        existing_gate_parameters (Mapping[Any, Union[Mapping[Any, Parameter], Parameter]]={}): Already existing mapping
+                that is used to automatically create the mapping for already known gates without user input.
     """
     # get all parameters in one flat list for the mapping process
     instrument_parameters = filter_flatten_parameters(components)
@@ -137,15 +140,32 @@ def map_gates_to_instruments(components: Mapping[Any, Metadatable],
             ...
         else:
             # map gate to instrument
+            # TODO: List is shown even if no user input is required - Fix this
             print(f"Mapping gate {key} to one of the following instruments:")
             for idx, instrument_key in enumerate(components.keys()):
                 print(f"{idx}: {instrument_key}")
             chosen = None
+            flag = False
             while True:
                 try:
-                    chosen = int(input(f"Which instrument shall be mapped to gate \"{key}\" ({gate}): "))
-                    chosen_instrument = list(components.values())[int(chosen)]
+                    #Automatically maps all parameters to their corresponding gates
+                    #based on the existing mapping
+                    for existing_gate, existing_parameters in existing_gate_parameters.items():
+                        if existing_gate == key:
+                            for channel in existing_parameters.values():
+                                if channel:
+                                    chosen_instrument = channel.root_instrument
+                                    flag = True
+                                    print(chosen_instrument)
+                                    break   
+                                
+                    #TODO: Does not work with instruments that have only one parameter
+                    #(Lists letters of parametername instead of parameter)
+                    if not flag:
+                        chosen = int(input(f"Which instrument shall be mapped to gate \"{key}\" ({gate}): "))
+                        chosen_instrument = list(components.values())[int(chosen)]
                     chosen_instrument_parameters = {k: v for k, v in instrument_parameters.items() if v.root_instrument is chosen_instrument}
+                    print(chosen_instrument_parameters)
                     try:
                         # Only use chosen instrument's parameters for mapping
                         _map_gate_to_instrument(gate, chosen_instrument_parameters)
