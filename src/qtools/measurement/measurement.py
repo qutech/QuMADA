@@ -2,15 +2,17 @@
 """
 Measurement
 """
-
+import numpy as np
 from dataclasses import dataclass, field
-from typing import MutableSequence, MutableMapping, Any, Union
+from typing import MutableSequence, MutableMapping, Any, Union, Mapping
 
 from qcodes import Station
 from qcodes.instrument import Parameter
-
+from qcodes.utils.metadata import Metadatable
 from qtools.data.measurement import EquipmentInstance, FunctionType
-
+from qtools.instrument.mapping.base import _map_gate_to_instrument, filter_flatten_parameters
+from qcodes.utils.dataset.doNd import LinSweep, AbstractSweep
+from qcodes.instrument.parameter import _BaseParameter
 
 class QtoolsStation(Station):
     """Station object, inherits from qcodes Station."""
@@ -29,8 +31,10 @@ class MeasurementScript():
         self.properties: dict[Any, Any] = {}
         self.gate_parameters: dict[Any, Union[dict[Any, Union[Parameter, None]], Parameter, None]] = {}
         self.gettable_parameters: list[str] = []
+        self.gettable_channels: list[str] = []
         self.static_parameters: list[str] = []
         self.dynamic_parameters: list[str] = []
+        self.dynamic_sweeps: list[str] = []
 
     def add_gate_parameter(self,
                            parameter_name: str,
@@ -85,9 +89,10 @@ class MeasurementScript():
         to the "self.gettable_parameters" as they are recorded anyway and will 
         cause issues with dond functions.
         Provides gettable_parameters, static_parameters and dynamic parameters to
-        measurement class
+        measurement class and generates AbstractSweeps from the measurement
+        properties. Sweeps form a list that can be found in "dynamic_sweeps"
         TODO: Is there a more elegant way?
-        TODO: Handle dynamic parameters with custom setpoints
+        TODO: Put Sweep-Generation somewhere else?
         """
         for gate, parameters in self.gate_parameters.items():
             for parameter, channel in parameters.items():
@@ -99,14 +104,30 @@ class MeasurementScript():
                 if self.properties[gate][parameter]["type"].find("gettable") >= 0:
                     self.gettable_parameters.append({"gate":gate,
                                                      "parameter":parameter})
+                    self.gettable_channels.append(channel)
                 elif self.properties[gate][parameter]["type"].find("dynamic") >= 0:
+                    #Handle different possibilities for starting points
                     try:
                         channel.set(self.properties[gate][parameter]["value"])
                     except KeyError:
                         channel.set(self.properties[gate][parameter]["start"])
-                    self.dynamic_parameter.append({"gate":gate,
+                    except KeyError:
+                        channel.set(self.properties[gate][parameter]["setpoints"][0])
+                    self.dynamic_parameters.append({"gate":gate,
                                                    "parameter":parameter})
-                    
+                    #Generate sweeps from parameters
+                    try:
+                        self.dynamic_sweeps.append(LinSweep(channel,
+                                                            self.properties[gate][parameter]["start"],
+                                                            self.properties[gate][parameter]["stop"],
+                                                            self.properties[gate][parameter]["num_points"],
+                                                            self.properties[gate][parameter]["delay"]))
+                    except KeyError:
+                        self.dynamic_sweeps.append(CustomSweep(channel,
+                                                               self.properties[gate][parameter]["setpoints"],
+                                                               delay = self.properties[gate][parameter].setdefault("delay", 0)))
+        self._relabel_instruments()
+                                        
     def reset(self) -> None:
         """
         Resets all static/dynamic parameters to their value/start value.

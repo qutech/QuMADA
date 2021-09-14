@@ -15,6 +15,7 @@ import qtools.data.db as db
 from qtools.instrument.mapping.base import add_mapping_to_instrument, map_gates_to_instruments, filter_flatten_parameters
 from qtools.measurement.measurement_for_immediate_use.inducing_measurement import InducingMeasurementScript
 from qtools.measurement.measurement_for_immediate_use.generic_measurement import Generic_1D_Sweep
+from qtools.measurement.measurement_for_immediate_use.generic_measurement import Generic_1D_Sweep, Generic_nD_Sweep
 from qtools.measurement.measurement import QtoolsStation as Station
 
 
