@@ -165,7 +165,6 @@ def map_gates_to_instruments(components: Mapping[Any, Metadatable],
                         chosen = int(input(f"Which instrument shall be mapped to gate \"{key}\" ({gate}): "))
                         chosen_instrument = list(components.values())[int(chosen)]
                     chosen_instrument_parameters = {k: v for k, v in instrument_parameters.items() if v.root_instrument is chosen_instrument}
-                    print(chosen_instrument_parameters)
                     try:
                         # Only use chosen instrument's parameters for mapping
                         _map_gate_to_instrument(gate, chosen_instrument_parameters)

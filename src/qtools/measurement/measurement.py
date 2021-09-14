@@ -121,7 +121,18 @@ class MeasurementScript():
                         channel.set(self.properties[gate][parameter]["value"])
                     except KeyError:
                         channel.set(self.properties[gate][parameter]["start"])
-                    
+                        
+    def _relabel_instruments(self) -> None:
+        """
+        Changes the labels of all instrument channels to the 
+        corresponding name defined in the measurement script. 
+        Has to be done after mapping!
+        """
+        for gate, parameters in self.gate_parameters.items():
+            for key, parameter in parameters.items():
+                parameter.label = f"{gate} {key}"
+
+                   
 class VirtualGate():
     """Virtual Gate"""
     def __init__(self):
