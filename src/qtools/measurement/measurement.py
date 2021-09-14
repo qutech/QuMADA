@@ -110,9 +110,10 @@ class MeasurementScript():
                     try:
                         channel.set(self.properties[gate][parameter]["value"])
                     except KeyError:
-                        channel.set(self.properties[gate][parameter]["start"])
-                    except KeyError:
-                        channel.set(self.properties[gate][parameter]["setpoints"][0])
+                        try:
+                            channel.set(self.properties[gate][parameter]["start"])
+                        except KeyError:
+                            channel.set(self.properties[gate][parameter]["setpoints"][0])
                     self.dynamic_parameters.append({"gate":gate,
                                                    "parameter":parameter})
                     #Generate sweeps from parameters
@@ -131,7 +132,6 @@ class MeasurementScript():
     def reset(self) -> None:
         """
         Resets all static/dynamic parameters to their value/start value.
-        TODO: Handle dynamic parameters with custom setpoints
         """
         for gate, parameters in self.gate_parameters.items():
             for parameter, channel in parameters.items():
@@ -141,7 +141,11 @@ class MeasurementScript():
                     try:
                         channel.set(self.properties[gate][parameter]["value"])
                     except KeyError:
-                        channel.set(self.properties[gate][parameter]["start"])
+                        try:
+                            channel.set(self.properties[gate][parameter]["start"])
+                        except KeyError:
+                            channel.set(self.properties[gate][parameter]["setpoints"][0])
+                            
                         
     def _relabel_instruments(self) -> None:
         """
