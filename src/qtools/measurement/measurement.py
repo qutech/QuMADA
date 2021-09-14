@@ -180,3 +180,41 @@ class ExperimentHandler():
 
     def _load_instrument(self, instance: EquipmentInstance):
         pass
+
+class CustomSweep(AbstractSweep):
+    """
+    Custom sweep from array of setpoints.
+
+    Args:
+        param: Qcodes parameter to sweep.
+        setpoints: Array of setpoints.
+        delay: Time in seconds between two consequtive sweep points
+    """
+    def __init__(
+        self,
+        param: _BaseParameter,
+        setpoints: np.ndarray,
+        delay: float = 0,
+    ):
+        self._param = param
+        self._setpoints = setpoints
+        self._num_points = len(setpoints)
+        self._delay = delay
+
+    def get_setpoints(self) -> np.ndarray:
+        """
+        1D array of setpoints
+        """
+        return self._setpoints
+
+    @property
+    def param(self) -> _BaseParameter:
+        return self._param
+
+    @property
+    def delay(self) -> float:
+        return self._delay
+
+    @property
+    def num_points(self) -> int:
+        return self._num_points
