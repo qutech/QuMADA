@@ -4,7 +4,7 @@ Measurement
 """
 import numpy as np
 from dataclasses import dataclass, field
-from typing import MutableSequence, MutableMapping, Any, Union, Mapping
+from typing import MutableSequence, MutableMapping, Any, Union, Mapping, Sequence, Callable
 
 from qcodes import Station
 from qcodes.instrument import Parameter
@@ -206,6 +206,7 @@ class ExperimentHandler():
     def _load_instrument(self, instance: EquipmentInstance):
         pass
 
+ActionsT = Sequence[Callable[[], None]]
 class CustomSweep(AbstractSweep):
     """
     Custom sweep from array of setpoints.
@@ -220,11 +221,14 @@ class CustomSweep(AbstractSweep):
         param: _BaseParameter,
         setpoints: np.ndarray,
         delay: float = 0,
+        post_actions: ActionsT = ()
+        
     ):
         self._param = param
         self._setpoints = setpoints
         self._num_points = len(setpoints)
         self._delay = delay
+        self._post_actions = post_actions
 
     def get_setpoints(self) -> np.ndarray:
         """
@@ -243,3 +247,7 @@ class CustomSweep(AbstractSweep):
     @property
     def num_points(self) -> int:
         return self._num_points
+
+    @property
+    def post_actions(self) -> ActionsT:
+        return self._post_actions
