@@ -30,11 +30,6 @@ class MeasurementScript():
     def __init__(self):
         self.properties: dict[Any, Any] = {}
         self.gate_parameters: dict[Any, Union[dict[Any, Union[Parameter, None]], Parameter, None]] = {}
-        self.gettable_parameters: list[str] = []
-        self.gettable_channels: list[str] = []
-        self.static_parameters: list[str] = []
-        self.dynamic_parameters: list[str] = []
-        self.dynamic_sweeps: list[str] = []
 
     def add_gate_parameter(self,
                            parameter_name: str,
@@ -94,6 +89,11 @@ class MeasurementScript():
         TODO: Is there a more elegant way?
         TODO: Put Sweep-Generation somewhere else?
         """
+        self.gettable_parameters: list[str] = []
+        self.gettable_channels: list[str] = []
+        self.static_parameters: list[str] = []
+        self.dynamic_parameters: list[str] = []
+        self.dynamic_sweeps: list[str] = []
         for gate, parameters in self.gate_parameters.items():
             for parameter, channel in parameters.items():
                 if self.properties[gate][parameter]["type"].find("static") >= 0:
