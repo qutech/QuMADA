@@ -11,7 +11,7 @@ from qcodes.instrument import Parameter
 from qcodes.utils.metadata import Metadatable
 from qtools.data.measurement import EquipmentInstance, FunctionType
 from qtools.instrument.mapping.base import _map_gate_to_instrument, filter_flatten_parameters
-from qcodes.utils.dataset.doNd import LinSweep, AbstractSweep
+from qcodes.utils.dataset.doNd import LinSweep, AbstractSweep, ActionsT
 from qcodes.instrument.parameter import _BaseParameter
 
 class QtoolsStation(Station):
@@ -57,13 +57,13 @@ class MeasurementScript():
             else:
                 raise Exception("Gate {gate_name} is not a dictionary.")
 
-    def setup(self, 
-              parameters: dict, 
+    def setup(self,
+              parameters: dict,
               metadata: dict) -> None:
         """
-        Adds all gate_parameters that are defined in the parameters argument to 
+        Adds all gate_parameters that are defined in the parameters argument to
         the measurement. Allows to pass metadata dictionary to measurement.
-        
+
         Args:
             parameters (dict): Dictionary containing parameters and their settings
             metadata (dict): Dictionary containing metadata that should be
@@ -74,14 +74,14 @@ class MeasurementScript():
             self.properties[gate] = vals
             for parameter, properties in vals.items():
                 self.add_gate_parameter(parameter, gate)
-                
+
     def initialize(self) -> None:
         """
         Sets all static/sweepable parameters to their value/start value.
         If parameters are both, static and dynamic, they will be set to the "value" property
         and not to the "start" property.
-        Parameters that are marked "dynamic" and "gettable" will not be added 
-        to the "self.gettable_parameters" as they are recorded anyway and will 
+        Parameters that are marked "dynamic" and "gettable" will not be added
+        to the "self.gettable_parameters" as they are recorded anyway and will
         cause issues with dond functions.
         Provides gettable_parameters, static_parameters and dynamic parameters to
         measurement class and generates AbstractSweeps from the measurement
@@ -128,7 +128,7 @@ class MeasurementScript():
                                                                self.properties[gate][parameter]["setpoints"],
                                                                delay = self.properties[gate][parameter].setdefault("delay", 0)))
         self._relabel_instruments()
-                                        
+
     def reset(self) -> None:
         """
         Resets all static/dynamic parameters to their value/start value.
@@ -145,19 +145,19 @@ class MeasurementScript():
                             channel.set(self.properties[gate][parameter]["start"])
                         except KeyError:
                             channel.set(self.properties[gate][parameter]["setpoints"][0])
-                            
-                        
+
+
     def _relabel_instruments(self) -> None:
         """
-        Changes the labels of all instrument channels to the 
-        corresponding name defined in the measurement script. 
+        Changes the labels of all instrument channels to the
+        corresponding name defined in the measurement script.
         Has to be done after mapping!
         """
         for gate, parameters in self.gate_parameters.items():
             for key, parameter in parameters.items():
                 parameter.label = f"{gate} {key}"
 
-                   
+
 class VirtualGate():
     """Virtual Gate"""
     def __init__(self):
@@ -206,7 +206,7 @@ class ExperimentHandler():
     def _load_instrument(self, instance: EquipmentInstance):
         pass
 
-ActionsT = Sequence[Callable[[], None]]
+
 class CustomSweep(AbstractSweep):
     """
     Custom sweep from array of setpoints.
@@ -222,7 +222,7 @@ class CustomSweep(AbstractSweep):
         setpoints: np.ndarray,
         delay: float = 0,
         post_actions: ActionsT = ()
-        
+
     ):
         self._param = param
         self._setpoints = setpoints
