@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import json
-from typing import Any, Dict, Mapping, Set, Iterable, Union
+from typing import Any, Dict, Iterable, Mapping, Set, Union
 
 from qcodes.instrument.base import Instrument
 from qcodes.instrument.parameter import Parameter
@@ -157,8 +157,8 @@ def map_gates_to_instruments(components: Mapping[Any, Metadatable],
                                     chosen_instrument = channel.root_instrument
                                     flag = True
                                     print(chosen_instrument)
-                                    break   
-                                
+                                    break
+
                     #TODO: Does not work with instruments that have only one parameter
                     #(Lists letters of parametername instead of parameter)
                     if not flag:
