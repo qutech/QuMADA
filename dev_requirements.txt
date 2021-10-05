@@ -6,3 +6,4 @@ qtconsole
 
 pre-commit
 pyupgrade
+darker
