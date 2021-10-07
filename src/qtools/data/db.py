@@ -47,71 +47,6 @@ def _api_put(function_name: str, data: Mapping):
     return response.json()
 
 
-def get_measurements():
-    """Gets a list of all measurement entries on the db."""
-    return _api_get("measurements")
-
-
-def get_measurement_types():
-    """Gets a list of all measurement type entries on the db."""
-    return _api_get("measurementTypes")
-
-
-def get_measurement_settings():
-    """Gets a list of all measurement setting entries on the db."""
-    return _api_get("measurementSettings")
-
-
-def get_experiments():
-    """Gets a list of all experiment entries on the db."""
-    return _api_get("experiments")
-
-
-def get_measurement_by_id(pid: str):
-    """Get a single measurement entry by ID from the db."""
-    return _api_get("getMeasurementById", {"pid": pid})
-
-
-def get_measurement_type_by_id(pid: str):
-    """Get a single measurement type entry by ID from the db."""
-    return _api_get("getMeasurementTypeById", {"pid": pid})
-
-
-def get_measurement_setting_by_id(pid: str):
-    """Get a single measurement setting entry by ID from the db."""
-    return _api_get("getMeasurementSettingById", {"pid": pid})
-
-
-def get_measurement_setting_script_by_id(pid: str):
-    """Get a single measurement setting script entry by ID from the db."""
-    return _api_get("getMeasurementSettingScriptById", {"pid": pid})
-
-
-def get_experiment_by_id(pid: str):
-    """Get a single experiment entry by ID from the db."""
-    return _api_get("getExperimentById", {"pid": pid})
-
-
-def get_template_parameter_by_id(pid: str):
-    """Get a single template parameter entry by ID from the db."""
-    return _api_get("getTemplateParameterById", {"pid": pid})
-
-
-def get_equipment_function_by_id(pid: str):
-    """Get a single equipment function entry by ID from the db."""
-    return _api_get("getEquipmentFunctionById", {"pid": pid})
-
-
-def get_equipment_instance_by_id(pid: str):
-    """Get a single equipment instance entry by ID from the db."""
-    return _api_get("getEquipmentInstanceById", {"pid": pid})
-
-
-def get_equipment_by_id(pid: str):
-    """Get a single equipment entry by ID from the db."""
-    return _api_get("getEquipmentById", {"pid": pid})
-
-
 def save_or_update_sample(description: str,
                           name: str,
                           wafer_name: str,
@@ -271,25 +206,6 @@ def save_or_update_measurement_setting_script(name: str,
     if pid:
         data["pid"] = pid
     return _api_put("saveOrUpdateMeasurementSettingScript", data)
-
-
-def save_or_update_template_parameter(name: str,
-                                      type: str,
-                                      pid: str = None):
-    """
-    Creates or updates a template parameter on the database.
-
-    Args:
-        name (str): Measurement name
-        type (str): Type of the template parameter
-        pid (str, optional): Provide the unique ID of an existing template parameter on the database to update it.
-                             Defaults to None.
-    """
-    data = {
-        "name": name,
-        "type": type,
-    }
-    return _api_put("saveOrUpdateTemplateParameter", data)
 
 
 def save_or_update_measurement_type(name: str,
