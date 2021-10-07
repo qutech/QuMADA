@@ -5,8 +5,8 @@ Functions and classes regarding the database connection
 
 from typing import Mapping
 from urllib.parse import urljoin
-import requests
 
+import requests
 
 api_url: str = ""
 
@@ -47,31 +47,6 @@ def _api_put(function_name: str, data: Mapping):
     return response.json()
 
 
-def get_factories():
-    """Gets a list of all factory entries on the db."""
-    return _api_get("factories")
-
-
-def get_wafers():
-    """Gets a list of all wafer entries on the db."""
-    return _api_get("wafers")
-
-
-def get_samples():
-    """Gets a list of all sample entries on the db."""
-    return _api_get("samples")
-
-
-def get_designs():
-    """Gets a list of all design entries on the db."""
-    return _api_get("designs")
-
-
-def get_devices():
-    """Gets a list of all device entries on the db."""
-    return _api_get("devices")
-
-
 def get_measurements():
     """Gets a list of all measurement entries on the db."""
     return _api_get("measurements")
@@ -90,31 +65,6 @@ def get_measurement_settings():
 def get_experiments():
     """Gets a list of all experiment entries on the db."""
     return _api_get("experiments")
-
-
-def get_factory_by_id(pid: str):
-    """Get a single factory entry by ID from the db."""
-    return _api_get("getFactoryById", {"pid": pid})
-
-
-def get_wafer_by_id(pid: str):
-    """Get a single wafer entry by ID from the db."""
-    return _api_get("getWaferById", {"pid": pid})
-
-
-def get_sample_by_id(pid: str):
-    """Get a single sample entry by ID from the db."""
-    return _api_get("getSampleById", {"pid": pid})
-
-
-def get_device_by_id(pid: str):
-    """Get a single device entry by ID from the db."""
-    return _api_get("getDeviceById", {"pid": pid})
-
-
-def get_design_by_id(pid: str):
-    """Get a single design entry by ID from the db."""
-    return _api_get("getDesignById", {"pid": pid})
 
 
 def get_measurement_by_id(pid: str):
@@ -160,49 +110,6 @@ def get_equipment_instance_by_id(pid: str):
 def get_equipment_by_id(pid: str):
     """Get a single equipment entry by ID from the db."""
     return _api_get("getEquipmentById", {"pid": pid})
-
-
-def save_or_update_factory(description: str,
-                           name: str,
-                           factory_id: str = None):
-    """
-    Creates or updates a factory on the database.
-
-    Args:
-        description (str): Description of the factory
-        name (str): Factory name
-    """
-    data = {
-        "description": description,
-        "name": name
-    }
-    if factory_id:
-        data["pid"] = factory_id
-    return _api_put("saveOrUpdateFactory", data)
-
-
-def save_or_update_wafer(description: str,
-                         name: str,
-                         production_date: str,
-                         pid: str = None):
-    """
-    Creates or updates a wafer on the database.
-
-    Args:
-        description (str): Description of the wafer
-        name (str): Name of the wafer
-        productionDate (str): Production date of the wafer
-        pid (str, optional): Provide the unique ID of an existing wafer on the database to update it.
-                             Defaults to None.
-    """
-    data = {
-        "description": description,
-        "name": name,
-        "productionDate": production_date
-    }
-    if pid:
-        data["pid"] = pid
-    return _api_put("saveOrUpdateWafer", data)
 
 
 def save_or_update_sample(description: str,
