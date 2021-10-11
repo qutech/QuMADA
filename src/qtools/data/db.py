@@ -47,54 +47,6 @@ def _api_put(function_name: str, data: Mapping):
     return response.json()
 
 
-def save_or_update_sample(description: str,
-                          name: str,
-                          wafer_name: str,
-                          pid: str = None):
-    """
-    Creates or updates a sample on the database.
-
-    Args:
-        description (str): Description of the sample
-        name (str): Sample name
-        wafer_name (str): Wafer name
-        pid (str, optional): Provide the unique ID of an existing sample on the database to update it.
-                             Defaults to None.
-    """
-    data = {
-        "description": description,
-        "name": name,
-        "waferName": wafer_name
-    }
-    if pid:
-        data["pid"] = pid
-    return _api_put("saveOrUpdateSample", data)
-
-
-def save_or_update_device(name: str,
-                          design_name: str,
-                          sample_name: str,
-                          pid: str = None):
-    """
-    Creates or updates a device on the database.
-
-    Args:
-        name (str): Device name
-        design_name (str): Design name
-        sample_name (str): Sample name
-        pid (str, optional): Provide the unique ID of an existing device on the database to update it.
-                             Defaults to None.
-    """
-    data = {
-        "name": name,
-        "designName": design_name,
-        "sampleName": sample_name
-    }
-    if pid:
-        data["pid"] = pid
-    return _api_put("saveOrUpdateDevice", data)
-
-
 def save_or_update_measurement(name: str,
                                device_name: str,
                                experiment_name: str,
