@@ -91,6 +91,8 @@ def _process_class_save(cls, fn_name: str, field_names: list[str]):
                 attr = attr.pid
                 field_name = f"{field_name}Id"
             elif isinstance(attr, Iterable) and not isinstance(attr, str):
+                # Take pid from all DomainObjects
+                attr = [a.pid if isinstance(a, DomainObject) else a for a in attr]
                 # Join Iterables by comma
                 attr = ",".join(attr)
             elif not isinstance(attr, str):
