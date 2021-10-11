@@ -6,14 +6,13 @@ Representations of domain objects (Devices).
 from dataclasses import dataclass, field
 from typing import Any
 
+from qtools.data.apiclasses import get_all, get_by_id, save
 from qtools.data.domain import DomainObject
-from qtools.data.db import (get_factory_by_id, save_or_update_factory,
-                            get_wafer_by_id, save_or_update_wafer,
-                            get_sample_by_id, save_or_update_sample,
-                            get_design_by_id, save_or_update_design,
-                            get_device_by_id, save_or_update_device)
 
 
+@get_by_id
+@get_all(fn_name="factories")
+@save(fn_name="saveOrUpdateFactory")
 @dataclass
 class Factory(DomainObject):
     """Represents the database entry of a factory."""
@@ -28,20 +27,10 @@ class Factory(DomainObject):
         })
         return super(cls, cls)._create(**kwargs)
 
-    @classmethod
-    def load_from_db(cls, pid: str):
-        """Create a Factory object from an existing db entry."""
-        data = get_factory_by_id(pid)
-        return cls(**data)
 
-    def save_to_db(self):
-        """Saves or updates the Factory object to the db."""
-        response = save_or_update_factory(self.description,
-                                          self.name,
-                                          self.pid)
-        self._handle_db_response(response)
-
-
+@get_by_id
+@get_all
+@save(fn_name="saveOrUpdateWafer")
 @dataclass
 class Wafer(DomainObject):
     """Represents the database entry of a wafer."""
@@ -62,21 +51,10 @@ class Wafer(DomainObject):
         })
         return super(cls, cls)._create(**kwargs)
 
-    @classmethod
-    def load_from_db(cls, pid: str):
-        """Create a Wafer object from an existing db entry."""
-        data = get_wafer_by_id(pid)
-        return cls(**data)
 
-    def save_to_db(self):
-        """Saves or updates the Wafer object to the db."""
-        response = save_or_update_wafer(self.description,
-                                        self.name,
-                                        self.productionDate,
-                                        self.pid)
-        self._handle_db_response(response)
-
-
+@get_by_id
+@get_all
+@save(fn_name="saveOrUpdateSample")
 @dataclass
 class Sample(DomainObject):
     """Represents the database entry of a sample."""
@@ -93,21 +71,10 @@ class Sample(DomainObject):
         })
         return super(cls, cls)._create(**kwargs)
 
-    @classmethod
-    def load_from_db(cls, pid: str):
-        """Create a Sample object from an existing db entry."""
-        data = get_sample_by_id(pid)
-        return cls(**data)
 
-    def save_to_db(self):
-        """Saves or updates the Sample object to the db."""
-        response = save_or_update_sample(self.description,
-                                         self.name,
-                                         self.wafer.name,
-                                         self.pid)
-        self._handle_db_response(response)
-
-
+@get_by_id
+@get_all
+@save(fn_name="saveOrUpdateDesign")
 @dataclass
 class Design(DomainObject):
     """Represents the database entry of a design."""
@@ -141,25 +108,10 @@ class Design(DomainObject):
         })
         return super(cls, cls)._create(**kwargs)
 
-    @classmethod
-    def load_from_db(cls, pid: str):
-        """Create a Design object from an existing db entry."""
-        data = get_design_by_id(pid)
-        return cls(**data)
 
-    def save_to_db(self):
-        """Saves or updates the Design object to the db."""
-        response = save_or_update_design(",".join(self.allowedForMeasurementTypes),
-                                         self.creator,
-                                         self.factory.name,
-                                         self.mask,
-                                         self.name,
-                                         self.sample.name,
-                                         self.wafer.name,
-                                         self.pid)
-        self._handle_db_response(response)
-
-
+@get_by_id
+@get_all
+@save(fn_name="saveOrUpdateDevice")
 @dataclass
 class Device(DomainObject):
     """Represents the database entry of a device."""
@@ -175,16 +127,3 @@ class Device(DomainObject):
             "sample": sample,
         })
         return super(cls, cls)._create(**kwargs)
-
-    @classmethod
-    def load_from_db(cls, pid: str):
-        """Create a Device object from an existing db entry."""
-        data = get_device_by_id(pid)
-        return cls(**data)
-
-    def save_to_db(self):
-        """Saves or updates the Device object to the db."""
-        response = save_or_update_device(self.name,
-                                         self.design.name,
-                                         self.sample.name)
-        self._handle_db_response(response)

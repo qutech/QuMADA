@@ -5,31 +5,17 @@ Representations of domain objects (Measurements).
 
 from __future__ import annotations
 
-from enum import Enum
 from dataclasses import dataclass, field
-from qtools.data.db import (get_equipment_by_id,
-                            get_equipment_function_by_id,
-                            get_equipment_instance_by_id,
-                            get_experiment_by_id,
-                            get_measurement_by_id,
-                            get_measurement_setting_by_id,
-                            get_measurement_setting_script_by_id,
-                            get_measurement_type_by_id,
-                            get_template_parameter_by_id,
-                            save_or_update_equipment,
-                            save_or_update_equipment_function,
-                            save_or_update_equipment_instance,
-                            save_or_update_experiment,
-                            save_or_update_measurement,
-                            save_or_update_measurement_setting,
-                            save_or_update_measurement_setting_script,
-                            save_or_update_measurement_type,
-                            save_or_update_template_parameter)
+from enum import Enum
 
+from qtools.data.apiclasses import get_all, get_by_id, save
 from qtools.data.device import Device
 from qtools.data.domain import DomainObject
 
 
+@get_by_id
+@get_all
+@save(fn_name="saveOrUpdateTemplateParameter")
 @dataclass
 class TemplateParameter(DomainObject):
     """Represents the database entry of a template parameter."""
@@ -47,20 +33,10 @@ class TemplateParameter(DomainObject):
         })
         return super(cls, cls)._create(**kwargs)
 
-    @classmethod
-    def load_from_db(cls, pid: str):
-        """Create a TemplateParameter object from an existing db entry."""
-        data = get_template_parameter_by_id(pid)
-        return cls(**data)
 
-    def save_to_db(self):
-        """Saves or updates the TemplateParameter object to the db."""
-        response = save_or_update_template_parameter(self.name,
-                                                     self.type,
-                                                     self.pid)
-        self._handle_db_response(response)
-
-
+@get_by_id
+@get_all
+@save(fn_name="saveOrUpdateMeasurementSettingScript")
 @dataclass
 class MeasurementSettingScript(DomainObject):
     """Represents the database entry of a measurement setting script."""
@@ -85,22 +61,10 @@ class MeasurementSettingScript(DomainObject):
         })
         return super(cls, cls)._create(**kwargs)
 
-    @classmethod
-    def load_from_db(cls, pid: str):
-        """Create a MeasurementSettingScript object from an existing db entry."""
-        data = get_measurement_setting_script_by_id(pid)
-        return cls(**data)
 
-    def save_to_db(self):
-        """Saves or updates the MeasurementSettingScript object to the db."""
-        response = save_or_update_measurement_setting_script(self.name,
-                                                             self.script,
-                                                             self.language,
-                                                             ",".join(self.allowedParameters),
-                                                             self.pid)
-        self._handle_db_response(response)
-
-
+@get_by_id
+@get_all(fn_name="measurementSettings")
+@save(fn_name="saveOrUpdateMeasurementSettings")
 @dataclass
 class MeasurementSettings(DomainObject):
     """Represents the database entry of the measurement settings."""
@@ -118,19 +82,6 @@ class MeasurementSettings(DomainObject):
         })
         return super(cls, cls)._create(**kwargs)
 
-    @classmethod
-    def load_from_db(cls, pid: str):
-        """Create a MeasurementSettings object from an existing db entry."""
-        data = get_measurement_setting_by_id(pid)
-        return cls(**data)
-
-    def save_to_db(self):
-        """Saves or updates the MeasurementSettings object to the db."""
-        response = save_or_update_measurement_setting(self.name,
-                                                      self.script.pid,
-                                                      self.pid)
-        self._handle_db_response(response)
-
 
 class FunctionType(Enum):
     """Possible equipment functions"""
@@ -142,6 +93,9 @@ class FunctionType(Enum):
     CURRENT_SENSE_AC = 5
 
 
+@get_by_id
+@get_all
+@save(fn_name="saveOrUpdateEquipmentFunction")
 @dataclass
 class EquipmentFunction(DomainObject):
     """Represents the database entry of a equipment function."""
@@ -159,20 +113,10 @@ class EquipmentFunction(DomainObject):
         })
         return super(cls, cls)._create(**kwargs)
 
-    @classmethod
-    def load_from_db(cls, pid: str):
-        """Create an EquipmentFunction object from an existing db entry."""
-        data = get_equipment_function_by_id(pid)
-        return cls(**data)
 
-    def save_to_db(self):
-        """Saves or updates the EquipmentFunction object to the db."""
-        response = save_or_update_equipment_function(self.name,
-                                                     self.functionType.value,
-                                                     self.pid)
-        self._handle_db_response(response)
-
-
+@get_by_id
+@get_all
+@save(fn_name="saveOrUpdateEquipment")
 @dataclass
 class Equipment(DomainObject):
     """Represents the database entry of an equipment."""
@@ -197,22 +141,10 @@ class Equipment(DomainObject):
         })
         return super(cls, cls)._create(**kwargs)
 
-    @classmethod
-    def load_from_db(cls, pid: str):
-        """Create an Equipment object from an existing db entry."""
-        data = get_equipment_by_id(pid)
-        return cls(**data)
 
-    def save_to_db(self):
-        """Saves or updates the Equipment object to the db."""
-        response = save_or_update_equipment(self.name,
-                                            self.description,
-                                            self.parameters,
-                                            ",".join(self.functions),
-                                            self.pid)
-        self._handle_db_response(response)
-
-
+@get_by_id
+@get_all
+@save(fn_name="saveOrUpdateEquipmentInstance")
 @dataclass
 class EquipmentInstance(DomainObject):
     """Represents the database entry of an equipment instance."""
@@ -233,21 +165,10 @@ class EquipmentInstance(DomainObject):
         })
         return super(cls, cls)._create(**kwargs)
 
-    @classmethod
-    def load_from_db(cls, pid: str):
-        """Create an EquipmentInstance object from an existing db entry."""
-        data = get_equipment_instance_by_id(pid)
-        return cls(**data)
 
-    def save_to_db(self):
-        """Saves or updates the EquipmentInstance object to the db."""
-        response = save_or_update_equipment_instance(self.name,
-                                                     self.type.pid,
-                                                     self.parameter,
-                                                     self.pid)
-        self._handle_db_response(response)
-
-
+@get_by_id
+@get_all(fn_name="measurementTypes")
+@save(fn_name="saveOrUpdateMeasurementType")
 @dataclass
 class MeasurementType(DomainObject):
     """Represents the database entry of a measurement type."""
@@ -278,24 +199,10 @@ class MeasurementType(DomainObject):
         })
         return super(cls, cls)._create(**kwargs)
 
-    @classmethod
-    def load_from_db(cls, pid: str):
-        """Create a MeasurementType object from an existing db entry."""
-        data = get_measurement_type_by_id(pid)
-        return cls(**data)
 
-    def save_to_db(self):
-        """Saves or updates the MeasurementType object to the db."""
-        response = save_or_update_measurement_type(self.name,
-                                                   self.model,
-                                                   self.scriptTemplate.pid,
-                                                   self.extractableParameters,
-                                                   self.mapping,
-                                                   ",".join(self.equipments),
-                                                   self.pid)
-        self._handle_db_response(response)
-
-
+@get_by_id
+@get_all
+@save(fn_name="saveOrUpdateExperiment")
 @dataclass
 class Experiment(DomainObject):
     """Represents the database entry of an experiment."""
@@ -329,25 +236,10 @@ class Experiment(DomainObject):
         })
         return super(cls, cls)._create(**kwargs)
 
-    @classmethod
-    def load_from_db(cls, pid: str):
-        """Create an Experiment object from an existing db entry."""
-        data = get_experiment_by_id(pid)
-        return cls(**data)
 
-    def save_to_db(self):
-        """Saves or updates the Experiment object to the db."""
-        response = save_or_update_experiment(self.description,
-                                             self.name,
-                                             self.user,
-                                             self.group,
-                                             self.softwareNoiseFilters,
-                                             self.measurementType.name,
-                                             ",".join(self.equipmentInstances),
-                                             self.pid)
-        self._handle_db_response(response)
-
-
+@get_by_id
+@get_all
+@save(fn_name="saveOrUpdateMeasurement")
 @dataclass
 class Measurement(DomainObject):
     """Represents the database entry of a measurement."""
@@ -373,19 +265,3 @@ class Measurement(DomainObject):
             "measurementParameters": measurementParameters,
         })
         return super(cls, cls)._create(**kwargs)
-
-    @classmethod
-    def load_from_db(cls, pid: str):
-        """Create a Measurement object from an existing db entry."""
-        data = get_measurement_by_id(pid)
-        return cls(**data)
-
-    def save_to_db(self):
-        """Saves or updates the Measurement object to the db."""
-        response = save_or_update_measurement(self.name,
-                                              self.device.name,
-                                              self.experiment.name,
-                                              self.settings.name,
-                                              self.measurementParameters,
-                                              self.pid)
-        self._handle_db_response(response)
