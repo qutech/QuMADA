@@ -7,11 +7,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from qtools.data.apiclasses import get_all, get_by_id, save
-from qtools.data.db import (
-    save_or_update_design,
-    save_or_update_device,
-    save_or_update_sample,
-)
+from qtools.data.db import save_or_update_device, save_or_update_sample
 from qtools.data.domain import DomainObject
 
 
@@ -86,6 +82,19 @@ class Sample(DomainObject):
 
 @get_by_id
 @get_all
+@save(
+    fn_name="saveOrUpdateDesign",
+    field_names=[
+        "waferId",
+        "factoryId",
+        "sampleId",
+        "mask",
+        "creator",
+        "allowedForMeasurementTypes",
+        "name",
+        "pid",
+    ],
+)
 @dataclass
 class Design(DomainObject):
     """Represents the database entry of a design."""
@@ -119,17 +128,17 @@ class Design(DomainObject):
         })
         return super(cls, cls)._create(**kwargs)
 
-    def save_to_db(self):
-        """Saves or updates the Design object to the db."""
-        response = save_or_update_design(",".join(self.allowedForMeasurementTypes),
-                                         self.creator,
-                                         self.factory.name,
-                                         self.mask,
-                                         self.name,
-                                         self.sample.name,
-                                         self.wafer.name,
-                                         self.pid)
-        self._handle_db_response(response)
+    @property
+    def waferId(self):
+        return self.wafer.pid
+
+    @property
+    def factoryId(self):
+        return self.factory.pid
+
+    @property
+    def sampleId(self):
+        return self.sample.pid
 
 
 @get_by_id

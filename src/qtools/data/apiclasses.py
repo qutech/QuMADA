@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+from typing import Iterable
+
 from qtools.data.db import _api_get, _api_put
+from qtools.data.domain import DomainObject
 
 
 def _process_class_get_by_id(cls, fn_name: str, id_name: str):
@@ -78,7 +81,21 @@ def _process_class_save(cls, fn_name: str, field_names: list[str]):
     # TODO: change this to exec-construction, that dataclasses uses for better introspection
 
     def save(self):
-        data = {field_name: getattr(self, field_name) for field_name in field_names}
+        # data = {field_name: getattr(self, field_name) for field_name in field_names}
+        data = {}
+        for field_name in field_names:
+            # TODO: match-clause with Python 3.10
+            attr = getattr(self, field_name)
+            if isinstance(attr, DomainObject):
+                # Take pid for DomainObjects by default
+                attr = attr.pid
+            elif isinstance(attr, Iterable) and not isinstance(attr, str):
+                # Join Iterables by comma
+                attr = ",".join(attr)
+            elif not isinstance(attr, str):
+                # Turn everything else into str
+                attr = str(attr)
+            data[field_name] = attr
         resp = _api_put(fn_name, data)
         self._handle_db_response(resp)
 

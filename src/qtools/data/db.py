@@ -71,42 +71,6 @@ def save_or_update_sample(description: str,
     return _api_put("saveOrUpdateSample", data)
 
 
-def save_or_update_design(allowed_for_measurement_types: str,
-                          creator: str,
-                          factory_name: str,
-                          mask: str,
-                          name: str,
-                          sample_name: str,
-                          wafer_name: str,
-                          pid: str = None):
-    """
-    Creates or updates an design on the database.
-
-    Args:
-        allowed_for_measurement_types (str):
-        creator (str): Creator of the design
-        factory_name (str): Name of the factory
-        mask (str):
-        name (str): Design name
-        sample_name (str): Sample name
-        wafer_name (str): Wafer name
-        pid (str, optional): Provide the unique ID of an existing design on the database to update it.
-                             Defaults to None.
-    """
-    data = {
-        "allowedForMeasumentTypes": allowed_for_measurement_types,
-        "creator": creator,
-        "factoryName": factory_name,
-        "mask": mask,
-        "name": name,
-        "sampleName": sample_name,
-        "waferName": wafer_name
-    }
-    if pid:
-        data["pid"] = pid
-    return _api_put("saveOrUpdateDesign", data)
-
-
 def save_or_update_device(name: str,
                           design_name: str,
                           sample_name: str,
