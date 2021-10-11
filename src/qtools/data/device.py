@@ -12,7 +12,7 @@ from qtools.data.domain import DomainObject
 
 @get_by_id
 @get_all(fn_name="factories")
-@save(fn_name="saveOrUpdateFactory", field_names=["description", "name", "pid"])
+@save(fn_name="saveOrUpdateFactory")
 @dataclass
 class Factory(DomainObject):
     """Represents the database entry of a factory."""
@@ -54,9 +54,7 @@ class Wafer(DomainObject):
 
 @get_by_id
 @get_all
-@save(
-    fn_name="saveOrUpdateSample", field_names=["description", "waferId", "name", "pid"]
-)
+@save(fn_name="saveOrUpdateSample")
 @dataclass
 class Sample(DomainObject):
     """Represents the database entry of a sample."""
@@ -73,26 +71,10 @@ class Sample(DomainObject):
         })
         return super(cls, cls)._create(**kwargs)
 
-    @property
-    def waferId(self):
-        return self.wafer.pid
-
 
 @get_by_id
 @get_all
-@save(
-    fn_name="saveOrUpdateDesign",
-    field_names=[
-        "waferId",
-        "factoryId",
-        "sampleId",
-        "mask",
-        "creator",
-        "allowedForMeasurementTypes",
-        "name",
-        "pid",
-    ],
-)
+@save(fn_name="saveOrUpdateDesign")
 @dataclass
 class Design(DomainObject):
     """Represents the database entry of a design."""
@@ -126,22 +108,10 @@ class Design(DomainObject):
         })
         return super(cls, cls)._create(**kwargs)
 
-    @property
-    def waferId(self):
-        return self.wafer.pid
-
-    @property
-    def factoryId(self):
-        return self.factory.pid
-
-    @property
-    def sampleId(self):
-        return self.sample.pid
-
 
 @get_by_id
 @get_all
-@save(fn_name="saveOrUpdateDevice", field_names=["designId", "sampleId", "name", "pid"])
+@save(fn_name="saveOrUpdateDevice")
 @dataclass
 class Device(DomainObject):
     """Represents the database entry of a device."""
@@ -157,11 +127,3 @@ class Device(DomainObject):
             "sample": sample,
         })
         return super(cls, cls)._create(**kwargs)
-
-    @property
-    def designId(self):
-        return self.design.pid
-
-    @property
-    def sampleId(self):
-        return self.sample.pid

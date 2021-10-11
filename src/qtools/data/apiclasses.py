@@ -89,12 +89,13 @@ def _process_class_save(cls, fn_name: str, field_names: list[str]):
             if isinstance(attr, DomainObject):
                 # Take pid for DomainObjects by default
                 attr = attr.pid
+                field_name = f"{field_name}Id"
             elif isinstance(attr, Iterable) and not isinstance(attr, str):
                 # Join Iterables by comma
                 attr = ",".join(attr)
             elif not isinstance(attr, str):
-                # Turn everything else into str
-                attr = str(attr)
+                # Turn everything else into str (except None, which turns into an empty string instead of "None")
+                attr = str(attr or "")
             data[field_name] = attr
         resp = _api_put(fn_name, data)
         self._handle_db_response(resp)
