@@ -10,7 +10,7 @@ from qcodes.instrument_drivers.tektronix.Keithley_2400 import Keithley_2400
 from qcodes.instrument_drivers.tektronix.Keithley_2450 import Keithley2450
 from qcodes.tests.instrument_mocks import DummyInstrument, DummyInstrumentWithMeasurement
 
-from qtools.data.base import create_metadata_device
+from qtools.data.base import create_metadata_device, create_metadata_from_experiment
 import qtools.data.db as db
 from qtools.instrument.mapping.base import add_mapping_to_instrument, map_gates_to_instruments, filter_flatten_parameters
 from qtools.measurement.measurement_for_immediate_use.inducing_measurement import InducingMeasurementScript
@@ -87,6 +87,7 @@ if __name__ == "__main__":
     # Create Metadata structure
     db.api_url = "http://134.61.7.48:9123"
     device = create_metadata_device()
+    experiment = create_metadata_from_experiment()
     device.save_to_db()
 
     # map gate functions to instruments
