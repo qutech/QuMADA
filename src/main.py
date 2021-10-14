@@ -1,33 +1,48 @@
 #!/usr/bin/env python3
 
-from typing import MutableMapping, Any
+from typing import Any, MutableMapping
 
 import qcodes as qc
+import qcodes.instrument.sims as qcsims
 from qcodes.instrument.base import Instrument
 from qcodes.instrument_drivers.Harvard.Decadac import Decadac
 from qcodes.instrument_drivers.stanford_research.SR830 import SR830
 from qcodes.instrument_drivers.tektronix.Keithley_2400 import Keithley_2400
 from qcodes.instrument_drivers.tektronix.Keithley_2450 import Keithley2450
-from qcodes.tests.instrument_mocks import DummyInstrument, DummyInstrumentWithMeasurement
+from qcodes.tests.instrument_mocks import (
+    DummyInstrument,
+    DummyInstrumentWithMeasurement,
+)
 
-from qtools.data.base import create_metadata_device, create_metadata_from_experiment
 import qtools.data.db as db
-from qtools.instrument.mapping.base import add_mapping_to_instrument, map_gates_to_instruments, filter_flatten_parameters
-from qtools.measurement.measurement_for_immediate_use.inducing_measurement import InducingMeasurementScript
-from qtools.measurement.measurement_for_immediate_use.generic_measurement import Generic_1D_Sweep
-from qtools.measurement.measurement_for_immediate_use.generic_measurement import Generic_1D_Sweep, Generic_nD_Sweep
-from qtools.measurement.measurement import QtoolsStation as Station
-
-
 # Filenames for simulation files
 import qtools.instrument.sims as qtsims
-import qcodes.instrument.sims as qcsims
+from qtools.data.base import create_metadata_device, create_metadata_from_experiment
+from qtools.instrument.mapping.base import (
+    add_mapping_to_instrument,
+    filter_flatten_parameters,
+    map_gates_to_instruments,
+)
+from qtools.measurement.measurement import QtoolsStation as Station
+from qtools.measurement.measurement_for_immediate_use.generic_measurement import (
+    Generic_1D_Sweep,
+    Generic_nD_Sweep,
+)
+from qtools.measurement.measurement_for_immediate_use.inducing_measurement import (
+    InducingMeasurementScript,
+)
+
 DECADAC_VISALIB = qtsims.__file__.replace('__init__.py', 'FZJ_Decadac.yaml@sim')
 KEITHLEY_2450_VISALIB = qcsims.__file__.replace('__init__.py', 'Keithley_2450.yaml@sim')
 SR830_VISALIB = qcsims.__file__.replace('__init__.py', 'SR830.yaml@sim')
 
 # Filenames for mapping files
-from qtools.instrument.mapping import DECADAC_MAPPING, SR830_MAPPING, KEITHLEY_2400_MAPPING, KEITHLEY_2450_MAPPING
+from qtools.instrument.mapping import (
+    DECADAC_MAPPING,
+    KEITHLEY_2400_MAPPING,
+    KEITHLEY_2450_MAPPING,
+    SR830_MAPPING,
+)
 
 
 def _initialize_instruments() -> MutableMapping[Any, Instrument]:
@@ -88,7 +103,7 @@ if __name__ == "__main__":
     db.api_url = "http://134.61.7.48:9123"
     device = create_metadata_device()
     experiment = create_metadata_from_experiment()
-    device.save_to_db()
+    device.save()
 
     # map gate functions to instruments
     map_gates_to_instruments(station.components, script.gate_parameters)
