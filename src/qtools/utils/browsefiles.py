@@ -35,7 +35,7 @@ def browsefiles(**kwargs):
     # Show window again and lift it to top so it can get focus,
     # otherwise dialogs will end up behind the terminal.
     root.deiconify()
-    root.lift()
+    root.tkraise()
     root.focus_force()
     filename = filedialog.askopenfilename(parent=root,
                                           initialdir=initialdir,
@@ -68,7 +68,7 @@ def browsesavefile(**kwargs):
     # Show window again and lift it to top so it can get focus,
     # otherwise dialogs will end up behind the terminal.
     root.deiconify()
-    root.lift()
+    root.tkraise()
     root.focus_force()
     file = tkinter.filedialog.asksaveasfile(parent=root,
                                             initialdir=initialdir,
