@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-
-import json
+import argparse
 from typing import Any, MutableMapping
 
 import qcodes as qc
@@ -86,6 +85,21 @@ def _initialize_instruments() -> MutableMapping[Any, Instrument]:
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser("qtools")
+    parser.add_argument(
+        "-m",
+        "--metadata",
+        type=argparse.FileType("r"),
+        help="YAML-file with metadata information.",
+    )
+    args = parser.parse_args()
+
+    # Load metadata
+    db.api_url = "http://134.61.7.48:9123"
+    with args.metadata or open("metadata.yaml") as f:
+        metadata = Metadata.from_yaml(f)
+    metadata.save()
+
     # Create station with instruments
     station = Station()
     instruments = _initialize_instruments()
@@ -100,13 +114,6 @@ if __name__ == "__main__":
     # Load measuring script template
     script = InducingMeasurementScript()
     script.setup()
-
-    # Create Metadata structure
-    db.api_url = "http://134.61.7.48:9123"
-
-    with open("metadata.yaml") as f:
-        metadata = Metadata.from_yaml(f)
-    metadata.save()
 
     # map gate functions to instruments
     map_gates_to_instruments(station.components, script.gate_parameters)
