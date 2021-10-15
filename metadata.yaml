@@ -1,0 +1,68 @@
+!!python/object:qtools.data.device.Device
+createDate: null
+creatorId: null
+design: !!python/object:qtools.data.device.Design
+  allowedForMeasurementTypes: []
+  createDate: null
+  creator: DGrothe
+  creatorId: null
+  factory: !!python/object:qtools.data.device.Factory
+    createDate: null
+    creatorId: null
+    description: Testfactory 3
+    lastChangeDate: null
+    lastChangerId: null
+    name: F3
+    pid: ed41b23a-3a81-4b91-b033-44a13383753d
+  lastChangeDate: null
+  lastChangerId: null
+  mask: mask
+  name: Design3
+  pid: 7d333741-d52e-4237-aa31-66869f1bbcce
+  sample: !!python/object:qtools.data.device.Sample
+    createDate: null
+    creatorId: null
+    description: Testsample 4
+    lastChangeDate: null
+    lastChangerId: null
+    name: S4
+    pid: 65584462-c74f-49ce-ba8d-fe7db462a374
+    wafer: !!python/object:qtools.data.device.Wafer
+      createDate: null
+      creatorId: null
+      description: Testwafer 4
+      lastChangeDate: null
+      lastChangerId: null
+      name: W4
+      pid: bf848ce0-ec43-4934-8f87-736d33107218
+      productionDate: null
+  wafer: !!python/object:qtools.data.device.Wafer
+    createDate: null
+    creatorId: null
+    description: Testwafer 4
+    lastChangeDate: null
+    lastChangerId: null
+    name: W4
+    pid: bf848ce0-ec43-4934-8f87-736d33107218
+    productionDate: null
+lastChangeDate: null
+lastChangerId: null
+name: Device6
+pid: null
+sample: !!python/object:qtools.data.device.Sample
+  createDate: null
+  creatorId: null
+  description: Testsample 4
+  lastChangeDate: null
+  lastChangerId: null
+  name: S4
+  pid: null
+  wafer: !!python/object:qtools.data.device.Wafer
+    createDate: null
+    creatorId: null
+    description: Testwafer 1
+    lastChangeDate: null
+    lastChangerId: null
+    name: W1
+    pid: 081b0ae8-e0e1-45f9-84e7-9779340343b4
+    productionDate: '2021-08-23T22:00:00.000+00:00'

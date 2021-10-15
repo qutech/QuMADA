@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import json
 from typing import Any, MutableMapping
 
 import qcodes as qc
@@ -17,7 +18,8 @@ from qcodes.tests.instrument_mocks import (
 import qtools.data.db as db
 # Filenames for simulation files
 import qtools.instrument.sims as qtsims
-from qtools.data.base import create_metadata_device, create_metadata_from_experiment
+from qtools.data.base import create_metadata_device
+from qtools.data.metadata import Metadata
 from qtools.instrument.mapping.base import (
     add_mapping_to_instrument,
     filter_flatten_parameters,
@@ -101,12 +103,16 @@ if __name__ == "__main__":
 
     # Create Metadata structure
     db.api_url = "http://134.61.7.48:9123"
-    device = create_metadata_device()
-    experiment = create_metadata_from_experiment()
-    device.save()
+
+    with open("metadata.yaml") as f:
+        metadata = Metadata.from_yaml(f)
+    metadata.save()
 
     # map gate functions to instruments
     map_gates_to_instruments(station.components, script.gate_parameters)
 
     # run script
     script.run()
+
+    # Exit
+    raise SystemExit(0)
