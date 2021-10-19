@@ -102,9 +102,15 @@ if __name__ == "__main__":
     # Load metadata
     if not args.no_metadata:
         db.api_url = "http://134.61.7.48:9123"
-        with args.metadata or open("metadata.yaml") as f:
-            metadata = Metadata.from_yaml(f)
-        metadata.save()
+        try:
+            with args.metadata or open("metadata.yaml") as f:
+                metadata = Metadata.from_yaml(f)
+            metadata.save()
+        except FileNotFoundError:
+            print(
+                "No Metadata file found. Please specify using -m/--metadata [filename].yaml or provide a default metadata.yaml in the working directory."
+            )
+            raise SystemExit(1)
 
     # Create station with instruments
     station = Station()
