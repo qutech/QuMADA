@@ -92,13 +92,19 @@ if __name__ == "__main__":
         type=argparse.FileType("r"),
         help="YAML-file with metadata information.",
     )
+    # Disable metadata
+    parser.add_argument(
+        "--no-metadata", "-nm", action="store_true", help="Disable metadata."
+    )
+
     args = parser.parse_args()
 
     # Load metadata
-    db.api_url = "http://134.61.7.48:9123"
-    with args.metadata or open("metadata.yaml") as f:
-        metadata = Metadata.from_yaml(f)
-    metadata.save()
+    if not args.no_metadata:
+        db.api_url = "http://134.61.7.48:9123"
+        with args.metadata or open("metadata.yaml") as f:
+            metadata = Metadata.from_yaml(f)
+        metadata.save()
 
     # Create station with instruments
     station = Station()
