@@ -1,68 +1,28 @@
-!!python/object:qtools.data.device.Device
-createDate: null
-creatorId: null
-design: !!python/object:qtools.data.device.Design
-  allowedForMeasurementTypes: []
-  createDate: null
-  creator: DGrothe
-  creatorId: null
-  factory: !!python/object:qtools.data.device.Factory
-    createDate: null
-    creatorId: null
-    description: Testfactory 3
-    lastChangeDate: null
-    lastChangerId: null
-    name: F3
-    pid: ed41b23a-3a81-4b91-b033-44a13383753d
-  lastChangeDate: null
-  lastChangerId: null
-  mask: mask
-  name: Design3
-  pid: 7d333741-d52e-4237-aa31-66869f1bbcce
-  sample: !!python/object:qtools.data.device.Sample
-    createDate: null
-    creatorId: null
-    description: Testsample 4
-    lastChangeDate: null
-    lastChangerId: null
-    name: S4
-    pid: 65584462-c74f-49ce-ba8d-fe7db462a374
-    wafer: !!python/object:qtools.data.device.Wafer
-      createDate: null
-      creatorId: null
-      description: Testwafer 4
-      lastChangeDate: null
-      lastChangerId: null
-      name: W4
-      pid: bf848ce0-ec43-4934-8f87-736d33107218
-      productionDate: null
-  wafer: !!python/object:qtools.data.device.Wafer
-    createDate: null
-    creatorId: null
-    description: Testwafer 4
-    lastChangeDate: null
-    lastChangerId: null
-    name: W4
-    pid: bf848ce0-ec43-4934-8f87-736d33107218
-    productionDate: null
-lastChangeDate: null
-lastChangerId: null
-name: Device6
-pid: null
-sample: !!python/object:qtools.data.device.Sample
-  createDate: null
-  creatorId: null
-  description: Testsample 4
-  lastChangeDate: null
-  lastChangerId: null
-  name: S4
-  pid: null
-  wafer: !!python/object:qtools.data.device.Wafer
-    createDate: null
-    creatorId: null
-    description: Testwafer 1
-    lastChangeDate: null
-    lastChangerId: null
-    name: W1
-    pid: 081b0ae8-e0e1-45f9-84e7-9779340343b4
-    productionDate: '2021-08-23T22:00:00.000+00:00'
+!!python/object:qtools.data.metadata.Metadata
+device: &id001 !Device "63923883-1c47-412f-a1e7-1be411f90b1f"
+experiment: &id002 !Experiment
+  description: Testexperiment
+  equipmentInstances: null
+  group: group
+  measurementType: !!python/object:qtools.data.measurement.MeasurementType
+    equipments:
+    - !Equipment "d7914063-c786-4b0c-9ded-84390a3839ba"
+    - !Equipment "dbc9e518-2624-4536-b86d-1cc5ddb1c6bf"
+    - !Equipment "24e03597-fdca-4c70-ad39-3db752d3d636"
+    - !Equipment "57188264-4210-4877-b512-bab9086398b2"
+    extractableParameters: X
+    mapping: mapping
+    model: model
+    name: Measurementtype1
+    scriptTemplate: &id003 !MeasurementSettingScript "c52af245-fd65-4249-bcd2-367fe90cade1"
+  name: Experiment 1
+  softwareNoiseFilters: null
+  user: grothe
+measurement: !Measurement
+  device: *id001
+  experiment: *id002
+  measurementParameters: meas_params
+  name: Meas1
+  settings: !MeasurementSettings
+    name: MeasurementSetting1
+    script: *id003

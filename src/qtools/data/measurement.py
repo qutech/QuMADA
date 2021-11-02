@@ -11,14 +11,18 @@ from enum import Enum
 from qtools.data.apiclasses import get_all, get_by_id, save
 from qtools.data.device import Device
 from qtools.data.domain import DomainObject
+from qtools.data.yaml import DomainYAMLObject
 
 
 @get_by_id
 @get_all
 @save(fn_name="saveOrUpdateTemplateParameter")
 @dataclass
-class TemplateParameter(DomainObject):
+class TemplateParameter(DomainObject, DomainYAMLObject):
     """Represents the database entry of a template parameter."""
+
+    yaml_tag = "!TemplateParameter"
+
     type: str
 
     @classmethod
@@ -38,8 +42,11 @@ class TemplateParameter(DomainObject):
 @get_all
 @save(fn_name="saveOrUpdateMeasurementSettingScript")
 @dataclass
-class MeasurementSettingScript(DomainObject):
+class MeasurementSettingScript(DomainObject, DomainYAMLObject):
     """Represents the database entry of a measurement setting script."""
+
+    yaml_tag = "!MeasurementSettingScript"
+
     script: str
     language: str
     allowedParameters: list[TemplateParameter] = field(default_factory=list)
@@ -66,8 +73,11 @@ class MeasurementSettingScript(DomainObject):
 @get_all(fn_name="measurementSettings")
 @save(fn_name="saveOrUpdateMeasurementSettings")
 @dataclass
-class MeasurementSettings(DomainObject):
+class MeasurementSettings(DomainObject, DomainYAMLObject):
     """Represents the database entry of the measurement settings."""
+
+    yaml_tag = "!MeasurementSettings"
+
     script: MeasurementSettingScript
 
     @classmethod
@@ -97,8 +107,11 @@ class FunctionType(Enum):
 @get_all
 @save(fn_name="saveOrUpdateEquipmentFunction")
 @dataclass
-class EquipmentFunction(DomainObject):
+class EquipmentFunction(DomainObject, DomainYAMLObject):
     """Represents the database entry of a equipment function."""
+
+    yaml_tag = "!EquipmentFunction"
+
     functionType: FunctionType
 
     @classmethod
@@ -118,8 +131,11 @@ class EquipmentFunction(DomainObject):
 @get_all
 @save(fn_name="saveOrUpdateEquipment")
 @dataclass
-class Equipment(DomainObject):
+class Equipment(DomainObject, DomainYAMLObject):
     """Represents the database entry of an equipment."""
+
+    yaml_tag = "!Equipment"
+
     description: str
     parameters: str
     functions: list[EquipmentFunction]
@@ -146,8 +162,11 @@ class Equipment(DomainObject):
 @get_all
 @save(fn_name="saveOrUpdateEquipmentInstance")
 @dataclass
-class EquipmentInstance(DomainObject):
+class EquipmentInstance(DomainObject, DomainYAMLObject):
     """Represents the database entry of an equipment instance."""
+
+    yaml_tag = "!EquipmentInstance"
+
     type: Equipment
     parameter: str
 
@@ -170,8 +189,11 @@ class EquipmentInstance(DomainObject):
 @get_all(fn_name="measurementTypes")
 @save(fn_name="saveOrUpdateMeasurementType")
 @dataclass
-class MeasurementType(DomainObject):
+class MeasurementType(DomainObject, DomainYAMLObject):
     """Represents the database entry of a measurement type."""
+
+    yaml_tag = "!MeasurementType"
+
     model: str
     scriptTemplate: MeasurementSettingScript
     extractableParameters: str
@@ -180,23 +202,27 @@ class MeasurementType(DomainObject):
     # TODO: equipments
 
     @classmethod
-    def create(cls,
-               name: str,
-               model: str,
-               scriptTemplate: MeasurementSettingScript,
-               exctractableParameters: str,
-               mapping: str,
-               equipments: list[Equipment],
-               **kwargs):
+    def create(
+        cls,
+        name: str,
+        model: str,
+        scriptTemplate: MeasurementSettingScript,
+        extractableParameters: str,
+        mapping: str,
+        equipments: list[Equipment],
+        **kwargs
+    ):
         """Creates a MeasurementType object."""
-        kwargs.update({
-            "name": name,
-            "model": model,
-            "scriptTemplate": scriptTemplate,
-            "exctractableParameters": exctractableParameters,
-            "mapping": mapping,
-            "equipments": equipments
-        })
+        kwargs.update(
+            {
+                "name": name,
+                "model": model,
+                "scriptTemplate": scriptTemplate,
+                "extractableParameters": extractableParameters,
+                "mapping": mapping,
+                "equipments": equipments,
+            }
+        )
         return super(cls, cls)._create(**kwargs)
 
 
@@ -204,8 +230,11 @@ class MeasurementType(DomainObject):
 @get_all
 @save(fn_name="saveOrUpdateExperiment")
 @dataclass
-class Experiment(DomainObject):
+class Experiment(DomainObject, DomainYAMLObject):
     """Represents the database entry of an experiment."""
+
+    yaml_tag = "!Experiment"
+
     description: str
     user: str
     group: str
@@ -241,8 +270,11 @@ class Experiment(DomainObject):
 @get_all
 @save(fn_name="saveOrUpdateMeasurement")
 @dataclass
-class Measurement(DomainObject):
+class Measurement(DomainObject, DomainYAMLObject):
     """Represents the database entry of a measurement."""
+
+    yaml_tag = "!Measurement"
+
     device: Device
     experiment: Experiment
     settings: MeasurementSettings

@@ -103,7 +103,7 @@ if __name__ == "__main__":
     if not args.no_metadata:
         db.api_url = "http://134.61.7.48:9123"
         try:
-            with args.metadata or open("metadata_new.yaml") as f:
+            with args.metadata or open("metadata.yaml") as f:
                 metadata = Metadata.from_yaml(f)
             metadata.save_to_db()
             # update metadata.yaml with pids
