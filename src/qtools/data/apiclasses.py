@@ -95,12 +95,14 @@ def _process_class_save(cls, fn_name: str, field_names: list[str]):
                 attr = [a.pid if isinstance(a, DomainObject) else a for a in attr]
                 # Join Iterables by comma
                 attr = ",".join(attr)
+                field_name = f"{field_name.removesuffix('s')}Ids"
             elif not isinstance(attr, str):
                 # Turn everything else into str (except None, which turns into an empty string instead of "None")
                 attr = str(attr or "")
             data[field_name] = attr
         resp = _api_put(fn_name, data)
         self._handle_db_response(resp)
+        return self.pid
 
     setattr(cls, "save", save)
     return cls
