@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-
+import argparse
 from typing import Any, MutableMapping
 
 import qcodes as qc
 import qcodes.instrument.sims as qcsims
+import yaml
 from qcodes.instrument.base import Instrument
 from qcodes.instrument_drivers.Harvard.Decadac import Decadac
 from qcodes.instrument_drivers.stanford_research.SR830 import SR830
@@ -17,7 +18,7 @@ from qcodes.tests.instrument_mocks import (
 import qtools.data.db as db
 # Filenames for simulation files
 import qtools.instrument.sims as qtsims
-from qtools.data.base import create_metadata_device, create_metadata_from_experiment
+from qtools.data.metadata import Metadata
 from qtools.instrument.mapping.base import (
     add_mapping_to_instrument,
     filter_flatten_parameters,
@@ -84,6 +85,36 @@ def _initialize_instruments() -> MutableMapping[Any, Instrument]:
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser("qtools")
+    parser.add_argument(
+        "-m",
+        "--metadata",
+        type=argparse.FileType("r"),
+        help="YAML-file with metadata information.",
+    )
+    # Disable metadata
+    parser.add_argument(
+        "--no-metadata", "-nm", action="store_true", help="Disable metadata."
+    )
+
+    args = parser.parse_args()
+
+    # Load metadata
+    if not args.no_metadata:
+        db.api_url = "http://134.61.7.48:9123"
+        try:
+            with args.metadata or open("metadata.yaml") as f:
+                metadata = Metadata.from_yaml(f)
+            metadata.save_to_db()
+            # update metadata.yaml with pids
+            with args.metadata or open("metadata.yaml") as f:
+                yaml.dump(metadata, f, yaml.Dumper)
+        except FileNotFoundError:
+            print(
+                "No Metadata file found. Please specify using -m/--metadata [filename].yaml or provide a default metadata.yaml in the working directory."
+            )
+            raise SystemExit(1)
+
     # Create station with instruments
     station = Station()
     instruments = _initialize_instruments()
@@ -99,14 +130,11 @@ if __name__ == "__main__":
     script = InducingMeasurementScript()
     script.setup()
 
-    # Create Metadata structure
-    db.api_url = "http://134.61.7.48:9123"
-    device = create_metadata_device()
-    experiment = create_metadata_from_experiment()
-    device.save()
-
     # map gate functions to instruments
     map_gates_to_instruments(station.components, script.gate_parameters)
 
     # run script
     script.run()
+
+    # Exit
+    raise SystemExit(0)

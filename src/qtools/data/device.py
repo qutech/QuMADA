@@ -8,14 +8,18 @@ from typing import Any
 
 from qtools.data.apiclasses import get_all, get_by_id, save
 from qtools.data.domain import DomainObject
+from qtools.data.yaml import DomainYAMLObject
 
 
 @get_by_id
 @get_all(fn_name="factories")
 @save(fn_name="saveOrUpdateFactory")
 @dataclass
-class Factory(DomainObject):
+class Factory(DomainObject, DomainYAMLObject):
     """Represents the database entry of a factory."""
+
+    yaml_tag = "!Factory"
+
     description: str
 
     @classmethod
@@ -32,8 +36,11 @@ class Factory(DomainObject):
 @get_all
 @save(fn_name="saveOrUpdateWafer")
 @dataclass
-class Wafer(DomainObject):
+class Wafer(DomainObject, DomainYAMLObject):
     """Represents the database entry of a wafer."""
+
+    yaml_tag = "!Wafer"
+
     description: str
     productionDate: str  # pylint: disable=invalid-name
 
@@ -56,8 +63,11 @@ class Wafer(DomainObject):
 @get_all
 @save(fn_name="saveOrUpdateSample")
 @dataclass
-class Sample(DomainObject):
+class Sample(DomainObject, DomainYAMLObject):
     """Represents the database entry of a sample."""
+
+    yaml_tag = "!Sample"
+
     description: str
     wafer: Wafer
 
@@ -76,8 +86,11 @@ class Sample(DomainObject):
 @get_all
 @save(fn_name="saveOrUpdateDesign")
 @dataclass
-class Design(DomainObject):
+class Design(DomainObject, DomainYAMLObject):
     """Represents the database entry of a design."""
+
+    yaml_tag = "!Design"
+
     wafer: Wafer
     factory: Factory
     sample: Sample
@@ -113,8 +126,11 @@ class Design(DomainObject):
 @get_all
 @save(fn_name="saveOrUpdateDevice")
 @dataclass
-class Device(DomainObject):
+class Device(DomainObject, DomainYAMLObject):
     """Represents the database entry of a device."""
+
+    yaml_tag = "!Device"
+
     design: Design
     sample: Sample
 

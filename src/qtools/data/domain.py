@@ -3,8 +3,10 @@
 General Object class for the domain.
 """
 
-from collections.abc import Mapping
+from __future__ import annotations
+
 import json
+from collections.abc import Mapping
 from dataclasses import dataclass, is_dataclass
 
 
@@ -39,17 +41,10 @@ class DomainObject:
         kwargs.setdefault("lastChangeDate", None)
         return cls(**kwargs)
 
-    def to_json(self):
-        """
-        Outputs json representation of the object as string.
+    def to_json(self) -> str:
+        return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
-        Returns:
-            str: JSON representation
-        """
-        return json.dumps(self, default=lambda o: o.__dict__,
-                          sort_keys=True, indent=4)
-
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         # Select all variables, that should be a dataclass, but are a dict and
         # turn them into the respective objects
         # pylint: disable=no-member
@@ -57,10 +52,10 @@ class DomainObject:
                    if is_dataclass(v.type) and isinstance(self.__dict__[k], Mapping)}
         self.__dict__.update(objects)
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         return self.__dict__ == other.__dict__
 
-    def _handle_db_response(self, response):
+    def _handle_db_response(self, response) -> None:
         if not response["status"]:
             raise Exception(response["errorMessage"])
         # save pid
