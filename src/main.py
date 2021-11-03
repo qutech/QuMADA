@@ -81,6 +81,46 @@ parser_metadata_print.add_argument(
     help="Output file to write the metadata to.",
 )
 
+instrument_parser = Cmd2ArgumentParser()
+instrument_subparsers = instrument_parser.add_subparsers(
+    title="subcommands", help="subcommand help"
+)
+
+parser_instrument_list = instrument_subparsers.add_parser(
+    "list", help="List all initialized instruments."
+)
+
+parser_instrument_add = instrument_subparsers.add_parser(
+    "add", help="add instrument to station."
+)
+# TODO: add arguments
+
+parser_instrument_delete = instrument_subparsers.add_parser(
+    "delete", help="remove instrument from station."
+)
+parser_instrument_delete.add_argument(
+    "name", metavar="NAME", help="Name of the instrument."
+)
+
+parser_instrument_load_station = instrument_subparsers.add_parser(
+    "load_station", help="load a station file with previously initialized instruments."
+)
+parser_instrument_load_station.add_argument(
+    "file",
+    metavar="FILE",
+    type=argparse.FileType("r"),
+    help="File with the station object.",
+)
+
+parser_instrument_save_station = instrument_subparsers.add_parser(
+    "save_station", help="save a station to file."
+)
+parser_instrument_save_station.add_argument(
+    "file",
+    metavar="FILE",
+    type=argparse.FileType("w"),
+    help="Output file for the station object.",
+)
 
 class QToolsApp(Cmd):
     def __init__(self):
@@ -101,6 +141,21 @@ class QToolsApp(Cmd):
         self.metadata = Metadata()
         self.station = Station()
 
+    def instrument_list(self, args):
+        pprint.pp(self.station.snapshot())
+
+    def instrument_add(self, args):
+        ...
+
+    def instrument_delete(self, args):
+        ...
+
+    def instrument_load_station(self, args):
+        ...
+
+    def instrument_save_station(self, args):
+        ...
+
     def metadata_load(self, args):
         try:
             self.metadata = Metadata.from_yaml(args.file)
@@ -117,6 +172,11 @@ class QToolsApp(Cmd):
         elif args.format == "yaml":
             yaml.dump(self.metadata, stream=args.output)
 
+    parser_instrument_list.set_defaults(func=instrument_list)
+    parser_instrument_add.set_defaults(func=instrument_add)
+    parser_instrument_delete.set_defaults(func=instrument_delete)
+    parser_instrument_load_station.set_defaults(func=instrument_load_station)
+    parser_instrument_save_station.set_defaults(func=instrument_save_station)
     parser_metadata_load.set_defaults(func=metadata_load)
     parser_metadata_new.set_defaults(func=metadata_new)
     parser_metadata_print.set_defaults(func=metadata_print)
@@ -129,6 +189,15 @@ class QToolsApp(Cmd):
             func(self, args)
         else:
             self.do_help("metadata")
+
+    @with_argparser(instrument_parser)
+    def do_instrument(self, args):
+        """instrument command branching"""
+        func = getattr(args, "func", None)
+        if func:
+            func(self, args)
+        else:
+            self.do_help("instrument")
 
 
 def _initialize_instruments() -> MutableMapping[Any, Instrument]:
