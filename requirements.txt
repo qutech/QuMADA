@@ -1,5 +1,7 @@
 -e ./libs/qcodes
 
+cmd2
+
 pyqt5 < 5.13
 qtconsole
 
