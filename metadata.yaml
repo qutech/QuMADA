@@ -4,7 +4,7 @@ experiment: &id002 !Experiment
   description: Testexperiment
   equipmentInstances: null
   group: group
-  measurementType: !!python/object:qtools.data.measurement.MeasurementType
+  measurementType: !MeasurementType
     equipments:
     - !Equipment "d7914063-c786-4b0c-9ded-84390a3839ba"
     - !Equipment "dbc9e518-2624-4536-b86d-1cc5ddb1c6bf"
