@@ -44,6 +44,8 @@ def load_db(filepath : str = None) -> None:
     if not filepath or not path.isfile(filepath):
         filepath = browsefiles(filetypes = (("DB Files", "*.db*"),
                                          ("All files", "*.*")))
+        if filepath == "":
+            return None
     try:
         qc.initialise_or_create_database_at(filepath)
         return None
