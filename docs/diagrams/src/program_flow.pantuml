@@ -1,0 +1,31 @@
+@startuml
+title Measurement program flow
+
+|GUI|
+
+start
+:open/create experiment;
+
+|#AntiqueWhite|ExperimentHandler|
+:create qcodes Station;
+
+|GUI|
+:fill experiment metadata;
+:add/modify/remove instruments;
+
+|ExperimentHandler|
+:add instruments to station object;
+
+|GUI|
+:create Measurement;
+:load measurement type;
+:map virtual gates to instrument functions;
+:set instrument/measurement
+parameters and config;
+:run;
+
+|ExperimentHandler|
+:;
+
+
+@enduml

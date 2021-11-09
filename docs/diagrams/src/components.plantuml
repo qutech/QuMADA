@@ -1,0 +1,14 @@
+@startuml
+title: QCoDeS Components
+
+[Station] as station
+[Instrument] as instrument
+() snapshot
+() device
+
+snapshot <. station: outputs
+instrument <-> device: communicates
+
+station <-- instrument
+
+@enduml
