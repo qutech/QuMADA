@@ -86,6 +86,7 @@ class QToolsApp(Cmd):
         title="subcommands", help="subcommand help"
     )
 
+    # metadata load
     parser_metadata_load = metadata_subparsers.add_parser(
         "load", help="Load a metadata object from a YAML-file."
     )
@@ -96,10 +97,12 @@ class QToolsApp(Cmd):
         help="YAML-file with metadata information.",
     )
 
+    # metadata new
     parser_metadata_new = metadata_subparsers.add_parser(
         "new", help="Create an empty metadata object."
     )
 
+    # metadata print
     parser_metadata_print = metadata_subparsers.add_parser(
         "print", help="print the metadata."
     )
@@ -123,15 +126,18 @@ class QToolsApp(Cmd):
         title="subcommands", help="subcommand help"
     )
 
+    # instrument list
     parser_instrument_list = instrument_subparsers.add_parser(
         "list", help="List all initialized instruments."
     )
 
+    # instrument add
     parser_instrument_add = instrument_subparsers.add_parser(
         "add", help="add instrument to station."
     )
     instrument_add_subparsers = parser_instrument_add.add_subparsers()
 
+    # instrument add visa
     parser_instrument_add_visa = instrument_add_subparsers.add_parser(
         "visa", help="add VISA instrument."
     )
@@ -152,8 +158,7 @@ class QToolsApp(Cmd):
         "--terminator", help="VISA terminator to use."
     )
 
-    # TODO: add arguments
-
+    # instrument delete
     parser_instrument_delete = instrument_subparsers.add_parser(
         "delete", help="remove instrument from station."
     )
@@ -161,6 +166,7 @@ class QToolsApp(Cmd):
         "name", metavar="NAME", help="Name of the instrument."
     )
 
+    # instrument load_station
     parser_instrument_load_station = instrument_subparsers.add_parser(
         "load_station",
         help="load a station file with previously initialized instruments.",
@@ -172,6 +178,7 @@ class QToolsApp(Cmd):
         help="File with the station object.",
     )
 
+    # instrument save_station
     parser_instrument_save_station = instrument_subparsers.add_parser(
         "save_station", help="save a station to file."
     )
@@ -182,6 +189,7 @@ class QToolsApp(Cmd):
         help="Output file for the station object.",
     )
 
+    # parser functions
     def instrument_list(self, args):
         pprint.pp(self.station.snapshot())
 
@@ -234,6 +242,7 @@ class QToolsApp(Cmd):
     parser_metadata_new.set_defaults(func=metadata_new)
     parser_metadata_print.set_defaults(func=metadata_print)
 
+    # general subcommand parser
     @with_argparser(metadata_parser)
     def do_metadata(self, args):
         """metadata command branching"""
