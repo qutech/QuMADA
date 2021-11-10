@@ -21,15 +21,16 @@ def _process_class_get_by_id(cls, fn_name: str, id_name: str):
     return cls
 
 
-def get_by_id(cls=None, /, *, fn_name=None, id_name="pid"):
+def get_by_id(cls=None, /, *, fn_name: str | None = None, id_name: str | None = "pid"):
     """
     Decorator construction to add an API call to get an object by pid.
-    Adds a class method get_by_id to the class, that takes a pid and returns
+
+    This decorator adds a class method get_by_id to the class, that takes a pid and returns
     the corresponding object from the database.
 
     Args:
-        fn_name (str, optional): Name of the API call. If None, f"get{cls.__name__}ById" is used.
-        id_name (str, optional): Name of the ID datafield of the API call. Defaults to "pid".
+        fn_name: Name of the API call. If None, f"get{cls.__name__}ById" is used.
+        id_name: Name of the ID datafield of the API call. Defaults to "pid".
     """
 
     def wrap(cls):
@@ -54,13 +55,14 @@ def _process_class_get_all(cls, fn_name: str):
     return cls
 
 
-def get_all(cls=None, /, *, fn_name=None):
+def get_all(cls=None, /, *, fn_name: str | None = None):
     """
     Decorator construction to add an API call to get all objects from the database.
-    Adds a class method get_all to the class, that returns all corresponding objects from the database.
+
+    This decorator adds a class method get_all to the class, that returns all corresponding objects from the database.
 
     Args:
-        fn_name (str), optional): Name of the API call. If None, f"{cls.__name__.lower()}s" is used.
+        fn_name: Name of the API call. If None, f"{cls.__name__.lower()}s" is used.
     """
 
     def wrap(cls):
@@ -108,15 +110,18 @@ def _process_class_save(cls, fn_name: str, field_names: list[str]):
     return cls
 
 
-def save(cls=None, /, *, fn_name=None, field_names=None):
+def save(
+    cls=None, /, *, fn_name: str | None = None, field_names: list[str] | None = None
+):
     """
     Decorator construction to add an API call to put an object into the database.
-    Adds a class method save to the class, that creates or updates the object entry on the database.
+
+    This decorator adds a class method save to the class, that creates or updates the object entry on the database.
 
     Args:
-        fn_name (str, optional): Name of the API call. If None, f"put{cls.__name__}" is used.
-        field_names (list[str], optional): List of all fields names, the api call gets.
-                                           If None, every field of the class is used.
+        fn_name: Name of the API call. If None, f"put{cls.__name__}" is used.
+        field_names: List of all fields names, the api call gets.
+                     If None, every field of the class is used.
     """
 
     def wrap(cls):
