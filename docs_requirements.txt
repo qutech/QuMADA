@@ -1,0 +1,6 @@
+-e ./libs/qcodes
+
+pyqt5 < 5.13
+qtconsole
+
+sphinx
