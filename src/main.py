@@ -33,19 +33,11 @@ from qtools.measurement.measurement_for_immediate_use.inducing_measurement impor
     InducingMeasurementScript,
 )
 from qtools.utils.import_submodules import import_submodules
+from qtools.utils.resources import import_resources
 
 DECADAC_VISALIB = qtsims.__file__.replace('__init__.py', 'FZJ_Decadac.yaml@sim')
 KEITHLEY_2450_VISALIB = qcsims.__file__.replace('__init__.py', 'Keithley_2450.yaml@sim')
 SR830_VISALIB = qcsims.__file__.replace('__init__.py', 'SR830.yaml@sim')
-
-# Filenames for mapping files
-from qtools.instrument.mapping import (
-    DECADAC_MAPPING,
-    KEITHLEY_2400_MAPPING,
-    KEITHLEY_2450_MAPPING,
-    SR830_MAPPING,
-)
-
 
 def is_instrument(o):
     return inspect.isclass(o) and issubclass(o, Instrument)
@@ -71,6 +63,9 @@ class QToolsApp(Cmd):
             members = inspect.getmembers(module, is_instrument)
             self.instrument_drivers.update(members)
 
+        # import mappings
+        self.mappings = import_resources("qtools.instrument.mapping", "*.json")
+
         # Metadata
         db.api_url = "http://134.61.7.48:9123"
         self.metadata = Metadata()
@@ -79,6 +74,9 @@ class QToolsApp(Cmd):
     # argparse choices
     def choices_complete_instrument_drivers(self) -> list[str]:
         return list(self.instrument_drivers.keys())
+
+    def choices_complete_instrument_mappings(self) -> list[str]:
+        return [path.name for path in self.mappings]
 
     # Cmd2 Parsers
     metadata_parser = Cmd2ArgumentParser()
@@ -147,11 +145,13 @@ class QToolsApp(Cmd):
     parser_instrument_add_visa.add_argument(
         "name",
         metavar="NAME",
-        help="Name of the Instrument Class",
-        choices_provider=choices_complete_instrument_drivers,
+        help="name of the instrument",
     )
     parser_instrument_add_visa.add_argument(
-        "-p", "--package", help="Python package of the instrument class"
+        "driver",
+        metavar="DRIVER",
+        help="Instrument driver",
+        choices_provider=choices_complete_instrument_drivers,
     )
     parser_instrument_add_visa.add_argument(
         "address", metavar="ADDRESS", help="VISA-address to the instrument."
@@ -159,6 +159,21 @@ class QToolsApp(Cmd):
     parser_instrument_add_visa.add_argument("--visalib", help="VISAlib to use.")
     parser_instrument_add_visa.add_argument(
         "--terminator", help="VISA terminator to use."
+    )
+    parser_instrument_add_visa.add_argument(
+        "--mapping",
+        help="Mapping file for the instrument",
+        choices_provider=choices_complete_instrument_mappings,
+    )
+
+    # instrument add dummy
+    parser_instrument_add_dummy = instrument_add_subparsers.add_parser(
+        "dummy", help="add Dummy instrument."
+    )
+    parser_instrument_add_dummy.add_argument(
+        "name",
+        metavar="NAME",
+        help="name of the instrument",
     )
 
     # instrument delete
@@ -198,7 +213,9 @@ class QToolsApp(Cmd):
 
     def instrument_add(self, args):
         try:
-            instrument_class: type[VisaInstrument] = self.instrument_drivers[args.name]
+            instrument_class: type[VisaInstrument] = self.instrument_drivers[
+                args.driver
+            ]
             kwargs = {}
             if args.terminator:
                 kwargs["terminator"] = args.terminator
@@ -207,18 +224,28 @@ class QToolsApp(Cmd):
             instrument = instrument_class(
                 name=args.name, address=args.address, **kwargs
             )
+            if args.mapping:
+                # This does not yet work correctly, because the chosen instrument name has to fit the name in the mapping file.
+                path = next(p for p in self.mappings if p.name == args.mapping)
+                add_mapping_to_instrument(instrument, path)
             self.station.add_component(instrument)
+
         except ImportError as e:
             self.pexcept(f"Error while importing Instrument Driver {args.name}: {e}")
 
+    def instrument_add_dummy(self, args):
+        raise NotImplementedError()
+
     def instrument_delete(self, args):
-        ...
+        self.station.remove_component(args.name)
 
     def instrument_load_station(self, args):
-        ...
+        self.station.load_config(args.file)
 
     def instrument_save_station(self, args):
-        ...
+        raise NotImplementedError()
+        # Does this produce a valid station config file?
+        # yaml.dump(self.station.snapshot(), args.file)
 
     def metadata_load(self, args):
         try:
@@ -238,6 +265,7 @@ class QToolsApp(Cmd):
 
     parser_instrument_list.set_defaults(func=instrument_list)
     parser_instrument_add_visa.set_defaults(func=instrument_add)
+    parser_instrument_add_dummy.set_defaults(func=instrument_add_dummy)
     parser_instrument_delete.set_defaults(func=instrument_delete)
     parser_instrument_load_station.set_defaults(func=instrument_load_station)
     parser_instrument_save_station.set_defaults(func=instrument_save_station)
