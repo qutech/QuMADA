@@ -293,44 +293,6 @@ class QToolsApp(Cmd):
             self.do_help("instrument")
 
 
-def _initialize_instruments() -> MutableMapping[Any, Instrument]:
-    """
-    Initializes the instruments as qcodes components.
-
-    Returns:
-        MutableMapping[Any, EquipmentInstance]: Instruments, that can be loaded into qcodes Station.#
-    """
-    qc.Instrument.close_all() # Remove all previous initialized instruments
-
-    # TODO: Maybe do this in UI
-    instruments: dict[str, Instrument] = {}
-
-    # Initialize instruments for simulation
-    dac = instruments["dac"] = DummyInstrument("dac", ("voltage1", "voltage2"))
-    instruments["dmm"] = DummyInstrumentWithMeasurement("dmm", dac)
-
-    lockin = instruments["lockin"] = DummyInstrument("lockin", ("amplitude", "frequency", "current"))
-    instruments["dmm2"] = DummyInstrumentWithMeasurement("dmm2", lockin)
-
-    keithley = instruments["keithley"] = Keithley2450("keithley", "GPIB::2::INSTR", visalib=KEITHLEY_2450_VISALIB)
-    add_mapping_to_instrument(keithley, KEITHLEY_2450_MAPPING)
-
-    # initialize real instruments
-    # dac = instruments["dac"] = Decadac("dac",
-    #                                     "ASRL6::INSTR",
-    #                                     min_val=-10, max_val=10,
-    #                                     terminator="\n")
-    # add_mapping_to_instrument(dac, DECADAC_MAPPING)
-
-    # lockin = instruments["lockin"] = SR830("lockin", "GPIB1::12::INSTR")
-    # add_mapping_to_instrument(lockin, SR830_MAPPING)
-
-    # keithley = instruments["keithley"] = Keithley_2400("keithley", "GPIB1::27::INSTR")
-    # add_mapping_to_instrument(keithley, KEITHLEY_2400_MAPPING)
-
-    return instruments
-
-
 if __name__ == "__main__":
     app = QToolsApp()
     ret_code = app.cmdloop()
