@@ -25,6 +25,7 @@ from qtools.instrument.mapping.base import (
     filter_flatten_parameters,
     map_gates_to_instruments,
 )
+from qtools.measurement.measurement import MeasurementScript
 from qtools.measurement.measurement import QtoolsStation as Station
 from qtools.measurement.measurement_for_immediate_use.generic_measurement import (
     Generic_1D_Sweep,
@@ -120,6 +121,7 @@ class QToolsApp(Cmd):
         help="Output file to write the metadata to.",
     )
 
+    # instrument parser
     instrument_parser = Cmd2ArgumentParser()
     instrument_subparsers = instrument_parser.add_subparsers(
         title="subcommands", help="subcommand help"
@@ -223,6 +225,50 @@ class QToolsApp(Cmd):
         help="Output file for the generated mapping.",
     )
 
+    # measurement parser
+    measurement_parser = Cmd2ArgumentParser()
+    measurement_subparsers = measurement_parser.add_subparsers(
+        title="subcommands", help="subcommands help"
+    )
+
+    # measurement script
+    parser_measurement_script = measurement_subparsers.add_parser(
+        "script", help="measurement script commands"
+    )
+    measurement_script_subparsers = parser_measurement_script.add_subparsers()
+
+    # measurement script load
+    parser_measurement_script_load = measurement_script_subparsers.add_parser(
+        "load", help="Load a measurement script."
+    )
+    parser_measurement_script_load.add_argument(
+        "-n", "--name", help="Load measurement script by name."
+    )
+    parser_measurement_script_load.add_argument(
+        "-f",
+        "--file",
+        type=argparse.FileType("r"),
+        help="File path of the measurement script.",
+    )
+    parser_measurement_script_load.add_argument(
+        "-pid", "--pid", help="pid to load script from database."
+    )
+
+    # measurement setup
+    parser_measurement_setup = measurement_subparsers.add_parser(
+        "setup", help="Setup the measurement."
+    )
+
+    # measurement run
+    parser_measurement_run = measurement_subparsers.add_parser(
+        "run", help="Run the measurement."
+    )
+
+    # measurement map_gates
+    parser_measurement_map_gates = measurement_subparsers.add_parser(
+        "map_gates", help="Map gates to instruments."
+    )
+
     # parser functions
     def instrument_list(self, args):
         pprint.pp(self.station.snapshot()["instruments"], depth=args.depth)
@@ -250,6 +296,7 @@ class QToolsApp(Cmd):
             self.pexcept(f"Error while importing Instrument Driver {args.name}: {e}")
 
     def instrument_add_dummy(self, args):
+        ...
         raise NotImplementedError()
 
     def instrument_delete(self, args):
@@ -267,7 +314,21 @@ class QToolsApp(Cmd):
         # generate a mapping stub from an initialized instrument
         instrument = self.station.components[args.instrument]
         assert isinstance(instrument, Instrument)
-        _generate_mapping_stub(instrument, args.filef)
+        _generate_mapping_stub(instrument, args.file)
+
+    def measurement_script_load(self, args):
+        ...
+        raise NotImplementedError()
+
+    def measurement_setup(self, args):
+        self.script.setup()
+
+    def measurement_run(self, args):
+        self.script.run()
+        raise NotImplementedError()
+
+    def measurement_map_gates(self, args):
+        map_gates_to_instruments(self.station.components, self.script.gate_parameters)
 
     def metadata_load(self, args):
         try:
@@ -285,6 +346,9 @@ class QToolsApp(Cmd):
         elif args.format == "yaml":
             yaml.dump(self.metadata, stream=args.output)
 
+    parser_metadata_load.set_defaults(func=metadata_load)
+    parser_metadata_new.set_defaults(func=metadata_new)
+    parser_metadata_print.set_defaults(func=metadata_print)
     parser_instrument_list.set_defaults(func=instrument_list)
     parser_instrument_add_visa.set_defaults(func=instrument_add)
     parser_instrument_add_dummy.set_defaults(func=instrument_add_dummy)
@@ -292,9 +356,10 @@ class QToolsApp(Cmd):
     parser_instrument_load_station.set_defaults(func=instrument_load_station)
     parser_instrument_save_station.set_defaults(func=instrument_save_station)
     parser_instrument_generate_mapping.set_defaults(func=instrument_generate_mapping)
-    parser_metadata_load.set_defaults(func=metadata_load)
-    parser_metadata_new.set_defaults(func=metadata_new)
-    parser_metadata_print.set_defaults(func=metadata_print)
+    parser_measurement_script_load.set_defaults(func=measurement_script_load)
+    parser_measurement_setup.set_defaults(func=measurement_setup)
+    parser_measurement_run.set_defaults(func=measurement_run)
+    parser_measurement_map_gates.set_defaults(func=measurement_map_gates)
 
     # general subcommand parser
     @with_argparser(metadata_parser)
@@ -314,6 +379,15 @@ class QToolsApp(Cmd):
             func(self, args)
         else:
             self.do_help("instrument")
+
+    @with_argparser(measurement_parser)
+    def do_measurement(self, args):
+        """measurement command branching"""
+        func = getattr(args, "func", None)
+        if func:
+            func(self, args)
+        else:
+            self.do_help("measurement")
 
 
 if __name__ == "__main__":
