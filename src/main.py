@@ -20,6 +20,7 @@ import qtools.data.db as db
 import qtools.instrument.sims as qtsims
 from qtools.data.metadata import Metadata
 from qtools.instrument.mapping.base import (
+    _generate_mapping_stub,
     add_mapping_to_instrument,
     filter_flatten_parameters,
     map_gates_to_instruments,
@@ -207,6 +208,21 @@ class QToolsApp(Cmd):
         help="Output file for the station object.",
     )
 
+    # instrument generate_mapping
+    parser_instrument_generate_mapping = instrument_subparsers.add_parser(
+        "generate_mapping",
+        help="generate a mapping stub from an initialized instrument.",
+    )
+    parser_instrument_generate_mapping.add_argument(
+        "name", metavar="NAME", help="Name of the instrument."
+    )
+    parser_instrument_generate_mapping.add_argument(
+        "file",
+        metavar="FILE",
+        type=argparse.FileType("w"),
+        help="Output file for the generated mapping.",
+    )
+
     # parser functions
     def instrument_list(self, args):
         pprint.pp(self.station.snapshot()["instruments"], depth=args.depth)
@@ -247,6 +263,12 @@ class QToolsApp(Cmd):
         # Does this produce a valid station config file?
         # yaml.dump(self.station.snapshot(), args.file)
 
+    def instrument_generate_mapping(self, args):
+        # generate a mapping stub from an initialized instrument
+        instrument = self.station.components[args.instrument]
+        assert isinstance(instrument, Instrument)
+        _generate_mapping_stub(instrument, args.filef)
+
     def metadata_load(self, args):
         try:
             self.metadata = Metadata.from_yaml(args.file)
@@ -269,6 +291,7 @@ class QToolsApp(Cmd):
     parser_instrument_delete.set_defaults(func=instrument_delete)
     parser_instrument_load_station.set_defaults(func=instrument_load_station)
     parser_instrument_save_station.set_defaults(func=instrument_save_station)
+    parser_instrument_generate_mapping.set_defaults(func=instrument_generate_mapping)
     parser_metadata_load.set_defaults(func=metadata_load)
     parser_metadata_new.set_defaults(func=metadata_new)
     parser_metadata_print.set_defaults(func=metadata_print)
@@ -297,17 +320,6 @@ if __name__ == "__main__":
     app = QToolsApp()
     ret_code = app.cmdloop()
     raise SystemExit(ret_code)
-
-    # Create station with instruments
-    station = Station()
-    instruments = _initialize_instruments()
-    for name, instrument in instruments.items():
-        station.add_component(instrument)
-
-    # Uncomment the following part, to generate a mapping stub file from an initialized instrument
-    # from qtools.instrument.mapping.base import _generate_mapping_stub
-    # _generate_mapping_stub(instruments["keithley"], "qtools/instrument/mapping/tektronix/Keithley_2400.json")
-    # exit()
 
     # Load measuring script template
     script = InducingMeasurementScript()
