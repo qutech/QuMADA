@@ -1,17 +1,15 @@
 #!/usr/bin/env python3
 import argparse
+import inspect
 import pprint
-from typing import Any, MutableMapping
+from typing import Any, MutableMapping, Type
 
 import qcodes as qc
 import qcodes.instrument.sims as qcsims
 import yaml
 from cmd2 import Cmd, Cmd2ArgumentParser, with_argparser
 from qcodes.instrument.base import Instrument
-from qcodes.instrument_drivers.Harvard.Decadac import Decadac
-from qcodes.instrument_drivers.stanford_research.SR830 import SR830
-from qcodes.instrument_drivers.tektronix.Keithley_2400 import Keithley_2400
-from qcodes.instrument_drivers.tektronix.Keithley_2450 import Keithley2450
+from qcodes.instrument.visa import VisaInstrument
 from qcodes.tests.instrument_mocks import (
     DummyInstrument,
     DummyInstrumentWithMeasurement,
@@ -34,6 +32,7 @@ from qtools.measurement.measurement_for_immediate_use.generic_measurement import
 from qtools.measurement.measurement_for_immediate_use.inducing_measurement import (
     InducingMeasurementScript,
 )
+from qtools.utils.import_submodules import import_submodules
 
 DECADAC_VISALIB = qtsims.__file__.replace('__init__.py', 'FZJ_Decadac.yaml@sim')
 KEITHLEY_2450_VISALIB = qcsims.__file__.replace('__init__.py', 'Keithley_2450.yaml@sim')
@@ -47,80 +46,9 @@ from qtools.instrument.mapping import (
     SR830_MAPPING,
 )
 
-# Cmd2 Parsers
-metadata_parser = Cmd2ArgumentParser()
-metadata_subparsers = metadata_parser.add_subparsers(
-    title="subcommands", help="subcommand help"
-)
 
-parser_metadata_load = metadata_subparsers.add_parser(
-    "load", help="Load a metadata object from a YAML-file."
-)
-parser_metadata_load.add_argument(
-    "file",
-    metavar="FILE",
-    type=argparse.FileType("r"),
-    help="YAML-file with metadata information.",
-)
-
-parser_metadata_new = metadata_subparsers.add_parser(
-    "new", help="Create an empty metadata object."
-)
-
-parser_metadata_print = metadata_subparsers.add_parser(
-    "print", help="print the metadata."
-)
-parser_metadata_print.add_argument(
-    "-f", "--format", choices=["base", "yaml"], default="base", help="Output format."
-)
-parser_metadata_print.add_argument(
-    "-o",
-    "--output",
-    type=argparse.FileType("w"),
-    default="-",
-    help="Output file to write the metadata to.",
-)
-
-instrument_parser = Cmd2ArgumentParser()
-instrument_subparsers = instrument_parser.add_subparsers(
-    title="subcommands", help="subcommand help"
-)
-
-parser_instrument_list = instrument_subparsers.add_parser(
-    "list", help="List all initialized instruments."
-)
-
-parser_instrument_add = instrument_subparsers.add_parser(
-    "add", help="add instrument to station."
-)
-# TODO: add arguments
-
-parser_instrument_delete = instrument_subparsers.add_parser(
-    "delete", help="remove instrument from station."
-)
-parser_instrument_delete.add_argument(
-    "name", metavar="NAME", help="Name of the instrument."
-)
-
-parser_instrument_load_station = instrument_subparsers.add_parser(
-    "load_station", help="load a station file with previously initialized instruments."
-)
-parser_instrument_load_station.add_argument(
-    "file",
-    metavar="FILE",
-    type=argparse.FileType("r"),
-    help="File with the station object.",
-)
-
-parser_instrument_save_station = instrument_subparsers.add_parser(
-    "save_station", help="save a station to file."
-)
-parser_instrument_save_station.add_argument(
-    "file",
-    metavar="FILE",
-    type=argparse.FileType("w"),
-    help="Output file for the station object.",
-)
+def is_instrument(o):
+    return inspect.isclass(o) and issubclass(o, Instrument)
 
 class QToolsApp(Cmd):
     def __init__(self):
@@ -136,15 +64,140 @@ class QToolsApp(Cmd):
         self.hidden_commands.append("run_script")
         self.hidden_commands.append("shortcuts")
 
+        # import instruments
+        modules = import_submodules("qcodes.instrument_drivers")
+        self.instrument_drivers = {}
+        for name, module in modules.items():
+            members = inspect.getmembers(module, is_instrument)
+            self.instrument_drivers.update(members)
+
         # Metadata
         db.api_url = "http://134.61.7.48:9123"
         self.metadata = Metadata()
         self.station = Station()
 
+    # argparse choices
+    def choices_complete_instrument_drivers(self) -> list[str]:
+        return list(self.instrument_drivers.keys())
+
+    # Cmd2 Parsers
+    metadata_parser = Cmd2ArgumentParser()
+    metadata_subparsers = metadata_parser.add_subparsers(
+        title="subcommands", help="subcommand help"
+    )
+
+    parser_metadata_load = metadata_subparsers.add_parser(
+        "load", help="Load a metadata object from a YAML-file."
+    )
+    parser_metadata_load.add_argument(
+        "file",
+        metavar="FILE",
+        type=argparse.FileType("r"),
+        help="YAML-file with metadata information.",
+    )
+
+    parser_metadata_new = metadata_subparsers.add_parser(
+        "new", help="Create an empty metadata object."
+    )
+
+    parser_metadata_print = metadata_subparsers.add_parser(
+        "print", help="print the metadata."
+    )
+    parser_metadata_print.add_argument(
+        "-f",
+        "--format",
+        choices=["base", "yaml"],
+        default="base",
+        help="Output format.",
+    )
+    parser_metadata_print.add_argument(
+        "-o",
+        "--output",
+        type=argparse.FileType("w"),
+        default="-",
+        help="Output file to write the metadata to.",
+    )
+
+    instrument_parser = Cmd2ArgumentParser()
+    instrument_subparsers = instrument_parser.add_subparsers(
+        title="subcommands", help="subcommand help"
+    )
+
+    parser_instrument_list = instrument_subparsers.add_parser(
+        "list", help="List all initialized instruments."
+    )
+
+    parser_instrument_add = instrument_subparsers.add_parser(
+        "add", help="add instrument to station."
+    )
+    instrument_add_subparsers = parser_instrument_add.add_subparsers()
+
+    parser_instrument_add_visa = instrument_add_subparsers.add_parser(
+        "visa", help="add VISA instrument."
+    )
+    parser_instrument_add_visa.add_argument(
+        "name",
+        metavar="NAME",
+        help="Name of the Instrument Class",
+        choices_provider=choices_complete_instrument_drivers,
+    )
+    parser_instrument_add_visa.add_argument(
+        "-p", "--package", help="Python package of the instrument class"
+    )
+    parser_instrument_add_visa.add_argument(
+        "address", metavar="ADDRESS", help="VISA-address to the instrument."
+    )
+    parser_instrument_add_visa.add_argument("--visalib", help="VISAlib to use.")
+    parser_instrument_add_visa.add_argument(
+        "--terminator", help="VISA terminator to use."
+    )
+
+    # TODO: add arguments
+
+    parser_instrument_delete = instrument_subparsers.add_parser(
+        "delete", help="remove instrument from station."
+    )
+    parser_instrument_delete.add_argument(
+        "name", metavar="NAME", help="Name of the instrument."
+    )
+
+    parser_instrument_load_station = instrument_subparsers.add_parser(
+        "load_station",
+        help="load a station file with previously initialized instruments.",
+    )
+    parser_instrument_load_station.add_argument(
+        "file",
+        metavar="FILE",
+        type=argparse.FileType("r"),
+        help="File with the station object.",
+    )
+
+    parser_instrument_save_station = instrument_subparsers.add_parser(
+        "save_station", help="save a station to file."
+    )
+    parser_instrument_save_station.add_argument(
+        "file",
+        metavar="FILE",
+        type=argparse.FileType("w"),
+        help="Output file for the station object.",
+    )
+
     def instrument_list(self, args):
         pprint.pp(self.station.snapshot())
 
     def instrument_add(self, args):
+        try:
+            instrument_class: type[VisaInstrument] = self.instrument_drivers[args.name]
+            instrument = instrument_class(
+                name=args.name,
+                address=args.address,
+                terminator=args.terminator,
+                visalib=args.visalib,
+            )
+            self.station.add_component(instrument)
+        except ImportError as e:
+            self.pexcept(e)
+
         ...
 
     def instrument_delete(self, args):
@@ -173,7 +226,7 @@ class QToolsApp(Cmd):
             yaml.dump(self.metadata, stream=args.output)
 
     parser_instrument_list.set_defaults(func=instrument_list)
-    parser_instrument_add.set_defaults(func=instrument_add)
+    parser_instrument_add_visa.set_defaults(func=instrument_add)
     parser_instrument_delete.set_defaults(func=instrument_delete)
     parser_instrument_load_station.set_defaults(func=instrument_load_station)
     parser_instrument_save_station.set_defaults(func=instrument_save_station)
