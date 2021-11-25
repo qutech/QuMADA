@@ -1,6 +1,8 @@
 -e ./libs/qcodes
 -e .
 
+cmd2
+
 pyvisa-sim
 pyqt5
 qtconsole
