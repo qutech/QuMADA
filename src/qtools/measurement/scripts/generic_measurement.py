@@ -34,8 +34,7 @@ parameters = {
     "right_barrier": {"voltage": {"type": "static", "value": 2}},
 }
 
-metadata = {"exp_name" : "Test",
-            "sample_name" : "Testsample"}
+metadata = {"exp_name": "Test", "sample_name": "Testsample"}
 
 
 class Generic_1D_Sweep(MeasurementScript):
@@ -49,9 +48,7 @@ class Generic_1D_Sweep(MeasurementScript):
         time.sleep(5)
         for sweep in self.dynamic_sweeps:
             sweep._param.set(sweep.get_setpoints()[0])
-            data.append(
-                dond(sweep,
-                     *tuple(self.gettable_channels)))
+            data.append(dond(sweep, *tuple(self.gettable_channels)))
             self.reset()
         return data
 
@@ -65,7 +62,6 @@ class Generic_nD_Sweep(MeasurementScript):
 
         self.initialize()
         time.sleep(5)
-        data = dond(*tuple(self.dynamic_sweeps),
-                    *tuple(self.gettable_channels))
+        data = dond(*tuple(self.dynamic_sweeps), *tuple(self.gettable_channels))
         self.reset()
         return data
