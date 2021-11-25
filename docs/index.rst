@@ -10,6 +10,7 @@ Welcome to qtools's documentation!
    :maxdepth: 3
    :caption: Contents:
 
+   usage
    qtools
 
 
