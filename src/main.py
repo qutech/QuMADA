@@ -130,6 +130,9 @@ class QToolsApp(Cmd):
     parser_instrument_list = instrument_subparsers.add_parser(
         "list", help="List all initialized instruments."
     )
+    parser_instrument_list.add_argument(
+        "--depth", default=1, type=int, help="depth of the snapshot to print"
+    )
 
     # instrument add
     parser_instrument_add = instrument_subparsers.add_parser(
@@ -191,22 +194,22 @@ class QToolsApp(Cmd):
 
     # parser functions
     def instrument_list(self, args):
-        pprint.pp(self.station.snapshot())
+        pprint.pp(self.station.snapshot()["instruments"], depth=args.depth)
 
     def instrument_add(self, args):
         try:
             instrument_class: type[VisaInstrument] = self.instrument_drivers[args.name]
+            kwargs = {}
+            if args.terminator:
+                kwargs["terminator"] = args.terminator
+            if args.visalib:
+                kwargs["visalib"] = args.visalib
             instrument = instrument_class(
-                name=args.name,
-                address=args.address,
-                terminator=args.terminator,
-                visalib=args.visalib,
+                name=args.name, address=args.address, **kwargs
             )
             self.station.add_component(instrument)
         except ImportError as e:
-            self.pexcept(e)
-
-        ...
+            self.pexcept(f"Error while importing Instrument Driver {args.name}: {e}")
 
     def instrument_delete(self, args):
         ...
