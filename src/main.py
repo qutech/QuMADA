@@ -2,10 +2,7 @@
 import argparse
 import inspect
 import pprint
-from typing import Any, MutableMapping, Type
 
-import qcodes as qc
-import qcodes.instrument.sims as qcsims
 import yaml
 from cmd2 import Cmd, Cmd2ArgumentParser, with_argparser
 from qcodes.instrument.base import Instrument
@@ -17,32 +14,24 @@ from qcodes.tests.instrument_mocks import (
 
 import qtools.data.db as db
 # Filenames for simulation files
-import qtools.instrument.sims as qtsims
 from qtools.data.metadata import Metadata
 from qtools.instrument.mapping.base import (
     _generate_mapping_stub,
     add_mapping_to_instrument,
-    filter_flatten_parameters,
     map_gates_to_instruments,
 )
 from qtools.measurement.measurement import MeasurementScript
 from qtools.measurement.measurement import QtoolsStation as Station
-from qtools.measurement.measurement_for_immediate_use.generic_measurement import (
-    Generic_1D_Sweep,
-    Generic_nD_Sweep,
-)
-from qtools.measurement.measurement_for_immediate_use.inducing_measurement import (
-    InducingMeasurementScript,
-)
 from qtools.utils.import_submodules import import_submodules
 from qtools.utils.resources import import_resources
 
-DECADAC_VISALIB = qtsims.__file__.replace('__init__.py', 'FZJ_Decadac.yaml@sim')
-KEITHLEY_2450_VISALIB = qcsims.__file__.replace('__init__.py', 'Keithley_2450.yaml@sim')
-SR830_VISALIB = qcsims.__file__.replace('__init__.py', 'SR830.yaml@sim')
 
 def is_instrument(o):
     return inspect.isclass(o) and issubclass(o, Instrument)
+
+
+def is_measurement_script(o):
+    return inspect.isclass(o) and issubclass(o, MeasurementScript)
 
 class QToolsApp(Cmd):
     def __init__(self):
@@ -61,12 +50,19 @@ class QToolsApp(Cmd):
         # import instruments
         modules = import_submodules("qcodes.instrument_drivers")
         self.instrument_drivers = {}
-        for name, module in modules.items():
+        for _, module in modules.items():
             members = inspect.getmembers(module, is_instrument)
             self.instrument_drivers.update(members)
 
         # import mappings
         self.mappings = import_resources("qtools.instrument.mapping", "*.json")
+
+        # import scripts
+        modules = import_submodules("qtools.measurement.scripts")
+        self.measurement_scripts = {}
+        for _, module in modules.items():
+            members = inspect.getmembers(module, is_measurement_script)
+            self.measurement_scripts.update(members)
 
         # Metadata
         db.api_url = "http://134.61.7.48:9123"
@@ -79,6 +75,9 @@ class QToolsApp(Cmd):
 
     def choices_complete_instrument_mappings(self) -> list[str]:
         return [path.name for path in self.mappings]
+
+    def choices_complete_measurement_scripts(self) -> list[str]:
+        return list(self.measurement_scripts.keys())
 
     # Cmd2 Parsers
     metadata_parser = Cmd2ArgumentParser()
@@ -95,6 +94,7 @@ class QToolsApp(Cmd):
         metavar="FILE",
         type=argparse.FileType("r"),
         help="YAML-file with metadata information.",
+        completer=Cmd.path_complete,
     )
 
     # metadata new
@@ -197,6 +197,7 @@ class QToolsApp(Cmd):
         metavar="FILE",
         type=argparse.FileType("r"),
         help="File with the station object.",
+        completer=Cmd.path_complete,
     )
 
     # instrument save_station
@@ -208,6 +209,7 @@ class QToolsApp(Cmd):
         metavar="FILE",
         type=argparse.FileType("w"),
         help="Output file for the station object.",
+        completer=Cmd.path_complete,
     )
 
     # instrument generate_mapping
@@ -223,6 +225,7 @@ class QToolsApp(Cmd):
         metavar="FILE",
         type=argparse.FileType("w"),
         help="Output file for the generated mapping.",
+        completer=Cmd.path_complete,
     )
 
     # measurement parser
@@ -242,13 +245,17 @@ class QToolsApp(Cmd):
         "load", help="Load a measurement script."
     )
     parser_measurement_script_load.add_argument(
-        "-n", "--name", help="Load measurement script by name."
+        "-n",
+        "--name",
+        help="Load measurement script by name.",
+        choices_provider=choices_complete_measurement_scripts,
     )
     parser_measurement_script_load.add_argument(
         "-f",
         "--file",
         type=argparse.FileType("r"),
         help="File path of the measurement script.",
+        completer=Cmd.path_complete,
     )
     parser_measurement_script_load.add_argument(
         "-pid", "--pid", help="pid to load script from database."
@@ -317,15 +324,30 @@ class QToolsApp(Cmd):
         _generate_mapping_stub(instrument, args.file)
 
     def measurement_script_load(self, args):
-        ...
-        raise NotImplementedError()
+        def single_true(iterable):
+            # check if only one entry is true
+            i = iter(iterable)
+            return any(i) and not any(i)
+
+        if single_true([args.pid, args.name, args.file]):
+            if args.pid:
+                raise NotImplementedError()
+            elif args.file:
+                raise NotImplementedError()
+            elif args.name:
+                # Create script object
+                self.script = self.measurement_scripts[args.name]()
+
+        else:
+            raise ValueError(
+                "More than one location for the script specified. Use --pid, --name or --file exclusively."
+            )
 
     def measurement_setup(self, args):
         self.script.setup()
 
     def measurement_run(self, args):
         self.script.run()
-        raise NotImplementedError()
 
     def measurement_map_gates(self, args):
         map_gates_to_instruments(self.station.components, self.script.gate_parameters)
@@ -394,16 +416,3 @@ if __name__ == "__main__":
     app = QToolsApp()
     ret_code = app.cmdloop()
     raise SystemExit(ret_code)
-
-    # Load measuring script template
-    script = InducingMeasurementScript()
-    script.setup()
-
-    # map gate functions to instruments
-    map_gates_to_instruments(station.components, script.gate_parameters)
-
-    # run script
-    script.run()
-
-    # Exit
-    raise SystemExit(0)
