@@ -9,6 +9,7 @@ Welcome to qtools's documentation!
 .. toctree::
    :maxdepth: 3
    :caption: Contents:
+   :numbered:
 
    usage
    qtools
