@@ -17,7 +17,8 @@ def import_submodules(
         try:
             results[full_name] = importlib.import_module(full_name)
         except ImportError as e:
-            print(f"ImportError for {full_name}: {e}")
+            pass
+            # print(f"ImportError for {full_name}: {e}")
         if recursive and is_pkg:
             results.update(import_submodules(full_name))
     return results
