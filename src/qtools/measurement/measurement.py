@@ -91,9 +91,11 @@ class MeasurementScript():
         """
         self.gettable_parameters: list[str] = []
         self.gettable_channels: list[str] = []
+        self.break_conditions: list[str] = []
         self.static_parameters: list[str] = []
         self.dynamic_parameters: list[str] = []
         self.dynamic_sweeps: list[str] = []
+        
         for gate, parameters in self.gate_parameters.items():
             for parameter, channel in parameters.items():
                 if self.properties[gate][parameter]["type"].find("static") >= 0:
@@ -105,6 +107,11 @@ class MeasurementScript():
                     self.gettable_parameters.append({"gate":gate,
                                                      "parameter":parameter})
                     self.gettable_channels.append(channel)
+                    try:
+                        for condition in self.properties[gate][parameter]["break_conditions"]:
+                            self.break_conditions.append({"channel": channel, "break_condition": condition})
+                    except KeyError:
+                        pass
                 elif self.properties[gate][parameter]["type"].find("dynamic") >= 0:
                     #Handle different possibilities for starting points
                     try:
