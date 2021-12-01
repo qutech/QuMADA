@@ -76,7 +76,7 @@ class Generic_nD_Sweep(MeasurementScript):
         data = dond(*tuple(self.dynamic_sweeps),
                     *tuple(self.gettable_channels),
                      measurement_name=self.metadata.get('measurement_name', "measurement"),
-                     #break_conditions= self.break_conditions
+                     break_conditions=self.break_conditions
                      )
         self.reset()
         return data
