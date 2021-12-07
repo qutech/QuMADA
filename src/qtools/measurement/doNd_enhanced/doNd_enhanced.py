@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Mon Nov 29 12:57:40 2021
 
@@ -6,17 +5,15 @@ Created on Mon Nov 29 12:57:40 2021
 """
 
 import logging
+import operator
 import os
 import sys
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from typing import Callable, Dict, Iterator, List, Optional, Sequence, Tuple, Union
-import operator
 
 import matplotlib
 import numpy as np
-from tqdm.auto import tqdm
-
 from qcodes import config
 from qcodes.dataset.data_set_protocol import DataSetProtocol
 from qcodes.dataset.descriptions.detect_shapes import detect_shape_of_measurement
@@ -25,11 +22,20 @@ from qcodes.dataset.experiment_container import Experiment
 from qcodes.dataset.measurements import Measurement
 from qcodes.dataset.plotting import plot_dataset
 from qcodes.instrument.parameter import _BaseParameter
-from qcodes.utils.threading import process_params_meas
 from qcodes.utils.dataset.doNd import (
-        AbstractSweep, ParamMeasT, ActionsT, AxesTupleListWithDataSet, LinSweep, LOG,
-        _register_parameters, _register_actions, _set_write_period, _catch_keyboard_interrupts, _handle_plotting
-    )
+    LOG,
+    AbstractSweep,
+    ActionsT,
+    AxesTupleListWithDataSet,
+    LinSweep,
+    ParamMeasT,
+    _handle_plotting,
+    _register_actions,
+    _register_parameters,
+    _set_write_period,
+)
+from qcodes.utils.threading import process_params_meas
+from tqdm.auto import tqdm
 
 
 @contextmanager
@@ -114,12 +120,12 @@ def dond(
 
     def _parse_dond_arguments(
         *params: Union[AbstractSweep, ParamMeasT]
-    ) -> Tuple[List[AbstractSweep], List[ParamMeasT]]:
+    ) -> tuple[list[AbstractSweep], list[ParamMeasT]]:
         """
         Parse supplied arguments into sweep objects and measurement parameters.
         """
-        sweep_instances: List[AbstractSweep] = []
-        params_meas: List[ParamMeasT] = []
+        sweep_instances: list[AbstractSweep] = []
+        params_meas: list[ParamMeasT] = []
         for par in params:
             if isinstance(par, AbstractSweep):
                 sweep_instances.append(par)
@@ -127,7 +133,7 @@ def dond(
                 params_meas.append(par)
         return sweep_instances, params_meas
 
-    def _make_nested_setpoints(sweeps: List[AbstractSweep]) -> np.ndarray:
+    def _make_nested_setpoints(sweeps: list[AbstractSweep]) -> np.ndarray:
         """Create the cartesian product of all the setpoint values."""
         if len(sweeps) == 0:
             return np.array([[]])  # 0d sweep (do0d)
@@ -166,8 +172,8 @@ def dond(
     _set_write_period(meas, write_period)
     _register_actions(meas, enter_actions, exit_actions)
 
-    original_delays: Dict[_BaseParameter, float] = {}
-    params_set: List[_BaseParameter] = []
+    original_delays: dict[_BaseParameter, float] = {}
+    params_set: list[_BaseParameter] = []
     for sweep in sweep_instances:
         original_delays[sweep.param] = sweep.param.post_delay
         sweep.param.post_delay = sweep.delay
@@ -213,7 +219,7 @@ def _interpret_breaks(break_conditions: list,
                         Comparator: "<",">" or "=="
                         Value: float
                     The parts have to be separated by blanks.
-                    
+
     **kwargs : TYPE
         DESCRIPTION.
 
@@ -222,7 +228,7 @@ def _interpret_breaks(break_conditions: list,
     list[bool]
         List of booleans, True if break condition is fulfilled.
 
-    """    
+    """
 
     conditions = list()
     def eval_binary_expr(op1, oper, op2):
@@ -233,12 +239,12 @@ def _interpret_breaks(break_conditions: list,
         }
         op1, op2 = float(op1), float(op2)
         return ops[oper](op1, op2)
-    
+
     for cond in break_conditions:
         ops = cond["break_condition"].split(" ")
-        if ops[0] == "val": 
+        if ops[0] == "val":
             param = cond["channel"].get()
-        else: 
+        else:
             print("Only parameters values can be used for breaks in this version")
             conditions.append(False)
         try:
@@ -248,19 +254,15 @@ def _interpret_breaks(break_conditions: list,
     return conditions
 
 class Conditional_Break_Exception(Exception):
-    pass    
+    pass
 
-def _handle_breaks(
-        conditions: Union[tuple[bool], list[bool]],
-        **kwargs
-        ) -> bool: 
+
+def _handle_breaks(conditions: Union[tuple[bool], list[bool]], **kwargs) -> bool:
     """
     Handles break conditions and returns True if one of the conditions is fulfilled.
     """
     for cond in conditions:
-        if cond == True: 
+        if cond == True:
             #raise Conditional_Break_Exception
             return True
     return False
-
-    
