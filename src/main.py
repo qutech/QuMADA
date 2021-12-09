@@ -28,6 +28,8 @@ from qtools.measurement.measurement import QtoolsStation as Station
 from qtools.measurement.measurement_for_immediate_use.generic_measurement import (
     Generic_1D_Sweep,
     Generic_nD_Sweep,
+    metadata,
+    parameters,
 )
 from qtools.measurement.measurement_for_immediate_use.inducing_measurement import (
     InducingMeasurementScript,
@@ -127,14 +129,14 @@ if __name__ == "__main__":
     # exit()
 
     # Load measuring script template
-    script = InducingMeasurementScript()
-    script.setup()
+    script = Generic_1D_Sweep()
+    script.setup(parameters, metadata)
 
     # map gate functions to instruments
     map_gates_to_instruments(station.components, script.gate_parameters)
 
     # run script
-    script.run()
+    script.run(parameters, metadata)
 
     # Exit
     raise SystemExit(0)
