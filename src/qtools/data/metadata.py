@@ -12,8 +12,6 @@ from qtools.data.measurement import Experiment, Measurement
 class Metadata(yaml.YAMLObject):
     yaml_tag = "!Metadata"
 
-    device: Device
-    experiment: Experiment
     measurement: Measurement
 
     @classmethod
