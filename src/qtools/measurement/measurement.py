@@ -2,17 +2,35 @@
 """
 Measurement
 """
-import numpy as np
+import inspect
 from dataclasses import dataclass, field
-from typing import MutableSequence, MutableMapping, Any, Union, Mapping, Sequence, Callable
+from typing import (
+    Any,
+    Callable,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+    Union,
+)
 
+import numpy as np
 from qcodes import Station
 from qcodes.instrument import Parameter
-from qcodes.utils.metadata import Metadatable
-from qtools.data.measurement import EquipmentInstance, FunctionType
-from qtools.instrument.mapping.base import _map_gate_to_instrument, filter_flatten_parameters
-from qcodes.utils.dataset.doNd import LinSweep, AbstractSweep, ActionsT
 from qcodes.instrument.parameter import _BaseParameter
+from qcodes.utils.dataset.doNd import AbstractSweep, ActionsT, LinSweep
+from qcodes.utils.metadata import Metadatable
+
+from qtools.data.measurement import EquipmentInstance, FunctionType
+from qtools.instrument.mapping.base import (
+    _map_gate_to_instrument,
+    filter_flatten_parameters,
+)
+
+
+def is_measurement_script(o):
+    return inspect.isclass(o) and issubclass(o, MeasurementScript)
+
 
 class QtoolsStation(Station):
     """Station object, inherits from qcodes Station."""
