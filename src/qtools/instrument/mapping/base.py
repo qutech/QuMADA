@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+from __future__ import annotations
+
 import json
 from typing import Any, Dict, Iterable, Mapping, Set, Union
 
@@ -119,18 +121,24 @@ def _generate_mapping_stub(instrument: Instrument,
         json.dump(mapping, file, indent=4, sort_keys=True)
 
 
-def map_gates_to_instruments(components: Mapping[Any, Metadatable],
-                             gate_parameters: Mapping[Any, Union[Mapping[Any, Parameter], Parameter]],
-                             existing_gate_parameters: Mapping[Any, Union[Mapping[Any, Parameter], Parameter]] = {}) -> None:
+def map_gates_to_instruments(
+    components: Mapping[Any, Metadatable],
+    gate_parameters: Mapping[Any, Mapping[Any, Parameter] | Parameter],
+    existing_gate_parameters: Mapping[Any, Mapping[Any, Parameter] | Parameter]
+    | None = None,
+) -> None:
     """
     Maps the gates, that were defined in the MeasurementScript to the instruments, that are initialized in QCoDeS.
 
     Args:
         components (Mapping[Any, Metadatable]): Instruments/Components in QCoDeS
         gate_parameters (Mapping[Any, Union[Mapping[Any, Parameter], Parameter]]): Gates, as defined in the measurement script
-        existing_gate_parameters (Mapping[Any, Union[Mapping[Any, Parameter], Parameter]]={}): Already existing mapping
+        existing_gate_parameters (Mapping[Any, Union[Mapping[Any, Parameter], Parameter]] | None): Already existing mapping
                 that is used to automatically create the mapping for already known gates without user input.
     """
+    if existing_gate_parameters is None:
+        existing_gate_parameters = {}
+
     # get all parameters in one flat list for the mapping process
     instrument_parameters = filter_flatten_parameters(components)
     for key, gate in gate_parameters.items():
@@ -209,9 +217,11 @@ def _map_gate_to_instrument(gate: Mapping[Any, Parameter],
                 raise MappingError(f"No mapping candidate for \"{key}\" in instrument \"{instrument_name}\" found.")
 
 
-def _map_gate_parameters_to_instrument_parameters(gate_parameters: Mapping[Any, Parameter],
-                                                  instrument_parameters: Mapping[Any, Parameter],
-                                                  append_unmapped_parameters=True) -> None:
+def _map_gate_parameters_to_instrument_parameters(
+    gate_parameters: Mapping[Any, Parameter],
+    instrument_parameters: Mapping[Any, Parameter],
+    append_unmapped_parameters=True,
+) -> None:
     """
     Maps the gate parameters of one specific gate to the instrument parameters of one specific instrument.
 
