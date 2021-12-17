@@ -82,7 +82,7 @@ class GateWidget(QtWidgets.QWidget):
     """Gate widget, that incorporates a measurement view"""
     def __init__(self, parent=None):
         QtWidgets.QWidget.__init__(self, parent=parent)
-        uic.loadUi("qtools/ui/gate_widget.ui", self)
+        uic.loadUi("src/qtools/ui/gate_widget.ui", self)
 
 
 if __name__ == "__main__":
