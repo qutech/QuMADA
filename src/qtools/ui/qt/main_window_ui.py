@@ -7,12 +7,13 @@ from typing import Dict
 
 from PyQt5 import QtWidgets, uic
 from qtconsole.console_widget import ConsoleWidget
-from qtconsole.rich_jupyter_widget import RichJupyterWidget
 from qtconsole.inprocess import QtInProcessKernelManager
+from qtconsole.rich_jupyter_widget import RichJupyterWidget
 
 
 class Ui(QtWidgets.QMainWindow):
     """Main Window of the UI."""
+
     def __init__(self):
         super().__init__()
         uic.loadUi("qtools/ui/main_window.ui", self)
@@ -33,6 +34,7 @@ class MyConsoleWidget(RichJupyterWidget, ConsoleWidget):
     """
     qConsole Jupyter Widget to be embedded as QWidget.
     """
+
     def __init__(self, *args, **kwargs):
 
         super().__init__(*args, **kwargs)
@@ -80,6 +82,7 @@ class MyConsoleWidget(RichJupyterWidget, ConsoleWidget):
 
 class GateWidget(QtWidgets.QWidget):
     """Gate widget, that incorporates a measurement view"""
+
     def __init__(self, parent=None):
         QtWidgets.QWidget.__init__(self, parent=parent)
         uic.loadUi("src/qtools/ui/gate_widget.ui", self)
