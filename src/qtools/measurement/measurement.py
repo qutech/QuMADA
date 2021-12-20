@@ -2,23 +2,37 @@
 """
 Measurement
 """
-import numpy as np
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import MutableSequence, MutableMapping, Any, Union, Mapping, Sequence, Callable
+from typing import (
+    Any,
+    Callable,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+    Union,
+)
 
+import numpy as np
 from qcodes import Station
 from qcodes.instrument import Parameter
-from qcodes.utils.metadata import Metadatable
-from qtools.data.measurement import EquipmentInstance, FunctionType
-from qtools.instrument.mapping.base import _map_gate_to_instrument, filter_flatten_parameters
-from qcodes.utils.dataset.doNd import LinSweep, AbstractSweep, ActionsT
 from qcodes.instrument.parameter import _BaseParameter
+from qcodes.utils.dataset.doNd import AbstractSweep, ActionsT, LinSweep
+from qcodes.utils.metadata import Metadatable
+
+from qtools.data.measurement import EquipmentInstance, FunctionType
+from qtools.instrument.mapping.base import (
+    _map_gate_to_instrument,
+    filter_flatten_parameters,
+)
+
 
 class QtoolsStation(Station):
     """Station object, inherits from qcodes Station."""
 
 
-class MeasurementScript():
+class MeasurementScript(ABC):
     PARAMETER_NAMES: set[str] = {"voltage",
                                  "current",
                                  "current_compliance",
@@ -128,6 +142,14 @@ class MeasurementScript():
                                                                self.properties[gate][parameter]["setpoints"],
                                                                delay = self.properties[gate][parameter].setdefault("delay", 0)))
         self._relabel_instruments()
+
+    @abstractmethod
+    def run(self, parameters: dict, metadata: dict) -> list:
+        """
+        Runs the already setup measurement. you can call self.initialize in here.
+        Abstract method.
+        """
+        return []
 
     def reset(self) -> None:
         """
