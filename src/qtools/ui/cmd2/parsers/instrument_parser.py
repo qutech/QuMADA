@@ -5,6 +5,7 @@ from cmd2 import Cmd, Cmd2ArgumentParser, CommandSet, with_argparser
 from qcodes.instrument.base import Instrument
 from qcodes.instrument.visa import VisaInstrument
 
+from qtools.instrument.instrument import is_instrument
 from qtools.instrument.mapping.base import (
     _generate_mapping_stub,
     add_mapping_to_instrument,
@@ -127,11 +128,11 @@ class InstrumentCommandSet(CommandSet):
 
     # functions
     def instrument_list(self, args):
-        pprint.pp(self.station.snapshot()["instruments"], depth=args.depth)
+        pprint.pp(self._cmd.station.snapshot()["instruments"], depth=args.depth)
 
     def instrument_add(self, args):
         try:
-            instrument_class: type[VisaInstrument] = self.instrument_drivers[
+            instrument_class: type[VisaInstrument] = self._cmd.instrument_drivers[
                 args.driver
             ]
             kwargs = {}
@@ -144,9 +145,9 @@ class InstrumentCommandSet(CommandSet):
             )
             if args.mapping:
                 # This does not yet work correctly, because the chosen instrument name has to fit the name in the mapping file.
-                path = next(p for p in self.mappings if p.name == args.mapping)
+                path = next(p for p in self._cmd.mappings if p.name == args.mapping)
                 add_mapping_to_instrument(instrument, path)
-            self.station.add_component(instrument)
+            self._cmd.station.add_component(instrument)
 
         except ImportError as e:
             self.pexcept(f"Error while importing Instrument Driver {args.name}: {e}")
@@ -156,10 +157,10 @@ class InstrumentCommandSet(CommandSet):
         raise NotImplementedError()
 
     def instrument_delete(self, args):
-        self.station.remove_component(args.name)
+        self._cmd.station.remove_component(args.name)
 
     def instrument_load_station(self, args):
-        self.station.load_config(args.file)
+        self._cmd.station.load_config(args.file)
 
     def instrument_save_station(self, args):
         raise NotImplementedError()
@@ -168,8 +169,8 @@ class InstrumentCommandSet(CommandSet):
 
     def instrument_generate_mapping(self, args):
         # generate a mapping stub from an initialized instrument
-        instrument = self.station.components[args.instrument]
-        assert isinstance(instrument, Instrument)
+        instrument = self._cmd.station.components[args.instrument]
+        assert is_instrument(instrument)
         _generate_mapping_stub(instrument, args.file)
 
     # function mapping
@@ -189,4 +190,4 @@ class InstrumentCommandSet(CommandSet):
         if func:
             func(self, args)
         else:
-            self.do_help("instrument")
+            self._cmd.do_help("instrument")
