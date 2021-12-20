@@ -156,19 +156,23 @@ def map_gates_to_instruments(
             flag = False
             while True:
                 try:
-                    #Automatically maps all parameters to their corresponding gates
-                    #based on the existing mapping
+                    # Automatically maps all parameters to their corresponding gates
+                    # based on the existing mapping
                     for existing_gate, existing_parameters in existing_gate_parameters.items():
                         if existing_gate == key:
-                            for channel in existing_parameters.values():
-                                if channel:
-                                    chosen_instrument = channel.root_instrument
-                                    flag = True
-                                    print(chosen_instrument)
-                                    break
+                            if isinstance(existing_parameters, Parameter):
+                                # TODO: single parameter
+                                ...
+                            else:
+                                for channel in existing_parameters.values():
+                                    if channel:
+                                        chosen_instrument = channel.root_instrument
+                                        flag = True
+                                        print(chosen_instrument)
+                                        break
 
-                    #TODO: Does not work with instruments that have only one parameter
-                    #(Lists letters of parametername instead of parameter)
+                    # TODO: Does not work with instruments that have only one parameter
+                    # (Lists letters of parametername instead of parameter)
                     if not flag:
                         chosen = int(input(f"Which instrument shall be mapped to gate \"{key}\" ({gate}): "))
                         chosen_instrument = list(components.values())[int(chosen)]

@@ -103,34 +103,41 @@ class MeasurementScript(ABC):
         TODO: Is there a more elegant way?
         TODO: Put Sweep-Generation somewhere else?
         """
-        self.gettable_parameters: list[str] = []
-        self.gettable_channels: list[str] = []
-        self.static_parameters: list[str] = []
-        self.dynamic_parameters: list[str] = []
-        self.dynamic_sweeps: list[str] = []
+        # TODO: Do proper typing
+        self.gettable_parameters: list[dict[str, Any]] = []
+        self.gettable_channels: list[Union[Parameter, Any, None]] = []
+        self.static_parameters: list[dict[str, Any]] = []
+        self.dynamic_parameters: list[dict[str, Any]] = []
+        self.dynamic_sweeps: list[AbstractSweep] = []
+
         for gate, parameters in self.gate_parameters.items():
             for parameter, channel in parameters.items():
                 if self.properties[gate][parameter]["type"].find("static") >= 0:
                     channel.set(self.properties[gate][parameter]["value"])
-                    self.static_parameters.append({"gate":gate,
-                                                   "parameter":parameter})
+                    self.static_parameters.append(
+                        {"gate": gate, "parameter": parameter}
+                    )
 
                 if self.properties[gate][parameter]["type"].find("gettable") >= 0:
-                    self.gettable_parameters.append({"gate":gate,
-                                                     "parameter":parameter})
+                    self.gettable_parameters.append(
+                        {"gate": gate, "parameter": parameter}
+                    )
                     self.gettable_channels.append(channel)
                 elif self.properties[gate][parameter]["type"].find("dynamic") >= 0:
-                    #Handle different possibilities for starting points
+                    # Handle different possibilities for starting points
                     try:
                         channel.set(self.properties[gate][parameter]["value"])
                     except KeyError:
                         try:
                             channel.set(self.properties[gate][parameter]["start"])
                         except KeyError:
-                            channel.set(self.properties[gate][parameter]["setpoints"][0])
-                    self.dynamic_parameters.append({"gate":gate,
-                                                   "parameter":parameter})
-                    #Generate sweeps from parameters
+                            channel.set(
+                                self.properties[gate][parameter]["setpoints"][0]
+                            )
+                    self.dynamic_parameters.append(
+                        {"gate": gate, "parameter": parameter}
+                    )
+                    # Generate sweeps from parameters
                     try:
                         self.dynamic_sweeps.append(LinSweep(channel,
                                                             self.properties[gate][parameter]["start"],

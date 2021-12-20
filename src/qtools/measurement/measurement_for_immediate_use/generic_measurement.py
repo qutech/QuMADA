@@ -48,7 +48,7 @@ class Generic_1D_Sweep(MeasurementScript):
         data = list()
         time.sleep(5)
         for sweep in self.dynamic_sweeps:
-            sweep._param.set(sweep.get_setpoints()[0])
+            sweep.param.set(sweep.get_setpoints()[0])
             data.append(
                 dond(sweep,
                      *tuple(self.gettable_channels)))
