@@ -131,4 +131,4 @@ class MeasurementCommandSet(CommandSet):
         if func:
             func(self, args)
         else:
-            self.do_help("measurement")
+            self._cmd.do_help("measurement")

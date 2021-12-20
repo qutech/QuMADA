@@ -6,9 +6,11 @@ from qcodes import Station
 import qtools.data.db as db
 from qtools.data.metadata import Metadata
 from qtools.instrument.instrument import is_instrument
-from qtools.measurement.measurement import is_measurement_script
+from qtools.measurement.jobs import Job, Joblist
+from qtools.measurement.measurement import MeasurementScript, is_measurement_script
 from qtools.ui.cmd2.parsers import (
     InstrumentCommandSet,
+    JoblistCommandSet,
     MeasurementCommandSet,
     MetadataCommandSet,
 )
@@ -18,7 +20,13 @@ from qtools.utils.resources import import_resources
 
 class QToolsApp(Cmd):
     def __init__(self):
-        super().__init__()
+        commands = [
+            MetadataCommandSet(),
+            MeasurementCommandSet(),
+            InstrumentCommandSet(),
+            JoblistCommandSet(),
+        ]
+        super().__init__(auto_load_commands=False, command_sets=commands)
 
         # remove cmd2 builtin commands
         del Cmd.do_edit
@@ -47,7 +55,36 @@ class QToolsApp(Cmd):
             members = inspect.getmembers(module, is_measurement_script)
             self.measurement_scripts.update(members)
 
-        # Metadata
+        # Metadata url
         db.api_url = "http://134.61.7.48:9123"
-        self.metadata = Metadata()
+
+        # Joblist
+        self.joblist = Joblist()
+        self.current_job = Job()
+
+        # Station
         self.station = Station()
+
+    @property
+    def metadata(self) -> Metadata:
+        return self.current_job._metadata
+
+    @metadata.setter
+    def metadata(self, metadata: Metadata) -> None:
+        self.current_job._metadata = metadata
+
+    @property
+    def script(self) -> MeasurementScript:
+        return self.current_job._script
+
+    @script.setter
+    def script(self, script: MeasurementScript) -> None:
+        self.current_job._script = script
+
+    @property
+    def parameters(self):
+        return self.current_job._parameters
+
+    @parameters.setter
+    def parameters(self, parameters: dict) -> None:
+        self.current_job._parameters = parameters
