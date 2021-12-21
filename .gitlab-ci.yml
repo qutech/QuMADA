@@ -52,6 +52,6 @@ unit_test:
   stage: test
   before_script:
   - *global_script_before
-  - pip install pytest pytest-cov
+  - pip install pytest pytest-cov pytest-httpserver
   script:
   - pytest --cov=src src/tests

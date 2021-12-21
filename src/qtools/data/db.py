@@ -42,6 +42,6 @@ def _api_put(function_name: str, data: Mapping):
         JSONType: JSON answer from the application server
     """
     url = urljoin(api_url, function_name)
-    response = requests.put(url, data=data)
+    response = requests.put(url, json=data)
     response.raise_for_status()
     return response.json()
