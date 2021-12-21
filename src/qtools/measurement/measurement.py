@@ -4,15 +4,7 @@ Measurement
 """
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import (
-    Any,
-    Callable,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-    Sequence,
-    Union,
-)
+from typing import Any, MutableMapping, MutableSequence, Union
 
 import numpy as np
 from qcodes import Station
@@ -33,6 +25,11 @@ class QtoolsStation(Station):
 
 
 class MeasurementScript(ABC):
+    """
+    Base class for measurement scripts.
+
+    The abstract function "run" has to be implemented.
+    """
     PARAMETER_NAMES: set[str] = {"voltage",
                                  "current",
                                  "current_compliance",
