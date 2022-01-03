@@ -41,4 +41,4 @@ class Metadata(yaml.YAMLObject):
                     # No save function
                     pass
 
-        recurse([self.device, self.experiment, self.measurement])
+        recurse([self.measurement])
