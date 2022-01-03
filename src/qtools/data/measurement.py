@@ -26,7 +26,10 @@ class TemplateParameter(DomainObject, DomainYAMLObject):
     type: str
 
     @classmethod
-    def create(cls, name: str, type: str, **kwargs) -> TemplateParameter:
+    def create(cls,
+               name: str,
+               type: str,
+               **kwargs):
         """Creates a TemplateParameter object."""
         kwargs.update({
             "name": name,
@@ -50,14 +53,12 @@ class MeasurementSettingScript(DomainObject, DomainYAMLObject):
     # TODO: allowedParameters
 
     @classmethod
-    def create(
-        cls,
-        name: str,
-        script: str,
-        language: str,
-        allowedParameters: list[TemplateParameter],
-        **kwargs
-    ) -> MeasurementSettingScript:
+    def create(cls,
+               name: str,
+               script: str,
+               language: str,
+               allowedParameters: list[TemplateParameter],
+               **kwargs):
         """Creates a MeasurementSettingScript object."""
         kwargs.update({
             "name": name,
@@ -80,9 +81,10 @@ class MeasurementSettings(DomainObject, DomainYAMLObject):
     script: MeasurementSettingScript
 
     @classmethod
-    def create(
-        cls, name: str, script: MeasurementSettingScript, **kwargs
-    ) -> MeasurementSettings:
+    def create(cls,
+               name: str,
+               script: MeasurementSettingScript,
+               **kwargs):
         """Creates a MeasurementSettings object."""
         kwargs.update({
             "name": name,
@@ -113,9 +115,10 @@ class EquipmentFunction(DomainObject, DomainYAMLObject):
     functionType: FunctionType
 
     @classmethod
-    def create(
-        cls, name: str, functionType: FunctionType, **kwargs
-    ) -> EquipmentFunction:
+    def create(cls,
+               name: str,
+               functionType: FunctionType,
+               **kwargs):
         """Creates an EquipmentFunction object."""
         kwargs.update({
             "name": name,
@@ -139,14 +142,12 @@ class Equipment(DomainObject, DomainYAMLObject):
     # TODO: functions
 
     @classmethod
-    def create(
-        cls,
-        name: str,
-        description: str,
-        parameters: str,
-        functions: list[EquipmentFunction],
-        **kwargs
-    ) -> Equipment:
+    def create(cls,
+               name: str,
+               description: str,
+               parameters: str,
+               functions: list[EquipmentFunction],
+               **kwargs):
         """Creates an Equipment object."""
         kwargs.update({
             "name": name,
@@ -170,9 +171,11 @@ class EquipmentInstance(DomainObject, DomainYAMLObject):
     parameter: str
 
     @classmethod
-    def create(
-        cls, name: str, type: Equipment, parameter: str, **kwargs
-    ) -> EquipmentInstance:
+    def create(cls,
+               name: str,
+               type: Equipment,
+               parameter: str,
+               **kwargs):
         """Creates an EquipmentInstance object."""
         kwargs.update({
             "name": name,
@@ -208,7 +211,7 @@ class MeasurementType(DomainObject, DomainYAMLObject):
         mapping: str,
         equipments: list[Equipment],
         **kwargs
-    ) -> MeasurementType:
+    ):
         """Creates a MeasurementType object."""
         kwargs.update(
             {
@@ -241,17 +244,15 @@ class Experiment(DomainObject, DomainYAMLObject):
     # TODO: equipmentInstances
 
     @classmethod
-    def create(
-        cls,
-        name: str,
-        description: str,
-        user: str,
-        group: str,
-        measurementType: MeasurementType,
-        softwareNoiseFilters: str | None = None,
-        equipmentInstances: list[EquipmentInstance] | None = None,
-        **kwargs
-    ) -> Experiment:
+    def create(cls,
+               name: str,
+               description: str,
+               user: str,
+               group: str,
+               measurementType: MeasurementType,
+               softwareNoiseFilters: str | None = None,
+               equipmentInstances: list[EquipmentInstance] | None = None,
+               **kwargs):
         """Creates an Experiment object."""
         kwargs.update({
             "name": name,
@@ -280,15 +281,13 @@ class Measurement(DomainObject, DomainYAMLObject):
     measurementParameters: str
 
     @classmethod
-    def create(
-        cls,
-        name: str,
-        device: Device,
-        experiment: Experiment,
-        settings: MeasurementSettings,
-        measurementParameters: str,
-        **kwargs
-    ) -> Measurement:
+    def create(cls,
+               name: str,
+               device: Device,
+               experiment: Experiment,
+               settings: MeasurementSettings,
+               measurementParameters: str,
+               **kwargs):
         """Creates a Measurement object."""
         kwargs.update({
             "name": name,

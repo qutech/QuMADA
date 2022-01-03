@@ -3,10 +3,8 @@
 Representations of domain objects (Devices).
 """
 
-from __future__ import annotations
-
 from dataclasses import dataclass, field
-from typing import Any, TypeVar
+from typing import Any
 
 from qtools.data.apiclasses import get_all, get_by_id, save
 from qtools.data.domain import DomainObject
@@ -25,7 +23,7 @@ class Factory(DomainObject, DomainYAMLObject):
     description: str
 
     @classmethod
-    def create(cls, name: str, description: str, **kwargs) -> Factory:
+    def create(cls, name: str, description: str, **kwargs):
         """Creates a Factory object."""
         kwargs.update({
             "name": name,
@@ -47,9 +45,11 @@ class Wafer(DomainObject, DomainYAMLObject):
     productionDate: str  # pylint: disable=invalid-name
 
     @classmethod
-    def create(
-        cls, name: str, description: str, productionDate: str, **kwargs
-    ) -> Wafer:  # pylint: disable=invalid-name
+    def create(cls,
+               name: str,
+               description: str,
+               productionDate: str,
+               **kwargs):  # pylint: disable=invalid-name
         """Creates a Wafer object."""
         kwargs.update({
             "name": name,
@@ -72,7 +72,7 @@ class Sample(DomainObject, DomainYAMLObject):
     wafer: Wafer
 
     @classmethod
-    def create(cls, name: str, description: str, wafer: Wafer, **kwargs) -> Sample:
+    def create(cls, name: str, description: str, wafer: Wafer, **kwargs):
         """Creates a Sample object."""
         kwargs.update({
             "name": name,
@@ -100,17 +100,15 @@ class Design(DomainObject, DomainYAMLObject):
     # TODO: MeasurementTypes
 
     @classmethod
-    def create(
-        cls,
-        name: str,
-        wafer: Wafer,
-        factory: Factory,
-        sample: Sample,
-        mask: str,
-        creator: str,
-        allowedForMeasurementTypes: list[Any],
-        **kwargs
-    ) -> Design:  # pylint: disable=invalid-name
+    def create(cls,
+               name: str,
+               wafer: Wafer,
+               factory: Factory,
+               sample: Sample,
+               mask: str,
+               creator: str,
+               allowedForMeasurementTypes: list[Any],
+               **kwargs):  # pylint: disable=invalid-name
         """Creates a Design object."""
         kwargs.update({
             "name": name,
@@ -137,7 +135,7 @@ class Device(DomainObject, DomainYAMLObject):
     sample: Sample
 
     @classmethod
-    def create(cls, name: str, design: Design, sample: Sample, **kwargs) -> Device:
+    def create(cls, name: str, design: Design, sample: Sample, **kwargs):
         """Creates a Device object."""
         kwargs.update({
             "name": name,
