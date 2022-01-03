@@ -2,12 +2,10 @@
 """
 General Object class for the domain.
 """
-
-from __future__ import annotations
-
 import json
 from collections.abc import Mapping
-from dataclasses import dataclass, is_dataclass
+from dataclasses import dataclass, fields, is_dataclass
+from typing import get_type_hints
 
 
 @dataclass
@@ -21,7 +19,7 @@ class DomainObject:
     lastChangeDate: str     # pylint: disable=invalid-name
 
     @classmethod
-    def _create(cls, name: str, **kwargs):
+    def _create(cls, name: str, **kwargs) -> "DomainObject":
         """
         This factory function creates a DomainObject while ensuring, that the internal DB fields are all set to None.
         This function is usually not called directly, but by the factory function of a child class.
@@ -46,10 +44,19 @@ class DomainObject:
 
     def __post_init__(self) -> None:
         # Select all variables, that should be a dataclass, but are a dict and
-        # turn them into the respective objects
-        # pylint: disable=no-member
-        objects = {k: v.type(**self.__dict__[k]) for k, v in self.__dataclass_fields__.items()
-                   if is_dataclass(v.type) and isinstance(self.__dict__[k], Mapping)}
+        # turn them into the respective objects.
+        # The field's type is evaluated using get_type_hints, because dataclasses are incompatible
+        # with the string type hints, which are introduced with PEP 563 and "from __future__ import annotations"
+        # This behavior may change in the future, if PEP 649 is implemented
+        def gen():
+            types = get_type_hints(type(self))
+            for field in fields(self):
+                name = field.name
+                cls = types[name]
+                if is_dataclass(cls) and isinstance(self.__dict__[name], Mapping):
+                    yield name, cls
+
+        objects = {name: cls(**self.__dict__[name]) for name, cls in gen()}
         self.__dict__.update(objects)
 
     def __eq__(self, other) -> bool:
