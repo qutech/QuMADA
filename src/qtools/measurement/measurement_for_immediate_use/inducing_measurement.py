@@ -1,13 +1,9 @@
-#!/usr/bin/env python3
-
 """Inducing Measurement Script"""
 
 import time
-
 from copy import deepcopy
 
 from qcodes.dataset.experiment_container import load_or_create_experiment
-
 from qcodes.utils.dataset.doNd import do1d
 
 from qtools.measurement.measurement import MeasurementScript

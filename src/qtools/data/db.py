@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Functions and classes regarding the database connection
 """
