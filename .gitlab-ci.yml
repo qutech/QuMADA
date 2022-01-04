@@ -33,20 +33,13 @@ pylint:
   allow_failure: true
   before_script:
   - *global_script_before
-  - mkdir -p public/badges public/lint
-  - echo undefinded > public/badges/$CI_JOB_NAME.score
   - pip install pylint pylint-gitlab
   script:
-  - pylint --exit-zero --output-format=text src | tee /tmp/pylint.txt
-  - sed -n 's/^Your code has been rated at \([-0-9.]*\)\/.*/\1/p' /tmp/pylint.txt > public/badges/$CI_JOB_NAME.score
-  - pylint --exit-zero --output-format=pylint_gitlab.GitlabPagesHtmlReporter src > public/lint/index.html
-  after_script:
-  - anybadge --overwrite --label $CI_JOB_NAME --value=$(cat public/badges/$CI_JOB_NAME.score) --file=public/badges/$CI_JOB_NAME.svg 4=red 6=orange 8=yellow 10=green
-  - |
-    echo "Your score is: $(cat public/badges/$CI_JOB_NAME.score)"
+  - pylint --exit-zero --output-format=pylint_gitlab.GitlabCodeClimateReporter src > codeclimate.json
   artifacts:
-    paths:
-    - public
+    when: always
+    reports:
+      codequality: codeclimate.json
 
 unit_test:
   stage: test
@@ -54,4 +47,9 @@ unit_test:
   - *global_script_before
   - pip install pytest pytest-cov pytest-httpserver
   script:
-  - pytest --cov=src src/tests
+  - pytest --junitxml=report.xml --cov=src --cov-report=xml src/tests
+  artifacts:
+    when: always
+    reports:
+      junit: report.xml
+      cobertura: coverage.xml
