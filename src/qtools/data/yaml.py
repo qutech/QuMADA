@@ -2,6 +2,7 @@ from uuid import UUID
 
 import yaml
 from yaml.constructor import ConstructorError
+from yaml.error import YAMLError
 
 
 def is_valid_uuid(s):
@@ -17,12 +18,15 @@ class DomainYAMLObject(yaml.YAMLObject):
     def from_yaml(cls, loader, node):
         try:
             pid = loader.construct_scalar(node)
-            if (
-                is_valid_uuid(pid)
-                and hasattr(cls, "get_by_id")
-                and callable(cls.get_by_id)
-            ):
-                return cls.get_by_id(node.value)
+            if not (hasattr(cls, "get_by_id") and callable(cls.get_by_id)):
+                raise YAMLError(
+                    f"Could not load {node.tag} from DB: Not loadable by pID."
+                )
+            if not is_valid_uuid(pid):
+                raise YAMLError(
+                    f"Could not load {node.tag} from DB: {pid} is not a valid UUID."
+                )
+            return cls.get_by_id(node.value)
         except ConstructorError:
             # No pid (scalar), try mapping
             try:
