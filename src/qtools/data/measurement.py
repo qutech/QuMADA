@@ -6,15 +6,11 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 
-from qtools.data.apiclasses import get_all, get_by_id, save
 from qtools.data.device import Device
 from qtools.data.domain import DomainObject
 from qtools.data.yaml import DomainYAMLObject
 
 
-@get_by_id
-@get_all
-@save(fn_name="saveOrUpdateTemplateParameter")
 @dataclass
 class TemplateParameter(DomainObject, DomainYAMLObject):
     """Represents the database entry of a template parameter."""
@@ -24,20 +20,18 @@ class TemplateParameter(DomainObject, DomainYAMLObject):
     type: str
 
     @classmethod
-    def create(
-        cls: type[TemplateParameter], name: str, type: str, **kwargs
-    ) -> TemplateParameter:
+    def create(cls, name: str, type: str, **kwargs) -> TemplateParameter:
         """Creates a TemplateParameter object."""
         kwargs.update({
             "name": name,
             "type": type,
         })
-        return super(cls, cls)._create(**kwargs)
+        return super()._create(**kwargs)
+
+    def save(self) -> str:
+        return super()._save("saveOrUpdateTemplateParameter")
 
 
-@get_by_id
-@get_all
-@save(fn_name="saveOrUpdateMeasurementSettingScript")
 @dataclass
 class MeasurementSettingScript(DomainObject, DomainYAMLObject):
     """Represents the database entry of a measurement setting script."""
@@ -51,7 +45,7 @@ class MeasurementSettingScript(DomainObject, DomainYAMLObject):
 
     @classmethod
     def create(
-        cls: type[MeasurementSettingScript],
+        cls,
         name: str,
         script: str,
         language: str,
@@ -65,12 +59,12 @@ class MeasurementSettingScript(DomainObject, DomainYAMLObject):
             "language": language,
             "allowedParameters": allowedParameters,
         })
-        return super(cls, cls)._create(**kwargs)
+        return super()._create(**kwargs)
+
+    def save(self) -> str:
+        return super()._save("saveOrUpdateMeasurementSettingScript")
 
 
-@get_by_id
-@get_all(fn_name="measurementSettings")
-@save(fn_name="saveOrUpdateMeasurementSettings")
 @dataclass
 class MeasurementSettings(DomainObject, DomainYAMLObject):
     """Represents the database entry of the measurement settings."""
@@ -81,17 +75,21 @@ class MeasurementSettings(DomainObject, DomainYAMLObject):
 
     @classmethod
     def create(
-        cls: type[MeasurementSettings],
-        name: str,
-        script: MeasurementSettingScript,
-        **kwargs
+        cls, name: str, script: MeasurementSettingScript, **kwargs
     ) -> MeasurementSettings:
         """Creates a MeasurementSettings object."""
         kwargs.update({
             "name": name,
             "script": script,
         })
-        return super(cls, cls)._create(**kwargs)
+        return super()._create(**kwargs)
+
+    @classmethod
+    def get_all(cls) -> list[MeasurementSettings]:
+        return super()._get_all(fn_name="measurementSettings")
+
+    def save(self) -> str:
+        return super()._save("saveOrUpdateMeasurementSettings")
 
 
 class FunctionType(Enum):
@@ -104,9 +102,6 @@ class FunctionType(Enum):
     CURRENT_SENSE_AC = 5
 
 
-@get_by_id
-@get_all
-@save(fn_name="saveOrUpdateEquipmentFunction")
 @dataclass
 class EquipmentFunction(DomainObject, DomainYAMLObject):
     """Represents the database entry of a equipment function."""
@@ -117,19 +112,19 @@ class EquipmentFunction(DomainObject, DomainYAMLObject):
 
     @classmethod
     def create(
-        cls: type[EquipmentFunction], name: str, functionType: FunctionType, **kwargs
+        cls, name: str, functionType: FunctionType, **kwargs
     ) -> EquipmentFunction:
         """Creates an EquipmentFunction object."""
         kwargs.update({
             "name": name,
             "functionType": functionType,
         })
-        return super(cls, cls)._create(**kwargs)
+        return super()._create(**kwargs)
+
+    def save(self) -> str:
+        return super()._save("saveOrUpdateEquipmentFunction")
 
 
-@get_by_id
-@get_all
-@save(fn_name="saveOrUpdateEquipment")
 @dataclass
 class Equipment(DomainObject, DomainYAMLObject):
     """Represents the database entry of an equipment."""
@@ -143,7 +138,7 @@ class Equipment(DomainObject, DomainYAMLObject):
 
     @classmethod
     def create(
-        cls: type[Equipment],
+        cls,
         name: str,
         description: str,
         parameters: str,
@@ -157,12 +152,12 @@ class Equipment(DomainObject, DomainYAMLObject):
             "parameters": parameters,
             "functions": functions,
         })
-        return super(cls, cls)._create(**kwargs)
+        return super()._create(**kwargs)
+
+    def save(self) -> str:
+        return super()._save("saveOrUpdateEquipment")
 
 
-@get_by_id
-@get_all
-@save(fn_name="saveOrUpdateEquipmentInstance")
 @dataclass
 class EquipmentInstance(DomainObject, DomainYAMLObject):
     """Represents the database entry of an equipment instance."""
@@ -174,11 +169,7 @@ class EquipmentInstance(DomainObject, DomainYAMLObject):
 
     @classmethod
     def create(
-        cls: type[EquipmentInstance],
-        name: str,
-        type: Equipment,
-        parameter: str,
-        **kwargs
+        cls, name: str, type: Equipment, parameter: str, **kwargs
     ) -> EquipmentInstance:
         """Creates an EquipmentInstance object."""
         kwargs.update({
@@ -186,12 +177,12 @@ class EquipmentInstance(DomainObject, DomainYAMLObject):
             "type": type,
             "parameter": parameter,
         })
-        return super(cls, cls)._create(**kwargs)
+        return super()._create(**kwargs)
+
+    def save(self) -> str:
+        return super()._save("saveOrUpdateEquipmentInstance")
 
 
-@get_by_id
-@get_all(fn_name="measurementTypes")
-@save(fn_name="saveOrUpdateMeasurementType")
 @dataclass
 class MeasurementType(DomainObject, DomainYAMLObject):
     """Represents the database entry of a measurement type."""
@@ -207,7 +198,7 @@ class MeasurementType(DomainObject, DomainYAMLObject):
 
     @classmethod
     def create(
-        cls: type[MeasurementType],
+        cls,
         name: str,
         model: str,
         scriptTemplate: MeasurementSettingScript,
@@ -227,12 +218,16 @@ class MeasurementType(DomainObject, DomainYAMLObject):
                 "equipments": equipments,
             }
         )
-        return super(cls, cls)._create(**kwargs)
+        return super()._create(**kwargs)
+
+    @classmethod
+    def get_all(cls) -> list[MeasurementType]:
+        return super()._get_all("measurementTypes")
+
+    def save(self) -> str:
+        return super()._save("saveOrUpdateMeasurementType")
 
 
-@get_by_id
-@get_all
-@save(fn_name="saveOrUpdateExperiment")
 @dataclass
 class Experiment(DomainObject, DomainYAMLObject):
     """Represents the database entry of an experiment."""
@@ -249,7 +244,7 @@ class Experiment(DomainObject, DomainYAMLObject):
 
     @classmethod
     def create(
-        cls: type[Experiment],
+        cls,
         name: str,
         description: str,
         user: str,
@@ -269,12 +264,12 @@ class Experiment(DomainObject, DomainYAMLObject):
             "measurementType": measurementType,
             "equipmentInstances": equipmentInstances
         })
-        return super(cls, cls)._create(**kwargs)
+        return super()._create(**kwargs)
+
+    def save(self) -> str:
+        return super()._save("saveOrUpdateExperiment")
 
 
-@get_by_id
-@get_all
-@save(fn_name="saveOrUpdateMeasurement")
 @dataclass
 class Measurement(DomainObject, DomainYAMLObject):
     """Represents the database entry of a measurement."""
@@ -288,7 +283,7 @@ class Measurement(DomainObject, DomainYAMLObject):
 
     @classmethod
     def create(
-        cls: type[Measurement],
+        cls,
         name: str,
         device: Device,
         experiment: Experiment,
@@ -304,4 +299,7 @@ class Measurement(DomainObject, DomainYAMLObject):
             "settings": settings,
             "measurementParameters": measurementParameters,
         })
-        return super(cls, cls)._create(**kwargs)
+        return super()._create(**kwargs)
+
+    def save(self) -> str:
+        return super()._save("saveOrUpdateMeasurement")
