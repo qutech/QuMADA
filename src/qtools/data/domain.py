@@ -1,10 +1,16 @@
 """
 General Object class for the domain.
 """
+from __future__ import annotations
+
 import json
 from collections.abc import Mapping
 from dataclasses import dataclass, fields, is_dataclass
-from typing import get_type_hints
+from typing import Iterable, TypeVar, get_type_hints
+
+from qtools.data.db import _api_get, _api_put
+
+T = TypeVar("T", bound="DomainObject")
 
 
 @dataclass
@@ -18,7 +24,7 @@ class DomainObject:
     lastChangeDate: str     # pylint: disable=invalid-name
 
     @classmethod
-    def _create(cls, name: str, **kwargs) -> "DomainObject":
+    def _create(cls: type[T], name: str, **kwargs) -> T:
         """
         This factory function creates a DomainObject while ensuring, that the internal DB fields are all set to None.
         This function is usually not called directly, but by the factory function of a child class.
@@ -38,7 +44,72 @@ class DomainObject:
         kwargs.setdefault("lastChangeDate", None)
         return cls(**kwargs)
 
+    @classmethod
+    def get_by_id(cls: type[T], pid: str) -> T:
+        """get a domain object by pid from the database."""
+        return cls._get_by_id(pid)
+
+    @classmethod
+    def _get_by_id(
+        cls: type[T], pid: str, fn_name: str | None = None, id_name: str = "pid"
+    ) -> T:
+        # Try to guess function name if not provided
+        if fn_name is None:
+            fn_name = f"get{cls.__name__}ById"
+        data = _api_get(fn_name, {id_name: pid})
+        return cls(**data)
+
+    @classmethod
+    def get_all(cls: type[T]) -> list[T]:
+        """get all domain objects of the specific type from the database."""
+        return cls._get_all()
+
+    @classmethod
+    def _get_all(cls: type[T], fn_name: str | None = None) -> list[T]:
+        # Try to guess function name if not provided
+        if fn_name is None:
+            fn_name = f"{cls.__name__.lower()}s"
+        return [cls(**data) for data in _api_get(fn_name)]
+
+    def save(self):
+        """saves the domain object to the database."""
+        return self._save()
+
+    def _save(
+        self: DomainObject,
+        fn_name: str | None = None,
+        field_names: list[str] | None = None,
+    ) -> str:
+        # Try to guess function name if not provided
+        if fn_name is None:
+            fn_name = f"put{type(self).__name__}"
+        if field_names is None:
+            field_names = [f.name for f in fields(self)]
+        # data = {field_name: getattr(self, field_name) for field_name in field_names}
+        data = {}
+        for field_name in field_names:
+            # TODO: match-clause with Python 3.10
+            attr = getattr(self, field_name)
+            if isinstance(attr, DomainObject):
+                # Take pid for DomainObjects by default
+                attr = attr.pid
+                field_name = f"{field_name}Id"
+            elif isinstance(attr, Iterable) and not isinstance(attr, str):
+                # Take pid from all DomainObjects
+                attr = [a.pid if isinstance(a, DomainObject) else a for a in attr]
+                # Join Iterables by comma
+                attr = ",".join(attr)
+                field_name = f"{field_name.removesuffix('s')}Ids"
+            elif not isinstance(attr, str):
+                # Turn everything else into str (except None, which turns into an empty string instead of "None")
+                attr = str(attr or "")
+            data[field_name] = attr
+        resp = _api_put(fn_name, data)
+        self._handle_db_response(resp)
+        return self.pid
+
     def to_json(self) -> str:
+        """Return a JSON representation of the domain object."""
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
     def __post_init__(self) -> None:

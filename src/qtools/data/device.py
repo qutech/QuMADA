@@ -6,14 +6,10 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from qtools.data.apiclasses import get_all, get_by_id, save
 from qtools.data.domain import DomainObject
 from qtools.data.yaml import DomainYAMLObject
 
 
-@get_by_id
-@get_all(fn_name="factories")
-@save(fn_name="saveOrUpdateFactory")
 @dataclass
 class Factory(DomainObject, DomainYAMLObject):
     """Represents the database entry of a factory."""
@@ -23,18 +19,22 @@ class Factory(DomainObject, DomainYAMLObject):
     description: str
 
     @classmethod
-    def create(cls: type[Factory], name: str, description: str, **kwargs) -> Factory:
+    def create(cls, name: str, description: str, **kwargs) -> Factory:
         """Creates a Factory object."""
         kwargs.update({
             "name": name,
             "description": description,
         })
-        return super(cls, cls)._create(**kwargs)
+        return super()._create(**kwargs)
+
+    @classmethod
+    def get_all(cls) -> list[Factory]:
+        return super()._get_all(fn_name="factories")
+
+    def save(self) -> str:
+        return super()._save(fn_name="saveOrUpdateFactory")
 
 
-@get_by_id
-@get_all
-@save(fn_name="saveOrUpdateWafer")
 @dataclass
 class Wafer(DomainObject, DomainYAMLObject):
     """Represents the database entry of a wafer."""
@@ -44,22 +44,23 @@ class Wafer(DomainObject, DomainYAMLObject):
     description: str
     productionDate: str  # pylint: disable=invalid-name
 
+    # pylint: disable=invalid-name
     @classmethod
     def create(
-        cls: type[Wafer], name: str, description: str, productionDate: str, **kwargs
-    ) -> Wafer:  # pylint: disable=invalid-name
+        cls, name: str, description: str, productionDate: str, **kwargs
+    ) -> Wafer:
         """Creates a Wafer object."""
         kwargs.update({
             "name": name,
             "description": description,
             "productionDate": productionDate,
         })
-        return super(cls, cls)._create(**kwargs)
+        return super()._create(**kwargs)
+
+    def save(self) -> str:
+        return super()._save(fn_name="saveOrUpdateWafer")
 
 
-@get_by_id
-@get_all
-@save(fn_name="saveOrUpdateSample")
 @dataclass
 class Sample(DomainObject, DomainYAMLObject):
     """Represents the database entry of a sample."""
@@ -70,21 +71,23 @@ class Sample(DomainObject, DomainYAMLObject):
     wafer: Wafer
 
     @classmethod
-    def create(
-        cls: type[Sample], name: str, description: str, wafer: Wafer, **kwargs
-    ) -> Sample:
+    def create(cls, name: str, description: str, wafer: Wafer, **kwargs) -> Sample:
         """Creates a Sample object."""
         kwargs.update({
             "name": name,
             "description": description,
             "wafer": wafer,
         })
-        return super(cls, cls)._create(**kwargs)
+        return super()._create(**kwargs)
+
+    @classmethod
+    def get_all(cls) -> list[Sample]:
+        return super()._get_all("samples")
+
+    def save(self) -> str:
+        return super()._save(fn_name="saveOrUpdateSample")
 
 
-@get_by_id
-@get_all
-@save(fn_name="saveOrUpdateDesign")
 @dataclass
 class Design(DomainObject, DomainYAMLObject):
     """Represents the database entry of a design."""
@@ -99,9 +102,10 @@ class Design(DomainObject, DomainYAMLObject):
     allowedForMeasurementTypes: list[Any] = field(default_factory=list)  # pylint: disable=invalid-name
     # TODO: MeasurementTypes
 
+    # pylint: disable=invalid-name
     @classmethod
     def create(
-        cls: type[Design],
+        cls,
         name: str,
         wafer: Wafer,
         factory: Factory,
@@ -110,7 +114,7 @@ class Design(DomainObject, DomainYAMLObject):
         creator: str,
         allowedForMeasurementTypes: list[Any],
         **kwargs
-    ) -> Design:  # pylint: disable=invalid-name
+    ) -> Design:
         """Creates a Design object."""
         kwargs.update({
             "name": name,
@@ -121,12 +125,12 @@ class Design(DomainObject, DomainYAMLObject):
             "creator": creator,
             "allowedForMeasurementTypes": allowedForMeasurementTypes,
         })
-        return super(cls, cls)._create(**kwargs)
+        return super()._create(**kwargs)
+
+    def save(self) -> str:
+        return super()._save(fn_name="saveOrUpdateDesign")
 
 
-@get_by_id
-@get_all
-@save(fn_name="saveOrUpdateDevice")
 @dataclass
 class Device(DomainObject, DomainYAMLObject):
     """Represents the database entry of a device."""
@@ -137,13 +141,14 @@ class Device(DomainObject, DomainYAMLObject):
     sample: Sample
 
     @classmethod
-    def create(
-        cls: type[Device], name: str, design: Design, sample: Sample, **kwargs
-    ) -> Device:
+    def create(cls, name: str, design: Design, sample: Sample, **kwargs) -> Device:
         """Creates a Device object."""
         kwargs.update({
             "name": name,
             "design": design,
             "sample": sample,
         })
-        return super(cls, cls)._create(**kwargs)
+        return super()._create(**kwargs)
+
+    def save(self) -> str:
+        return super()._save(fn_name="saveOrUpdateDevice")
