@@ -46,6 +46,7 @@ class DomainObject:
 
     @classmethod
     def get_by_id(cls: type[T], pid: str) -> T:
+        """get a domain object by pid from the database."""
         return cls._get_by_id(pid)
 
     @classmethod
@@ -60,6 +61,7 @@ class DomainObject:
 
     @classmethod
     def get_all(cls: type[T]) -> list[T]:
+        """get all domain objects of the specific type from the database."""
         return cls._get_all()
 
     @classmethod
@@ -70,6 +72,7 @@ class DomainObject:
         return [cls(**data) for data in _api_get(fn_name)]
 
     def save(self):
+        """saves the domain object to the database."""
         return self._save()
 
     def _save(
@@ -106,6 +109,7 @@ class DomainObject:
         return self.pid
 
     def to_json(self) -> str:
+        """Return a JSON representation of the domain object."""
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
     def __post_init__(self) -> None:

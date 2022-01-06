@@ -40,9 +40,12 @@ class MeasurementSettingScript(DomainObject, DomainYAMLObject):
 
     script: str
     language: str
-    allowedParameters: list[TemplateParameter] = field(default_factory=list)
+    allowedParameters: list[TemplateParameter] = field(  # pylint: disable=invalid-name
+        default_factory=list
+    )
     # TODO: allowedParameters
 
+    # pylint: disable=invalid-name
     @classmethod
     def create(
         cls,
@@ -108,8 +111,9 @@ class EquipmentFunction(DomainObject, DomainYAMLObject):
 
     yaml_tag = "!EquipmentFunction"
 
-    functionType: FunctionType
+    functionType: FunctionType  # pylint: disable=invalid-name
 
+    # pylint: disable=invalid-name
     @classmethod
     def create(
         cls, name: str, functionType: FunctionType, **kwargs
@@ -190,12 +194,13 @@ class MeasurementType(DomainObject, DomainYAMLObject):
     yaml_tag = "!MeasurementType"
 
     model: str
-    scriptTemplate: MeasurementSettingScript
-    extractableParameters: str
+    scriptTemplate: MeasurementSettingScript  # pylint: disable=invalid-name
+    extractableParameters: str  # pylint: disable=invalid-name
     mapping: str
     equipments: list[Equipment] = field(default_factory=list)
     # TODO: equipments
 
+    # pylint: disable=invalid-name
     @classmethod
     def create(
         cls,
@@ -237,11 +242,14 @@ class Experiment(DomainObject, DomainYAMLObject):
     description: str
     user: str
     group: str
-    measurementType: MeasurementType
-    softwareNoiseFilters: str
-    equipmentInstances: list[EquipmentInstance] = field(default_factory=list)
+    measurementType: MeasurementType  # pylint: disable=invalid-name
+    softwareNoiseFilters: str  # pylint: disable=invalid-name
+    equipmentInstances: list[EquipmentInstance] = field(  # pylint: disable=invalid-name
+        default_factory=list
+    )
     # TODO: equipmentInstances
 
+    # pylint: disable=invalid-name
     @classmethod
     def create(
         cls,
@@ -279,8 +287,9 @@ class Measurement(DomainObject, DomainYAMLObject):
     device: Device
     experiment: Experiment
     settings: MeasurementSettings
-    measurementParameters: str
+    measurementParameters: str  # pylint: disable=invalid-name
 
+    # pylint: disable=invalid-name
     @classmethod
     def create(
         cls,

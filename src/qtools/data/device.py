@@ -44,10 +44,11 @@ class Wafer(DomainObject, DomainYAMLObject):
     description: str
     productionDate: str  # pylint: disable=invalid-name
 
+    # pylint: disable=invalid-name
     @classmethod
     def create(
         cls, name: str, description: str, productionDate: str, **kwargs
-    ) -> Wafer:  # pylint: disable=invalid-name
+    ) -> Wafer:
         """Creates a Wafer object."""
         kwargs.update({
             "name": name,
@@ -101,6 +102,7 @@ class Design(DomainObject, DomainYAMLObject):
     allowedForMeasurementTypes: list[Any] = field(default_factory=list)  # pylint: disable=invalid-name
     # TODO: MeasurementTypes
 
+    # pylint: disable=invalid-name
     @classmethod
     def create(
         cls,
@@ -112,7 +114,7 @@ class Design(DomainObject, DomainYAMLObject):
         creator: str,
         allowedForMeasurementTypes: list[Any],
         **kwargs
-    ) -> Design:  # pylint: disable=invalid-name
+    ) -> Design:
         """Creates a Design object."""
         kwargs.update({
             "name": name,
