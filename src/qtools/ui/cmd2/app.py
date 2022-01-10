@@ -58,6 +58,9 @@ class QToolsApp(Cmd):
 
         # Metadata url
         db.api_url = "http://134.61.7.48:9123"
+        
+        # set DB
+        load_db()
 
         # Joblist
         self.joblist = Joblist()
