@@ -156,7 +156,7 @@ class MeasurementScript(ABC):
         self._relabel_instruments()
 
     @abstractmethod
-    def run(self, parameters: dict, metadata: dict) -> list:
+    def run(self) -> list:
         """
         Runs the already setup measurement. you can call self.initialize in here.
         Abstract method.

@@ -38,7 +38,7 @@ metadata = {"exp_name" : "Test",
 
 
 class Generic_1D_Sweep(MeasurementScript):
-    def run(self, parameters: dict, metadata: dict) -> list:
+    def run(self) -> list:
         """
         Perform 1D sweeps for all dynamic parameters
         """
