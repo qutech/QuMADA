@@ -6,6 +6,7 @@ from qcodes.dataset.experiment_container import load_or_create_experiment
 from qcodes.instrument import Parameter
 from qcodes.utils.dataset.doNd import LinSweep, do1d, do2d, dond
 
+from qtools.measurement.doNd_enhanced.doNd_enhanced import _interpret_breaks
 from qtools.measurement.measurement import MeasurementScript
 
 # To be loaded from DB later on/Entered via GUI
@@ -48,8 +49,15 @@ class Generic_1D_Sweep(MeasurementScript):
         for sweep in self.dynamic_sweeps:
             sweep.param.set(sweep.get_setpoints()[0])
             data.append(
-                dond(sweep,
-                     *tuple(self.gettable_channels)))
+                dond(
+                    sweep,
+                    *tuple(self.gettable_channels),
+                    measurement_name=self.metadata.get(
+                        "measurement_name", "measurement"
+                    ),
+                    break_condition=_interpret_breaks(self.break_conditions)
+                )
+            )
             self.reset()
         return data
 
@@ -62,8 +70,14 @@ class Generic_nD_Sweep(MeasurementScript):
     def run(self, parameters: dict, metadata: dict):
 
         self.initialize()
+        for sweep in self.dynamic_sweeps:
+            sweep._param.set(sweep.get_setpoints()[0])
         time.sleep(5)
-        data = dond(*tuple(self.dynamic_sweeps),
-                    *tuple(self.gettable_channels))
+        data = dond(
+            *tuple(self.dynamic_sweeps),
+            *tuple(self.gettable_channels),
+            measurement_name=self.metadata.get("measurement_name", "measurement"),
+            break_condition=_interpret_breaks(self.break_conditions)
+        )
         self.reset()
         return data
