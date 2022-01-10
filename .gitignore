@@ -1,5 +1,7 @@
 __pycache__/
 
+*.egg-info/
+
 # generated images / documents
 *.png
 *.pdf
@@ -11,3 +13,5 @@ docs/_autosummary/
 htmlcov/
 .coverage
 coverage.xml
+
+.spyproject/

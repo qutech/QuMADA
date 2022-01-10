@@ -14,5 +14,5 @@ def _build_path(subpath: str) -> str:
 DECADAC_MAPPING = _build_path("Decadac.json")
 SR830_MAPPING = _build_path("lockin.json")
 KEITHLEY_2400_MAPPING = _build_path("tektronix/Keithley_2400.json")
-KEITHLEY_2450_MAPPING = _build_path("tektronix/Keithley_2450.json")
+KEITHLEY_2450_MAPPING = _build_path("tektronix/Keithley_2450_voltage_source.json")
 MFLI_MAPPING = _build_path("Zurich_Instruments/MFLI.json")
