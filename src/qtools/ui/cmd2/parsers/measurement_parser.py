@@ -1,5 +1,7 @@
 import argparse
 
+import json
+
 from cmd2 import Cmd, Cmd2ArgumentParser, CommandSet, with_argparser
 
 from qtools.instrument.mapping.base import map_gates_to_instruments
@@ -67,6 +69,14 @@ class MeasurementCommandSet(CommandSet):
     parser_measurement_setup = measurement_subparsers.add_parser(
         "setup", help="Setup the measurement."
     )
+    
+    parser_measurement_setup.add_argument(
+        "-p",
+        "--parameters",
+        type=argparse.FileType("r"),
+        help="File path of the measurement parameters",
+        completer=Cmd.path_complete,
+    )
 
     # measurement run
     parser_measurement_run = measurement_subparsers.add_parser(
@@ -92,7 +102,7 @@ class MeasurementCommandSet(CommandSet):
                 raise NotImplementedError()
             elif args.name:
                 # Create script object
-                self.script = self._cmd.measurement_scripts[args.name]()
+                self._cmd.script = self._cmd.measurement_scripts[args.name]()
 
         else:
             raise ValueError(
@@ -100,7 +110,8 @@ class MeasurementCommandSet(CommandSet):
             )
 
     def measurement_setup(self, args):
-        self._cmd.script.setup()
+        parameters = json.load(args.parameters)
+        self._cmd.script.setup(parameters=parameters, metadata=self._cmd.metadata)
 
     def measurement_run(self, args):
         self._cmd.script.run()
