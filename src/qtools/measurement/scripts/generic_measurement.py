@@ -33,8 +33,7 @@ parameters = {
     "right_barrier": {"voltage": {"type": "static", "value": 2}},
 }
 
-metadata = {"exp_name" : "Test",
-            "sample_name" : "Testsample"}
+metadata = {"exp_name": "Test", "sample_name": "Testsample"}
 
 
 class Generic_1D_Sweep(MeasurementScript):

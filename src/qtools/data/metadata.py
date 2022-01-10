@@ -17,7 +17,7 @@ class Metadata(yaml.YAMLObject):
     """
     yaml_tag = "!Metadata"
 
-    measurement: Measurement
+    measurement: Measurement = None
 
     @classmethod
     def from_yaml(cls, stream):

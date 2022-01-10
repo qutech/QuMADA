@@ -80,6 +80,7 @@ def add_mapping_to_instrument(instrument: Instrument,
         instrument (Instrument): Instrument, the mapping is added to.
         path (str): Path to the JSON file.
     """
+    # TODO: chosen instrument name should not influence the mapping
     mapping = _load_instrument_mapping(path)
     parameters: dict[Any, Parameter] = filter_flatten_parameters(instrument)
     mapped_parameters = ((key, parameter) for key, parameter in parameters.items() if key in mapping["parameter_names"])

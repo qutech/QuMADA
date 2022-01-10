@@ -1,6 +1,7 @@
 """
 Measurement
 """
+import inspect
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, MutableMapping, MutableSequence, Union
@@ -17,6 +18,10 @@ from qtools.instrument.mapping.base import (
     _map_gate_to_instrument,
     filter_flatten_parameters,
 )
+
+
+def is_measurement_script(o):
+    return inspect.isclass(o) and issubclass(o, MeasurementScript)
 
 
 class QtoolsStation(Station):
