@@ -15,6 +15,7 @@ from qtools.ui.cmd2.parsers import (
     MetadataCommandSet,
 )
 from qtools.utils.import_submodules import import_submodules
+from qtools.utils.load_from_sqlite_db import load_db
 from qtools.utils.resources import import_resources
 
 
@@ -26,7 +27,7 @@ class QToolsApp(Cmd):
             InstrumentCommandSet(),
             JoblistCommandSet(),
         ]
-        super().__init__(auto_load_commands=False, command_sets=commands)
+        super().__init__(auto_load_commands=False, command_sets=commands, include_py=True, include_ipy=True)
 
         # remove cmd2 builtin commands
         del Cmd.do_edit
