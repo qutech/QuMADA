@@ -1,5 +1,4 @@
 -e ./libs/qcodes
--e ../pyvisa-sim
 
 pyqt5
 qtconsole
@@ -7,5 +6,8 @@ qtconsole
 pre-commit
 pyupgrade
 darker
+
 pylint
 mypy
+
+spyder
