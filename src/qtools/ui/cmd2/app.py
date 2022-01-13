@@ -6,7 +6,7 @@ from qcodes import Station
 import qtools.data.db as db
 from qtools.data.metadata import Metadata
 from qtools.instrument.instrument import is_instrument
-from qtools.measurement.jobs import Job, Joblist
+from qtools.measurement.jobs import Job
 from qtools.measurement.measurement import MeasurementScript, is_measurement_script
 from qtools.ui.cmd2.parsers import (
     InstrumentCommandSet,
@@ -63,7 +63,7 @@ class QToolsApp(Cmd):
         load_db()
 
         # Joblist
-        self.joblist = Joblist()
+        self.joblist: list[Job] = []
         self.current_job = Job()
 
         # Station
