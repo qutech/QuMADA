@@ -143,10 +143,9 @@ def test_measurement_factories(
     new_type = MeasurementType.create(
         name="measurement_type_test",
         model="model",
-        scriptTemplate=new_script,
         extractableParameters="X",
         mapping="mapping",
-        equipments=[],
+        scriptTemplates=[new_script],
     )
     assert new_type == min_type
     new_experiment = Experiment.create(

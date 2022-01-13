@@ -194,11 +194,9 @@ class MeasurementType(DomainObject, DomainYAMLObject):
     yaml_tag = "!MeasurementType"
 
     model: str
-    scriptTemplate: MeasurementSettingScript  # pylint: disable=invalid-name
+    scriptTemplates: list[MeasurementSettingScript]  # pylint: disable=invalid-name
     extractableParameters: str  # pylint: disable=invalid-name
     mapping: str
-    equipments: list[Equipment] = field(default_factory=list)
-    # TODO: equipments
 
     # pylint: disable=invalid-name
     @classmethod
@@ -206,10 +204,9 @@ class MeasurementType(DomainObject, DomainYAMLObject):
         cls,
         name: str,
         model: str,
-        scriptTemplate: MeasurementSettingScript,
         extractableParameters: str,
         mapping: str,
-        equipments: list[Equipment],
+        scriptTemplates: list[MeasurementSettingScript],
         **kwargs
     ) -> MeasurementType:
         """Creates a MeasurementType object."""
@@ -217,10 +214,9 @@ class MeasurementType(DomainObject, DomainYAMLObject):
             {
                 "name": name,
                 "model": model,
-                "scriptTemplate": scriptTemplate,
+                "scriptTemplates": scriptTemplates,
                 "extractableParameters": extractableParameters,
                 "mapping": mapping,
-                "equipments": equipments,
             }
         )
         return super()._create(**kwargs)

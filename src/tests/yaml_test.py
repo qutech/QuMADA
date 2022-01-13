@@ -29,8 +29,8 @@ def fixture_yaml_metadata() -> str:
                     mapping: mapping
                     model: model
                     extractableParameters: X
-                    equipments: []
-                    scriptTemplate: &id001 !MeasurementSettingScript
+                    scriptTemplates:
+                    - &id001 !MeasurementSettingScript
                         name: script_test
                         script: code
                         language: python

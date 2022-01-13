@@ -6,16 +6,12 @@ measurement: !Measurement
     equipmentInstances: null
     group: group
     measurementType: !!python/object:qtools.data.measurement.MeasurementType
-      equipments:
-      - !Equipment "d7914063-c786-4b0c-9ded-84390a3839ba"
-      - !Equipment "dbc9e518-2624-4536-b86d-1cc5ddb1c6bf"
-      - !Equipment "24e03597-fdca-4c70-ad39-3db752d3d636"
-      - !Equipment "57188264-4210-4877-b512-bab9086398b2"
       extractableParameters: X
       mapping: mapping
       model: model
       name: Measurementtype1
-      scriptTemplate: &id001 !MeasurementSettingScript "c52af245-fd65-4249-bcd2-367fe90cade1"
+      scriptTemplates:
+      - &id001 !MeasurementSettingScript "c52af245-fd65-4249-bcd2-367fe90cade1"
     name: Experiment 1
     softwareNoiseFilters: null
     user: grothe

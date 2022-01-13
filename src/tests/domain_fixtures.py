@@ -146,10 +146,9 @@ def fixture_min_type(min_script: MeasurementSettingScript) -> MeasurementType:
         lastChangerId=None,
         lastChangeDate=None,
         model="model",
-        scriptTemplate=min_script,
         extractableParameters="X",
         mapping="mapping",
-        equipments=[],
+        scriptTemplates=[min_script],
     )
 
 
