@@ -58,7 +58,7 @@ class QToolsApp(Cmd):
 
         # Metadata url
         db.api_url = "http://134.61.7.48:9123"
-        
+
         # set DB
         load_db()
 
@@ -92,3 +92,9 @@ class QToolsApp(Cmd):
     @parameters.setter
     def parameters(self, parameters: dict) -> None:
         self.current_job._parameters = parameters
+
+
+def start_console_app():
+    app = QToolsApp()
+    ret_code = app.cmdloop()
+    raise SystemExit(ret_code)
