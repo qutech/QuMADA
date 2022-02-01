@@ -51,3 +51,15 @@ For development, the requirements are stored in *dev_requirements.txt*.
 .. code-block:: console
 
     pip install -r dev_requirements.txt
+
+Build documentation
+-------------------
+
+Run
+
+.. code-block:: console
+
+    cd docs
+    make html
+
+The built documentation can be found at :file:`_build/html/index.html`.
