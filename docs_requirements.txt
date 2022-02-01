@@ -1,3 +1,6 @@
 -e .
 
 sphinx
+sphinx_autodoc_typehints
+sphinx_autopackagesummary
+sphinx_rtd_theme
