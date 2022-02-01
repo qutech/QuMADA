@@ -11,6 +11,7 @@ Welcome to qtools's documentation!
    :caption: Contents:
    :numbered:
 
+   installation
    usage
    qtools
 
