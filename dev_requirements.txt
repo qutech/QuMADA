@@ -1,9 +1,4 @@
--e ./libs/qcodes
-
-cmd2
-
-pyqt5
-qtconsole
+-e .
 
 pre-commit
 pyupgrade
@@ -11,5 +6,3 @@ darker
 
 pylint
 mypy
-
-spyder
