@@ -1,0 +1,135 @@
+@startuml
+
+left to right direction
+hide circle
+'skinparam linetype ortho
+
+!define PK <size:12><&key></size><b>
+!define FK <size:12><&link-intact></size><i>
+
+together {
+    entity "Wafer" as wafer {
+        PK ID
+        --
+        * name
+    }
+
+    entity "Sample" as sample {
+        PK ID
+        --
+        * name
+        FK wafer_id
+    }
+
+    entity "Device" as device {
+        PK ID
+        --
+        * name
+        FK sample_id
+        FK design_id
+    }
+}
+
+entity "Factory" as factory {
+    PK ID
+    --
+    * name
+
+}
+
+
+entity "Design" as design {
+    PK ID
+    --
+    * name
+    mask
+    creator
+    FK factory_id
+    FK measurement_types_id []
+}
+
+entity "Measurement" as meas {
+    PK ID
+    --
+    * name
+    * pathToData
+    * datetime
+    comments
+    FK device_id
+    FK measurement_type_id
+    FK measurement_settings_id
+    FK experiment_id
+    FK analysis_id []
+}
+
+entity "Experiment" as exp {
+    PK ID
+    --
+    * name
+    user
+    temperature of cryostat
+    instruments / channels
+    filters
+    FK measurement_types_id []
+}
+
+together {
+    entity "MeasurementSettings" as measSettings {
+        PK ID
+        --
+        * name
+        FK measurement_type_id
+    }
+
+    entity "MeasurementType" as measType {
+        PK ID
+        --
+        * name
+    }
+}
+
+together {
+    entity "Analysis" as analysis {
+        PK ID
+        --
+        * name
+        model
+        script
+        software filters
+        result
+    }
+
+    entity "AnalysisResults" as analysisResults {
+        ' ID resulting from analysis method and measurement ID?
+        PK ID
+        --
+        * name
+        extracted parameters and their values
+        FK analysis_measurement_id
+    }
+}
+
+' Relationship symbols:
+
+' Type	        Symbol
+' Zero or One	|o--
+' Exactly One	||--
+' Zero or Many	}o--
+' One or Many	}|--
+
+wafer::ID ||--|{ sample::wafer_id : made of <
+sample::ID ||--|{ device::sample_id : is on <
+design::ID ||--|{ device::design_id : has <
+factory::ID ||--|{ design::factory_id : is produces by <
+measType::ID }|--|{ design::measurement_types_id : allows for >
+' 1..m or m..n??
+measType::ID  }|--|{ exp::measurement_types_id : requires
+' really?
+measSettings::measurement_type_id }|--|| measType::ID : requires >
+meas::measurement_type_id }|--|| measType::ID : according to >
+meas::measurement_settings_id }|--|| measSettings::ID : set to >
+meas::device_id }|--|| device::ID : measured >
+meas::experiment_id }|--|| exp::ID : performed on >
+analysis::ID }|--|{ meas::analysis_id : done on >
+analysisResults::analysis_measurement_id ||--|| analysis::ID : due to >
+@enduml

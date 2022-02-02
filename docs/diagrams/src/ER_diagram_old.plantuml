@@ -11,9 +11,9 @@ graph G {
 		weak_entity [label = "Weak Entity", shape = box, style = filled, fillcolor = lightgrey, peripheries = 2];
 		relations [label = "relations", shape = "diamond", style = "", peripheries = 1];
 		weak_relations [label = "relation to weak entity", shape = diamond, peripheries = 2];
-		attributes [label = "Attribute", peripheries = 1, shape = ellipse, style = ""];	
+		attributes [label = "Attribute", peripheries = 1, shape = ellipse, style = ""];
 	}
-	
+
 	' Independent Entities
 	node [shape = box, style = "filled", fillcolor = lightgrey];
 	design [label = "Design"];
@@ -21,7 +21,7 @@ graph G {
 	sample [label = "Sample", tooltip = "This is a tooltip"];
 	analysis  [label = "Analysis"];
 	experiment [label = "Experiment"];
-	
+
 	' Dependent Entities
 	node [shape = box, peripheries = 2];
 	device [label = "Device", URL = "C:\Users\till3\Desktop\Update_18-09-20"];
@@ -37,7 +37,7 @@ graph G {
 	rel_analysis_msmnt [label = "done on"];
 	rel_msmnt_type_measurement [label = "according to"];
 	rel_msmnt_type_experiment [label = "requires"];
-	
+
 	' Dependent relations
 	node [shape = diamond, peripheries = 2];
 	rel_wafer_sample [label = "made of"];
@@ -46,7 +46,7 @@ graph G {
 	rel_msmnt_settings_measurement [label = "set to"];
 	rel_results [label = "due to"];
 	rel_msmnt_settings_experiment [label = "set to"];
-	
+
 	' Attributes
 	node [shape = ellipse, peripheries = 1];
 
@@ -82,7 +82,7 @@ graph G {
 	rel_msmnt_type_experiment_mapping [label = "Mapping gate to device"];
 
 	edge [arrowhead = "none", arrowtail = "none"];
-	
+
 	' Attribute Connections
 
 	measurement -- msmnt_ID, msmnt_comments, msmnt_datetime, msmnt_link;
@@ -110,7 +110,7 @@ graph G {
 	measurement_type -- rel_msmnt_type_experiment [label = "N"];
 	rel_msmnt_type_experiment -- experiment [label = "M"];
 	measurement_settings -- rel_msmnt_settings_experiment [label = "N"];
-	
+
 	' Dependent Connections
 	edge [arrowhead = "none", arrowtail = "none", color = "black:black"];
 	rel_wafer_sample -- sample [label = "N"];
@@ -126,7 +126,7 @@ graph G {
 	measurement -- rel_results [label = "1"];
 	rel_results -- results [label = "1"];
 	rel_msmnt_settings_experiment -- experiment [label = "M"];
-	
+
 	' Cluster
 	subgraph cluster_settings{
 		label = "Settings";
@@ -136,7 +136,7 @@ graph G {
 		rel_msmnt_type_msmnt_settings [label = "requires", shape = "diamond", style = ""];
 		measurement_type -- rel_msmnt_type_msmnt_settings [label = "1"];
 		rel_msmnt_type_msmnt_settings -- measurement_settings [label = "N", color = "black:black"];
-		
+
 		' Cluster Attributes
 		node [shape = ellipse];
 		msmnt_type_ID [label = <<u>Type ID</u>>];
@@ -146,15 +146,15 @@ graph G {
 		msmnt_type_script [label = "Script/Algorithm"];
 
 		settings_filter [label = "Filter"];
-		
+
 		' Cluster Attribute Connections
 		edge [color = "black"];
 		measurement_type -- msmnt_type_ID, msmnt_type_outcomes, msmnt_type_requirements, msmnt_type_model, msmnt_type_script;
 		measurement_settings -- settings_filter;
 
 		}
-	
-	
+
+
 
 
 
