@@ -7,27 +7,15 @@ hide circle
 !define PK <size:12><&key></size><b>
 !define FK <size:12><&link-intact></size><i>
 
-together {
-    entity "Wafer" as wafer {
-        PK ID
-        --
-        * name
-    }
-
-    entity "Sample" as sample {
-        PK ID
-        --
-        * name
-        FK wafer_id
-    }
-
-    entity "Device" as device {
-        PK ID
-        --
-        * name
-        FK sample_id
-        FK design_id
-    }
+entity "Wafer" as wafer {
+    PK ID
+    --
+    FK factory_id
+    --
+    * name
+    * production_date
+    description
+    layout
 }
 
 entity "Factory" as factory {
@@ -37,76 +25,152 @@ entity "Factory" as factory {
 
 }
 
+entity "Sample" as sample {
+    PK ID
+    --
+    FK wafer_id
+    FK factory_id
+    FK layout_id
+    --
+    * name
+    description
+    creator
+}
 
-entity "Design" as design {
+entity "SampleLayout" as sampleLayout {
     PK ID
     --
     * name
     mask
+}
+
+entity "Device" as device {
+    PK ID
+    --
+    FK sample_id
+    FK layout_id
+    --
+    * name
+    description
+    layout_parameters
+}
+
+' Verknüpfung DeviceLayout und SampleLayout?
+' Wie lässt sich das verknüpfen?
+entity "DeviceLayout" as deviceLayout {
+    PK ID
+    --
+    FK gates_id []
+    --
+    * name
+    mask
+    image
     creator
-    FK factory_id
-    FK measurement_types_id []
+}
+
+entity "Gate" as gate {
+    PK ID
+    --
+    * name
+    * function
+    number
+}
+
+entity "MeasurementSeries" as measSeries {
+    PK ID
+    --
+    FK measurements_id []
+    --
+    * name
 }
 
 entity "Measurement" as meas {
     PK ID
     --
-    * name
-    * pathToData
-    * datetime
-    comments
     FK device_id
     FK measurement_type_id
     FK measurement_settings_id
-    FK experiment_id
-    FK analysis_id []
+    FK measurement_mapping_id
+    FK experiment_setup_id
+    FK script_id
+    FK measurement_series_id
+    FK measurement_data_id []
+    --
+    * name
+    * datetime
+    * user
+    * valid
+    comments
 }
 
-entity "Experiment" as exp {
+entity "MeasurementData" as measData {
     PK ID
     --
     * name
-    user
+    * data_type
+    * path_to_data
+}
+
+entity "ExperimentSetup" as exp {
+    PK ID
+    --
+    * name
     temperature of cryostat
     instruments / channels
+    standard_settings
     filters
-    FK measurement_types_id []
 }
 
-together {
-    entity "MeasurementSettings" as measSettings {
-        PK ID
-        --
-        * name
-        FK measurement_type_id
-    }
-
-    entity "MeasurementType" as measType {
-        PK ID
-        --
-        * name
-    }
+entity "MeasurementScript" as measScript {
+    PK ID
+    --
+    * name
+    language
+    script
 }
 
-together {
-    entity "Analysis" as analysis {
-        PK ID
-        --
-        * name
-        model
-        script
-        software filters
-        result
-    }
+entity "MeasurementSettings" as measSettings {
+    PK ID
+    --
+    * name
+    settings
+}
 
-    entity "AnalysisResults" as analysisResults {
-        ' ID resulting from analysis method and measurement ID?
-        PK ID
-        --
-        * name
-        extracted parameters and their values
-        FK analysis_measurement_id
-    }
+entity "MeasurementMapping" as measMapping {
+    PK ID
+    --
+    * name
+    mapping
+}
+
+entity "MeasurementType" as measType {
+    PK ID
+    --
+    FK script_template
+    --
+    * name
+    extractable_parameters
+}
+
+entity "Analysis" as analysis {
+    PK ID
+    --
+    * name
+    method
+    results
+    script
+    software_filter
+}
+
+entity "AnalysisResults" as analysisResults {
+    ' ID resulting from analysis method and measurement ID?
+    PK analysis_results_id
+    --
+    FK measurement_id
+    FK analysis_id
+    --
+    * name
+    extracted parameters and their values
 }
 
 ' Relationship symbols:
@@ -118,18 +182,22 @@ together {
 ' One or Many	}|--
 
 wafer::ID ||--|{ sample::wafer_id : made of <
+wafer::factory_id }|--|| factory::ID : is produced by >
 sample::ID ||--|{ device::sample_id : is on <
-design::ID ||--|{ device::design_id : has <
-factory::ID ||--|{ design::factory_id : is produces by <
-measType::ID }|--|{ design::measurement_types_id : allows for >
-' 1..m or m..n??
-measType::ID  }|--|{ exp::measurement_types_id : requires
-' really?
-measSettings::measurement_type_id }|--|| measType::ID : requires >
+sample::factory_id }|--|| factory::ID : is produced by >
+sample::layout_id }|--|| sampleLayout::ID : has >
+deviceLayout::ID ||--|{ device::layout_id : has <
+deviceLayout::gates_id ||--|{ gate::ID : has >
+measType::script_template }|--|{ measScript::ID : provides >
+meas::measurement_series_id }|--|| measSeries::measurements_id
+meas::script_id }|--|| measScript::ID : uses >
 meas::measurement_type_id }|--|| measType::ID : according to >
 meas::measurement_settings_id }|--|| measSettings::ID : set to >
+meas::measurement_mapping_id }|--|| measMapping::ID
 meas::device_id }|--|| device::ID : measured >
-meas::experiment_id }|--|| exp::ID : performed on >
-analysis::ID }|--|{ meas::analysis_id : done on >
-analysisResults::analysis_measurement_id ||--|| analysis::ID : due to >
+meas::experiment_setup_id }|--|| exp::ID : performed on >
+meas::measurement_data_id ||--|{ measData::ID : measured >
+analysisResults::analysis_id }|--|| analysis::ID : due to >
+analysisResults::measurement_id }|--|| meas::ID : due to >
+
 @enduml
