@@ -1,8 +1,0 @@
--e ./libs/qcodes
-
-pyqt5
-cmd2
-
-qtconsole
-
-plottr
