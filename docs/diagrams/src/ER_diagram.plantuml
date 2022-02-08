@@ -71,6 +71,8 @@ entity "DeviceLayout" as deviceLayout {
 entity "Gate" as gate {
     PK ID
     --
+    FK layout_id
+    --
     * name
     * function
     number
@@ -92,7 +94,7 @@ entity "Measurement" as meas {
     FK measurement_settings_id
     FK measurement_mapping_id
     FK experiment_setup_id
-    FK script_id
+    FK measurement_script_id
     FK measurement_series_id
     FK measurement_data_id []
     --
@@ -146,7 +148,7 @@ entity "MeasurementMapping" as measMapping {
 entity "MeasurementType" as measType {
     PK ID
     --
-    FK script_template
+    FK script_templates_id []
     --
     * name
     extractable_parameters
@@ -164,7 +166,7 @@ entity "Analysis" as analysis {
 
 entity "AnalysisResults" as analysisResults {
     ' ID resulting from analysis method and measurement ID?
-    PK analysis_results_id
+    PK ID
     --
     FK measurement_id
     FK analysis_id
@@ -187,7 +189,7 @@ sample::ID ||--|{ device::sample_id : is on <
 sample::factory_id }|--|| factory::ID : is produced by >
 sample::layout_id }|--|| sampleLayout::ID : has >
 deviceLayout::ID ||--|{ device::layout_id : has <
-deviceLayout::gates_id ||--|{ gate::ID : has >
+deviceLayout::gates_id ||--|{ gate::layout_id : has >
 measType::script_template }|--|{ measScript::ID : provides >
 meas::measurement_series_id }|--|| measSeries::measurements_id
 meas::script_id }|--|| measScript::ID : uses >
