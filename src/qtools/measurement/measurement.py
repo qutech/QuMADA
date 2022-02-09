@@ -3,6 +3,7 @@ Measurement
 """
 import inspect
 from abc import ABC, abstractmethod
+from contextlib import suppress
 from dataclasses import dataclass, field
 from typing import Any, MutableMapping, MutableSequence, Union
 
@@ -124,15 +125,13 @@ class MeasurementScript(ABC):
                         {"gate": gate, "parameter": parameter}
                     )
                     self.gettable_channels.append(channel)
-                    try:
+                    with suppress(KeyError):
                         for condition in self.properties[gate][parameter][
                             "break_conditions"
                         ]:
                             self.break_conditions.append(
                                 {"channel": channel, "break_condition": condition}
                             )
-                    except KeyError:
-                        pass
                 elif self.properties[gate][parameter]["type"].find("dynamic") >= 0:
                     # Handle different possibilities for starting points
                     try:
