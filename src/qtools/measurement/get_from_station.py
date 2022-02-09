@@ -4,8 +4,8 @@ Created on Thu Dec 17 18:38:50 2020
 @author: Huckemann
 """
 from typing import Mapping
-from tabulate import tabulate
 
+from tabulate import tabulate
 
 _FLAG_FIRST = object()
 
@@ -27,10 +27,12 @@ def flatten_dict(d, join=lambda a, b: [a, b], lift=lambda x: x):
     return results
 
 
-def _find_instr_channel(key, station, last_entry=[], **kwargs):
+def _find_instr_channel(key, station, last_entry=None, **kwargs):
     '''
 
     '''
+    if last_entry is None:
+        last_entry = []
     dictionary = kwargs.get('dictionary', station.__dict__)
     results = kwargs.get('results', [])
     f_d = flatten_dict(dictionary, join=lambda a, b: [a, b])
