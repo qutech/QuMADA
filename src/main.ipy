@@ -16,7 +16,7 @@ from qtools.instrument.mapping import (
     KEITHLEY_2400_MAPPING,
     QDAC_MAPPING)
 from qtools.instrument.mapping.base import map_gates_to_instruments
-from qtools.measurement.scripts import Generic_1D_Sweep
+from qtools.measurement.scripts import Generic_1D_Sweep, Generic_nD_Sweep, Generic_1D_parallel_Sweep
 from qtools.utils.load_from_sqlite_db import load_db
 
 
