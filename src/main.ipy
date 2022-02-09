@@ -5,10 +5,15 @@ from qcodes.station import Station
 from qcodes.instrument_drivers.Harvard.Decadac import Decadac
 from qcodes.instrument_drivers.stanford_research.SR830 import SR830
 from qcodes.instrument_drivers.tektronix.Keithley_2400 import Keithley_2400
+from qcodes.instrument_drivers.QDevil.QDevil_QDAC import QDac
 
 import qtools.data.db as db
 from qtools.data.metadata import Metadata
-from qtools.instrument.mapping import add_mapping_to_instrument, DECADAC_MAPPING, SR830_MAPPING, KEITHLEY_2400_MAPPING
+from qtools.instrument.mapping import (
+    add_mapping_to_instrument,
+    DECADAC_MAPPING,
+    SR830_MAPPING,
+    KEITHLEY_2400_MAPPING,
 from qtools.instrument.mapping.base import map_gates_to_instruments
 from qtools.measurement.scripts import Generic_1D_Sweep
 from qtools.utils.load_from_sqlite_db import load_db
@@ -23,7 +28,7 @@ station = Station()
 # Call add_mapping_to_instrument(instrument, mapping) to map the instrument's parameters to qtools-specific names.
 dac = Decadac(
     "dac",
-    "ASRL6::INSTR",
+    "ASRL3::INSTR",
     min_val=-10,
     max_val=10,
     terminator="\n")
@@ -33,6 +38,9 @@ station.add_component(dac)
 lockin = SR830("lockin", "GPIB1::12::INSTR")
 add_mapping_to_instrument(lockin, SR830_MAPPING)
 station.add_component(lockin)
+qdac = QDac("qdac", "ASRL5::INSTR")
+add_mapping_to_instrument(qdac, QDAC_MAPPING)
+station.add_component(qdac)
 
 keithley = Keithley_2400("keithley", "GPIB1::27::INSTR")
 add_mapping_to_instrument(keithley, KEITHLEY_2400_MAPPING)
