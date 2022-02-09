@@ -14,6 +14,7 @@ from qtools.instrument.mapping import (
     DECADAC_MAPPING,
     SR830_MAPPING,
     KEITHLEY_2400_MAPPING,
+    QDAC_MAPPING)
 from qtools.instrument.mapping.base import map_gates_to_instruments
 from qtools.measurement.scripts import Generic_1D_Sweep
 from qtools.utils.load_from_sqlite_db import load_db
