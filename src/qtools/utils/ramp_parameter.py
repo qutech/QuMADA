@@ -26,7 +26,6 @@ def ramp_parameter(
         current_value = parameter.get()
         num_points = int(current_value/(ramp_speed*setpoint_intervall))+2
         sweep = generate_sweep(parameter.get(), target, num_points)
-        print(sweep)
         for value in sweep:
             parameter.set(value)
             time.sleep(setpoint_intervall)
