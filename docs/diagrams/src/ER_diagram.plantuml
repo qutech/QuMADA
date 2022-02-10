@@ -164,7 +164,7 @@ entity "Analysis" as analysis {
     software_filter
 }
 
-entity "AnalysisResults" as analysisResults {
+entity "AnalysisResult" as analysisResults {
     ' ID resulting from analysis method and measurement ID?
     PK ID
     --
