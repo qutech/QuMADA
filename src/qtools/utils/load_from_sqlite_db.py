@@ -64,7 +64,7 @@ def list_sample_names()-> set[str]:
     """
     Lists all sample names that appear in the database
     """
-    name_set = {measurement.sample_name for measurement in qc.experiments()}
+    name_set = set(measurement.sample_name for measurement in qc.experiments())
     return name_set
 
 
@@ -129,3 +129,54 @@ def _flatten_experiment_container() -> list[qc.DataSet]:
     """
     datasets = [*(experiment.data_sets() for experiment in qc.experiments())]
     return flatten_list(datasets)
+
+#%%
+
+def pick_measurement(sample_name: str = None, preview_dialogue = True):
+    """
+    Returns a measurement of your choice, plots it if you want.
+    Interactive, if no sample_name is provided.
+    """
+    
+    measurements = list_measurements_for_sample(sample_name = sample_name)
+    for idx, measurement in enumerate(measurements):
+        print(f"{idx} : {measurement.name}")
+    chosen = int(input("Please choose a measurement: "))
+    chosen_measurement = measurements[int(chosen)]
+    if preview_dialogue:
+        preview = str(input("Do you want to see a plot? (Y/N) "))
+        if str.lower(preview) == "y":
+            plot_dataset(chosen_measurement)
+    return chosen_measurement
+
+#%%
+
+def plot_data(sample_name: str = None):
+    """
+    Simple plotting of datasets from the QCoDeS DB.
+    """
+    dataset = pick_measurement(sample_name = sample_name, preview_dialogue = False)
+    independend_parameters = list()
+    dependend_parameters = list()
+    for parameter in dataset.get_parameters():
+        if len(parameter._depends_on) == 0:
+            independend_parameters.append(parameter)
+        else:
+            dependend_parameters.append(parameter)
+    print("Which parameter do you want to plot?")
+    for idx, parameter in enumerate(dependend_parameters):
+        print(f"{idx} : {parameter.label}")
+    plot_param_numbers = input("Please enter the numbers of the parameters you want to plot, separated by blank")
+    param_list = plot_param_numbers.split()
+    plot_params = list()
+    for param in plot_param_numbers:
+        plot_params.append(dependend_parameters[int(param)].name)
+    print(plot_params)
+    for param in plot_params:
+        y_data = dataset.get_parameter_data(param)[param][param]
+        print(dataset.get_parameter_data(param)[param])
+        x_data = dataset.get_parameter_data(param)[param][dependend_parameters[0].name]
+        
+        print(y_data)
+        print(x_data)
+        
