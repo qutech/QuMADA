@@ -19,6 +19,7 @@ from qtools.instrument.mapping.base import (
     _map_gate_to_instrument,
     filter_flatten_parameters,
 )
+from qtools.utils.ramp_parameter import ramp_or_set_parameter
 
 
 def is_measurement_script(o):
@@ -37,11 +38,14 @@ class MeasurementScript(ABC):
     """
     PARAMETER_NAMES: set[str] = {"voltage",
                                  "current",
+                                 "current_x_component",
+                                 "current_y_component",
                                  "current_compliance",
                                  "amplitude",
                                  "frequency",
                                  "output_enabled",
-                                 "phase"}
+                                 "phase",
+                                 "count"}
 
     def __init__(self):
         self.properties: dict[Any, Any] = {}
@@ -104,6 +108,7 @@ class MeasurementScript(ABC):
         properties. Sweeps form a list that can be found in "dynamic_sweeps"
         TODO: Is there a more elegant way?
         TODO: Put Sweep-Generation somewhere else?
+        TODO: Allow setting ramp rate for setting the parameters manually
         """
         self.gettable_parameters: list[str] = []
         self.gettable_channels: list[str] = []
@@ -115,7 +120,7 @@ class MeasurementScript(ABC):
         for gate, parameters in self.gate_parameters.items():
             for parameter, channel in parameters.items():
                 if self.properties[gate][parameter]["type"].find("static") >= 0:
-                    channel.set(self.properties[gate][parameter]["value"])
+                    ramp_or_set_parameter(channel, self.properties[gate][parameter]["value"])
                     self.static_parameters.append(
                         {"gate": gate, "parameter": parameter}
                     )
@@ -135,14 +140,12 @@ class MeasurementScript(ABC):
                 elif self.properties[gate][parameter]["type"].find("dynamic") >= 0:
                     # Handle different possibilities for starting points
                     try:
-                        channel.set(self.properties[gate][parameter]["value"])
+                        ramp_or_set_parameter(channel, self.properties[gate][parameter]["value"])
                     except KeyError:
                         try:
-                            channel.set(self.properties[gate][parameter]["start"])
+                            ramp_or_set_parameter(channel, self.properties[gate][parameter]["start"])
                         except KeyError:
-                            channel.set(
-                                self.properties[gate][parameter]["setpoints"][0]
-                            )
+                            ramp_or_set_parameter(channel, self.properties[gate][parameter]["setpoints"][0])
                     self.dynamic_parameters.append(
                         {"gate": gate, "parameter": parameter}
                     )
@@ -174,15 +177,15 @@ class MeasurementScript(ABC):
         for gate, parameters in self.gate_parameters.items():
             for parameter, channel in parameters.items():
                 if self.properties[gate][parameter]["type"].find("static") >= 0:
-                    channel.set(self.properties[gate][parameter]["value"])
+                    ramp_or_set_parameter(channel, self.properties[gate][parameter]["value"])
                 elif self.properties[gate][parameter]["type"].find("dynamic") >= 0:
                     try:
-                        channel.set(self.properties[gate][parameter]["value"])
+                        ramp_or_set_parameter(channel, self.properties[gate][parameter]["value"])
                     except KeyError:
                         try:
-                            channel.set(self.properties[gate][parameter]["start"])
+                            ramp_or_set_parameter(channel, self.properties[gate][parameter]["start"])
                         except KeyError:
-                            channel.set(self.properties[gate][parameter]["setpoints"][0])
+                            ramp_or_set_parameter(channel, self.properties[gate][parameter]["setpoints"][0])
 
 
     def _relabel_instruments(self) -> None:
