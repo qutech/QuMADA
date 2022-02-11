@@ -14,7 +14,7 @@ class Unsweepable_parameter(Exception):
 def ramp_parameter(
         parameter,
         target,
-        ramp_speed : float = 0.1,
+        ramp_rate : float = 0.1,
         setpoint_intervall: float = 0.1
         ):
     """
@@ -24,7 +24,7 @@ def ramp_parameter(
     """
     if type(parameter.get()) == float:
         current_value = parameter.get()
-        num_points = int(current_value/(ramp_speed*setpoint_intervall))+2
+        num_points = int(current_value/(ramp_rate*setpoint_intervall))+2
         sweep = generate_sweep(parameter.get(), target, num_points)
         for value in sweep:
             parameter.set(value)
@@ -37,7 +37,7 @@ def ramp_parameter(
 
 def ramp_or_set_parameter(parameter,
                           target,
-                          ramp_speed : float = 0.1,
+                          ramp_rate : float = 0.1,
                           setpoint_intervall: float = 0.1):
     """
     Trys to ramp parameter to specified value, if the parameter values are not
@@ -46,7 +46,7 @@ def ramp_or_set_parameter(parameter,
     try:
         ramp_parameter(parameter, 
                        target,
-                       ramp_speed,
+                       ramp_rate,
                        setpoint_intervall)
     except Unsweepable_parameter:
         parameter.set(target)

@@ -15,14 +15,14 @@ class Generic_1D_Sweep(MeasurementScript):
         """
         Perform 1D sweeps for all dynamic parameters
         """
-        # self.setup(parameters, metadata)
         self.initialize()
+        wait_time = self.settings.get("wait_time", 5)
         data = list()
-        time.sleep(5)
+        time.sleep(wait_time)
         i=0
         for sweep in self.dynamic_sweeps:  
             sweep._param.set(sweep.get_setpoints()[0])
-            time.sleep(5)
+            time.sleep(wait_time)
             data.append(
                 dond(sweep,
                      *tuple(self.gettable_channels),
@@ -44,9 +44,10 @@ class Generic_nD_Sweep(MeasurementScript):
     def run(self):
 
         self.initialize()
+        wait_time = self.settings.get("wait_time", 5)
         for sweep in self.dynamic_sweeps:
             sweep._param.set(sweep.get_setpoints()[0])
-        time.sleep(5)
+        time.sleep(wait_time)
         data = dond(*tuple(self.dynamic_sweeps),
                     *tuple(self.gettable_channels),
                     measurement_name=self.metadata.measurement.name or "measurement",
@@ -56,14 +57,17 @@ class Generic_nD_Sweep(MeasurementScript):
         return data
     
 class Generic_1D_parallel_Sweep(MeasurementScript):
-    
+    """
+    Sweeps all dynamic parameters in parallel, setpoints of first parameter are
+    used for all parameters.
+    """
     def run(self):
         self.initialize()
         dynamic_params = list()
         for sweep in self.dynamic_sweeps:
             sweep._param.set(sweep.get_setpoints()[0])
             dynamic_params.append(sweep.param)
-        time.sleep(5)
+        time.sleep(wait_time)
             
         
         data = do1d_parallel(*tuple(self.gettable_channels),
