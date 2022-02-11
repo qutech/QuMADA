@@ -63,6 +63,8 @@ class Generic_1D_parallel_Sweep(MeasurementScript):
     """
     def run(self):
         self.initialize()
+        backsweep_after_break = self.settings.get("backsweep_after_break", False)
+        wait_time = self.settings.get("wait_time", 5)
         dynamic_params = list()
         for sweep in self.dynamic_sweeps:
             sweep._param.set(sweep.get_setpoints()[0])
@@ -75,8 +77,8 @@ class Generic_1D_parallel_Sweep(MeasurementScript):
                             setpoints = self.dynamic_sweeps[0].get_setpoints(),
                             delay = self.dynamic_sweeps[0]._delay,
                             measurement_name=self.metadata.measurement.name or "measurement",
-                            break_condition = _interpret_breaks(self.break_conditions)
+                            break_condition = _interpret_breaks(self.break_conditions),
+                            backsweep_after_break = backsweep_after_break
                             )
         
         return data
-
