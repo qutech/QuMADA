@@ -79,7 +79,8 @@ class MeasurementScript(ABC):
 
     def setup(self,
               parameters: dict,
-              metadata: dict) -> None:
+              metadata: dict,
+              **settings: dict) -> None:
         """
         Adds all gate_parameters that are defined in the parameters argument to
         the measurement. Allows to pass metadata dictionary to measurement.
@@ -88,8 +89,17 @@ class MeasurementScript(ABC):
             parameters (dict): Dictionary containing parameters and their settings
             metadata (dict): Dictionary containing metadata that should be
                             available for the measurement.
+            settings (dict): Settings regarding the measurement script. Kwargs:
+                ramp_rate: Defines how fast parameters are ramped during
+                initialization and reset.
+                setpoint_intervalle: Defines how smooth parameters are ramped
+                during initialization and reset.      
         """
         self.metadata = metadata
+        try:
+            self.settings.update(settings)
+        except:
+            self.settings = settings
         for gate, vals in parameters.items():
             self.properties[gate] = vals
             for parameter, properties in vals.items():
@@ -116,11 +126,15 @@ class MeasurementScript(ABC):
         self.static_parameters: list[str] = []
         self.dynamic_parameters: list[str] = []
         self.dynamic_sweeps: list[str] = []
-
+        ramp_rate = self.settings.get("ramp_rate", 0.3)
+        setpoint_intervall = self.settings.get("setpoint_intervall", 0.1)
         for gate, parameters in self.gate_parameters.items():
             for parameter, channel in parameters.items():
                 if self.properties[gate][parameter]["type"].find("static") >= 0:
-                    ramp_or_set_parameter(channel, self.properties[gate][parameter]["value"])
+                    ramp_or_set_parameter(channel, 
+                                          self.properties[gate][parameter]["value"],
+                                          ramp_rate=ramp_rate,
+                                          setpoint_intervall=setpoint_intervall)
                     self.static_parameters.append(
                         {"gate": gate, "parameter": parameter}
                     )
@@ -140,12 +154,21 @@ class MeasurementScript(ABC):
                 elif self.properties[gate][parameter]["type"].find("dynamic") >= 0:
                     # Handle different possibilities for starting points
                     try:
-                        ramp_or_set_parameter(channel, self.properties[gate][parameter]["value"])
+                        ramp_or_set_parameter(channel, 
+                                              self.properties[gate][parameter]["value"],
+                                              ramp_rate=ramp_rate,
+                                              setpoint_intervall=setpoint_intervall)
                     except KeyError:
                         try:
-                            ramp_or_set_parameter(channel, self.properties[gate][parameter]["start"])
+                            ramp_or_set_parameter(channel,
+                                                  self.properties[gate][parameter]["start"],
+                                                  ramp_rate=ramp_rate,
+                                                  setpoint_intervall=setpoint_intervall)
                         except KeyError:
-                            ramp_or_set_parameter(channel, self.properties[gate][parameter]["setpoints"][0])
+                            ramp_or_set_parameter(channel, 
+                                                  self.properties[gate][parameter]["setpoints"][0],
+                                                  ramp_rate=ramp_rate,
+                                                  setpoint_intervall=setpoint_intervall)
                     self.dynamic_parameters.append(
                         {"gate": gate, "parameter": parameter}
                     )
@@ -174,18 +197,32 @@ class MeasurementScript(ABC):
         """
         Resets all static/dynamic parameters to their value/start value.
         """
+        ramp_rate = self.settings.get("ramp_rate", 0.3)
+        setpoint_intervall = self.settings.get("setpoint_intervall", 0.1)
         for gate, parameters in self.gate_parameters.items():
             for parameter, channel in parameters.items():
                 if self.properties[gate][parameter]["type"].find("static") >= 0:
-                    ramp_or_set_parameter(channel, self.properties[gate][parameter]["value"])
+                    ramp_or_set_parameter(channel, 
+                                          self.properties[gate][parameter]["value"],
+                                          ramp_rate=ramp_rate,
+                                          setpoint_intervall=setpoint_intervall)
                 elif self.properties[gate][parameter]["type"].find("dynamic") >= 0:
                     try:
-                        ramp_or_set_parameter(channel, self.properties[gate][parameter]["value"])
+                        ramp_or_set_parameter(channel, 
+                                              self.properties[gate][parameter]["value"],
+                                              ramp_rate=ramp_rate,
+                                              setpoint_intervall=setpoint_intervall)
                     except KeyError:
                         try:
-                            ramp_or_set_parameter(channel, self.properties[gate][parameter]["start"])
+                            ramp_or_set_parameter(channel, 
+                                                  self.properties[gate][parameter]["start"],
+                                                  ramp_rate=ramp_rate,
+                                                  setpoint_intervall=setpoint_intervall)
                         except KeyError:
-                            ramp_or_set_parameter(channel, self.properties[gate][parameter]["setpoints"][0])
+                            ramp_or_set_parameter(channel, 
+                                                  self.properties[gate][parameter]["setpoints"][0],
+                                                  ramp_rate=ramp_rate,
+                                                  setpoint_intervall=setpoint_intervall)
 
 
     def _relabel_instruments(self) -> None:
