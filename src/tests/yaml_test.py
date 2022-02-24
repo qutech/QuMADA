@@ -1,3 +1,4 @@
+# pylint: disable=missing-function-docstring
 import pytest
 from pytest_httpserver import HTTPServer
 from yaml.error import YAMLError

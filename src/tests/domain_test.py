@@ -1,19 +1,22 @@
+# pylint: disable=missing-function-docstring
 import json
+from cmath import exp
 
 from pytest_httpserver import HTTPServer
 
-from qtools.data.device import Design, Device, Factory, Sample, Wafer
+from qtools.data.device import Device, DeviceLayout, Factory, Sample, Wafer
 from qtools.data.measurement import (
-    Experiment,
+    ExperimentSetup,
     Measurement,
+    MeasurementScript,
     MeasurementSettings,
-    MeasurementSettingScript,
     MeasurementType,
 )
 from tests.domain_fixtures import *  # pylint: disable=unused-wildcard-import
 
 
 def ordered(obj):
+    """Order both list and dict. Return every other"""
     if isinstance(obj, dict):
         return sorted((k, ordered(v)) for k, v in obj.items())
     if isinstance(obj, list):
@@ -35,13 +38,17 @@ def test_wafer_to_json(json_wafer, wafer: Wafer):
     assert ordered(json_wafer) != ordered(json.loads(wafer.to_json()))
 
 
-def test_wafer_factory(min_wafer: Wafer, wafer: Wafer):
-    new_wafer = Wafer.create("wafer_test", "wafer test description", "20211221")
+def test_wafer_factory(
+    min_wafer: Wafer, wafer: Wafer, min_factory: Factory, factory: Factory
+):
+    new_wafer = Wafer.create("wafer_test", "20211221", min_factory)
     assert new_wafer == min_wafer
     new_wafer_2 = Wafer.create(
         name="wafer_test",
         description="wafer test description",
         productionDate="20211221",
+        factory=factory,
+        layout="layout",
         pid="89738c4a-e46b-40de-b2fd-c5aaeea7175c",
         creatorId="DG",
         createDate="20211220",
@@ -66,19 +73,19 @@ def test_wafer_get_all(json_wafer, wafer: Wafer, httpserver: HTTPServer):
     assert wafers == [wafer, wafer]
 
 
-def test_wafer_save(min_wafer: Wafer, httpserver: HTTPServer):
+def test_wafer_save(min_wafer: Wafer, min_factory: Factory, httpserver: HTTPServer):
     # TODO: improve data matching
     data = {
         "name": "wafer_test",
-        "description": "wafer test description",
+        "description": "",
         "productionDate": "20211221",
+        "factory": min_factory,
         "pid": "",
         "creatorId": "",
         "createDate": "",
         "lastChangerId": "",
         "lastChangeDate": "",
     }
-    print(data)
     response = {
         "status": True,
         "id": "89738c4a-e46b-40de-b2fd-c5aaeea7175c",
@@ -91,13 +98,17 @@ def test_wafer_save(min_wafer: Wafer, httpserver: HTTPServer):
     assert min_wafer.pid == "89738c4a-e46b-40de-b2fd-c5aaeea7175c"
 
 
-def test_design_from_pid(json_design, design: Design, httpserver: HTTPServer):
+def test_device_layout_from_pid(
+    json_device_layout, device_layout: DeviceLayout, httpserver: HTTPServer
+):
     httpserver.expect_request(
         "/getDesignById",
         query_string="pid=5a89d022-1ffa-4ab5-bd77-cea6b3b95750",
         method="GET",
-    ).respond_with_json(json_design)
-    assert Design.get_by_id("5a89d022-1ffa-4ab5-bd77-cea6b3b95750") == design
+    ).respond_with_json(json_device_layout)
+    assert (
+        DeviceLayout.get_by_id("5a89d022-1ffa-4ab5-bd77-cea6b3b95750") == device_layout
+    )
 
 
 def test_device_from_pid(json_device, device: Device, httpserver: HTTPServer):
@@ -113,56 +124,65 @@ def test_device_factories(
     min_factory: Factory,
     min_wafer: Wafer,
     min_device: Device,
-    min_design: Design,
+    min_device_layout: DeviceLayout,
+    min_gate: Gate,
     min_sample: Sample,
 ):
-    new_factory = Factory.create("factory_test", "factory test description")
+    new_factory = Factory.create("factory_test")
     assert new_factory == min_factory
-    new_sample = Sample.create("sample_test", "sample test description", min_wafer)
+    new_sample = Sample.create("sample_test", min_wafer, min_factory, min_device_layout)
     assert new_sample == min_sample
-    new_design = Design.create(
-        "design_test", min_wafer, new_factory, new_sample, "mask", "DG", []
-    )
-    assert new_design == min_design
-    new_device = Device.create("device_test", new_design, new_sample)
+    new_gate = Gate.create("gate_test", "SD", layout=min_device_layout)
+    assert new_gate == min_gate
+    new_device_layout = DeviceLayout.create("design_test", gates=[min_gate])
+    assert new_device_layout == min_device_layout
+    new_device = Device.create("device_test", new_device_layout, new_sample)
     assert new_device == min_device
 
 
 def test_measurement_factories(
     min_device: Device,
     min_settings: MeasurementSettings,
-    min_script: MeasurementSettingScript,
+    min_mapping: MeasurementMapping,
+    min_script: MeasurementScript,
     min_type: MeasurementType,
-    min_experiment: Experiment,
+    min_experiment_setup: ExperimentSetup,
+    min_series: MeasurementSeries,
+    min_data: MeasurementData,
     min_measurement: Measurement,
 ):
-    new_script = MeasurementSettingScript.create("script_test", "code", "python", [])
+    new_script = MeasurementScript.create("script_test")
     assert new_script == min_script
-    new_settings = MeasurementSettings.create("measurement_settings_test", new_script)
+    new_settings = MeasurementSettings.create("measurement_settings_test")
     assert new_settings == min_settings
+    new_mapping = MeasurementMapping.create("measurement_mapping_test")
+    assert new_mapping == min_mapping
     new_type = MeasurementType.create(
         name="measurement_type_test",
-        model="model",
         extractableParameters="X",
-        mapping="mapping",
         scriptTemplates=[new_script],
     )
     assert new_type == min_type
-    new_experiment = Experiment.create(
-        name="experiment_test",
-        description="experiment test description",
-        user="DG",
-        group="group",
-        measurementType=new_type,
-        softwareNoiseFilters=None,
-        equipmentInstances=[],
+    new_experiment_setup = ExperimentSetup.create(name="experiment_test")
+    assert new_experiment_setup == min_experiment_setup
+    new_series = MeasurementSeries.create("measurement_series_test")
+    assert new_series == min_series
+    new_data = MeasurementData.create(
+        "measurement_data_test", "hdf5", "/path/to/data.hdf5"
     )
-    assert new_experiment == min_experiment
+    assert new_data == min_data
     new_measurement = Measurement.create(
         name="measurement_test",
         device=min_device,
-        experiment=new_experiment,
+        measurementType=new_type,
         settings=new_settings,
-        measurementParameters="meas_params",
+        mapping=new_mapping,
+        experimentSetup=new_experiment_setup,
+        script=new_script,
+        series=new_series,
+        datetime=datetime(2022, 2, 15, 10, 0, 0),
+        user="DG",
+        valid=True,
+        data=[new_data],
     )
     assert new_measurement == min_measurement
