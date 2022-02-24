@@ -14,7 +14,6 @@ from qcodes.instrument.parameter import _BaseParameter
 from qcodes.utils.dataset.doNd import AbstractSweep, ActionsT, LinSweep
 from qcodes.utils.metadata import Metadatable
 
-from qtools.data.measurement import EquipmentInstance, FunctionType
 from qtools.instrument.mapping.base import (
     _map_gate_to_instrument,
     filter_flatten_parameters,
@@ -212,40 +211,6 @@ class VirtualGate():
     @functions.setter
     def functions(self, functions: MutableSequence):
         self._functions = functions
-
-
-class VirtualParameter():
-    pass
-
-
-@dataclass
-class FunctionMapping():
-    """Data structure, that holds the mapping of several instrument parameters
-    that correspond to one specific FunctionType.
-    """
-    name: str
-    function_type: FunctionType
-    gate: VirtualGate
-    parameters: MutableMapping[Any, Parameter] = field(default_factory=dict)
-
-
-class ExperimentHandler():
-    """Experiment Handler"""
-    def __init__(self, station: Station = None,
-                 equipmentInstances: MutableSequence[EquipmentInstance] = None) -> None:
-        if equipmentInstances is None:
-            equipmentInstances = []
-
-        if station:
-            self._station = station
-        else:
-            self._station = Station()
-
-        for instance in equipmentInstances:
-            self._load_instrument(instance)
-
-    def _load_instrument(self, instance: EquipmentInstance):
-        pass
 
 
 class CustomSweep(AbstractSweep):
