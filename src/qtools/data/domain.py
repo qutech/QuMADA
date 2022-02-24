@@ -102,7 +102,7 @@ class DomainObject:
                 field_name = f"{field_name.removesuffix('s')}Ids"
             elif not isinstance(attr, str):
                 # Turn everything else into str (except None, which turns into an empty string instead of "None")
-                attr = str(attr or "")
+                attr = str(attr) if attr is not None else ""
             data[field_name] = attr
         resp = _api_put(fn_name, data)
         self._handle_db_response(resp)
