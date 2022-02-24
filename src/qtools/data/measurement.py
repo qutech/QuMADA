@@ -23,7 +23,7 @@ class MeasurementScript(DomainObject, DomainYAMLObject):
     # pylint: disable=invalid-name
     @classmethod
     def create(
-        cls, name: str, language: str, script: str, **kwargs
+        cls, name: str, language: str | None = None, script: str | None = None, **kwargs
     ) -> MeasurementScript:
         """Creates a MeasurementScript object."""
         kwargs.update(
@@ -48,7 +48,9 @@ class MeasurementSettings(DomainObject, DomainYAMLObject):
     settings: str
 
     @classmethod
-    def create(cls, name: str, settings: str, **kwargs) -> MeasurementSettings:
+    def create(
+        cls, name: str, settings: str | None = None, **kwargs
+    ) -> MeasurementSettings:
         """Creates a MeasurementSettings object."""
         kwargs.update(
             {
@@ -116,9 +118,9 @@ class ExperimentSetup(DomainObject, DomainYAMLObject):
     def create(
         cls,
         name: str,
-        temperature: str,
-        instrumentsChannels: str,
-        standardSettings: str,
+        temperature: str | None = None,
+        instrumentsChannels: str | None = None,
+        standardSettings: str | None = None,
         filters: str | None = None,
         **kwargs
     ) -> ExperimentSetup:
@@ -150,7 +152,7 @@ class MeasurementMapping(DomainObject, DomainYAMLObject):
     def create(
         cls,
         name: str,
-        mapping: str,
+        mapping: str | None = None,
         **kwargs,
     ) -> Measurement:
         """Creates an Measurement object."""
@@ -267,8 +269,8 @@ class Measurement(DomainObject, DomainYAMLObject):
         datetime: Datetime,
         user: str,
         valid: bool,
-        comments: str,
         data: list[MeasurementData],
+        comments: str | None = None,
         **kwargs
     ) -> Measurement:
         """Creates a Measurement object."""

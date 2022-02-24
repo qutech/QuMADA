@@ -39,6 +39,7 @@ class Wafer(DomainObject, DomainYAMLObject):
 
     description: str
     productionDate: str  # pylint: disable=invalid-name
+    layout: str
     factory: Factory
 
     # pylint: disable=invalid-name
@@ -46,9 +47,10 @@ class Wafer(DomainObject, DomainYAMLObject):
     def create(
         cls,
         name: str,
-        description: str,
         productionDate: str,
         factory: Factory,
+        description: str | None = None,
+        layout: str | None = None,
         **kwargs,
     ) -> Wafer:
         """Creates a Wafer object."""
@@ -57,6 +59,7 @@ class Wafer(DomainObject, DomainYAMLObject):
                 "name": name,
                 "description": description,
                 "productionDate": productionDate,
+                "layout": layout,
                 "factory": factory,
             }
         )
@@ -82,11 +85,11 @@ class Sample(DomainObject, DomainYAMLObject):
     def create(
         cls,
         name: str,
-        description: str,
-        creator: str,
         wafer: Wafer,
         factory: Factory,
         layout: SampleLayout,
+        description: str | None = None,
+        creator: str | None = None,
         **kwargs,
     ) -> Sample:
         """Creates a Sample object."""
@@ -119,7 +122,7 @@ class SampleLayout(DomainObject, DomainYAMLObject):
     mask: str
 
     @classmethod
-    def create(cls, name: str, mask: str, **kwargs) -> SampleLayout:
+    def create(cls, name: str, mask: str | None = None, **kwargs) -> SampleLayout:
         """Creates a SampleLayout object."""
         kwargs.update({
             "name": name,
@@ -147,10 +150,10 @@ class Device(DomainObject, DomainYAMLObject):
     def create(
         cls,
         name: str,
-        description: str,
-        layoutParameters: str,
         layout: DeviceLayout,
         sample: Sample,
+        description: str | None = None,
+        layoutParameters: str | None = None,
         **kwargs,
     ) -> Device:
         """Creates a Device object."""
@@ -183,7 +186,12 @@ class DeviceLayout(DomainObject, DomainYAMLObject):
     # TODO: incorporate gate List
     @classmethod
     def create(
-        cls, name: str, mask: str, image: str, creator: str, **kwargs
+        cls,
+        name: str,
+        mask: str | None = None,
+        image: str | None = None,
+        creator: str | None = None,
+        **kwargs,
     ) -> DeviceLayout:
         """Creates a DeviceLayout object."""
         kwargs.update(
@@ -197,7 +205,10 @@ class DeviceLayout(DomainObject, DomainYAMLObject):
         return super()._create(**kwargs)
 
     def save(self) -> str:
-        return super()._save(fn_name="saveOrUpdateDeviceLayout")
+        return super()._save(
+            fn_name="saveOrUpdateDeviceLayout",
+            field_names=["name", "pid", "mask", "image", "creator"],
+        )
 
 
 @dataclass
@@ -212,7 +223,12 @@ class Gate(DomainObject, DomainYAMLObject):
 
     @classmethod
     def create(
-        cls, name: str, function: str, number: int, layout: DeviceLayout, **kwargs
+        cls,
+        name: str,
+        function: str,
+        layout: DeviceLayout,
+        number: int | None = None,
+        **kwargs,
     ) -> Gate:
         """Creates a Gate object."""
         kwargs.update(
