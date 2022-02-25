@@ -1,0 +1,8 @@
+{
+    "parameter_names": {
+        "dac_IDN": "IDN",
+        "dac_voltage": "voltage",
+        "dac2_IDN": "IDN",
+        "dac2_voltage": "voltage"
+    }
+}

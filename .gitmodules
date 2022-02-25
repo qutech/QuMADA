@@ -1,3 +1,0 @@
-[submodule "libs/qcodes"]
-	path = libs/qcodes
-	url = https://github.com/QCoDeS/Qcodes.git

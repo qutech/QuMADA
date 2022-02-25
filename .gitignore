@@ -1,3 +1,17 @@
 __pycache__/
-*.egg-info
+
+*.egg-info/
+
+# generated images / documents
+*.png
+*.pdf
+
+# sphinx build files
+docs/_build/
+docs/_autosummary/
+
+htmlcov/
 .coverage
+coverage.xml
+
+.spyproject/

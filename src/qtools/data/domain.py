@@ -1,41 +1,139 @@
-#!/usr/bin/env python3
 """
 General Object class for the domain.
 """
+from __future__ import annotations
 
-from collections.abc import Mapping
 import json
-from dataclasses import dataclass, is_dataclass
+from collections.abc import Mapping
+from dataclasses import dataclass, fields, is_dataclass
+from typing import Iterable, TypeVar, get_type_hints
+
+from qtools.data.db import _api_get, _api_put
+
+T = TypeVar("T", bound="DomainObject")
 
 
 @dataclass
 class DomainObject:
     """Represents a database entry. Consists of the data fields, every db entry has."""
-    pid: str
     name: str
-    creatorId: str
-    createDate: str
-    lastChangerId: str
-    lastChangeDate: str
+    pid: str
+    creatorId: str          # pylint: disable=invalid-name
+    createDate: str         # pylint: disable=invalid-name
+    lastChangerId: str      # pylint: disable=invalid-name
+    lastChangeDate: str     # pylint: disable=invalid-name
 
-    def to_json(self):
+    @classmethod
+    def _create(cls: type[T], name: str, **kwargs) -> T:
         """
-        Outputs json representation of the object as string.
+        This factory function creates a DomainObject while ensuring, that the internal DB fields are all set to None.
+        This function is usually not called directly, but by the factory function of a child class.
+
+        Args:
+            name (str): Name of the DomainObject
 
         Returns:
-            str: JSON representation
+            [cls]: Created object
         """
-        return json.dumps(self, default=lambda o: o.__dict__,
-                          sort_keys=True, indent=4)
+        # Set default values for internal fields
+        kwargs["name"] = name
+        kwargs.setdefault("pid", None)
+        kwargs.setdefault("creatorId", None)
+        kwargs.setdefault("createDate", None)
+        kwargs.setdefault("lastChangerId", None)
+        kwargs.setdefault("lastChangeDate", None)
+        return cls(**kwargs)
 
-    def __post_init__(self):
+    @classmethod
+    def get_by_id(cls: type[T], pid: str) -> T:
+        """get a domain object by pid from the database."""
+        return cls._get_by_id(pid)
+
+    @classmethod
+    def _get_by_id(
+        cls: type[T], pid: str, fn_name: str | None = None, id_name: str = "pid"
+    ) -> T:
+        # Try to guess function name if not provided
+        if fn_name is None:
+            fn_name = f"get{cls.__name__}ById"
+        data = _api_get(fn_name, {id_name: pid})
+        return cls(**data)
+
+    @classmethod
+    def get_all(cls: type[T]) -> list[T]:
+        """get all domain objects of the specific type from the database."""
+        return cls._get_all()
+
+    @classmethod
+    def _get_all(cls: type[T], fn_name: str | None = None) -> list[T]:
+        # Try to guess function name if not provided
+        if fn_name is None:
+            fn_name = f"{cls.__name__.lower()}s"
+        return [cls(**data) for data in _api_get(fn_name)]
+
+    def save(self):
+        """saves the domain object to the database."""
+        return self._save()
+
+    def _save(
+        self: DomainObject,
+        fn_name: str | None = None,
+        field_names: list[str] | None = None,
+    ) -> str:
+        # Try to guess function name if not provided
+        if fn_name is None:
+            fn_name = f"put{type(self).__name__}"
+        if field_names is None:
+            field_names = [f.name for f in fields(self)]
+        # data = {field_name: getattr(self, field_name) for field_name in field_names}
+        data = {}
+        for field_name in field_names:
+            # TODO: match-clause with Python 3.10
+            attr = getattr(self, field_name)
+            if isinstance(attr, DomainObject):
+                # Take pid for DomainObjects by default
+                attr = attr.pid
+                field_name = f"{field_name}Id"
+            elif isinstance(attr, Iterable) and not isinstance(attr, str):
+                # Take pid from all DomainObjects
+                attr = [a.pid if isinstance(a, DomainObject) else a for a in attr]
+                # Join Iterables by comma
+                attr = ",".join(attr)
+                field_name = f"{field_name.removesuffix('s')}Ids"
+            elif not isinstance(attr, str):
+                # Turn everything else into str (except None, which turns into an empty string instead of "None")
+                attr = str(attr) if attr is not None else ""
+            data[field_name] = attr
+        resp = _api_put(fn_name, data)
+        self._handle_db_response(resp)
+        return self.pid
+
+    def to_json(self) -> str:
+        """Return a JSON representation of the domain object."""
+        return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
+
+    def __post_init__(self) -> None:
         # Select all variables, that should be a dataclass, but are a dict and
-        # turn them into the respective objects
+        # turn them into the respective objects.
+        # The field's type is evaluated using get_type_hints, because dataclasses are incompatible
+        # with the string type hints, which are introduced with PEP 563 and "from __future__ import annotations"
+        # This behavior may change in the future, if PEP 649 is implemented
+        def gen():
+            types = get_type_hints(type(self))
+            for field in fields(self):
+                name = field.name
+                cls = types[name]
+                if is_dataclass(cls) and isinstance(self.__dict__[name], Mapping):
+                    yield name, cls
 
-        # pylint: disable=no-member
-        objects = {k: v.type(**self.__dict__[k]) for k, v in self.__dataclass_fields__.items()
-                   if is_dataclass(v.type) and isinstance(self.__dict__[k], Mapping)}
+        objects = {name: cls(**self.__dict__[name]) for name, cls in gen()}
         self.__dict__.update(objects)
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         return self.__dict__ == other.__dict__
+
+    def _handle_db_response(self, response) -> None:
+        if not response["status"]:
+            raise Exception(response["errorMessage"])
+        # save pid
+        self.pid = response["id"]
