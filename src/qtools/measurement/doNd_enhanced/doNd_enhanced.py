@@ -59,6 +59,7 @@ MultiAxesTupleListWithDataSet = Tuple[
 
 LOG = logging.getLogger(__name__)
 
+
 def do1d_parallel(
     *param_meas: ParamMeasT,
     param_set: list[ParamMeasT],
@@ -75,17 +76,16 @@ def do1d_parallel(
     show_progress: Optional[None] = None,
     log_info: Optional[str] = None,
     break_condition: Optional[BreakConditionT] = None,
+    backsweep_after_break: Optional = False
 ) -> AxesTupleListWithDataSet:
     """
-    Perform a 1D scan of ``param_set`` from ``start`` to ``stop`` in
-    ``num_points`` measuring param_meas at each step. In case param_meas is
+    Performs a 1D scan of all ``param_set`` according to "setpoints" in parallel,
+    measuring param_meas at each step. In case param_meas is
     an ArrayParameter this is effectively a 2d scan.
 
     Args:
         param_set: The QCoDeS parameter to sweep over
-        start: Starting point of sweep
-        stop: End point of sweep
-        num_points: Number of points in sweep
+        setpoints: Array of setpoints for param_set
         delay: Delay after setting parameter before measurement is performed
         *param_meas: Parameter(s) to measure at each step or functions that
           will be called at each step. The function should take no arguments.
@@ -98,7 +98,7 @@ def do1d_parallel(
         write_period: The time after which the data is actually written to the
             database.
         additional_setpoints: A list of setpoint parameters to be registered in
-            the measurement but not scanned.
+            the measurement but not scanned. Not supported right now.
         measurement_name: Name of the measurement. This will be passed down to
             the dataset produced by the measurement. If not given, a default
             value of 'results' is used for the dataset.
@@ -112,6 +112,10 @@ def do1d_parallel(
             measurement. If None the setting will be read from ``qcodesrc.json`
         log_info: Message that is logged during the measurement. If None a default
             message is used.
+        backsweep_after_break: If true, after a break condition is fulfilled a
+            reversed sweep starting from the measurement point at which the
+            condition was fulfilled and stopping at the first setpoint of the
+            measurement is performed.
 
     Returns:
         The QCoDeS dataset.
@@ -163,7 +167,7 @@ def do1d_parallel(
         if use_threads
         else SequentialParamsCaller(*param_meas)
     )
-    
+    tracked_setpoints = list()
     # do1D enforces a simple relationship between measured parameters
     # and set parameters. For anything more complicated this should be
     # reimplemented from scratch
@@ -175,11 +179,11 @@ def do1d_parallel(
         # updates
         sys.stdout.flush()
         sys.stderr.flush()
-
+        
         for set_point in tqdm(setpoints, disable=not show_progress):
             for param in param_set:
                 param.set(set_point)
-
+            tracked_setpoints.append(set_point)
             datasaver.add_result(
                 (param_set[0], set_point),
                 *process_params_meas(measured_params, use_threads=use_threads),
@@ -187,7 +191,20 @@ def do1d_parallel(
             )
             if callable(break_condition):
                 if break_condition():
-                    raise BreakConditionInterrupt("Break condition was met.")
+                    if backsweep_after_break:
+                        tracked_setpoints.reverse()
+                        print(tracked_setpoints)
+                        for set_point in tqdm(tracked_setpoints, disable=not show_progress):
+                            for param in param_set:
+                                param.set(set_point)
+                            datasaver.add_result(
+                                (param_set[0], set_point),
+                                *process_params_meas(measured_params, use_threads=use_threads),
+                                *additional_setpoints_data
+                            )
+                        break
+                    else:
+                        raise BreakConditionInterrupt("Break condition was met.")
 
 
     param_set[0].post_delay = original_delay
