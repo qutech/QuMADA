@@ -5,8 +5,8 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping
-from dataclasses import dataclass, fields, is_dataclass
-from typing import Iterable, TypeVar, get_type_hints
+from dataclasses import Field, dataclass, fields, is_dataclass
+from typing import Iterable, Sequence, TypeVar, get_type_hints
 
 from qtools.data.db import _api_get, _api_put
 
@@ -113,20 +113,33 @@ class DomainObject:
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
     def __post_init__(self) -> None:
-        # Select all variables, that should be a dataclass, but are a dict and
+        # Select all variables, that should be a dataclass, but are a dict (or dics in lists) and
         # turn them into the respective objects.
         # The field's type is evaluated using get_type_hints, because dataclasses are incompatible
         # with the string type hints, which are introduced with PEP 563 and "from __future__ import annotations"
         # This behavior may change in the future, if PEP 649 is implemented
-        def gen():
-            types = get_type_hints(type(self))
-            for field in fields(self):
-                name = field.name
-                cls = types[name]
-                if is_dataclass(cls) and isinstance(self.__dict__[name], Mapping):
-                    yield name, cls
+        def _load_field(field: Field):
+            name = field.name
+            obj = self.__dict__[name]
+            cls = types[name]
+            if is_dataclass(cls) and isinstance(obj, Mapping):
+                return cls(**obj)
+            elif isinstance(obj, Sequence) and not isinstance(obj, str):
+                # list of dicts?
+                # A sequence type hint has only one entry
+                cls = cls.__args__[0]
+                if is_dataclass(cls):
+                    return list(
+                        map(lambda d: cls(**d) if isinstance(d, Mapping) else d, obj)
+                    )
+            return None
 
-        objects = {name: cls(**self.__dict__[name]) for name, cls in gen()}
+        types = get_type_hints(type(self))
+        objects = {}
+        for field in fields(self):
+            obj = _load_field(field)
+            if obj:
+                objects[field.name] = obj
         self.__dict__.update(objects)
 
     def __eq__(self, other) -> bool:
