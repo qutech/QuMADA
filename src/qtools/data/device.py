@@ -219,21 +219,17 @@ class Gate(DomainObject, DomainYAMLObject):
 
     function: str
     number: int
-    layout: DeviceLayout
 
     @classmethod
     def create(
         cls,
         name: str,
         function: str,
-        layout: DeviceLayout,
         number: int | None = None,
         **kwargs,
     ) -> Gate:
         """Creates a Gate object."""
-        kwargs.update(
-            {"name": name, "function": function, "number": number, "layout": layout}
-        )
+        kwargs.update({"name": name, "function": function, "number": number})
         return super()._create(**kwargs)
 
     def save(self) -> str:
