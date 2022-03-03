@@ -181,9 +181,9 @@ class DeviceLayout(DomainObject, DomainYAMLObject):
     mask: str
     image: str
     creator: str
-    gates: list[Gate] = field(default_factory=list)
+    terminals: list[Terminal] = field(default_factory=list)
 
-    # TODO: incorporate gate List
+    # TODO: incorporate terminal List
     @classmethod
     def create(
         cls,
@@ -212,10 +212,10 @@ class DeviceLayout(DomainObject, DomainYAMLObject):
 
 
 @dataclass
-class Gate(DomainObject, DomainYAMLObject):
-    """Represents the database entry of a gate."""
+class Terminal(DomainObject, DomainYAMLObject):
+    """Represents the database entry of a terminal."""
 
-    yaml_tag = "!Gate"
+    yaml_tag = "!Terminal"
 
     function: str
     number: int
@@ -227,10 +227,10 @@ class Gate(DomainObject, DomainYAMLObject):
         function: str,
         number: int | None = None,
         **kwargs,
-    ) -> Gate:
-        """Creates a Gate object."""
+    ) -> Terminal:
+        """Creates a Terminal object."""
         kwargs.update({"name": name, "function": function, "number": number})
         return super()._create(**kwargs)
 
     def save(self) -> str:
-        return super()._save(fn_name="saveOrUpdateGate")
+        return super()._save(fn_name="saveOrUpdateTerminal")
