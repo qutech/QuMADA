@@ -20,6 +20,7 @@ from qcodes.utils.threading import (
 from tqdm.auto import tqdm
 from qcodes import config
 import matplotlib
+from qcodes.dataset.data_set import DataSet
 from qcodes.dataset.experiment_container import Experiment
 from qcodes.dataset.measurements import Measurement
 from qcodes.dataset.descriptions.versioning.rundescribertypes import Shapes
