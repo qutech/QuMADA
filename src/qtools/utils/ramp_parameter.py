@@ -22,10 +22,15 @@ def ramp_parameter(
     ramp_speed sets the ramping speed in [value]/s, setpoint intervalls defines
     the delay between to consecutive set_commands (the ramp_speed is independent)
     """
-    if type(parameter.get()) == float:
-        current_value = parameter.get()
-        num_points = int(current_value/(ramp_rate*setpoint_intervall))+2
+    time.sleep(0.1)
+    print(parameter)
+    current_value = parameter.get()
+    print(current_value)
+    if type(current_value) == float:
+        print(target)
+        num_points = int(abs(current_value-float(target))/(ramp_rate*setpoint_intervall))+2
         sweep = generate_sweep(parameter.get(), target, num_points)
+        print(sweep)
         for value in sweep:
             parameter.set(value)
             time.sleep(setpoint_intervall)
