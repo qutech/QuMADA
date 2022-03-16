@@ -13,6 +13,7 @@ Welcome to qtools's documentation!
 
    installation
    usage
+   tutorials
    qtools
 
 
