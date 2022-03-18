@@ -2,6 +2,7 @@
 Measurement
 """
 import inspect
+import json
 from abc import ABC, abstractmethod
 from contextlib import suppress
 from dataclasses import dataclass, field
@@ -14,6 +15,9 @@ from qcodes.instrument.parameter import _BaseParameter
 from qcodes.utils.dataset.doNd import AbstractSweep, ActionsT, LinSweep
 from qcodes.utils.metadata import Metadatable
 
+from qtools.data.measurement import MeasurementScript as DomainMeasurementScript
+from qtools.data.measurement import MeasurementSettings
+from qtools.data.metadata import Metadata
 from qtools.instrument.mapping.base import (
     _map_gate_to_instrument,
     filter_flatten_parameters,
@@ -76,29 +80,63 @@ class MeasurementScript(ABC):
             else:
                 raise Exception("Gate {gate_name} is not a dictionary.")
 
-    def setup(self,
-              parameters: dict,
-              metadata: dict,
-              **settings: dict) -> None:
+    def setup(
+        self,
+        parameters: dict,
+        metadata: Metadata,
+        *,
+        add_script_to_metadata: bool = True,
+        add_parameters_to_metadata: bool = True,
+        **settings: dict,
+    ) -> None:
         """
         Adds all gate_parameters that are defined in the parameters argument to
-        the measurement. Allows to pass metadata dictionary to measurement.
+        the measurement. Allows to pass metadata to measurement and update the
+        metadata with the script.
 
         Args:
             parameters (dict): Dictionary containing parameters and their settings
             metadata (dict): Dictionary containing metadata that should be
                             available for the measurement.
+            add_script_to_metadata (bool): If True (default), adds this object's content
+                                           to the metadata's measurement.script.
+            add_parameters_to_metadata (bool): If True (default), add the parameters to
+                                               the metadata's measurement.settings.
             settings (dict): Settings regarding the measurement script. Kwargs:
                 ramp_rate: Defines how fast parameters are ramped during
                 initialization and reset.
                 setpoint_intervalle: Defines how smooth parameters are ramped
                 during initialization and reset.      
         """
+        # TODO: Add settings to metadata
         self.metadata = metadata
+        cls = type(self)
+
         try:
             self.settings.update(settings)
         except:
             self.settings = settings
+
+        if add_script_to_metadata:
+            script = metadata.measurement.script or DomainMeasurementScript.create(
+                cls.__name__
+            )
+            try:
+                script.language = "python"
+                script.script = inspect.getsource(cls)
+            except OSError as err:
+                print(f"Source of MeasurementScript coud not be acquired: {err}")
+            except Exception:
+                print("Script could not be added to metadata.")
+
+        if add_parameters_to_metadata:
+            settings = metadata.measurement.settings or MeasurementSettings.create(
+                f"{cls.__name__}Settings"
+            )
+            try:
+                settings.settings = json.dumps(parameters)
+            except Exception:
+                print("Parameters could not be added to metadata.")
         for gate, vals in parameters.items():
             self.properties[gate] = vals
             for parameter, properties in vals.items():
