@@ -1,0 +1,27 @@
+@startuml
+
+|User|
+start
+:Load initial metadata;
+' note
+'     Load from YAML file or build Metadata object
+'     in python environment
+'     ====
+'     Use existing metadata from database if applicable,
+'     e.g. Layout, MeasurementType, etc.
+' end note
+
+|MeasurementScript.setup|
+:Fill script metadata;
+:Fill measurement settings metadata;
+
+|map_gates_to_instruments|
+:Fill mapping metadata;
+
+|MeasurementScript.run|
+:Fill data metadata;
+:Write metadata to database;
+
+end
+
+@enduml
