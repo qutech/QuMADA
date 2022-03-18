@@ -7,6 +7,9 @@ from qcodes.instrument.base import Instrument
 from qcodes.instrument.parameter import Parameter
 from qcodes.utils.metadata import Metadatable
 
+from qtools.data.measurement import MeasurementMapping
+from qtools.data.metadata import Metadata
+
 
 class MappingError(Exception):
     """Exception is raised, if an error occured during Mapping."""
@@ -125,6 +128,8 @@ def map_gates_to_instruments(
     gate_parameters: Mapping[Any, Mapping[Any, Parameter] | Parameter],
     existing_gate_parameters: Mapping[Any, Mapping[Any, Parameter] | Parameter]
     | None = None,
+    *,
+    metadata: Metadata | None = None,
 ) -> None:
     """
     Maps the gates, that were defined in the MeasurementScript to the instruments, that are initialized in QCoDeS.
@@ -134,6 +139,7 @@ def map_gates_to_instruments(
         gate_parameters (Mapping[Any, Union[Mapping[Any, Parameter], Parameter]]): Gates, as defined in the measurement script
         existing_gate_parameters (Mapping[Any, Union[Mapping[Any, Parameter], Parameter]] | None): Already existing mapping
                 that is used to automatically create the mapping for already known gates without user input.
+        metadata (Metadata | None): If provided, add mapping to the metadata object.
     """
     if existing_gate_parameters is None:
         existing_gate_parameters = {}
@@ -196,7 +202,15 @@ def map_gates_to_instruments(
                     break
                 except (IndexError, ValueError):
                     continue
-    print("Mapping:" + str(gate_parameters))
+    j = json.dumps(gate_parameters)
+    print("Mapping:" + j)
+    # Add mapping to metadata, if provided
+    if metadata is not None:
+        mapping = metadata.measurement.mapping or MeasurementMapping.create(
+            "automatic-mapping"
+        )
+        mapping.mapping = json.dumps(gate_parameters)
+
 
 
 def _map_gate_to_instrument(gate: Mapping[Any, Parameter],
