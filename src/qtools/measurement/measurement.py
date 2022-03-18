@@ -117,6 +117,7 @@ class MeasurementScript(ABC):
         except:
             self.settings = settings
 
+        # Add script and parameters to metadata
         if add_script_to_metadata:
             script = metadata.measurement.script or DomainMeasurementScript.create(
                 cls.__name__
@@ -137,6 +138,8 @@ class MeasurementScript(ABC):
                 settings.settings = json.dumps(parameters)
             except Exception:
                 print("Parameters could not be added to metadata.")
+
+        # Add gate parameters
         for gate, vals in parameters.items():
             self.properties[gate] = vals
             for parameter, properties in vals.items():
