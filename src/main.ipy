@@ -1,5 +1,10 @@
 #%% Imports
 import json
+import pathlib
+import subprocess
+
+import IPython.lib.backgroundjobs as bg
+from plottr.apps import inspectr
 
 from qcodes.station import Station
 from qcodes.instrument_drivers.Harvard.Decadac import Decadac
@@ -13,6 +18,7 @@ from qcodes.dataset import (
     load_by_run_spec,
     load_or_create_experiment,
 )
+from qcodes.monitor import monitor as qcmon
 
 import qtools.data.db as db
 from qtools.data.metadata import Metadata
@@ -28,6 +34,7 @@ from qtools.measurement.scripts import (
     Generic_nD_Sweep,
     Generic_1D_parallel_Sweep,
     Timetrace)
+from qtools.utils import parameter_file_helpers as param_helpers
 from qtools.utils.load_from_sqlite_db import load_db
 from qtools.utils.generate_sweeps import generate_sweep, replace_parameter_settings
 from qtools.utils.ramp_parameter import *
@@ -61,33 +68,67 @@ station.add_component(keithley)
 
 
 #%% Metadata Setup
+base_path = pathlib.Path('C:/Users/Flash/Documents/qtools_scripts')
 
 # Set Metadata-DB URL
 db.api_url = "http://134.61.7.48:9123"
 
 # Load metadata.yaml
-with open("metadata.yaml", "r") as file:
+with open(base_path / "metadata.yaml", "r") as file:
     metadata = Metadata.from_yaml(file)
 
 # Save metadata to DB
 # metadata.save_to_db()
 
+experiment = load_or_create_experiment(
+    experiment_name="sensor_2d",
+    sample_name="gl_005d_sisyphos"
+)
+
+# %% Set up monitor
+monitor_process = subprocess.Popen(['python', '-m qcodes.monitor.monitor'], shell=True)
+# monitor.show()
+
+# %% Set up inspector
+jobs = bg.BackgroundJobManager()
+jobs.new(inspectr.main, base_path / 'measurements.db')
 
 #%% Measurement Setup
-
+mapping = None
+# %% Parameters
 # Set path for measurement data db
-load_db()
-# load_db("path/to/measurements.db")
+load_db(base_path / 'measurements.db')
 
-# Load parameters
-with open("parameters.json", "r") as file:
-    parameters = json.load(file)
+# Write parameter file from excel and load
+excel_file = (pathlib.Path('C:/Users/Flash/AppData/Local/Temp/OneNote/16.0/NT/0')
+              / 'gl_005d - Sisyphos1.xlsx')
+parameter_file = base_path / 'parameters_gl_005d.json'
+parameters = param_helpers.excel_to_dac_parameter_file(excel_file, parameter_file,
+                                                       gate_header='Sample', dac_header='DAC/AWG')
 
-script = Generic_1D_Sweep()
-script.setup(parameters, metadata)
+parameters = param_helpers.update_parameters(
+    parameter_file,
+    new_parameters=(
+        param_helpers.dynamic_gate_entry('RT', start=-0.575, stop=-0.475, num_points=100, delay=30e-3)
+        | param_helpers.dynamic_gate_entry('RB', start=-0.760, stop=-0.660, num_points=100, delay=30e-3)
+        | param_helpers.static_gate_entry('RP', -0.1)
+        | param_helpers.static_gate_entry('SD', -0.6)
+        | param_helpers.static_gate_entry('PD', -0.6)
+        | param_helpers.static_smu_entry('source drain', 'amplitude', 0.2)
+    )
+)
 
-# map measurement gates to instrument gates
-map_gates_to_instruments(station.components, script.gate_parameters)
+script = Generic_nD_Sweep()
+script.setup(parameters, metadata, ramp_rate=0.05)
 
-# run script
-script.run()
+# %%% map measurement gates to instrument gates
+mapping = map_gates_to_instruments(station.components, script.gate_parameters,
+                                   existing_gate_parameters=mapping)
+
+all_qcparams = [param for key in mapping.keys() for param in mapping[key].values()]
+
+monitor = qcmon.Monitor(*all_qcparams)
+# %% run script
+script.run(write_period=1, use_threads=False, do_plot=True, show_progress=True,
+           enter_actions=[lambda: lockin.output_enabled(True)],
+           exit_actions=[lambda: lockin.output_enabled(False)])
