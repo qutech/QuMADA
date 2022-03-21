@@ -21,7 +21,7 @@ class Generic_1D_Sweep(MeasurementScript):
         data = list()
         time.sleep(wait_time)
         i=0
-        for sweep in self.dynamic_sweeps:  
+        for sweep in self.dynamic_sweeps:
             # if self.settings.get("include_gate_name", False):
             #     measurement_name = self.metadata.measurement.name + f" {sweep['gate']}"
             sweep._param.set(sweep.get_setpoints()[0])
@@ -43,7 +43,7 @@ class Generic_nD_Sweep(MeasurementScript):
     Perform n-Dimensional sweep with n dynamic parameters.
     """
 
-    def run(self):
+    def run(self, **dond_kwargs):
 
         self.initialize()
         wait_time = self.settings.get("wait_time", 5)
@@ -53,11 +53,11 @@ class Generic_nD_Sweep(MeasurementScript):
         data = dond(*tuple(self.dynamic_sweeps),
                     *tuple(self.gettable_channels),
                     measurement_name=self.metadata.measurement.name or "measurement",
-                    break_condition=_interpret_breaks(self.break_conditions)
-                     )
+                    break_condition=_interpret_breaks(self.break_conditions),
+                    **dond_kwargs)
         self.reset()
         return data
-    
+
 class Generic_1D_parallel_Sweep(MeasurementScript):
     """
     Sweeps all dynamic parameters in parallel, setpoints of first parameter are
@@ -81,12 +81,12 @@ class Generic_1D_parallel_Sweep(MeasurementScript):
                             backsweep_after_break = backsweep_after_break
                             )
         return data
-    
+
 class Timetrace(MeasurementScript):
     """
     Timetrace measurement, duration and timestep can be set as keyword-arguments,
     both in seconds.
-    Be aware that the timesteps can vary as the time it takes to record a 
+    Be aware that the timesteps can vary as the time it takes to record a
     datapoint is not constant, the argument only sets the wait time. However,
     the recorded "elapsed time" is accurate.
     """
@@ -109,6 +109,3 @@ class Timetrace(MeasurementScript):
                 time.sleep(timestep)
         dataset = datasaver.dataset
         return dataset
-                
-            
-    
