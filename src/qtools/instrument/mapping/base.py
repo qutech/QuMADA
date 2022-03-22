@@ -202,14 +202,15 @@ def map_gates_to_instruments(
                     break
                 except (IndexError, ValueError):
                     continue
-    j = json.dumps(gate_parameters)
+    j = json.dumps(gate_parameters, default=lambda o: str(o))
     print("Mapping:" + j)
     # Add mapping to metadata, if provided
     if metadata is not None:
-        mapping = metadata.measurement.mapping or MeasurementMapping.create(
-            "automatic-mapping"
-        )
-        mapping.mapping = json.dumps(gate_parameters)
+        if not metadata.measurement.mapping:
+            metadata.measurement.mapping = MeasurementMapping.create(
+                "automatic-mapping"
+            )
+        metadata.measurement.mapping.mapping = json.dumps(j)
 
 
 
