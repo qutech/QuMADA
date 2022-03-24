@@ -43,6 +43,7 @@ class MeasurementScript(ABC):
                                  "amplitude",
                                  "frequency",
                                  "output_enabled",
+                                 "time_constant",
                                  "phase",
                                  "count"}
 

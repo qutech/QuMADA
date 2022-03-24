@@ -5,6 +5,7 @@
         "lockin_current": "current",
         "lockin_frequency": "frequency",
         "lockin_output_enabled": "output_enabled",
-        "lockin_phase": "phase"
+        "lockin_phase": "phase",
+        "lockin_time_constant": "time_constant"
     }
 }
