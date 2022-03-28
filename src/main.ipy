@@ -139,6 +139,10 @@ script.setup(parameters, metadata, ramp_rate=0.05)
 mapping = map_gates_to_instruments(station.components, script.gate_parameters,
                                    existing_gate_parameters=mapping)
 
+# %% Populate local namespace with gate names
+locals().update(**{gate: val['voltage'] for gate, val in mapping.items()
+                   if 'voltage' in val.keys()})
+
 all_qcparams = [param for key in mapping.keys() for param in mapping[key].values()]
 
 monitor = qcmon.Monitor(*all_qcparams)
