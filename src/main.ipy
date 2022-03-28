@@ -106,17 +106,29 @@ excel_file = (pathlib.Path('C:/Users/Flash/AppData/Local/Temp/OneNote/16.0/NT/0'
               / 'gl_005d - Sisyphos1.xlsx')
 parameter_file = base_path / 'parameters_gl_005d.json'
 parameters = param_helpers.excel_to_dac_parameter_file(excel_file, parameter_file,
-                                                       gate_header='Sample', dac_header='DAC/AWG')
+                                                       sample_header='Sample', dac_header='DAC/AWG')
 
 parameters = param_helpers.update_parameters(
     parameter_file,
     new_parameters=(
-        param_helpers.dynamic_gate_entry('RT', start=-0.575, stop=-0.475, num_points=100, delay=30e-3)
-        | param_helpers.dynamic_gate_entry('RB', start=-0.760, stop=-0.660, num_points=100, delay=30e-3)
-        | param_helpers.static_gate_entry('RP', -0.1)
-        | param_helpers.static_gate_entry('SD', -0.6)
-        | param_helpers.static_gate_entry('PD', -0.6)
-        | param_helpers.static_smu_entry('source drain', 'amplitude', 0.2)
+        {}
+        | param_helpers.dynamic_dac_entry('TCD', start=-0.9, stop=-0.700, num_points=200, delay=5e-3)
+        | param_helpers.dynamic_dac_entry('NCD', start=-0.9, stop=-0.700, num_points=200, delay=5e-3)
+        # | param_helpers.dynamic_dac_entry('RT', start=-0.465, stop=-0.415, num_points=25, delay=1e-3)
+        # | param_helpers.dynamic_dac_entry('RB', start=-0.565, stop=-0.515, num_points=25, delay=1e-3)
+        # | param_helpers.dynamic_dac_entry('RP', start=-0.1, stop=-0.0, num_points=150, delay=1e-3)
+        | param_helpers.static_dac_entry('PD', -0.60, gettable=True)
+        | param_helpers.static_dac_entry('SD', -0.65, gettable=True)
+        # | param_helpers.static_dac_entry('NCD', NCD(), gettable=True)
+        # | param_helpers.static_dac_entry('TCD', TCD(), gettable=True)
+        | param_helpers.static_dac_entry('RT', -0.4421, gettable=True)
+        | param_helpers.static_dac_entry('RB', -0.515, gettable=True)
+        | param_helpers.static_dac_entry('RP', -0.02, gettable=True)
+        | param_helpers.static_smu_entry('source drain', 'amplitude', 1, gettable=False)
+        | param_helpers.static_smu_entry('source drain', 'time_constant', 5e-3, gettable=False)
+        | param_helpers.static_smu_entry('source drain', 'frequency', 321.09876550, gettable=False)
+        # | param_helpers.static_dac_entry('Bias', -1.0, gettable=False)
+        # | param_helpers.static_dac_entry('Ref', 0.0, gettable=False)
     )
 )
 
