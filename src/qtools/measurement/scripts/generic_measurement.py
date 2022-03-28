@@ -12,7 +12,7 @@ from qtools.measurement.measurement import MeasurementScript
 
 
 class Generic_1D_Sweep(MeasurementScript):
-    def run(self) -> list:
+    def run(self, **dond_kwargs) -> list:
         """
         Perform 1D sweeps for all dynamic parameters
         """
@@ -30,7 +30,8 @@ class Generic_1D_Sweep(MeasurementScript):
                 dond(sweep,
                      *tuple(self.gettable_channels),
                      measurement_name=self.metadata.measurement.name or "measurement",
-                     break_condition = _interpret_breaks(self.break_conditions)
+                     break_condition = _interpret_breaks(self.break_conditions),
+                     **dond_kwargs
                      )
                 )
             self.reset()
@@ -63,7 +64,7 @@ class Generic_1D_parallel_Sweep(MeasurementScript):
     Sweeps all dynamic parameters in parallel, setpoints of first parameter are
     used for all parameters.
     """
-    def run(self):
+    def run(self, **do1d_kwargs):
         self.initialize()
         backsweep_after_break = self.settings.get("backsweep_after_break", False)
         wait_time = self.settings.get("wait_time", 5)
@@ -78,7 +79,8 @@ class Generic_1D_parallel_Sweep(MeasurementScript):
                             delay = self.dynamic_sweeps[0]._delay,
                             measurement_name=self.metadata.measurement.name or "measurement",
                             break_condition = _interpret_breaks(self.break_conditions),
-                            backsweep_after_break = backsweep_after_break
+                            backsweep_after_break = backsweep_after_break,
+                            **do1d_kwargs
                             )
         return data
 
