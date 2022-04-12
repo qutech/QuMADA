@@ -77,7 +77,8 @@ def do1d_parallel(
     show_progress: Optional[None] = None,
     log_info: Optional[str] = None,
     break_condition: Optional[BreakConditionT] = None,
-    backsweep_after_break: Optional = False
+    backsweep_after_break: Optional = False,
+    wait_after_break: Optional = 0
 ) -> AxesTupleListWithDataSet:
     """
     Performs a 1D scan of all ``param_set`` according to "setpoints" in parallel,
@@ -138,6 +139,9 @@ def do1d_parallel(
         param for param in param_meas if isinstance(param, _BaseParameter)
     )
     measured_params = (*param_set[1:],*param_meas)
+    setpoints_length = len(setpoints)
+    if backsweep_after_break:
+        setpoints_length *= 2
     try:
         loop_shape = tuple(1 for _ in additional_setpoints) + (len(setpoints),)
         shapes: Shapes = detect_shape_of_measurement(
@@ -194,7 +198,7 @@ def do1d_parallel(
                 if break_condition():
                     if backsweep_after_break:
                         tracked_setpoints.reverse()
-                        print(tracked_setpoints)
+                        time.sleep(wait_after_break)
                         for set_point in tqdm(tracked_setpoints, disable=not show_progress):
                             for param in param_set:
                                 param.set(set_point)
