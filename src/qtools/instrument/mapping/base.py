@@ -203,7 +203,6 @@ def map_gates_to_instruments(
                 except (IndexError, ValueError):
                     continue
     j = json.dumps(gate_parameters, default=lambda o: str(o))
-    print("Mapping:" + j)
     # Add mapping to metadata, if provided
     if metadata is not None:
         if not metadata.measurement.mapping:

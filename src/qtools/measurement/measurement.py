@@ -37,11 +37,23 @@ class QtoolsStation(Station):
 
 
 def create_hook(func, hook):
+    """
+    Decorator to hook a function onto an existing function.
+    The hook function can use keyword-only arguments, which are omitted prior to execution of the main function.
+    """
     @wraps(func)
     def wrapper(*args, **kwargs):
         hook(*args, **kwargs)
-        return func(*args, **kwargs)
-
+        # remove arguments used in hook from kwargs
+        sig = inspect.signature(hook)
+        varkw = next(
+            filter(
+                lambda p: p.kind is inspect.Parameter.VAR_KEYWORD,
+                sig.parameters.values(),
+            )
+        ).name
+        unused_kwargs = sig.bind(*args, **kwargs).arguments.get(varkw) or {}
+        return func(*args, **unused_kwargs)
     return wrapper
 
 
