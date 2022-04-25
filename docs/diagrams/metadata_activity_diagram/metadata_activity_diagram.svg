@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="447px" preserveAspectRatio="none" style="width:841px;height:447px;background:#FFFFFF;" version="1.1" viewBox="0 0 841 447" width="841px" zoomAndPan="magnify"><defs><filter height="300%" id="fgjqn6hp7ctkx" width="300%" x="-1" y="-1"><feGaussianBlur result="blurOut" stdDeviation="2.0"/><feColorMatrix in="blurOut" result="blurOut2" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .4 0"/><feOffset dx="4.0" dy="4.0" in="blurOut2" result="blurOut3"/><feBlend in="SourceGraphic" in2="blurOut3" mode="normal"/></filter></defs><g><ellipse cx="88.5" cy="50.0957" fill="#000000" filter="url(#fgjqn6hp7ctkx)" rx="10" ry="10" style="stroke:none;stroke-width:1.0;"/><rect fill="#FEFECE" filter="url(#fgjqn6hp7ctkx)" height="35.0938" rx="12.5" ry="12.5" style="stroke:#A80036;stroke-width:1.5;" width="135" x="21" y="80.0957"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="115" x="31" y="102.5527">Load initial metadata</text><line style="stroke:#000000;stroke-width:2.0;" x1="15" x2="15" y1="12.4551" y2="430.6582"/><rect fill="#FEFECE" filter="url(#fgjqn6hp7ctkx)" height="35.0938" rx="12.5" ry="12.5" style="stroke:#A80036;stroke-width:1.5;" width="124" x="219.5" y="135.1895"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="104" x="229.5" y="157.6465">Fill script metadata</text><rect fill="#FEFECE" filter="url(#fgjqn6hp7ctkx)" height="35.0938" rx="12.5" ry="12.5" style="stroke:#A80036;stroke-width:1.5;" width="219" x="172" y="190.2832"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="199" x="182" y="212.7402">Fill measurement settings metadata</text><line style="stroke:#000000;stroke-width:2.0;" x1="166" x2="166" y1="12.4551" y2="430.6582"/><rect fill="#FEFECE" filter="url(#fgjqn6hp7ctkx)" height="35.0938" rx="12.5" ry="12.5" style="stroke:#A80036;stroke-width:1.5;" width="143" x="440" y="245.377"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="123" x="450" y="267.834">Fill mapping metadata</text><line style="stroke:#000000;stroke-width:2.0;" x1="401" x2="401" y1="12.4551" y2="430.6582"/><rect fill="#FEFECE" filter="url(#fgjqn6hp7ctkx)" height="35.0938" rx="12.5" ry="12.5" style="stroke:#A80036;stroke-width:1.5;" width="118" x="663" y="300.4707"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="98" x="673" y="322.9277">Fill data metadata</text><rect fill="#FEFECE" filter="url(#fgjqn6hp7ctkx)" height="35.0938" rx="12.5" ry="12.5" style="stroke:#A80036;stroke-width:1.5;" width="171" x="636.5" y="355.5645"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="151" x="646.5" y="378.0215">Write metadata to database</text><ellipse cx="722" cy="420.6582" fill="#FFFFFF" filter="url(#fgjqn6hp7ctkx)" rx="10" ry="10" style="stroke:#000000;stroke-width:1.5;"/><line style="stroke:#000000;stroke-width:2.5;" x1="715.8128" x2="728.1872" y1="414.471" y2="426.8454"/><line style="stroke:#000000;stroke-width:2.5;" x1="728.1872" x2="715.8128" y1="414.471" y2="426.8454"/><line style="stroke:#000000;stroke-width:2.0;" x1="626" x2="626" y1="12.4551" y2="430.6582"/><line style="stroke:#000000;stroke-width:2.0;" x1="822" x2="822" y1="12.4551" y2="430.6582"/><line style="stroke:#A80036;stroke-width:1.5;" x1="88.5" x2="88.5" y1="60.0957" y2="80.0957"/><polygon fill="#A80036" points="84.5,70.0957,88.5,80.0957,92.5,70.0957,88.5,74.0957" style="stroke:#A80036;stroke-width:1.0;"/><line style="stroke:#A80036;stroke-width:1.5;" x1="281.5" x2="281.5" y1="170.2832" y2="190.2832"/><polygon fill="#A80036" points="277.5,180.2832,281.5,190.2832,285.5,180.2832,281.5,184.2832" style="stroke:#A80036;stroke-width:1.0;"/><line style="stroke:#A80036;stroke-width:1.5;" x1="722" x2="722" y1="335.5645" y2="355.5645"/><polygon fill="#A80036" points="718,345.5645,722,355.5645,726,345.5645,722,349.5645" style="stroke:#A80036;stroke-width:1.0;"/><line style="stroke:#A80036;stroke-width:1.5;" x1="722" x2="722" y1="390.6582" y2="410.6582"/><polygon fill="#A80036" points="718,400.6582,722,410.6582,726,400.6582,722,404.6582" style="stroke:#A80036;stroke-width:1.0;"/><line style="stroke:#A80036;stroke-width:1.5;" x1="88.5" x2="88.5" y1="115.1895" y2="120.1895"/><line style="stroke:#A80036;stroke-width:1.5;" x1="88.5" x2="281.5" y1="120.1895" y2="120.1895"/><line style="stroke:#A80036;stroke-width:1.5;" x1="281.5" x2="281.5" y1="120.1895" y2="135.1895"/><polygon fill="#A80036" points="277.5,125.1895,281.5,135.1895,285.5,125.1895,281.5,129.1895" style="stroke:#A80036;stroke-width:1.0;"/><line style="stroke:#A80036;stroke-width:1.5;" x1="281.5" x2="281.5" y1="225.377" y2="230.377"/><line style="stroke:#A80036;stroke-width:1.5;" x1="281.5" x2="511.5" y1="230.377" y2="230.377"/><line style="stroke:#A80036;stroke-width:1.5;" x1="511.5" x2="511.5" y1="230.377" y2="245.377"/><polygon fill="#A80036" points="507.5,235.377,511.5,245.377,515.5,235.377,511.5,239.377" style="stroke:#A80036;stroke-width:1.0;"/><line style="stroke:#A80036;stroke-width:1.5;" x1="511.5" x2="511.5" y1="280.4707" y2="285.4707"/><line style="stroke:#A80036;stroke-width:1.5;" x1="511.5" x2="722" y1="285.4707" y2="285.4707"/><line style="stroke:#A80036;stroke-width:1.5;" x1="722" x2="722" y1="285.4707" y2="300.4707"/><polygon fill="#A80036" points="718,290.4707,722,300.4707,726,290.4707,722,294.4707" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="18" lengthAdjust="spacing" textLength="38" x="71.5" y="31.1406">User</text><text fill="#000000" font-family="sans-serif" font-size="18" lengthAdjust="spacing" textLength="204" x="181.5" y="31.1406">MeasurementScript.setup</text><text fill="#000000" font-family="sans-serif" font-size="18" lengthAdjust="spacing" textLength="215" x="406" y="31.1406">map_gates_to_instruments</text><text fill="#000000" font-family="sans-serif" font-size="18" lengthAdjust="spacing" textLength="186" x="631" y="31.1406">MeasurementScript.run</text><!--MD5=[c95b7b7154285be7dded5ce882d13553]
+@startuml
+
+|User|
+start
+:Load initial metadata;
+' note
+'     Load from YAML file or build Metadata object
+'     in python environment
+'     ====
+'     Use existing metadata from database if applicable,
+'     e.g. Layout, MeasurementType, etc.
+' end note
+
+|MeasurementScript.setup|
+:Fill script metadata;
+:Fill measurement settings metadata;
+
+|map_gates_to_instruments|
+:Fill mapping metadata;
+
+|MeasurementScript.run|
+:Fill data metadata;
+:Write metadata to database;
+
+end
+
+@enduml
+
+@startuml
+
+|User|
+start
+:Load initial metadata;
+
+|MeasurementScript.setup|
+:Fill script metadata;
+:Fill measurement settings metadata;
+
+|map_gates_to_instruments|
+:Fill mapping metadata;
+
+|MeasurementScript.run|
+:Fill data metadata;
+:Write metadata to database;
+
+end
+
+@enduml
+
+PlantUML version 1.2022.0(Tue Jan 11 17:16:42 CET 2022)
+(GPL source distribution)
+Java Runtime: OpenJDK Runtime Environment
+JVM: OpenJDK 64-Bit Server VM
+Default Encoding: Cp1252
+Language: de
+Country: DE
+--></g></svg>
