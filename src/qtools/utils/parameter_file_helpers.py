@@ -1,20 +1,18 @@
-# -*- coding: utf-8 -*-
 """
 Created on Fri Mar 18 10:33:00 2022
 
 @author: Flash
 """
+import json
 import operator
 from typing import Mapping
 
 import numpy as np
-from collections import OrderedDict
-import json
 import pandas as pd
 
 
-class ParameterDict(OrderedDict):
-
+class ParameterDict(dict):
+    """Changes operator | and |= of dict to overwrite entries, that are dict and have a key 'type'."""
     def __or__(self, other):
         new = self.__class__(**self)
         new |= other
