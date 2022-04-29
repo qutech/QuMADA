@@ -1,0 +1,93 @@
+#%% Imports
+import json
+
+from qcodes.station import Station
+from qcodes.instrument_drivers.Harvard.Decadac import Decadac
+from qcodes.instrument_drivers.stanford_research.SR830 import SR830
+from qcodes.instrument_drivers.tektronix.Keithley_2400 import Keithley_2400
+from qcodes.instrument_drivers.QDevil.QDevil_QDAC import QDac
+from qcodes.dataset import (
+    Measurement,
+    experiments,
+    initialise_or_create_database_at,
+    load_by_run_spec,
+    load_or_create_experiment,
+)
+
+import qtools.data.db as db
+from qtools.data.metadata import Metadata
+from qtools.instrument.mapping import (
+    add_mapping_to_instrument,
+    DECADAC_MAPPING,
+    SR830_MAPPING,
+    KEITHLEY_2400_MAPPING,
+    QDAC_MAPPING)
+from qtools.instrument.mapping.base import map_gates_to_instruments
+from qtools.measurement.scripts import (
+    Generic_1D_Sweep,
+    Generic_nD_Sweep,
+    Generic_1D_parallel_Sweep,
+    Timetrace)
+from qtools.utils.load_from_sqlite_db import load_db
+from qtools.utils.generate_sweeps import generate_sweep, replace_parameter_settings
+from qtools.utils.ramp_parameter import *
+
+#%% Experiment Setup
+
+# Setup qcodes station
+station = Station()
+
+# Setup instruments
+# Call add_mapping_to_instrument(instrument, mapping) to map the instrument's parameters to qtools-specific names.
+dac = Decadac(
+    "dac",
+    "ASRL3::INSTR",
+    min_val=-10,
+    max_val=10,
+    terminator="\n")
+add_mapping_to_instrument(dac, DECADAC_MAPPING)
+station.add_component(dac)
+
+lockin = SR830("lockin", "GPIB1::12::INSTR")
+add_mapping_to_instrument(lockin, SR830_MAPPING)
+station.add_component(lockin)
+qdac = QDac("qdac", "ASRL5::INSTR")
+add_mapping_to_instrument(qdac, QDAC_MAPPING)
+station.add_component(qdac)
+
+keithley = Keithley_2400("keithley", "GPIB1::27::INSTR")
+add_mapping_to_instrument(keithley, KEITHLEY_2400_MAPPING)
+station.add_component(keithley)
+
+
+#%% Metadata Setup
+
+# Set Metadata-DB URL
+db.api_url = "http://134.61.7.48:9123"
+
+# Load metadata.yaml
+with open("metadata.yaml", "r") as file:
+    metadata = Metadata.from_yaml(file)
+
+# Save metadata to DB
+# metadata.save_to_db()
+
+
+#%% Measurement Setup
+
+# Set path for measurement data db
+load_db()
+# load_db("path/to/measurements.db")
+
+# Load parameters
+with open("parameters.json", "r") as file:
+    parameters = json.load(file)
+
+script = Generic_1D_Sweep()
+script.setup(parameters, metadata)
+
+# map measurement gates to instrument gates
+map_gates_to_instruments(station.components, script.gate_parameters)
+
+# run script
+script.run()
