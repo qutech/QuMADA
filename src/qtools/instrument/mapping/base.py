@@ -125,7 +125,7 @@ def map_gates_to_instruments(
     gate_parameters: Mapping[Any, Mapping[Any, Parameter] | Parameter],
     existing_gate_parameters: Mapping[Any, Mapping[Any, Parameter] | Parameter]
     | None = None,
-) -> Mapping[Any, Parameter]:
+) -> None:
     """
     Maps the gates, that were defined in the MeasurementScript to the instruments, that are initialized in QCoDeS.
 
@@ -197,7 +197,6 @@ def map_gates_to_instruments(
                 except (IndexError, ValueError):
                     continue
     print("Mapping:" + str(gate_parameters))
-    return gate_parameters
 
 
 def _map_gate_to_instrument(gate: Mapping[Any, Parameter],

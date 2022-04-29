@@ -136,8 +136,9 @@ script = Generic_nD_Sweep()
 script.setup(parameters, metadata, ramp_rate=0.05)
 
 # %%% map measurement gates to instrument gates
-mapping = map_gates_to_instruments(station.components, script.gate_parameters,
-                                   existing_gate_parameters=mapping)
+map_gates_to_instruments(station.components, script.gate_parameters,
+                         existing_gate_parameters=mapping)
+mapping = script.gate_parameters
 
 # %% Populate local namespace with gate names
 locals().update(**{gate: val['voltage'] for gate, val in mapping.items()
