@@ -3,8 +3,12 @@ Created on Fri Mar 18 10:33:00 2022
 
 @author: Flash
 """
+from __future__ import annotations
+
 import json
 import operator
+from os import PathLike
+from pathlib import Path
 from typing import Mapping
 
 import numpy as np
@@ -29,16 +33,21 @@ class ParameterDict(dict):
         return self
 
 
-def update_parameters(parameter_file, new_parameters):
-    existing_parameters = json.load(parameter_file.open('r' if parameter_file.exists() else 'x'),
-                                    object_pairs_hook=ParameterDict)
+def update_parameters(
+    parameter_file_path: str | PathLike, new_parameters: ParameterDict
+):
+    """Write or overwrite parameters to a file."""
+    path = Path(parameter_file_path)
+    existing_parameters = json.load(
+        path.open("r" if path.exists() else "x"), object_pairs_hook=ParameterDict
+    )
     parameters = existing_parameters | new_parameters
-    json.dump(parameters, parameter_file.open('w'), indent=2)
+    json.dump(parameters, path.open("w"), indent=2)
     return parameters
 
 
-def intialize_dac_parameter_file(mapping, parameter_file):
-
+def intialize_dac_parameter_file(mapping, parameter_file_path: str | PathLike):
+    """Write new dac parameter file with dummy channels before relevant entries."""
     parameters = ParameterDict()
     for i in range(20):
         if i in mapping.keys():
@@ -47,20 +56,26 @@ def intialize_dac_parameter_file(mapping, parameter_file):
             key = f"CH{i}"
         parameters |= gettable_dac_entry(key)
 
-    return update_parameters(parameter_file, parameters)
+    return update_parameters(parameter_file_path, parameters)
 
 
-def excel_to_dac_parameter_file(excel_file, parameter_file,
-                                sample_header='Sample', dac_header='DAC/AWG'):
+def excel_to_dac_parameter_file(
+    excel_file,
+    parameter_file_path: str | PathLike,
+    sample_header="Sample",
+    dac_header="DAC/AWG",
+):
+    """Read dac parameters from Excel file and save them (with dummy channels) to new parameter file."""
     excel = pd.read_excel(excel_file, usecols=[sample_header, dac_header])
     mapping = ParameterDict({int(dac): sample
                              for dac, sample in zip(excel['DAC/AWG'], excel['Sample'])
                              if not np.isnan(dac)})
 
-    return intialize_dac_parameter_file(mapping, parameter_file)
+    return intialize_dac_parameter_file(mapping, parameter_file_path)
 
 
-def dynamic_dac_entry(dac, start, stop, num_points=100, delay=0.025):
+def dynamic_dac_entry(dac, start, stop, num_points=100, delay=0.025) -> ParameterDict:
+    """Generate a "dynamic" dac parameter."""
     return ParameterDict({
         dac: ParameterDict({
             'voltage': ParameterDict({
@@ -74,7 +89,8 @@ def dynamic_dac_entry(dac, start, stop, num_points=100, delay=0.025):
     })
 
 
-def static_dac_entry(dac, value, gettable=False):
+def static_dac_entry(dac, value, gettable=False) -> ParameterDict:
+    """Generate a "static" dac parameter."""
     return ParameterDict({
         dac: ParameterDict({
             'voltage': ParameterDict({
@@ -85,7 +101,8 @@ def static_dac_entry(dac, value, gettable=False):
     })
 
 
-def gettable_dac_entry(dac, **kwargs):
+def gettable_dac_entry(dac, **kwargs) -> ParameterDict:
+    """Generate a "gettable" dac parameter."""
     return ParameterDict({
         dac: ParameterDict({
             'voltage': ParameterDict({
@@ -95,7 +112,8 @@ def gettable_dac_entry(dac, **kwargs):
     })
 
 
-def static_smu_entry(smu, parameter, value, gettable=False):
+def static_smu_entry(smu, parameter, value, gettable=False) -> ParameterDict:
+    """Generate a static (gettable) SMU parameter."""
     return ParameterDict({
         smu: ParameterDict({
             parameter: ParameterDict({
