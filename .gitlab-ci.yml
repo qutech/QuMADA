@@ -20,6 +20,7 @@ cache:
 stages:
   - static_analysis
   - test
+  - deploy
 
 .global_script_before: &global_script_before
   - python -V  # Print out python version for debugging
@@ -53,3 +54,16 @@ unit_test:
     reports:
       junit: report.xml
       cobertura: coverage.xml
+
+pages:
+  stage: deploy
+  before_script:
+  - *global_script_before
+  - pip install sphinx sphinx_autodoc_typehints sphinx_autopackagesummary sphinx_rtd_theme
+  script:
+  - sphinx-build -b html docs public
+  artifacts:
+    paths:
+    - public
+  only:
+  - main
