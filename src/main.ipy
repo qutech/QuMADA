@@ -63,7 +63,7 @@ station.add_component(keithley)
 #%% Metadata Setup
 
 # Set Metadata-DB URL
-db.api_url = "http://134.61.7.48:9123"
+db.api_url = "http://134.61.7.48:9124"
 
 # Load metadata.yaml
 with open("metadata.yaml", "r") as file:
