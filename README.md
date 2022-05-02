@@ -51,7 +51,10 @@ For development, the requirements are stored in *dev_requirements.txt*.
 pip install -r dev_requirements.txt
 ```
 
-### Build documentation
+### Documentation
+
+You can access the current documentation [here](https://qutech.pages.git-ce.rwth-aachen.de/lab_software/qtools)
+or build your own:
 
 Run
 
