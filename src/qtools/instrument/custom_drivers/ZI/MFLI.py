@@ -19,7 +19,7 @@ class MFLI(Instrument):
     """
     Driver for the Zurich-Instruments lockin based on the zhinst.toolkit driver.
     Adds proper parameters with get and set commands to make the MFLI usable
-    with QTools. 
+    with QTools.
     Not finished, most parameters are still missing.
     """
     def __init__(self, name: str, device: str, **kwargs):
@@ -27,17 +27,17 @@ class MFLI(Instrument):
         self.instr = instr = tk_mfli.MFLI(name, device)
         instr.setup()
         instr.connect_device()
-        
+
         self.add_parameter(
             "current",
             label = "R",
             unit = "A",
-            get_cmd = self.instr.nodetree.demods[0].sample,
+            get_cmd = lambda: self.instr.nodetree.demods[0].sample() * np.sqrt(2),
             get_parser = np.abs,
             set_cmd = None,
             docstring= "Absolute current as measured by demod1"
             )
-        
+
         self.add_parameter(
             name = "phase",
             label = "Phase",
@@ -47,7 +47,7 @@ class MFLI(Instrument):
             set_cmd = None,
             docstring = "Phase of the measured current in radians"
             )
-        
+
         self.add_parameter(
             name = "amplitude",
             label = "Amplitude",
@@ -57,7 +57,7 @@ class MFLI(Instrument):
             set_cmd = self.instr.nodetree.sigout.amplitude,
             docstring = "Amplitude of the voltage output"
             )
-        
+
         self.add_parameter(
             name = "frequency",
             label = "Frequency",
@@ -67,15 +67,22 @@ class MFLI(Instrument):
             set_cmd = self.instr.nodetree.osc.freq,
             docstring = "Frequency of the oscillator"
             )
-        
+
         self.add_parameter(
             name = "output_enabled",
             label = "Output Enabled",
             get_cmd = self.instr.nodetree.sigout.on,
-            get_parser = bool,
+            get_parser = lambda x: int(bool(x)),
             set_cmd = self.instr.nodetree.sigout.on,
             docstring = "Turns Output1 on or off"
             )
-        
-        
-        
+
+        self.add_parameter(
+            name = "time_constant",
+            label="Time constant",
+            unit = "s",
+            get_cmd = self.instr.nodetree.demods[0].timeconstant,
+            get_parser = float,
+            set_cmd = self.instr.nodetree.demods[0].timeconstant,
+            docstring = "Time constant of the low-pass filter"
+            )

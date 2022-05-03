@@ -130,6 +130,7 @@ def map_gates_to_instruments(
     | None = None,
     *,
     metadata: Metadata | None = None,
+    map_manually: bool = False,
 ) -> None:
     """
     Maps the gates, that were defined in the MeasurementScript to the instruments, that are initialized in QCoDeS.
@@ -140,6 +141,7 @@ def map_gates_to_instruments(
         existing_gate_parameters (Mapping[Any, Union[Mapping[Any, Parameter], Parameter]] | None): Already existing mapping
                 that is used to automatically create the mapping for already known gates without user input.
         metadata (Metadata | None): If provided, add mapping to the metadata object.
+        map_manually (bool): If set to True, don't try to automatically map parameters to gates. Defaults to False.
     """
     if existing_gate_parameters is None:
         existing_gate_parameters = {}
@@ -183,6 +185,8 @@ def map_gates_to_instruments(
                         chosen_instrument = list(components.values())[int(chosen)]
                     chosen_instrument_parameters = {k: v for k, v in instrument_parameters.items() if v.root_instrument is chosen_instrument}
                     try:
+                        if map_manually:
+                            raise MappingError("map_manually set, mapping manually.")
                         # Only use chosen instrument's parameters for mapping
                         _map_gate_to_instrument(gate, chosen_instrument_parameters)
                         # Remove mapped parameters from parameter list

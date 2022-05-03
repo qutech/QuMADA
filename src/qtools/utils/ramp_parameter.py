@@ -7,6 +7,10 @@ Created on Fri Jan 28 14:42:03 2022
 
 from qtools.utils.generate_sweeps import generate_sweep
 import time
+import logging
+
+LOG = logging.getLogger(__name__)
+
 
 class Unsweepable_parameter(Exception):
     pass
@@ -23,22 +27,22 @@ def ramp_parameter(
     the delay between to consecutive set_commands (the ramp_speed is independent)
     """
     time.sleep(0.1)
-    print(parameter)
+    LOG.debug(f"parameter: {parameter}")
     current_value = parameter.get()
-    print(current_value)
+    LOG.debug(f"current value: {current_value}")
     if type(current_value) == float:
-        print(target)
+        LOG.debug(f"target: {target}")
         num_points = int(abs(current_value-float(target))/(ramp_rate*setpoint_intervall))+2
         sweep = generate_sweep(parameter.get(), target, num_points)
-        print(sweep)
+        LOG.debug(f"sweep: {sweep}")
         for value in sweep:
             parameter.set(value)
             time.sleep(setpoint_intervall)
         return True
     else:
         raise Unsweepable_parameter("Parameter has non-float values")
-        
-        
+
+
 
 def ramp_or_set_parameter(parameter,
                           target,
@@ -49,12 +53,9 @@ def ramp_or_set_parameter(parameter,
     float, they are just set.
     """
     try:
-        ramp_parameter(parameter, 
+        ramp_parameter(parameter,
                        target,
                        ramp_rate,
                        setpoint_intervall)
     except Unsweepable_parameter:
         parameter.set(target)
-        
-        
-    

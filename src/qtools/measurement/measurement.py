@@ -63,16 +63,20 @@ class MeasurementScript(ABC):
 
     The abstract function "run" has to be implemented.
     """
-    PARAMETER_NAMES: set[str] = {"voltage",
-                                 "current",
-                                 "current_x_component",
-                                 "current_y_component",
-                                 "current_compliance",
-                                 "amplitude",
-                                 "frequency",
-                                 "output_enabled",
-                                 "phase",
-                                 "count"}
+
+    PARAMETER_NAMES: set[str] = {
+        "voltage",
+        "current",
+        "current_x_component",
+        "current_y_component",
+        "current_compliance",
+        "amplitude",
+        "frequency",
+        "output_enabled",
+        "time_constant",
+        "phase",
+        "count",
+    }
 
     def __new__(cls, *args, **kwargs):
         # reverse order, so insert metadata is run second
