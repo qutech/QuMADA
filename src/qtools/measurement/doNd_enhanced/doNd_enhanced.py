@@ -143,7 +143,7 @@ def do1d_parallel(
     if backsweep_after_break:
         setpoints_length *= 2
     try:
-        loop_shape = tuple(1 for _ in additional_setpoints) + (len(setpoints),)
+        loop_shape = tuple(1 for _ in additional_setpoints) + (setpoints_length,)
         shapes: Shapes = detect_shape_of_measurement(
             measured_params,
             loop_shape
