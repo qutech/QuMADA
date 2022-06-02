@@ -51,6 +51,12 @@ For development, the requirements are stored in *dev_requirements.txt*.
 pip install -r dev_requirements.txt
 ```
 
+Set up pre-commit hooks
+
+```
+pre-commit install
+```
+
 ### Documentation
 
 You can access the current documentation [here](https://qutech.pages.git-ce.rwth-aachen.de/lab_software/qtools)

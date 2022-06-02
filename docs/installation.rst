@@ -52,6 +52,12 @@ For development, the requirements are stored in *dev_requirements.txt*.
 
     pip install -r dev_requirements.txt
 
+Set up pre-commit hooks
+
+.. code-block:: console
+
+    pre-commit install
+
 Build documentation
 -------------------
 
