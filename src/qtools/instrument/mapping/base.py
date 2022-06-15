@@ -34,7 +34,12 @@ def filter_flatten_parameters(node) -> dict[Any, Parameter]:
             values = list(node.values()) if isinstance(node, dict) else list(node)
         except KeyError:
             values = [node]
-
+        except IndexError:
+            values = []
+        # TODO: Lines 37 and 38 are only a hotfix for problems with the MFLI,
+        # The index error is raised somewhere within QCoDeS because the MFLI
+        # driver just adds keys that are missing instead of raising the KeyError
+        # properly. We should look into this later...
         for value in values:
             if isinstance(value, Parameter):
                 instrument_parameters[value.full_name] = value
