@@ -6,9 +6,12 @@ Loading data from Database
 from __future__ import annotations
 
 from os import path
+import numpy as np
 
 import qcodes as qc
+from qcodes.dataset.data_export import reshape_2D_data
 from qcodes.dataset.plotting import plot_dataset
+from qcodes.dataset.data_set import DataSet
 
 import qtools as qt
 from qtools.utils.browsefiles import browsefiles
@@ -140,7 +143,7 @@ def pick_measurement(sample_name: str = None, preview_dialogue = True):
     
     measurements = list_measurements_for_sample(sample_name = sample_name)
     for idx, measurement in enumerate(measurements):
-        print(f"{idx} : {measurement.name}")
+        print(f"{idx} (Run ID {measurement.run_id}) : {measurement.name}")
     chosen = int(input("Please choose a measurement: "))
     chosen_measurement = measurements[int(chosen)]
     if preview_dialogue:
@@ -180,3 +183,58 @@ def plot_data(sample_name: str = None):
         print(y_data)
         print(x_data)
         
+        
+#%%
+def get_parameter_data(dataset = None,
+                       parameter_name = None,
+                       **kwargs):
+    """
+    Gets you the data for a chosen dependent parameter and the data of the first (!)
+    parameter it depends on
+    #TODO: Support for independent parameters
+    """
+    if not dataset:
+        dataset = pick_measurement()
+    if not isinstance(dataset, DataSet):
+        print("Dataset has to be of type DataSet")
+        return None
+    if not parameter_name:
+        for idx, parameter in enumerate(dataset.dependent_parameters):
+            print(f"{idx} : {parameter.label} / {parameter.name}")
+        chosen_param_num = int(input("Please enter number: "))
+        chosen_param = dataset.dependent_parameters[chosen_param_num]
+        parameter_name = chosen_param.name
+    else:
+        chosen_param = dataset.paramspecs[parameter_name]
+    independent_param = dataset.paramspecs[parameter_name]._depends_on
+    # if not isinstance(independent_param, str):
+    #     independent_param = independent_param[0]
+    params = (*independent_param, parameter_name)
+    units  = (*(dataset.paramspecs[i_p].unit for i_p in independent_param), chosen_param.unit)
+    data = *tuple(dataset.get_parameter_data(parameter_name)[parameter_name][param]\
+    for param in independent_param), dataset.get_parameter_data\
+    (parameter_name)[parameter_name][parameter_name]
+    return zip(params, data, units)
+        
+#%%
+def separate_up_down(x_data, y_data):
+
+    grad = np.gradient(x_data)
+    curr_sign = np.sign(grad[0])
+    data_list_x = list()
+    data_list_y = list()
+    direction = list()
+    direction.append(curr_sign)
+    start_helper = 0
+    for i in range(0, len(grad)):
+        if np.sign(grad[i]) != curr_sign:
+            data_list_x.append(x_data[start_helper:i])
+            data_list_y.append(y_data[start_helper:i])
+            start_helper = i+1
+            curr_sign = np.sign(grad[i])
+            direction.append(curr_sign)
+    data_list_x.append(x_data[start_helper:len(grad)])
+    data_list_y.append(y_data[start_helper:len(grad)])
+    
+    return data_list_x, data_list_y, direction
+

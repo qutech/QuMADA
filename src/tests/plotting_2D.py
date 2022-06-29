@@ -6,101 +6,119 @@ Created on Fri Sep  3 16:45:07 2021
 """
 import qcodes as qc
 import qtools as qt
-import qtools.utils.load_from_sqlite_db as ldb
+from qtools.utils.load_from_sqlite_db import *
 from qtools.utils.browsefiles import browsefiles
 from qcodes.dataset.plotting import plot_dataset
+from qcodes.dataset.data_export import reshape_2D_data
 #from qtools.instrument.mapping.base import flatten_list
 import numpy as np
 from matplotlib import pyplot as plt
+import matplotlib
 
 #%%
+def _handle_overload(*args, 
+                     output_dimension : int = 1,
+                     **kwargs):
+    """
+    Reduces the amount of input parameters to output_dimension according to
+    user input.
+    """
+    all_params = list(args)
+    params = []
+    if len(all_params) == output_dimension:
+        return all_params
+    print(f"To many parameters found. Please choose {output_dimension} parameter(s)")
+    for i in range(0, output_dimension):       
+        for idx, j in enumerate(all_params):
+            print(f"{idx} : {j[0]}")
+        choice = input("Please enter ID: ")
+        params.append(all_params.pop(int(choice)))
+        
+    return params
 
-#R = R_data["lockin_R"]
-# fig, ax = plt.subplots()
+    #%%
+def plot_2D(x_data, y_data, z_data, *args, **kwargs):
+    """
+    Plots 2D derivatives. Requires tuples of name and 1D arrays corresponding 
+    to x, y and z data as input. 
+    Works well with Qtools "get_parameter_data" method found in
+    load_from_sqlite.
 
-# im = plt.pcolormesh(R["dac_Slot1_Chan1_volt"], R["dac_Slot1_Chan2_volt"], grad2, shading = "auto", antialiased = True)
-# fig.colorbar(im, ax=ax, label = "Conductance (1/$\Omega$)")
-#How to get data:
-# data = ldb.list_measurements_for_sample()
-# dataset= data[94]
-# dataset = dataset.get_parameter_data()["lockin_current"]
-#%%
-def plot_2D(dataset,
-            x_name = "dac_Slot0_Chan1_volt",
-            y_name = "dac_Slot0_Chan2_volt",
-            z_name = "lockin_current"):
-    fig, ax = plt.subplots(figsize = (20,10))
-    x_data = rearrange_data(dataset, z_name, x_name)
-    y_data = rearrange_data(dataset, z_name, y_name)
-    z_data = rearrange_data(dataset, z_name, z_name)
-    print(x_data)
-    print(y_data)
-    print(z_data)
-    im = plt.pcolormesh(x_data, y_data, z_data,
-                        shading = "auto", antialiased=True)
-    fig.colorbar(im, ax = ax, label = "Conductance (1/$\Omega$)")
-    plt.show()
-    return fig, ax
-
-#%%
-def plot_2D_old(dataset,
-            x_name = "dac_Slot0_Chan1_volt",
-            y_name = "dac_Slot0_Chan2_volt",
-            z_name = "lockin_current"):
-    fig, ax = plt.subplots( )
-    im = plt.pcolormesh(dataset[x_name], dataset[y_name], dataset[z_name],
-                        shading = "auto", antialiased=True)
-    fig.colorbar(im, ax = ax, label = "Conductance (1/$\Omega$)")
-    plt.show()
-    return fig, ax
-#%%
-def oldplot_2D_derivative(dataset,
-            x_name = "dac_Slot0_Chan1_volt",
-            y_name = "dac_Slot0_Chan2_volt",
-            z_name = "lockin_current"):
+    TODO: Add get_parameter_data method as default to call when no data is provided
+    TODO: Add further image manipulation and line detection functionality
+    """
+    if args:
+        x_data, y_data, z_data=_handle_overload(x_data, y_data, z_data, *args, 
+                                                output_dimension=3)
     fig, ax = plt.subplots()
-    x_data = rearrange_data(dataset, z_name, x_name)
-    y_data = rearrange_data(dataset, z_name, y_name)
-    z_data = rearrange_data(dataset, z_name, z_name)
-    grad = np.sqrt(np.gradient(dataset[z_name])[0]**2 + np.gradient(dataset[z_name])[1]**2)
-    im = plt.pcolormesh(dataset[x_name], dataset[y_name], grad,
-                        shading = "auto", antialiased=True)
-    fig.colorbar(im, ax = ax, label = "Derivative of conductace")
-    plt.show()
-    return fig, ax
-
-#%%
-def plot_2D_derivative(dataset,
-            x_name = "dac_Slot0_Chan1_volt",
-            y_name = "dac_Slot0_Chan2_volt",
-            z_name = "lockin_current"):
-    fig, ax = plt.subplots()
-    x_data = rearrange_data(dataset, z_name, x_name)
-    y_data = rearrange_data(dataset, z_name, y_name)
-    z_data = rearrange_data(dataset, z_name, z_name)
-    grad = np.sqrt(np.gradient(z_data)[0]**2 + np.gradient(z_data)[1]**2)
-    im = plt.pcolormesh(x_data[0,:], y_data[:,0], grad,
-                        shading = "auto", antialiased=True)
-    fig.colorbar(im, ax = ax, label = "Derivative of conductace")
+    x, y, z = reshape_2D_data(x_data[1], y_data[1], z_data[1])
+    im = plt.pcolormesh(x, y, z)
+    fig.colorbar(im, ax = ax, label = f"{x_data[0]} in {z_data[2]}")
+    plt.xlabel(f"{x_data[0]} in {x_data[2]}")
+    plt.ylabel(f"{y_data[0]} in {y_data[2]}")
     plt.show()
     return fig, ax
 
 
 #%%
-def plot_2D_sec_dervative(dataset,
-            x_name = "dac_Slot1_Chan2_volt",
-            y_name = "dac_Slot2_Chan0_volt",
-            z_name = "lockin_current"):
-    fig, ax = plt.subplots()
-    grad = np.gradient(dataset[z_name])
-    grad_2= np.sqrt(np.gradient(grad[0])[0]**2+ np.gradient(grad[1])[1]**2 + 2*np.gradient(grad[0])[1]**2)
+def plot_2D_grad(x_data, y_data, z_data, *args, direction = "both"):
+    """
+    Plots 2D derivatives. Requires tuples of name and 1D arrays corresponding 
+    to x, y and z data as input. 
+    Works well with Qtools "get_parameter_data" method found in load_from_sqlite.
+    direction argument can be x, y or z corresponding to the direction of the 
+    gradient used. "both" adds the gradients quadratically.
 
-    im = plt.pcolormesh(dataset[x_name], dataset[y_name], grad_2,
-                        shading = "auto", antialiased=True)
-    fig.colorbar(im, ax = ax, label = "2nd Derivative of conductace")
+    TODO: Add get_parameter_data method as default to call when no data is provided
+    TODO: Add further image manipulation and line detection functionality    
+    """
+    if args:
+        x_data, y_data, z_data=_handle_overload(x_data, y_data, z_data, *args, 
+                                                output_dimension=3)
+    fig, ax = plt.subplots()
+    x, y, z = reshape_2D_data(x_data[1], y_data[1], z_data[1])
+    z_gradient = np.gradient(z, x, y)
+    if direction == "both":
+        grad = np.sqrt(z_gradient[0]**2+z_gradient[1]**2)
+    elif direction == "x":
+        grad = z_gradient[0]
+    elif direction == "y":
+        grad = z_gradient[1]
+    im = plt.pcolormesh(x, y, grad)
+    fig.colorbar(im, ax = ax, label = f"Gradient of {z_data[0]} in {z_data[2]}/{x_data[2]}")
+    plt.xlabel(f"{x_data[0]} in {x_data[2]}")
+    plt.ylabel(f"{y_data[0]} in {y_data[2]}")
     plt.show()
     return fig, ax
 
+#%%
+def plot_2D_sec_derivative(x_data, y_data, z_data, *args):
+    """
+    Plots second derivative of data.
+    Requires tuples of name and 1D arrays corresponding 
+    to x, y and z data as input. 
+    Works well with Qtools "get_parameter_data" method found in load_from_sqlite.
+    direction argument can be x, y or z corresponding to the direction of the 
+    gradient used. "both" adds the gradients quadratically.
+
+    TODO: Add get_parameter_data method as default to call when no data is provided
+    TODO: Add further image manipulation and line detection functionality   
+    """
+    if args:
+        x_data, y_data, z_data=_handle_overload(x_data, y_data, z_data, *args, 
+                                                output_dimension=3)
+    fig, ax = plt.subplots()
+    x, y, z = reshape_2D_data(x_data[1], y_data[1], z_data[1])
+    z_gradient = np.gradient(z, x, y)
+    z_g_x = np.gradient(z_gradient[0], x, y)
+    z_g_y = np.gradient(z_gradient[1], x, y)
+    grad2 = np.sqrt(z_g_x[0]**2 + z_g_y[1]**2 + 2 *z_g_x[1]*z_g_y[0])
+    im = plt.pcolormesh(x, y, grad2)
+    fig.colorbar(im, ax = ax, label = "2nd Derivative of {z[1]}")
+    plt.xlabel(f"{x_data[0]} in {x_data[2]}")
+    plt.ylabel(f"{y_data[0]} in {y_data[2]}")
+    plt.show()
+    return fig, ax
 #%%
 def plot_hysteresis(dataset,
                     x_name,
@@ -131,40 +149,44 @@ def plot_hysteresis(dataset,
     return fig, ax
 
 #%%
-#def list_channels(dataset):
+def plot_multiple_datasets(datasets : list = [],
+                           y_axis_parameters_name: str = "lockin_current",
+                           plot_hysteresis: bool = True,
+                           **kwargs):
+    x_data = list()
+    y_data = list()
+    signs = list()
+    matplotlib.rc('font', size = 35)
+    fig, ax = plt.subplots(figsize=(30, 30))
     
-#%%
+    for i in range(len(datasets)):
+        label = datasets[i].name
+        x_data.append(get_parameter_data(datasets[i], y_axis_parameters_name)[0])
+        y_data.append(get_parameter_data(datasets[i], y_axis_parameters_name)[1])
+        if plot_hysteresis:
+            x_s, y_s, signs = separate_up_down(x_data[i], y_data[i])
+            for j in range(len(x_s)):
+                if signs[j] == 1:
+                    marker ="^"
+                    f_label =f"{label} foresweep"
+                    f_label = f_label.replace("Gate ", "")
+                    f_label = f_label.replace("00000000000001", "")
+                    f_label = f_label.replace("00000000000002", "")
+                else:
+                    marker = "v"
+                    f_label = f"{label} backsweep"
+                    f_label =f_label.replace("Gate ", "")
+                    f_label = f_label.replace("00000000000001", "")
+                    f_label = f_label.replace("00000000000002", "")
+                if j > 0:
+                    p = plt.plot(x_s[j], y_s[j], marker, color = p[-1].get_color(), label = f_label, markersize = 20)
+                else:
+                    p = plt.plot(x_s[j], y_s[j], marker, label = f_label, markersize = 17)
+    plt.xlabel("BDS Gate (V)")
+    plt.ylabel("SET current (A)")
+    plt.legend()
+    plt.tight_layout()
 
-def rearrange_data(dataset, subset = "lockin_current", parameter_name = "lockin_current"):
-    shape = dataset.description.shapes[subset]
-    data = dataset.get_parameter_data()[subset][parameter_name]
-    n=0
-    print(data.shape)
-    print(shape)
-    if list(data.shape) == shape:
-        print("alright")
-        
-        return data
-    else:
-        data_array = np.zeros(shape)
-        print(data_array.shape)
-        for i in range(0, shape[1]):
-            for j in range(0,shape[0]):
-                try:
-                    data_array[i,j] = data[i*shape[0]+j]
-                except: 
-                    data_array = data_array[i-1,:]
-                    break
-                break
-                    # try:
-                    #     data_array[i,j] = 0
-                    # except IndexError:
-                        
-                n+=1
-        #print(data_array)
-        return data_array
-
-ldb.load_db()
-broken_data =ldb.pick_measurement()
-plot_2D(broken_data)    
+    return fig, ax
+    
     
