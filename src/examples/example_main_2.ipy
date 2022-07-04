@@ -20,8 +20,8 @@ from qcodes.dataset import (
 )
 from qcodes.monitor import monitor as qcmon
 
-import qtools.data.db as db
-from qtools.data.metadata import Metadata
+import qtools_metadata.db as db
+from qtools_metadata.metadata import Metadata
 from qtools.instrument.mapping import (
     add_mapping_to_instrument,
     DECADAC_MAPPING,

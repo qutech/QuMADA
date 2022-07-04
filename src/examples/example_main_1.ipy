@@ -14,8 +14,8 @@ from qcodes.dataset import (
     load_or_create_experiment,
 )
 
-import qtools.data.db as db
-from qtools.data.metadata import Metadata
+import qtools_metadata.db as db
+from qtools_metadata.metadata import Metadata
 from qtools.instrument.mapping import (
     add_mapping_to_instrument,
     DECADAC_MAPPING,
