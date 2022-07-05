@@ -7,8 +7,8 @@ from qcodes.instrument.base import Instrument
 from qcodes.instrument.parameter import Parameter
 from qcodes.utils.metadata import Metadatable
 
-from qtools.data.measurement import MeasurementMapping
-from qtools.data.metadata import Metadata
+from qtools_metadata.measurement import MeasurementMapping
+from qtools_metadata.metadata import Metadata
 
 
 class MappingError(Exception):

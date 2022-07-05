@@ -16,11 +16,11 @@ from qcodes.instrument import Parameter
 from qcodes.instrument.parameter import _BaseParameter
 from qcodes.utils.dataset.doNd import AbstractSweep, ActionsT, LinSweep
 from qcodes.utils.metadata import Metadatable
+from qtools_metadata.measurement import MeasurementData
+from qtools_metadata.measurement import MeasurementScript as DomainMeasurementScript
+from qtools_metadata.measurement import MeasurementSettings
+from qtools_metadata.metadata import Metadata
 
-from qtools.data.measurement import MeasurementData
-from qtools.data.measurement import MeasurementScript as DomainMeasurementScript
-from qtools.data.measurement import MeasurementSettings
-from qtools.data.metadata import Metadata
 from qtools.instrument.mapping.base import (
     _map_gate_to_instrument,
     filter_flatten_parameters,

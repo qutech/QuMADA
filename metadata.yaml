@@ -1,4 +1,4 @@
-!!python/object:qtools.data.metadata.Metadata
+!!python/object:qtools_metadata.metadata.Metadata
 measurement: !Measurement
   name: test-measurement
   user: Max Mustermann

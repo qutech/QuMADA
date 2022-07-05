@@ -1,10 +1,10 @@
 import inspect
 
+import qtools_metadata.db as db
 from cmd2 import Cmd
 from qcodes import Station
+from qtools_metadata.metadata import Metadata
 
-import qtools.data.db as db
-from qtools.data.metadata import Metadata
 from qtools.instrument.instrument import is_instrument
 from qtools.measurement.jobs import Job
 from qtools.measurement.measurement import MeasurementScript, is_measurement_script
