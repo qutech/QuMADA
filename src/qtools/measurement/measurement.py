@@ -165,8 +165,8 @@ class MeasurementScript(ABC):
                 script.script = inspect.getsource(cls)
             except OSError as err:
                 print(f"Source of MeasurementScript coud not be acquired: {err}")
-            except Exception:
-                print("Script could not be added to metadata.")
+            except Exception as e:
+                print(f"Script could not be added to metadata: {e}")
 
         if add_parameters_to_metadata:
             try:
@@ -177,8 +177,8 @@ class MeasurementScript(ABC):
                 settings = metadata.measurement.settings
 
                 settings.settings = json.dumps(parameters)
-            except Exception:
-                print("Parameters could not be added to metadata.")
+            except Exception as e:
+                print(f"Parameters could not be added to metadata: {e}")
 
         # Add gate parameters
         for gate, vals in parameters.items():
