@@ -9,7 +9,7 @@ from qcodes.instrument import Parameter
 from qcodes.utils.dataset.doNd import LinSweep, do1d, do2d, dond
 from qtools.measurement.doNd_enhanced.doNd_enhanced import _interpret_breaks, do1d_parallel
 from qtools.measurement.measurement import MeasurementScript
-
+from qtools.utils.ramp_parameter import ramp_or_set_parameter
 
 class Generic_1D_Sweep(MeasurementScript):
     def run(self, **dond_kwargs) -> list:
@@ -24,7 +24,8 @@ class Generic_1D_Sweep(MeasurementScript):
         for sweep in self.dynamic_sweeps:
             # if self.settings.get("include_gate_name", False):
             #     measurement_name = self.metadata.measurement.name + f" {sweep['gate']}"
-            sweep._param.set(sweep.get_setpoints()[0])
+            
+            ramp_or_set_parameter(sweep._param, sweep.get_setpoints()[0])
             time.sleep(wait_time)
             data.append(
                 dond(sweep,
@@ -49,7 +50,7 @@ class Generic_nD_Sweep(MeasurementScript):
         self.initialize()
         wait_time = self.settings.get("wait_time", 5)
         for sweep in self.dynamic_sweeps:
-            sweep._param.set(sweep.get_setpoints()[0])
+            ramp_or_set_parameter(sweep._param, sweep.get_setpoints()[0])
         time.sleep(wait_time)
         data = dond(*tuple(self.dynamic_sweeps),
                     *tuple(self.gettable_channels),
@@ -70,7 +71,7 @@ class Generic_1D_parallel_Sweep(MeasurementScript):
         wait_time = self.settings.get("wait_time", 5)
         dynamic_params = list()
         for sweep in self.dynamic_sweeps:
-            sweep._param.set(sweep.get_setpoints()[0])
+            ramp_or_set_parameter(sweep._param, sweep.get_setpoints()[0])
             dynamic_params.append(sweep.param)
         time.sleep(wait_time)
         data = do1d_parallel(*tuple(self.gettable_channels),
@@ -109,5 +110,45 @@ class Timetrace(MeasurementScript):
                 datasaver.add_result((timer, now),
                                      *results)
                 time.sleep(timestep)
+        dataset = datasaver.dataset
+        return dataset
+
+class Timetrace_with_sweeps(MeasurementScript):
+    """
+    Timetrace measurement, duration and timestep can be set as keyword-arguments,
+    both in seconds.
+    Be aware that the timesteps can vary as the time it takes to record a
+    datapoint is not constant, the argument only sets the wait time. However,
+    the recorded "elapsed time" is accurate.
+    """
+    def run(self):
+        self.initialize()
+        duration = self.settings.get("duration", 300)
+        timestep = self.settings.get("timestep", 1)
+        backsweeps = self.settings.get("backsweeps", False)
+        timer = ElapsedTimeParameter('time')
+        meas = Measurement(name = self.metadata.measurement.name or "timetrace")
+        meas.register_parameter(timer)
+        setpoints = [timer]
+        for parameter in self.dynamic_channels: 
+            meas.register_parameter(parameter)            
+            setpoints.append(parameter)
+        for parameter in self.gettable_channels:
+            meas.register_parameter(parameter, setpoints=setpoints)
+        with meas.run() as datasaver:
+            start = timer.reset_clock()
+            while timer() < duration:
+                for sweep in self.dynamic_sweeps:
+                    ramp_or_set_parameter(sweep._param, sweep.get_setpoints()[0], ramp_time = timestep)
+                now = timer()
+                for i in range(0,len(self.dynamic_sweeps[0].get_setpoints())):
+                    for sweep in self.dynamic_sweeps:
+                        sweep._param.set(sweep.get_setpoints()[i])
+                    set_values = [(sweep._param, sweep.get_setpoints()[i]) for sweep in self.dynamic_sweeps]
+                    results = [(channel, channel.get()) for channel in self.gettable_channels]
+                    datasaver.add_result((timer, now),
+                                         *set_values,
+                                         *results)
+                #time.sleep(timestep)
         dataset = datasaver.dataset
         return dataset

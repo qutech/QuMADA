@@ -180,6 +180,7 @@ class MeasurementScript(ABC):
             except Exception as e:
                 print(f"Parameters could not be added to metadata: {e}")
 
+
         # Add gate parameters
         for gate, vals in parameters.items():
             self.properties[gate] = vals
@@ -206,6 +207,7 @@ class MeasurementScript(ABC):
         self.break_conditions: list[str] = []
         self.static_parameters: list[str] = []
         self.dynamic_parameters: list[str] = []
+        self.dynamic_channels: list[str] = []
         self.dynamic_sweeps: list[str] = []
         ramp_rate = self.settings.get("ramp_rate", 0.3)
         setpoint_intervall = self.settings.get("setpoint_intervall", 0.1)
@@ -218,6 +220,10 @@ class MeasurementScript(ABC):
                         ramp_rate=ramp_rate,
                         setpoint_intervall=setpoint_intervall,
                     )
+                    ramp_or_set_parameter(channel, 
+                                          self.properties[gate][parameter]["value"],
+                                          ramp_rate=ramp_rate,
+                                          setpoint_intervall=setpoint_intervall)
                     self.static_parameters.append(
                         {"gate": gate, "parameter": parameter}
                     )
@@ -259,6 +265,7 @@ class MeasurementScript(ABC):
                     self.dynamic_parameters.append(
                         {"gate": gate, "parameter": parameter}
                     )
+                    self.dynamic_channels.append(channel)
                     # Generate sweeps from parameters
                     try:
                         self.dynamic_sweeps.append(LinSweep(channel,
