@@ -63,20 +63,45 @@ class Generic_1D_Sweep(MeasurementScript):
 
 
 class Generic_nD_Sweep(MeasurementScript):
-    """
-    Perform n-Dimensional sweep with n dynamic parameters.
-    """
 
     def run(self, **dond_kwargs):
+        """
+        Perform n-dimensional sweep for n dynamic parameters.
 
+        Parameters
+        ----------
+        **dond_kwargs : Kwargs to pass to the dond method when it is called.
+        **settings[dict]: Kwargs passed during setup(). Details below:
+                wait_time[float]: Wait time between initialization and each measurement,
+                                    default = 5 sek
+                include_gate_name[Bool]: Append name of ramped gates to measurement
+                                    name. Default True.
+                ramp_speed[float]: Speed at which parameters are ramped during 
+                                    initialization in units. Default = 0.3
+                ramp_time[float]: Amount of time in s ramping of each parameter during 
+                                    initialization may take. If the ramp_speed is
+                                    too small it will be increased to match the
+                                    ramp_time. Default = 10
+
+        Returns
+        -------
+        data : QCoDeS dataset with measurement data
+        """
+        
         self.initialize()
         wait_time = self.settings.get("wait_time", 5)
+        include_gate_name = self.settings.get("include_gate_name", True)
+        if include_gate_name:
+            measurement_name = f"{self.metadata.measurement.name} Gates: {[gate['gate'] for gate in self.dynamic_parameters]}"
+        else:
+            measurement_name = self.metadata.measurement.name or "measurement"
+         
         for sweep in self.dynamic_sweeps:
             ramp_or_set_parameter(sweep._param, sweep.get_setpoints()[0])
         time.sleep(wait_time)
         data = dond(*tuple(self.dynamic_sweeps),
                     *tuple(self.gettable_channels),
-                    measurement_name=self.metadata.measurement.name or "measurement",
+                    measurement_name=measurement_name,
                     break_condition=_interpret_breaks(self.break_conditions),
                     **dond_kwargs)
         self.reset()
