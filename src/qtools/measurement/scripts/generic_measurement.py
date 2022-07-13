@@ -14,29 +14,51 @@ from qtools.utils.ramp_parameter import ramp_or_set_parameter
 class Generic_1D_Sweep(MeasurementScript):
     def run(self, **dond_kwargs) -> list:
         """
-        Perform 1D sweeps for all dynamic parameters
+        Peform 1D sweeps for all dynamic parameters, one after another. Dynamic
+        parameters that are not currently active are kept at their "value" value.
+
+        Parameters
+        ----------
+        **dond_kwargs : Kwargs to pass to the dond method when it is called.
+        **settings[dict]: Kwargs passed during setup(). Details below:
+                wait_time[float]: Wait time between initialization and each measurement,
+                                    default = 5 sek
+                include_gate_name[Bool]: Append name of ramped gate to measurement
+                                    name. Default True.
+                ramp_speed[float]: Speed at which parameters are ramped during 
+                                    initialization in units. Default = 0.3
+                ramp_time[float]: Amount of time in s ramping of each parameter during 
+                                    initialization may take. If the ramp_speed is
+                                    too small it will be increased to match the
+                                    ramp_time. Default = 10
+
+        Returns
+        -------
+        list
+            List with all QCoDeS Datasets.
+
         """
         self.initialize()
         wait_time = self.settings.get("wait_time", 5)
+        include_gate_name = self.settings.get("include_gate_name", True)
         data = list()
         time.sleep(wait_time)
-        i=0
-        for sweep in self.dynamic_sweeps:
-            # if self.settings.get("include_gate_name", False):
-            #     measurement_name = self.metadata.measurement.name + f" {sweep['gate']}"
-            
+        for sweep, dynamic_parameter in zip(self.dynamic_sweeps, self.dynamic_parameters):
+            if include_gate_name:
+                measurement_name = f"{self.metadata.measurement.name} {dynamic_parameter['gate']}"            
+            else:
+                measurement_name = self.metadata.measurment.name or "measurement"
             ramp_or_set_parameter(sweep._param, sweep.get_setpoints()[0])
             time.sleep(wait_time)
             data.append(
                 dond(sweep,
                      *tuple(self.gettable_channels),
-                     measurement_name=self.metadata.measurement.name or "measurement",
+                     measurement_name = measurement_name,
                      break_condition = _interpret_breaks(self.break_conditions),
                      **dond_kwargs
                      )
                 )
             self.reset()
-            i+=1
         return data
 
 
