@@ -149,6 +149,37 @@ def plot_hysteresis(dataset,
     return fig, ax
 
 #%%
+
+def plot_hysteresis_new(x_data,
+                    y_data):
+    fig, ax = plt.subplots()
+    grad = np.gradient(x_data[1])
+    curr_sign = np.sign(grad[0])
+    signs = [curr_sign]
+    data_list_x = list()
+    data_list_y = list()
+    start_helper = 0
+    for i in range(0, len(grad)):
+
+        if np.sign(grad[i]) != curr_sign:
+            data_list_x.append(x_data[1][start_helper:i])
+            data_list_y.append(y_data[1][start_helper:i])
+            start_helper = i+1
+            curr_sign = np.sign(grad[i])
+            signs.append(curr_sign)
+    data_list_x.append(x_data[1][start_helper:len(grad)])
+    data_list_y.append(y_data[1][start_helper:len(grad)])
+
+    for i in range(0, len(data_list_x)):
+        options = {
+            -1 : "v",
+            1 : "^"
+            }
+        plt.plot(data_list_x[i], data_list_y[i], options[signs[i]])
+    plt.show()
+    return fig, ax
+
+#%%
 def plot_multiple_datasets(datasets : list = [],
                            y_axis_parameters_name: str = "lockin_current",
                            plot_hysteresis: bool = True,
@@ -188,5 +219,85 @@ def plot_multiple_datasets(datasets : list = [],
     plt.tight_layout()
 
     return fig, ax
+
+#%%
+def plot_multiple_datasets_new(datasets : list = [],
+                           y_axis_parameters_name: str = "lockin_current",
+                           plot_hysteresis: bool = True,
+                           **kwargs):
+    x_data = list()
+    y_data = list()
+    signs = list()
+    matplotlib.rc('font', size = 35)
+    fig, ax = plt.subplots(figsize=(30, 30))
+    x_labels = []
+    y_labels = []
+    for i in range(len(datasets)):
+        label = datasets[i].name
+        x, y = [j for j in get_parameter_data(datasets[i], y_axis_parameters_name)]
+        x_data.append(x[1])
+        y_data.append(y[1])
+        x_labels.append(x[3])
+        y_labels.append(y[3])
+        if plot_hysteresis:
+            x_s, y_s, signs = separate_up_down(x_data[i], y_data[i])
+            for j in range(len(x_s)):
+                if signs[j] == 1:
+                    marker ="^"
+                    f_label =f"{label} foresweep"
+                    f_label = f_label.replace("Gate ", "")
+                    f_label = f_label.replace("00000000000001", "")
+                    f_label = f_label.replace("00000000000002", "")
+                else:
+                    marker = "v"
+                    f_label = f"{label} backsweep"
+                    f_label =f_label.replace("Gate ", "")
+                    f_label = f_label.replace("00000000000001", "")
+                    f_label = f_label.replace("00000000000002", "")
+                if j > 0:
+                    p = plt.plot(x_s[j], y_s[j], marker, color = p[-1].get_color(), label = f_label, markersize = 20)
+                else:
+                    p = plt.plot(x_s[j], y_s[j], marker, label = f_label, markersize = 17)
+    plt.xlabel(f"{x_labels[0]}")
+    plt.ylabel("SET current (A)")
+    plt.legend(loc = "upper left")
+    plt.tight_layout()
+
+    return fig, ax
     
+#%%
+
+def separate_up_down_old(x_data, y_data):
+
+    grad = np.gradient(x_data)
+    curr_sign = np.sign(grad[0])
+    data_list_x = list()
+    data_list_y = list()
+    start_helper = 0
+    for i in range(0, len(grad)):
+        if np.sign(grad[i]) != curr_sign:
+            data_list_x.append(x_data[start_helper:i])
+            data_list_y.append(y_data[start_helper:i])
+            start_helper = i+1
+            curr_sign = np.sign(grad[i])
+    data_list_x.append(x_data[start_helper:len(grad)])
+    data_list_y.append(y_data[start_helper:len(grad)])
     
+    return data_list_x, data_list_y
+
+#%%
+def hysteresis(dataset, I_threshold = 15e-12, parameter_name = "lockin_current"):
+    
+    data = list(get_parameter_data(dataset = dataset, parameter_name = parameter_name))
+    voltage = data[0][1]
+    current = data[1][1]
+    v, c = separate_up_down_old(voltage, current)
+    for i in range(0, len(v[0])):
+        if c[0][i] >= I_threshold:
+            V_threshold_up = v[0][i]
+            break
+    for i in range(0, len(v[1])):
+        if c[1][i] <= I_threshold:
+            V_threshold_down = v[1][i]
+            break
+    return V_threshold_up, V_threshold_down

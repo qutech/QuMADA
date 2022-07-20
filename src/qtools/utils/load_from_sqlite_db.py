@@ -154,6 +154,27 @@ def pick_measurement(sample_name: str = None, preview_dialogue = True):
 
 #%%
 
+def pick_measurements(sample_name: str = None,
+                      preview_dialogue = False):
+    """
+    Returns a measurement of your choice, plots it if you want.
+    Interactive, if no sample_name is provided.
+    """
+    measurement_list = []
+    measurements = list_measurements_for_sample(sample_name = sample_name)
+    for idx, measurement in enumerate(measurements):
+        print(f"{idx} (Run ID {measurement.run_id}) : {measurement.name}")
+    while True:
+        chosen = input("Please choose a measurement: ")
+        if chosen == "f":
+            return measurement_list
+        chosen = int(chosen)
+        measurement_list.append(measurements[int(chosen)])
+        print("Please enter 'f' when your are finished")
+
+
+#%%
+
 def plot_data(sample_name: str = None):
     """
     Simple plotting of datasets from the QCoDeS DB.
@@ -210,11 +231,12 @@ def get_parameter_data(dataset = None,
     # if not isinstance(independent_param, str):
     #     independent_param = independent_param[0]
     params = (*independent_param, parameter_name)
+    labels = (*(dataset.paramspecs[i_p].label for i_p in independent_param), chosen_param.label)
     units  = (*(dataset.paramspecs[i_p].unit for i_p in independent_param), chosen_param.unit)
     data = *tuple(dataset.get_parameter_data(parameter_name)[parameter_name][param]\
     for param in independent_param), dataset.get_parameter_data\
     (parameter_name)[parameter_name][parameter_name]
-    return zip(params, data, units)
+    return zip(params, data, units, labels)
         
 #%%
 def separate_up_down(x_data, y_data):
@@ -235,6 +257,7 @@ def separate_up_down(x_data, y_data):
             direction.append(curr_sign)
     data_list_x.append(x_data[start_helper:len(grad)])
     data_list_y.append(y_data[start_helper:len(grad)])
-    
+    if len(direction) == 0: 
+        direction.append(1)
     return data_list_x, data_list_y, direction
 
