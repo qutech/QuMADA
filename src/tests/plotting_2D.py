@@ -18,22 +18,42 @@ import matplotlib
 #%%
 def _handle_overload(*args, 
                      output_dimension : int = 1,
+                     x_name = None,
+                     y_name = None,
+                     z_name = None,
                      **kwargs):
     """
     Reduces the amount of input parameters to output_dimension according to
     user input.
     """
     all_params = list(args)
-    params = []
+    params = [None for i in range(output_dimension)]
     if len(all_params) == output_dimension:
         return all_params
+    if x_name:
+        for i, param in enumerate(all_params):
+            if param[0] == x_name:
+                params[0]=all_params.pop(i)
+                output_dimension-=1
+    if y_name:
+        for i, param in enumerate(all_params):
+            if param[0] == y_name:
+                params[1]=all_params.pop(i)
+                output_dimension-=1
+    if z_name:
+        for i, param in enumerate(all_params):
+            if param[0] == z_name:
+                params[2]=all_params.pop(i)  
+                output_dimension-=1
+    
     print(f"To many parameters found. Please choose {output_dimension} parameter(s)")
     for i in range(0, output_dimension):       
         for idx, j in enumerate(all_params):
             print(f"{idx} : {j[0]}")
         choice = input("Please enter ID: ")
-        params.append(all_params.pop(int(choice)))
-        
+        for k in range(len(params)):
+            if not params[k]:
+                params[k] = all_params.pop(int(choice))
     return params
 
     #%%
@@ -180,65 +200,35 @@ def plot_hysteresis_new(x_data,
     return fig, ax
 
 #%%
-def plot_multiple_datasets(datasets : list = [],
-                           y_axis_parameters_name: str = "lockin_current",
-                           plot_hysteresis: bool = True,
-                           **kwargs):
+def plot_multiple_datasets(datasets : list = None,
+                               x_axis_parameters_name: str = None,
+                               y_axis_parameters_name: str = None,
+                               plot_hysteresis: bool = True,
+                               **kwargs):
+    if not datasets:
+        datasets = pick_measurements()
     x_data = list()
     y_data = list()
     signs = list()
-    matplotlib.rc('font', size = 35)
-    fig, ax = plt.subplots(figsize=(30, 30))
-    
-    for i in range(len(datasets)):
-        label = datasets[i].name
-        x_data.append(get_parameter_data(datasets[i], y_axis_parameters_name)[0])
-        y_data.append(get_parameter_data(datasets[i], y_axis_parameters_name)[1])
-        if plot_hysteresis:
-            x_s, y_s, signs = separate_up_down(x_data[i], y_data[i])
-            for j in range(len(x_s)):
-                if signs[j] == 1:
-                    marker ="^"
-                    f_label =f"{label} foresweep"
-                    f_label = f_label.replace("Gate ", "")
-                    f_label = f_label.replace("00000000000001", "")
-                    f_label = f_label.replace("00000000000002", "")
-                else:
-                    marker = "v"
-                    f_label = f"{label} backsweep"
-                    f_label =f_label.replace("Gate ", "")
-                    f_label = f_label.replace("00000000000001", "")
-                    f_label = f_label.replace("00000000000002", "")
-                if j > 0:
-                    p = plt.plot(x_s[j], y_s[j], marker, color = p[-1].get_color(), label = f_label, markersize = 20)
-                else:
-                    p = plt.plot(x_s[j], y_s[j], marker, label = f_label, markersize = 17)
-    plt.xlabel("BDS Gate (V)")
-    plt.ylabel("SET current (A)")
-    plt.legend()
-    plt.tight_layout()
-
-    return fig, ax
-
-#%%
-def plot_multiple_datasets_new(datasets : list = [],
-                           y_axis_parameters_name: str = "lockin_current",
-                           plot_hysteresis: bool = True,
-                           **kwargs):
-    x_data = list()
-    y_data = list()
-    signs = list()
+    x_units = list()
+    y_units = list()
     matplotlib.rc('font', size = 35)
     fig, ax = plt.subplots(figsize=(30, 30))
     x_labels = []
     y_labels = []
     for i in range(len(datasets)):
         label = datasets[i].name
-        x, y = [j for j in get_parameter_data(datasets[i], y_axis_parameters_name)]
-        x_data.append(x[1])
-        y_data.append(y[1])
-        x_labels.append(x[3])
-        y_labels.append(y[3])
+        x, y = _handle_overload(*get_parameter_data(datasets[i], y_axis_parameters_name),
+                                x_name= x_axis_parameters_name,
+                                y_name= y_axis_parameters_name,
+                                output_dimension=2)
+        x_data.append(x[1]) #This is the x_data
+        y_data.append(y[1]) #This is the y_data
+        x_labels.append(x[3]) #Labels of x_data
+        y_labels.append(y[3]) #Labels of y_data
+        x_units.append(x[2]) #Units of x_data
+        y_units.append(y[2]) #Units of y_data
+
         if plot_hysteresis:
             x_s, y_s, signs = separate_up_down(x_data[i], y_data[i])
             for j in range(len(x_s)):
@@ -246,20 +236,18 @@ def plot_multiple_datasets_new(datasets : list = [],
                     marker ="^"
                     f_label =f"{label} foresweep"
                     f_label = f_label.replace("Gate ", "")
-                    f_label = f_label.replace("00000000000001", "")
-                    f_label = f_label.replace("00000000000002", "")
                 else:
                     marker = "v"
                     f_label = f"{label} backsweep"
                     f_label =f_label.replace("Gate ", "")
-                    f_label = f_label.replace("00000000000001", "")
-                    f_label = f_label.replace("00000000000002", "")
                 if j > 0:
-                    p = plt.plot(x_s[j], y_s[j], marker, color = p[-1].get_color(), label = f_label, markersize = 20)
+                    p = plt.plot(x_s[j], y_s[j], marker, color = p[-1].get_color(), label = f_label, markersize = 17)
                 else:
                     p = plt.plot(x_s[j], y_s[j], marker, label = f_label, markersize = 17)
-    plt.xlabel(f"{x_labels[0]}")
-    plt.ylabel("SET current (A)")
+        else:
+            p = plt.plot(x_data[i], y_data[i], marker = ".", label = label, markersize = 17)
+    plt.xlabel(f"{x_labels[0]} ({x_units[0]})")
+    plt.ylabel(f"{y_labels[0]} ({y_units[0]})")
     plt.legend(loc = "upper left")
     plt.tight_layout()
 

@@ -155,12 +155,12 @@ def pick_measurement(sample_name: str = None, preview_dialogue = True):
 #%%
 
 def pick_measurements(sample_name: str = None,
-                      preview_dialogue = False):
+                      preview_dialogue = False,
+                      measurement_list = []):
     """
     Returns a measurement of your choice, plots it if you want.
     Interactive, if no sample_name is provided.
     """
-    measurement_list = []
     measurements = list_measurements_for_sample(sample_name = sample_name)
     for idx, measurement in enumerate(measurements):
         print(f"{idx} (Run ID {measurement.run_id}) : {measurement.name}")
@@ -168,9 +168,12 @@ def pick_measurements(sample_name: str = None,
         chosen = input("Please choose a measurement: ")
         if chosen == "f":
             return measurement_list
+        if chosen == "s":
+            return(pick_measurements(preview_dialogue=preview_dialogue,
+                                     measurement_list=measurement_list))
         chosen = int(chosen)
         measurement_list.append(measurements[int(chosen)])
-        print("Please enter 'f' when your are finished")
+        print("Please enter 'f' when your are finished or 's' if you want to add measurements of another sample")
 
 
 #%%
