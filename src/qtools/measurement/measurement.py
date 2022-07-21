@@ -6,6 +6,7 @@ import json
 from abc import ABC, abstractmethod
 from contextlib import suppress
 from dataclasses import dataclass, field
+from datetime import datetime
 from functools import wraps
 from typing import Any, MutableMapping, MutableSequence, Union
 
@@ -80,6 +81,7 @@ class MeasurementScript(ABC):
 
     def __new__(cls, *args, **kwargs):
         # reverse order, so insert metadata is run second
+        cls.run = create_hook(cls.run, cls._add_datetime_to_metadata_if_empty)
         cls.run = create_hook(cls.run, cls._insert_metadata_into_db)
         cls.run = create_hook(cls.run, cls._add_data_to_metadata)
         return super().__new__(cls, *args, **kwargs)
@@ -220,10 +222,12 @@ class MeasurementScript(ABC):
                         ramp_rate=ramp_rate,
                         setpoint_intervall=setpoint_intervall,
                     )
-                    ramp_or_set_parameter(channel, 
-                                          self.properties[gate][parameter]["value"],
-                                          ramp_rate=ramp_rate,
-                                          setpoint_intervall=setpoint_intervall)
+                    ramp_or_set_parameter(
+                        channel,
+                        self.properties[gate][parameter]["value"],
+                        ramp_rate=ramp_rate,
+                        setpoint_intervall=setpoint_intervall,
+                    )
                     self.static_parameters.append(
                         {"gate": gate, "parameter": parameter}
                     )
@@ -335,6 +339,17 @@ class MeasurementScript(ABC):
         for gate, parameters in self.gate_parameters.items():
             for key, parameter in parameters.items():
                 parameter.label = f"{gate} {key}"
+
+    def _add_datetime_to_metadata_if_empty(
+        self, *args, add_datetime_to_metadata: bool = True, **kwargs
+    ):
+        if add_datetime_to_metadata:
+            try:
+                metadata = self.metadata
+                if not metadata.measurement.datetime:
+                    metadata.measurement.datetime = datetime.now()
+            except Exception as ex:
+                print(f"Datetime could not be added to metadata: {ex}")
 
     def _add_data_to_metadata(self, *args, add_data_to_metadata: bool = True, **kwargs):
         # Add script and parameters to metadata
