@@ -89,7 +89,9 @@ def add_mapping_to_instrument(instrument: Instrument,
         path (str): Path to the JSON file.
     """
     # TODO: chosen instrument name should not influence the mapping
-    mapping = _load_instrument_mapping(path)
+    helper_mapping = _load_instrument_mapping(path)
+    mapping = {}
+    mapping["parameter_names"] = {f"{instrument.name}_{key}":parameter for (key, parameter) in helper_mapping["parameter_names"].items()}
     parameters: dict[Any, Parameter] = filter_flatten_parameters(instrument)
     mapped_parameters = ((key, parameter) for key, parameter in parameters.items() if key in mapping["parameter_names"])
     for key, parameter in mapped_parameters:
@@ -121,7 +123,7 @@ def _generate_mapping_stub(instrument: Instrument,
     # Create mapping stub from flat dict of parameters
     mapping = {}
     parameters: dict[Any, Parameter] = filter_flatten_parameters(instrument)
-    mapping["parameter_names"] = {key: value.name for key, value in parameters.items()}
+    mapping["parameter_names"] = {key.removeprefix(f"{instrument.name}_"): value.name for key, value in parameters.items()}
 
     # Dump JSON file
     with open(path, "w") as file:
@@ -153,6 +155,8 @@ def map_gates_to_instruments(
 
     # get all parameters in one flat list for the mapping process
     instrument_parameters = filter_flatten_parameters(components)
+    # TODO: We have to distinguish multi channel/module instruments. Possible approach:
+    #       [parameter]._instrument should be InstrumentChannel or InstrumentModule type
     for key, gate in gate_parameters.items():
         if isinstance(gate, Parameter):
             # TODO: map single parameter
