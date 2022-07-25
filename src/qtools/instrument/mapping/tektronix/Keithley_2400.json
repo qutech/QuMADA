@@ -1,18 +1,18 @@
 {
     "parameter_names": {
-        "keithley_IDN": "IDN",
-        "keithley_compliancei": "current_compliance",
-        "keithley_compliancev": "voltage_compliance",
-        "keithley_curr": "current",
-        "keithley_mode": "mode",
-        "keithley_nplci": "nplci",
-        "keithley_nplcv": "nplcv",
-        "keithley_output": "output_enabled",
-        "keithley_rangei": "rangei",
-        "keithley_rangev": "rangev",
-        "keithley_resistance": "resistance",
-        "keithley_sense": "sense",
-        "keithley_timeout": "timeout",
-        "keithley_volt": "voltage"
+        "IDN": "IDN",
+        "compliancei": "current_compliance",
+        "compliancev": "voltage_compliance",
+        "curr": "current",
+        "mode": "mode",
+        "nplci": "nplci",
+        "nplcv": "nplcv",
+        "output": "output_enabled",
+        "rangei": "rangei",
+        "rangev": "rangev",
+        "resistance": "resistance",
+        "sense": "sense",
+        "timeout": "timeout",
+        "volt": "voltage"
     }
 }
