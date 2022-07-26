@@ -205,7 +205,41 @@ def plot_multiple_datasets(datasets : list = None,
                                y_axis_parameters_name: str = None,
                                plot_hysteresis: bool = True,
                                **kwargs):
+    """
+    Allows plotting of multiple datasets from a qcodes database into one plot.
+    So far, only 2D plotting is supported. Takes care of labels and legend.
+
+    Parameters
+    ----------
+    datasets : list, optional
+        List of Qtools datasets. If set to None, you can pick measurements from
+        the currently loaded Qtools database. Default is None.
+    x_axis_parameters_name : str, optional
+        Pass the namestring of the parameter you want to plot on the x-axis. 
+        If none, you will be asked to set it individually for every chosen
+        dataset, if more than two parameters are in the dataset.
+        The default is None.
+    y_axis_parameters_name : str, optional
+        Pass the namestring of the parameter you want to plot on the y-axis. 
+        If none, you will be asked to set it individually for every chosen
+        dataset, if more than two parameters are in the dataset.
+        The default is None.
+    plot_hysteresis : bool, optional
+        Will separate datasets that contain multiple sweeps into multiple
+        graphs, based on the monotony of the x-axis parameters data. 
+        The default is True.
+    **kwargs : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    fig : pyplot Figure object.
+    ax : pyplot axis objects.
+    
+    TODO: Move pyplot plot settings into kwargs.
+    """
     if not datasets:
+        print("hello, I am empty")
         datasets = pick_measurements()
     x_data = list()
     y_data = list()
@@ -241,14 +275,25 @@ def plot_multiple_datasets(datasets : list = None,
                     f_label = f"{label} backsweep"
                     f_label =f_label.replace("Gate ", "")
                 if j > 0:
-                    p = plt.plot(x_s[j], y_s[j], marker, color = p[-1].get_color(), label = f_label, markersize = 17)
+                    p = plt.plot(x_s[j], y_s[j], marker, 
+                                 color = p[-1].get_color(), 
+                                 label = f_label, 
+                                 markersize = kwargs.get("markersize", 15))
                 else:
-                    p = plt.plot(x_s[j], y_s[j], marker, label = f_label, markersize = 17)
+                    p = plt.plot(x_s[j], y_s[j], 
+                                 marker, 
+                                 label = f_label, 
+                                 markersize = kwargs.get("markersize", 15))
         else:
-            p = plt.plot(x_data[i], y_data[i], marker = ".", label = label, markersize = 17)
+            p = plt.plot(x_data[i], y_data[i], 
+                         marker = kwargs.get("marker", "."), 
+                         label = label, 
+                         markersize = kwargs.get("markersize", 15))
     plt.xlabel(f"{x_labels[0]} ({x_units[0]})")
     plt.ylabel(f"{y_labels[0]} ({y_units[0]})")
-    plt.legend(loc = "upper left")
+    plt.legend(loc = "upper left",
+               fontsize = kwargs.get("legend_fontsize", 15),
+               markerscale = kwargs.get("legend_markerscale", 1))
     plt.tight_layout()
 
     return fig, ax
