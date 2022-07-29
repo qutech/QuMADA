@@ -14,9 +14,10 @@ It contains a couple of blocks for the steps you have to do in order to set up t
 
 .. code-block:: python
 
-	#Required to load parameter json
+	#Required to load parameter json or yaml
 	import json
-
+	import yaml
+	
 	#Drivers for the measurement instruments
 	from qcodes.station import Station
 	from qcodes.instrument_drivers.Harvard.Decadac import Decadac
@@ -69,7 +70,7 @@ drivers in order to look up the right command.
 
 .. note::
 
-	Right now this names are specified in the measurement_scipt class. It will be moved to a separate file later on.
+	Right now these names are specified in the measurement_scipt class. It will be moved to a separate file later on.
 	When using an instrument not yet implemented into QTools you might have to specify new names for the parameters there.
 	For more information look into the section about creating gate_mappings for new instruments
 
@@ -116,8 +117,8 @@ In this sample we just add a couple of real instruments. Of course you can add Q
 .. note::
 
 	There is a known bug that requires the instrument's name to be the same as the name found in the corresponding mapping file.
-	This is especcially relevant when you want to use to instruments of the same type. We are working on a fix for this issue.
-	As a workaround, you can create a second mapping file for the second instrument and alter the instrument name on the left side of
+	This is especcially relevant when you want to use two instruments of the same type. We are working on a fix for this issue.
+	As a workaround, you can create a second mapping file for the second instrument and alter the instrument name on the left side of 
 	the mapping file to the name of the second instrument.
 
 #############
@@ -134,7 +135,7 @@ The easiest way to create the metadata-object is by entering the data into the m
 .. code-block:: python
 
 	# Set Metadata-DB URL
-	db.api_url = "http://134.61.7.48:9123"
+	db.api_url = "http://134.61.7.48:9124"
 	# Load metadata.yaml
 	with open("metadata.yaml", "r") as file:
 		metadata = Metadata.from_yaml(file)
@@ -146,13 +147,13 @@ The easiest way to create the metadata-object is by entering the data into the m
 The connection to the metadabase is required for loading information of already existing samples and measurements (so you do not have to enter them again) and
 - of course - for storing the data. Right now, we are only interested in creating the metadata object for usage in our measurements.
 
-In case you have not already initialized a QCoDeS database you can easily do so by using the load_db(path_to_db [optional) method, which either takes the path to the database you want to use or, no argument supplied,
-opens an open file prompt allowing you to simply pick the database you want to use (be aware that the prompt might pop up behind other windows).
+In case you have not already initialized a QCoDeS database you can easily do so by using the load_db(path_to_db [optional) method, which either takes the path to the database you want to use or, when no argument is supplied,
+opens an open-file prompt allowing you to simply pick the database you want to use (be aware that the prompt might pop up behind other windows).
 
-At this point we have taken care of all preliminary steps required before defining the measurement.
-Except for changing the measurement name in the metadata object you will have to do those steps only when exchanging the sample or altering the setup.
+At this point we have taken care of all preliminary steps required before defining the measurement. 
+Except for changing the measurement name in the metadata object, you will have to do those steps only when exchanging the sample or altering the setup.
 
-From nowon,  we will go through a typical workflow for characterizing a gate-defined Single Electron Transistor (SET) in a semiconductor heterostructure such as Si/SiGe or Si MOS.
+From now on, we will go through a typical workflow for characterizing a gate-defined Single Electron Transistor (SET) in a semiconductor heterostructure such as Si/SiGe or Si MOS.
 Measurements in QTools are mainly defined by two things: The gate_parameters and the measurement script used.
 
 
@@ -161,78 +162,62 @@ Gate parameters
 ###############################
 
 The gate_parameters are part of each measurement script and contain a list of all physical terminals of the device under test (DUT) such as gates or ohmic contacts and information about what to do with them during the measurement.
-The gate_parameters can be loaded from a json-file:
+The gate_parameters can be loaded from a yaml-file (or json-file if you prefer to double-check brackets all the time...):
 
 .. code-block:: python
 
 	# Load parameters
-	with open("parameters.json", "r") as file:
-		parameters = json.load(file)
+	with open("parameters.yaml", "r") as file:
+		parameters = yaml.safe_load(file)
 
-A typical parameters.json could look like this:
+A typical parameters.yaml could look like this:
 
-.. code-block:: json
+.. code-block:: yaml
 
-	{
-	   "source drain":{
-		  "amplitude":{
-			 "type":"d",
-			 "value":1e-4
-		  },
-		  "frequency":{
-			 "type":"static",
-			 "value":173
-		  },
-		  "output_enabled":{
-			 "type":"static",
-			 "value":1
-		  },
-		  "current":{
-			 "type":"gettable",
-			 "break_conditions" : ["val > 1e-9"]
-		  },
-		  "phase":{
-			 "type":"gettable"
-		  }
-	   },
-	   "Accumulation Gate":{
-		  "voltage":{
-			 "type":"dynamic",
-			 "start": 0,
-			 "stop" : 2,
-			 "num_points" : 200,
-			 "delay":0.025
-		  }
-	   },
-	   "Left Barrier Gate":{
-		  "voltage":{
-		  "voltage":{
-			 "type":"dynamic",
-			 "start": 0,
-			 "stop" : 2,
-			 "num_points" : 200,
-			 "delay":0.025
-		  }
-	   },
-	   "Right Barrier Gate":{
-		  "voltage":{
-			 "type":"dynamic",
-			 "start": 0,
-			 "stop" : 2,
-			 "num_points" : 200,
-			 "delay":0.025
-		  }
-	   },
-	   "Plunger Gate":{
-		  "voltage":{
-			 "type":"dynamic",
-			 "start": 0,
-			 "stop" : 2,
-			 "num_points" : 200,
-			 "delay":0.025
-		  }
-	   }
-	}
+	source drain:
+	  amplitude:
+		type: dynamic
+		value: 0.0001
+	  frequency:
+		type: static
+		value: 173
+	  output_enabled:
+		type: static
+		value: 1
+	  current:
+		type: gettable
+		break_conditions:
+		- val > 1e-9
+	  phase:
+		type: gettable
+	Accumulation Gate:
+	  voltage:
+		type: dynamic
+		start: 0
+		stop: 2
+		num_points: 200
+		delay: 0.025
+	Left Barrier Gate:
+	  voltage:
+		type: dynamic
+		start: 0
+		stop: 2
+		num_points: 200
+		delay: 0.025
+	Right Barrier Gate:
+	  voltage:
+		type: dynamic
+		start: 0
+		stop: 2
+		num_points: 200
+		delay: 0.025
+	Plunger Gate:
+	  voltage:
+		type: dynamic
+		start: 0
+		stop: 2
+		num_points: 200
+		delay: 0.025
 
 In our example the SET consists source and drain contact, a global accumulation gate, two barriers and a plunger gate for finetuning the dot potential.
 In a first step we want to ramp all the gates in parallel to check whether we can accumulate charges and open a current path through the quantum well.
@@ -270,7 +255,7 @@ In our case we added a maximum current as we want to stop the measurement when t
 Measurement Scripts
 ###################
 
-Obviously, the measurement is not yet completely defined. We still have to create measurement script or -more precise- a measurement_script object.
+Obviously, the measurement is not yet completely defined. We still have to a create measurement script or -more precisely- a measurement_script object.
 In QTools all information relevant for the measurement are stored in this object, including the gate_parameters and their mapping to the used instruments,
 the details about how the measurement has to be performed and some metadata such as sample and measurement name.
 
@@ -286,5 +271,51 @@ For our first measurement we use the Generic_1D_parallel_Sweep method, which ram
 	This measurement script uses the setpoints of the first gate_parameter to define the sweeps, the other parameter's setpoints are ignored at the current state.
 	It is not trivial to merge arbitrary setpoint arrays with different delays into one sweep, we might improve the script in the future.
 
+	
+Note that we do not directly pass the arguments when creating the object but use the built-in "setup" method. It is required to pass the parameters and a metadata object.
+All measurement_script objects have an initialize and a reset method, which take care of ramping/setting all parameters to the correct values and furthermore create a couple of attributes,
+like lists of all sweeps, different parameters and so on. Furthermore, they will automatically relabel the parameters in the QCoDeS datasets to match the gate names you specified.
+When using the predefined measurement scripts that come with QTools those steps are automatically performed whenever you run the measurement. In case you define your own measurement scripts, you are free to use those built-in methods as you need them.
+Furthermore, measurement scripts can have keyword arguments specifying details of how the measurement is performed. In this case we set the ramp_rate, which is again built-in into all measurement script objects and defines the ramp_speed used to ramp all parameters
+to their starting value as well as the back_after_break parameter, which automatically adds a backsweep to the measurement once a break condition is fulfilled. This is particulary handy for accumulation curves including hysteresis investigations.
 
-Note that we do not directly pass the arguments when creating the object but use the built-in "setup" method.
+At this point we have a well defined measurement script that has a list of gates or terminals and knows what to do with them. The last step is now to assign the terminals to their corresponding instrument channels.
+
+
+##################################
+Mapping terminals to instruments
+##################################
+
+Assigning the terminals to their correspoing instruments channels can be either done manually or by passing an already existing gate mapping object. The gate mapping is stored inside the measurement script and can be accessed via measurement_scipt.gate_parameter.
+The method we use to perform the gate mapping is:
+
+.. py:function:: map_gates_to_instruments(components, mapping, existing_mapping [optional])
+
+In our case we can simply pass station.components containing all the measurement instruments and their parameters and script.gate_parameters. If we already had a mapping from a previous measurement, we could simply pass it as third argument. Map_gates_to_instruments is also
+capable of handling existing mappings with different parameters than the current measurement script, you only have to add the changed parameters manually then.
+
+.. code-block:: python
+
+	map_gates_to_instruments(station.components, measurement_script.gate_parameter)
+	
+You are now asked for each registered gate/terminal to specify an instrument (or instrument channel) to map to. All available instruments are listed, you simply have to type in the number corresponding to the correct instrument. 
+As Qtools' :ref:`gate mapping<Station and Instruments>` has well defined parameter names the parameters are mapped automatically once the correct measurement instrument is specified.
+
+.. note::
+	
+	Right now there are some issues with multichannel instruments such as the DecaDac. The different channels are all part of the same instrument, whenever you assign a parameter to the instrument the first unassigned channel will be mapped.
+	In general this means that the channels are assigned in the order of their numbers (first parameter mapped to Channel 1, second parameter mapped to Channel 2, etc.) Make sure to add the parameters to the gate_parameters.yaml in the corresponding order.
+	
+
+Finally you can use
+
+.. py:function:: measurement_script.run() 
+
+to start the measurement.
+
+#####################################################
+Accessing Measurent Data and Plotting the Measurement
+#####################################################
+
+Qtools does not have separate live-plotting tool so far, instead you have to use the plottr-inspectr as described in the `QCoDeS documentation <https://qcodes.github.io/Qcodes/examples/plotting/How-to-use-Plottr-with-QCoDeS-for-live-plotting.html>`_.
+However, the "utils section" has a couple of tools that make working with the QCoDeS database, in which the data is stored, easier.
