@@ -199,14 +199,15 @@ def map_gates_to_instruments(
                         # Only use chosen instrument's parameters for mapping
                         _map_gate_to_instrument(gate, chosen_instrument_parameters)
                         # Remove mapped parameters from parameter list
+                        # TODO: remove all parameters from Channel, if parent is a channel
                         keys_to_remove = (key for key in chosen_instrument_parameters.keys() if chosen_instrument_parameters[key] in gate.values())
                         for key in keys_to_remove:
                             instrument_parameters.pop(key, None)
 
-                    except MappingError as e:
+                    except MappingError as ex:
                         # Could not map instrument, do it manually
                         # TODO: Map to multiple instruments
-                        print(e)
+                        print(ex)
                         _map_gate_parameters_to_instrument_parameters(gate, chosen_instrument_parameters)
                         # Remove mapped parameters from parameter list
                         keys_to_remove = (key for key in chosen_instrument_parameters.keys() if chosen_instrument_parameters[key] in gate.values())
