@@ -10,7 +10,7 @@ before_script:
   - pip install virtualenv
   - virtualenv venv
   - source venv/bin/activate
-  - pip install git+ssh://gitlab-ci-token:${CI_JOB_TOKEN}@git-ce.rwth-aachen.de/qutech/lab_software/qtools-metadata.git
+  - pip install git+https://gitlab-ci-token:${CI_JOB_TOKEN}@git-ce.rwth-aachen.de/qutech/lab_software/qtools-metadata.git
   - pip install -r ci_requirements.txt
 
 pylint:
