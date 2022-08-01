@@ -5,6 +5,7 @@ from qcodes.instrument.parameter import Parameter
 from qcodes.instrument.visa import VisaInstrument
 from qcodes.tests.instrument_mocks import DummyInstrument
 
+from qtools.instrument.custom_drivers.ZI.MFLI import MFLI
 from qtools.instrument.instrument import is_instrument_class
 
 
@@ -13,8 +14,18 @@ def fixture_instrument() -> Instrument:
     return DummyInstrument("instrument", ["v1", "v2"])
 
 
-def test_is_instrument():
-    assert is_instrument_class(Instrument)
-    assert is_instrument_class(DummyInstrument)
-    assert is_instrument_class(VisaInstrument)
-    assert not is_instrument_class(Parameter)
+@pytest.mark.parametrize(
+    "cls,expected",
+    [
+        (Instrument, True),
+        (DummyInstrument, True),
+        (VisaInstrument, True),
+        (Parameter, False),
+    ],
+)
+def test_is_instrument(cls, expected: bool):
+    assert is_instrument_class(cls) is expected
+
+
+def test_mfli_driver():
+    assert is_instrument_class(MFLI)
