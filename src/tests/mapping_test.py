@@ -8,22 +8,12 @@ from pytest_cases import fixture_ref, parametrize
 from pytest_mock import MockerFixture, mocker
 from qcodes.tests.instrument_mocks import DummyInstrument
 
+import qtools.instrument.mapping as mapping
 from qtools.instrument.mapping.base import (
     _load_instrument_mapping,
     add_mapping_to_instrument,
 )
 from qtools.measurement.scripts.generic_measurement import Generic_1D_Sweep
-
-# @pytest.fixture(name="instr_a")
-# def fixture_instrument_a():
-#     instrument = DummyInstrument("instr_a", ["v1", "v2"])
-#     yield instrument
-#     instrument.close()
-
-
-# @pytest.fixture(name="instr_a_params")
-# def fixture_params_a(instr_a):
-#     return [instr_a.v1, instr_a.v2]
 
 
 @pytest.fixture
@@ -70,7 +60,15 @@ def test_load_instrument_mapping(mocker: MockerFixture, mapping_data, expectatio
 
         ret = _load_instrument_mapping(path)
         assert ret == mapping_data
-        mock.assert_called_once_with(path, "r")
+        mock.assert_called_once_with(path)
+
+
+@pytest.mark.parametrize(
+    "path",
+    [getattr(mapping, name) for name in dir(mapping) if name.endswith("_MAPPING")],
+)
+def test_validate_mapping_file(path):
+    _load_instrument_mapping(path)
 
 
 def test_instrument_mapping(mocker: MockerFixture, valid_mapping_data):
