@@ -5,7 +5,6 @@ from qcodes.instrument.parameter import Parameter
 from qcodes.instrument.visa import VisaInstrument
 from qcodes.tests.instrument_mocks import DummyInstrument
 
-from qtools.instrument.custom_drivers.ZI.MFLI import MFLI
 from qtools.instrument.instrument import is_instrument_class
 
 
@@ -23,4 +22,5 @@ def test_is_instrument(cls, expected: bool):
 
 
 def test_mfli_driver():
-    assert is_instrument_class(MFLI)
+    MFLI = pytest.importorskip("qtools.instrument.custom_drivers.ZI.MFLI")
+    assert is_instrument_class(MFLI.MFLI)
