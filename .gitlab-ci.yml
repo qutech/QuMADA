@@ -29,7 +29,7 @@ pylint:
 unit_test:
   stage: test
   script:
-  - pip install pytest pytest-cov pytest-httpserver
+  - pip install pytest pytest-cov pytest-mock pytest-cases pytest-httpserver
   - pytest --junitxml=report.xml --cov=src --cov-report=xml --cov-report=term src/tests
   artifacts:
     when: always
