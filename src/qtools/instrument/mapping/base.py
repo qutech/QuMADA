@@ -3,10 +3,10 @@ from __future__ import annotations
 import json
 from typing import Any, Dict, Iterable, Mapping, Set, Union
 
+import jsonschema
 from qcodes.instrument.base import Instrument
 from qcodes.instrument.parameter import Parameter
 from qcodes.utils.metadata import Metadatable
-
 from qtools_metadata.measurement import MeasurementMapping
 from qtools_metadata.metadata import Metadata
 
@@ -73,8 +73,21 @@ def _load_instrument_mapping(path: str) -> Any:
     Returns:
         Any: Parsed JSON-object
     """
+    mapping_structure = {
+        "type": "object",
+        "properties": {
+            "parameter_names": {
+                "type": "object",
+                "additionalProperties": {"type": "string"},
+            }
+        },
+        "required": ["parameter_names"],
+    }
+
     with open(path) as file:
-        return json.load(file)
+        mapping_data = json.load(file)
+    jsonschema.validate(mapping_data, schema=mapping_structure)
+    return mapping_data
 
 
 def add_mapping_to_instrument(instrument: Instrument,

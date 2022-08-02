@@ -9,11 +9,6 @@ from qtools.instrument.custom_drivers.ZI.MFLI import MFLI
 from qtools.instrument.instrument import is_instrument_class
 
 
-@pytest.fixture(name="instrument")
-def fixture_instrument() -> Instrument:
-    return DummyInstrument("instrument", ["v1", "v2"])
-
-
 @pytest.mark.parametrize(
     "cls,expected",
     [
