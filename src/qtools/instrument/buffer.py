@@ -5,10 +5,18 @@ from typing import Any
 
 import numpy as np
 from pyvisa import VisaIOError
+from qcodes.instrument.base import Instrument
 from qcodes.instrument.parameter import ManualParameter, Parameter
 from qcodes.instrument_drivers.stanford_research.SR830 import SR830
 
 from qtools.instrument.custom_drivers.ZI.MFLI import MFLI
+
+
+def is_bufferable(instrument: Instrument):
+    """Checks if the instrument is bufferable using the qtools Buffer definition."""
+    return hasattr(instrument, "_qtools_buffer") and isinstance(
+        instrument._qtools_buffer, Buffer
+    )
 
 
 class BufferException(Exception):

@@ -1,15 +1,7 @@
-from qcodes.instrument.base import Instrument
 from qcodes.instrument_drivers.stanford_research.SR830 import SR830
 
-from qtools.instrument.buffer import Buffer, MFLIBuffer, SR830Buffer
+from qtools.instrument.buffer import MFLIBuffer, SR830Buffer
 from qtools.instrument.custom_drivers.ZI.MFLI import MFLI, Session
-
-
-def is_bufferable(instrument: Instrument):
-    """Checks if the instrument is bufferable using the qtools Buffer definition."""
-    return hasattr(instrument, "_qtools_buffer") and isinstance(
-        instrument._qtools_buffer, Buffer
-    )
 
 
 class BufferedMFLI(MFLI):
