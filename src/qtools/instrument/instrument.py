@@ -10,7 +10,7 @@ from qcodes.instrument.base import Instrument
 from qcodes.instrument.parameter import ManualParameter, Parameter
 from qcodes.instrument_drivers.stanford_research.SR830 import SR830
 
-from qtools.instrument.custom_drivers.ZI.MFLI import MFLI as MFLI
+from qtools.instrument.custom_drivers.ZI.MFLI import MFLI
 
 
 def is_instrument_class(o):
