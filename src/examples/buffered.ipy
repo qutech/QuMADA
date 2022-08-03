@@ -1,0 +1,21 @@
+#%%
+from time import sleep
+from qcodes.instrument_drivers.stanford_research.SR830 import SR830
+from qtools.instrument.instrument import SR830Buffer
+
+lockin = SR830("lockin", "GPIB1::12::INSTR")
+
+#%%
+buffer = SR830Buffer(lockin)
+buffer.setup_buffer(settings = {"sample_rate": 16})
+params = [lockin.X, lockin.Y]
+buffer.subscribe(params)
+buffer.trigger = "wir haben nur einen"
+# buffer.start()
+
+#%%
+buffer.stop()
+#%%
+buffer.read()
+
+# %%
