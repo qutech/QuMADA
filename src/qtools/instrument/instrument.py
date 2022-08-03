@@ -56,16 +56,16 @@ class Buffer(ABC):
     def read(self) -> dict:
         """
         Read the buffer
-        
+
         Output is a dict with the following structure:
-            
+
         {
             timestamps: list[float],
             param1: list[float],
             param2: list[float],
             ...
         }"""
-    
+
     @abstractmethod
     def read_raw(self) -> Any:
         "Read the buffer and return raw output."
@@ -105,12 +105,21 @@ class Buffer(ABC):
 
 class SR830Buffer(Buffer):
     class ExternalTrigger(ManualParameter):
+        """
+        Dummy parameter for setting the external trigger.
+
+        SR830 does only provide a single external trigger.
+        To set it, call `buffer.trigger = SR830Buffer.ExternalTrigger()`
+        """
         ...
+
+    ch1_names = ["X", "R", "X Noise", "aux_in1", "aux_in2"]
+    ch2_names = ["Y", "Phase", "Y Noise", "aux_in3", "aux_in4"]
 
     def __init__(self, device: SR830):
         self._device = device
         self._trigger: Parameter | None = None
-        self._subscribed_channels: set = set()
+        self._subscribed_parameters: set[Parameter] = set()
         device._qtools_buffer = self  # type: ignore[attr-defined]
 
     def setup_buffer(self, settings: dict | None = None) -> None:
@@ -136,6 +145,7 @@ class SR830Buffer(Buffer):
         elif isinstance(parameter, SR830Buffer.ExternalTrigger):
             self._device.buffer_SR("Trigger")
             self._device.buffer_trig_mode("On")
+            self._trigger = parameter
         else:
             raise BufferException(
                 "SR830 does not support setting custom trigger inputs. Use SR830Buffer.ExternalTrigger and the input on the back of the unit."
@@ -145,8 +155,14 @@ class SR830Buffer(Buffer):
         #TODO: Handle stopping buffer or not
         data = {}
         try:
-            for ch in self._subscribed_channels:
-                data[ch] = self._device.__getattr__(f"{ch}_datatrace").get()
+            for parameter in self._subscribed_parameters:
+                if parameter.name in self.ch1_names:
+                    ch = "ch1"
+                elif parameter.name in self.ch2_names:
+                    ch = "ch2"
+
+                # TODO: what structure has the data? do we get timestamps?
+                data[parameter.name] = self._device.__getattr__(f"{ch}_datatrace").get()
         except VisaIOError as ex:
             raise BufferException(
                 "Could not read the buffer. Buffer has to be stopped before readout."
@@ -154,15 +170,30 @@ class SR830Buffer(Buffer):
         return data
 
     def subscribe(self, parameters: list[Parameter]) -> None:
-
         for parameter in parameters:
             name = parameter.name
-            if name in ["X", "R", "X Noise", "aux_in1", "aux_in2"]:
+            if name in self.ch1_names:
                 self._device.ch1_display(name)
-                self._subscribed_channels.add("ch1")
-            elif name in ["Y", "Phase", "Y Noise", "aux_in3", "aux_in4"]:
+                param_to_remove = {
+                    param
+                    for param in self._subscribed_parameters
+                    if param.name in self.ch1_names
+                }
+                self._subscribed_parameters.difference_update(
+                    param_to_remove
+                )  # remove previously subscribed parameter from ch1
+                self._subscribed_parameters.add(parameter)
+            elif name in self.ch2_names:
                 self._device.ch2_display(name)
-                self._subscribed_channels.add("ch2")
+                param_to_remove = {
+                    param
+                    for param in self._subscribed_parameters
+                    if param.name in self.ch2_names
+                }
+                self._subscribed_parameters.difference_update(
+                    param_to_remove
+                )  # remove previously subscribed parameter from ch2
+                self._subscribed_parameters.add(parameter)
             else:
                 raise Exception(f"Parameter {parameter.name} can not be buffered.")
 
@@ -170,14 +201,14 @@ class SR830Buffer(Buffer):
         for parameter in parameters:
             name = parameter.name
             if name in ["X", "R", "X Noise", "aux_in1", "aux_in2"]:
-                self._subscribed_channels.remove("ch1")
+                self._subscribed_parameters.remove(parameter)
             elif name in ["Y", "Phase", "Y Noise", "aux_in3", "aux_in4"]:
-                self._subscribed_channels.remove("ch2")
+                self._subscribed_parameters.remove(parameter)
             else:
                 raise Exception(f"Parameter {parameter.name} can not be buffered.")
 
     def is_subscribed(self, parameter: Parameter) -> bool:
-        ...
+        return parameter in self._subscribed_parameters
 
     def start(self) -> None:
         self._device.buffer_reset()
@@ -216,7 +247,7 @@ class MFLIBuffer(Buffer):
         self._daq.type(settings.setdefault("trigger_type", 0))
 
         self._daq.grid.mode(2)
-        
+
         if "trigger_threshold" in settings:
             # TODO: better way to distinguish, which trigger level to set
             self._daq.level(settings["trigger_threshold"])
@@ -257,7 +288,7 @@ class MFLIBuffer(Buffer):
             if "timestamps" not in result_dict:
                 result_dict["timestamps"] = data[key][0].time
         return result_dict
-    
+
     def read_raw(self) -> dict:
         return self._daq.read()
 
@@ -288,6 +319,6 @@ class MFLIBuffer(Buffer):
 
     def is_ready(self) -> bool:
         ...
-    
+
     def _get_node_from_parameter(self, parameter: Parameter):
         return self._device.demods[self._channel].sample.__getattr__(parameter.label)
