@@ -133,6 +133,32 @@ class MFLI(Instrument):
             docstring = "Gets/Sets the order of the demod 0 filter."
             )
         
+        self.add_parameter(
+            name = "demod0_aux_in_1",
+            label = "Demod0 AuxIn 1",
+            get_cmd = lambda : demod0.sample()["auxin0"],
+            set_cmd = None,
+            get_parser = float,
+            docstring = "Aux In 1 of demod0"   
+        )
+    
+        self.add_parameter(
+            name = "demod0_aux_in_2",
+            label = "Demod0 AuxIn 2",
+            get_cmd = lambda : demod0.sample()["auxin1"],
+            set_cmd = None,
+            get_parser = float,
+            docstring = "Aux In 2 of demod0"   
+        )
+        
+        self.add_parameter(
+            name = "demod0_trig_in",
+            label = "Demod0 Trigger Input",
+            get_cmd = None,
+            set_cmd = None,
+            docstring = "Gets/Sets the order of the demod 0 filter."
+            )
+        
             
 
         

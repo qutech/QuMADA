@@ -3,6 +3,8 @@ from __future__ import annotations
 import inspect
 from abc import ABC, abstractmethod
 
+import numpy as np
+
 from pyvisa import VisaIOError
 from qcodes.instrument.base import Instrument
 from qcodes.instrument.parameter import ManualParameter, Parameter
@@ -52,7 +54,21 @@ class Buffer(ABC):
 
     @abstractmethod
     def read(self) -> dict:
-        """Read the buffer."""
+        """
+        Read the buffer
+        
+        Output is a dict with the following structure:
+            
+        {
+            timestamps: list[float],
+            param1: list[float],
+            param2: list[float],
+            ...
+        }"""
+    
+    @abstractmethod
+    def read_raw(self) -> Any:
+        "Read the buffer and return raw output."
 
     @abstractmethod
     def subscribe(self, parameters: list[Parameter]) -> None:
@@ -180,6 +196,7 @@ class MFLIBuffer(Buffer):
         self._device = mfli.instr
         self._daq = self._session.modules.daq
         self._sample_nodes: list = []
+        self._subscribed_parameters: list[Parameter] = []
         self._trigger: Parameter | None = None
         self._channel = 0
         mfli._qtools_buffer = self  # type: ignore[attr-defined]
@@ -199,6 +216,12 @@ class MFLIBuffer(Buffer):
         self._daq.type(settings.setdefault("trigger_type", 0))
 
         self._daq.grid.mode(2)
+        
+        if "trigger_threshold" in settings:
+            # TODO: better way to distinguish, which trigger level to set
+            self._daq.level(settings["trigger_threshold"])
+            self._device.triggers.in_[0].level(settings["trigger_threshold"])
+            self._device.triggers.in_[1].level(settings["trigger_threshold"])
 
         if all(k in settings for k in ("sample_rate", "burst_duration", "duration")):
             num_cols = int(
@@ -206,7 +229,7 @@ class MFLIBuffer(Buffer):
             )
             num_bursts = int(np.ceil(settings["duration"] / settings["burst_duration"]))
             self._daq.count(num_bursts)
-            self._daq.duration(settings["delay"])
+            self._daq.duration(settings["burst_duration"])
             self._daq.grid.cols(num_cols)
 
     @property
@@ -215,38 +238,55 @@ class MFLIBuffer(Buffer):
 
     @trigger.setter
     def trigger(self, parameter: Parameter) -> None:
-
+        if parameter.name == "demod0_aux_in_1":
+            self._daq.triggernode("/dev4039/demods/0/sample.AuxIn0")
+            if self._daq.type() not in (1, 3):
+                self._daq.type(1)
+        elif parameter.name == "demod0_trig_in":
+            self._daq.triggernode("/dev4039/demods/0/sample.TrigIn1")
+            self._daq.type(6)
         self._trigger = parameter
 
     def read(self) -> dict:
+        data = self.read_raw()
+        result_dict = {}
+        for parameter in self._subscribed_parameters:
+            node = self._get_node_from_parameter(parameter)
+            result_dict[parameter.name] = data[node][0].values
+            if "timestamps" not in result_dict:
+                result_dict["timestamps"] = data[node][0].time
+        return result_dict
+    
+    def read_raw(self) -> dict:
         return self._daq.read()
 
     def subscribe(self, parameters: list[Parameter]) -> None:
         for parameter in parameters:
-            node = self._device.demods[self._channel].sample.__getattr__(
-                parameter.label
-            )
+            node = self._get_node_from_parameter(parameter)
             if node not in self._sample_nodes:
+                self._subscribed_parameters.append(parameter)
                 self._sample_nodes.append(node)
                 self._daq.subscribe(node)
 
     def unsubscribe(self, parameters: list[Parameter]) -> None:
         for parameter in parameters:
-            node = self._device.demods[self._channel].sample.__getattr__(
-                parameter.label
-            )
+            node = self._get_node_from_parameter(parameter)
             if node in self._sample_nodes:
                 self._sample_nodes.remove(node)
+                self._subscribed_parameters.remove(parameter)
                 self._daq.unsubscribe(node)
 
     def is_subscribed(self, parameter: Parameter) -> bool:
-        ...
+        return parameter in self._subscribed_parameters
 
     def start(self) -> None:
         self._daq.execute()
 
     def stop(self) -> None:
-        ...
+        self._daq.raw_module.finish()
 
     def is_ready(self) -> bool:
         ...
+    
+    def _get_node_from_parameter(self, parameter: Parameter):
+        return self._device.demods[self._channel].sample.__getattr__(parameter.label)
