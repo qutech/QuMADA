@@ -1,17 +1,36 @@
 #%%
-from time import sleep
+import numpy as np
 from qcodes.instrument_drivers.stanford_research.SR830 import SR830
-from qtools.instrument.instrument import SR830Buffer
+from qtools.instrument.custom_drivers.ZI.MFLI import MFLI
+from qtools.instrument.instrument import SR830Buffer, MFLIBuffer
 
-lockin = SR830("lockin", "GPIB1::12::INSTR")
+#%%
+
+# lockin = SR830("lockin", "GPIB1::12::INSTR")
+lockin = MFLI("lockin", "dev5093")
+
+#%%
+buffer = MFLIBuffer(lockin)
+settings = {
+    "channel": 0,
+    "trigger_type": 0,
+    "sample_rate": 30000,
+    "duration": 5,
+    "burst_duration": 0.2,
+}
+buffer.setup_buffer(settings = {"channel": 0, "trigger_type": 0})
+params = [lockin.current_x_component, lockin.current_y_component]
+buffer.subscribe(params)
+#%%
+buffer.start()
 
 #%%
 buffer = SR830Buffer(lockin)
 buffer.setup_buffer(settings = {"sample_rate": 16})
 params = [lockin.X, lockin.Y]
 buffer.subscribe(params)
-buffer.trigger = "wir haben nur einen"
-# buffer.start()
+buffer.trigger = SR830Buffer.ExternalTrigger("trigger")
+buffer.start()
 
 #%%
 buffer.stop()
