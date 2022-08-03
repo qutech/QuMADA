@@ -104,6 +104,8 @@ class Buffer(ABC):
 
 
 class SR830Buffer(Buffer):
+    """Buffer for Stanford SR830"""
+
     class ExternalTrigger(ManualParameter):
         """
         Dummy parameter for setting the external trigger.
@@ -111,7 +113,6 @@ class SR830Buffer(Buffer):
         SR830 does only provide a single external trigger.
         To set it, call `buffer.trigger = SR830Buffer.ExternalTrigger()`
         """
-        ...
 
     ch1_names = ["X", "R", "X Noise", "aux_in1", "aux_in2"]
     ch2_names = ["Y", "Phase", "Y Noise", "aux_in3", "aux_in4"]
@@ -222,6 +223,8 @@ class SR830Buffer(Buffer):
 
 
 class MFLIBuffer(Buffer):
+    """Buffer for ZurichInstruments MFLI"""
+
     def __init__(self, mfli: MFLI):
         self._session = mfli.session
         self._device = mfli.instr
