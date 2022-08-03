@@ -252,9 +252,10 @@ class MFLIBuffer(Buffer):
         result_dict = {}
         for parameter in self._subscribed_parameters:
             node = self._get_node_from_parameter(parameter)
-            result_dict[parameter.name] = data[node][0].values
+            key = next(key for key in data.keys() if str(key) == str(node))
+            result_dict[parameter.name] = data[key][0].value
             if "timestamps" not in result_dict:
-                result_dict["timestamps"] = data[node][0].time
+                result_dict["timestamps"] = data[key][0].time
         return result_dict
     
     def read_raw(self) -> dict:
