@@ -17,6 +17,7 @@ from qcodes.instrument import Parameter
 from qcodes.instrument.parameter import _BaseParameter
 from qcodes.utils.dataset.doNd import AbstractSweep, ActionsT, LinSweep
 from qcodes.utils.metadata import Metadatable
+from qtools.utils.utils import flatten_array
 from qtools_metadata.measurement import MeasurementData
 from qtools_metadata.measurement import MeasurementScript as DomainMeasurementScript
 from qtools_metadata.measurement import MeasurementSettings
@@ -204,13 +205,15 @@ class MeasurementScript(ABC):
         TODO: Put Sweep-Generation somewhere else?
         TODO: Allow setting ramp rate for setting the parameters manually
         """
-        self.gettable_parameters: list[str] = []
+        self.gettable_parameters: list[str] = [] 
         self.gettable_channels: list[str] = []
         self.break_conditions: list[str] = []
         self.static_parameters: list[str] = []
         self.dynamic_parameters: list[str] = []
         self.dynamic_channels: list[str] = []
         self.dynamic_sweeps: list[str] = []
+        self.buffers: set = {} #All buffers of gettable parameters
+        
         ramp_rate = self.settings.get("ramp_rate", 0.3)
         setpoint_intervall = self.settings.get("setpoint_intervall", 0.1)
         for gate, parameters in self.gate_parameters.items():
@@ -281,6 +284,7 @@ class MeasurementScript(ABC):
                         self.dynamic_sweeps.append(CustomSweep(channel,
                                                                self.properties[gate][parameter]["setpoints"],
                                                                delay = self.properties[gate][parameter].setdefault("delay", 0)))
+        self.buffers = {self._qtools_buffer for instrument in self.gettable_channels.instruments if hasattr(instrument, "_qtools_buffer")}
         self._relabel_instruments()
 
     @abstractmethod
@@ -330,6 +334,52 @@ class MeasurementScript(ABC):
                                 setpoint_intervall=setpoint_intervall,
                             )
 
+    def ready_buffers(self, **kwargs) -> None:
+        """
+        Setup all buffers registered in the measurement and start them
+        
+        Parameters
+        ----------
+        **kwargs : None so far...
+        
+        Returns
+        -------
+        None
+        """
+        for buffer in self.buffers:
+            buffer.setup_buffer(settings = self.buffer_settings)
+            buffer.start()
+    
+    def readout_buffers(self, **kwargs) -> dict:
+        """
+        Readout all buffer and return the results as list of tuples
+        (parameters, values) as required by qcodes measurement context manager.
+
+        Parameters
+        ----------
+        **kwargs :
+            timestamps: Set True if timestamp data is to be included in the
+                    results. Not implemented yet.
+        Returns
+        -------
+        dict
+            Results, list with one tuple for each subscribed parameter. Tuple
+            contains (parameter, measurement_data).
+    
+        #TODO: Handle multiple bursts etc.
+        """
+        data = {}
+        results = []
+        for buffer in self.buffers:
+            buffer.stop()
+            data[buffer] = buffer.read()
+            for param in buffer._subscribed_parameters:
+                results.append((param, flatten_array(data[buffer][param.name])))
+                if kwargs.get("timestamps", False):
+                    #TODO: Add option to include timestamps here.
+                    pass
+        return results
+    
     def _relabel_instruments(self) -> None:
         """
         Changes the labels of all instrument channels to the
@@ -377,8 +427,8 @@ class MeasurementScript(ABC):
                 metadata.save_to_db()
             except Exception as e:
                 print(f"Metadata could not inserted into database: {e}")
-
-
+                
+                
 class VirtualGate():
     """Virtual Gate"""
     def __init__(self):
