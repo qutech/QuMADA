@@ -95,6 +95,10 @@ class Buffer(ABC):
         ...
 
     @abstractmethod
+    def force_trigger(self) -> None:
+        """Triggers the trigger."""
+
+    @abstractmethod
     def read(self) -> dict:
         """
         Read the buffer
@@ -185,6 +189,9 @@ class SR830Buffer(Buffer):
                 "SR830 does not support setting custom trigger inputs. Use 'external' and the input on the back of the unit."
             )
         self._trigger = trigger
+
+    def force_trigger(self) -> None:
+        raise NotImplementedError()
 
     def read(self) -> dict:
         # TODO: Handle stopping buffer or not
@@ -333,6 +340,9 @@ class MFLIBuffer(Buffer):
         else:
             raise BufferException(f"Trigger input '{trigger}' is not supported.")
         self._trigger = trigger
+
+    def force_trigger(self) -> None:
+        self._daq.forcetrigger(1)
 
     def read(self) -> dict:
         data = self.read_raw()
