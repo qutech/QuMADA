@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Dict, Iterable, Mapping, Set, Union
+from typing import Any, Iterable, Mapping
 
 import jsonschema
 from qcodes.instrument.base import Instrument
@@ -13,7 +13,6 @@ from qtools_metadata.metadata import Metadata
 
 class MappingError(Exception):
     """Exception is raised, if an error occured during Mapping."""
-    ...
 
 
 def filter_flatten_parameters(node) -> dict[Any, Parameter]:
@@ -237,7 +236,6 @@ def map_gates_to_instruments(
                 "automatic-mapping"
             )
         metadata.measurement.mapping.mapping = json.dumps(j)
-
 
 
 def _map_gate_to_instrument(gate: Mapping[Any, Parameter],

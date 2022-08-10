@@ -1,26 +1,65 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Mapping
 
 import numpy as np
 from pyvisa import VisaIOError
 from qcodes.instrument.base import Instrument
 from qcodes.instrument.parameter import ManualParameter, Parameter
 from qcodes.instrument_drivers.stanford_research.SR830 import SR830
+from qcodes.utils.metadata import Metadatable
 
 from qtools.instrument.custom_drivers.ZI.MFLI import MFLI
 
 
-def is_bufferable(instrument: Instrument):
-    """Checks if the instrument is bufferable using the qtools Buffer definition."""
-    return hasattr(instrument, "_qtools_buffer") and isinstance(
-        instrument._qtools_buffer, Buffer
+def is_bufferable(object: Instrument | Parameter):
+    """Checks if the instrument or parameter is bufferable using the qtools Buffer definition."""
+    if isinstance(object, Parameter):
+        object = object.root_instrument
+    return hasattr(object, "_qtools_buffer") and isinstance(
+        object._qtools_buffer, Buffer
     )
+    # TODO: check, if parameter can really be buffered
 
 
 class BufferException(Exception):
     """General Buffer Exception"""
+
+
+def map_buffers(
+    components: Mapping[Any, Metadatable],
+    properties: dict,
+    gate_parameters: Mapping[Any, Mapping[Any, Parameter] | Parameter],
+) -> None:
+    """
+    Maps the bufferable instruments of gate parameters.
+
+    Args:
+        components (Mapping[Any, Metadatable]): Instruments/Components in QCoDeS
+        gate_parameters (Mapping[Any, Union[Mapping[Any, Parameter], Parameter]]): Gates, as defined in the measurement script
+    """
+    # subscribe to gettable parameters with buffer
+    for gate, parameters in gate_parameters.items():
+        for parameter, channel in parameters.items():
+            if properties[gate][parameter]["type"] == "gettable":
+                if is_bufferable(channel):
+                    buffer: Buffer = channel.root_instrument._qtools_buffer
+                    buffer.subscribe([channel])
+
+    buffered_instruments = filter(is_bufferable, components.values())
+    for instrument in buffered_instruments:
+        buffer = instrument._qtools_buffer
+        print("Available trigger inputs:")
+        print("[0]: None")
+        for idx, trigger in enumerate(buffer.AVAILABLE_TRIGGERS, 1):
+            print(f"[{idx}]: {trigger}")
+        chosen = int(input(f"Choose the trigger input for {instrument.name}: "))
+        if chosen == 0:
+            trigger = None
+        else:
+            trigger = buffer.AVAILABLE_TRIGGERS[chosen - 1]
+        buffer.trigger = trigger
 
 
 class Buffer(ABC):
@@ -35,6 +74,8 @@ class Buffer(ABC):
         "channel",
         "sample_rate",
     }
+
+    AVAILABLE_TRIGGERS: list[str] = []
 
     @abstractmethod
     def setup_buffer(self, settings: dict) -> None:
@@ -106,20 +147,14 @@ class Buffer(ABC):
 class SR830Buffer(Buffer):
     """Buffer for Stanford SR830"""
 
-    class ExternalTrigger(ManualParameter):
-        """
-        Dummy parameter for setting the external trigger.
-
-        SR830 does only provide a single external trigger.
-        To set it, call `buffer.trigger = SR830Buffer.ExternalTrigger()`
-        """
-
     ch1_names = ["X", "R", "X Noise", "aux_in1", "aux_in2"]
     ch2_names = ["Y", "Phase", "Y Noise", "aux_in3", "aux_in4"]
 
+    AVAILABLE_TRIGGERS: list[str] = ["external"]
+
     def __init__(self, device: SR830):
         self._device = device
-        self._trigger: Parameter | None = None
+        self._trigger: str | None = None
         self._subscribed_parameters: set[Parameter] = set()
 
     def setup_buffer(self, settings: dict | None = None) -> None:
@@ -133,23 +168,23 @@ class SR830Buffer(Buffer):
         self._device.buffer_trig_mode("OFF")
 
     @property
-    def trigger(self) -> Parameter | None:
+    def trigger(self) -> str | None:
         return self._trigger
 
     @trigger.setter
-    def trigger(self, parameter: Parameter | None) -> None:
-        if parameter is None:
+    def trigger(self, trigger: str | None) -> None:
+        if trigger is None:
             # TODO: standard value for Sample Rate
             self._device.buffer_SR(512)
             self._device.buffer_trig_mode("Off")
-        elif isinstance(parameter, SR830Buffer.ExternalTrigger):
+        elif trigger == "external":
             self._device.buffer_SR("Trigger")
             self._device.buffer_trig_mode("On")
-            self._trigger = parameter
         else:
             raise BufferException(
-                "SR830 does not support setting custom trigger inputs. Use SR830Buffer.ExternalTrigger and the input on the back of the unit."
+                "SR830 does not support setting custom trigger inputs. Use 'external' and the input on the back of the unit."
             )
+        self._trigger = trigger
 
     def read(self) -> dict:
         # TODO: Handle stopping buffer or not
@@ -224,13 +259,20 @@ class SR830Buffer(Buffer):
 class MFLIBuffer(Buffer):
     """Buffer for ZurichInstruments MFLI"""
 
+    AVAILABLE_TRIGGERS: list[str] = [
+        "trigger_in_1",
+        "trigger_in_2",
+        "aux_in_1",
+        "aux_in_2",
+    ]
+
     def __init__(self, mfli: MFLI):
         self._session = mfli.session
         self._device = mfli.instr
         self._daq = self._session.modules.daq
         self._sample_nodes: list = []
         self._subscribed_parameters: list[Parameter] = []
-        self._trigger: Parameter | None = None
+        self._trigger: str | None = None
         self._channel = 0
 
     def setup_buffer(self, settings: dict | None = None) -> None:
@@ -266,18 +308,31 @@ class MFLIBuffer(Buffer):
 
     @property
     def trigger(self):
-        return super().trigger
+        return self._trigger
 
     @trigger.setter
-    def trigger(self, parameter: Parameter) -> None:
-        if parameter.name == "demod0_aux_in_1":
-            self._daq.triggernode("/dev4039/demods/0/sample.AuxIn0")
-            if self._daq.type() not in (1, 3):
-                self._daq.type(1)
-        elif parameter.name == "demod0_trig_in":
-            self._daq.triggernode("/dev4039/demods/0/sample.TrigIn1")
-            self._daq.type(6)
-        self._trigger = parameter
+    def trigger(self, trigger: str | None) -> None:
+        if trigger is None:
+            self._daq.type(0)
+        elif trigger in self.AVAILABLE_TRIGGERS:
+            samplenode = self._device.demods[self._channel].sample
+            if trigger == "trigger_in_1":
+                self._daq.triggernode(samplenode.TrigIn1)
+                self._daq.type(6)
+            elif trigger == "trigger_in_2":
+                self._daq.triggernode(samplenode.TrigIn2)
+                self._daq.type(6)
+            elif trigger == "aux_in_1":
+                self._daq.triggernode(samplenode.AuxIn0)
+                if self._daq.type() not in (1, 3):
+                    self._daq.type(1)
+            elif trigger == "aux_in_2":
+                self._daq.triggernode(samplenode.AuxIn1)
+                if self._daq.type() not in (1, 3):
+                    self._daq.type(1)
+        else:
+            raise BufferException(f"Trigger input '{trigger}' is not supported.")
+        self._trigger = trigger
 
     def read(self) -> dict:
         data = self.read_raw()
