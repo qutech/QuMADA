@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from abc import ABC, abstractmethod
 from typing import Any, Iterable, Mapping
 
 import jsonschema
@@ -13,6 +14,27 @@ from qtools_metadata.metadata import Metadata
 
 class MappingError(Exception):
     """Exception is raised, if an error occured during Mapping."""
+
+
+class InstrumentMapping(ABC):
+    def __init__(self, mapping_path: str | None):
+        if mapping_path:
+            self._mapping = _load_instrument_mapping(mapping_path)
+
+    @property
+    def mapping(self) -> dict:
+        return self._mapping
+
+    @abstractmethod
+    def ramp(
+        self,
+        parameters: list[Parameter],
+        *,
+        start_values: list[float] | None = None,
+        end_values: list[float],
+        ramp_time: float,
+    ) -> None:
+        """Wrapper to ramp the provided parameters"""
 
 
 def filter_flatten_parameters(node) -> dict[Any, Parameter]:
