@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="179px" preserveAspectRatio="none" style="width:670px;height:179px;background:#FFFFFF;" version="1.1" viewBox="0 0 670 179" width="670px" zoomAndPan="magnify"><defs><filter height="300%" id="f8tub58nrqt05" width="300%" x="-1" y="-1"><feGaussianBlur result="blurOut" stdDeviation="2.0"/><feColorMatrix in="blurOut" result="blurOut2" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .4 0"/><feOffset dx="4.0" dy="4.0" in="blurOut2" result="blurOut3"/><feBlend in="SourceGraphic" in2="blurOut3" mode="normal"/></filter></defs><g><!--MD5=[ef9aa1d9f06a3f56e46e81d792b62f60]
+cluster Qtools packages--><polygon fill="#FFFFFF" filter="url(#f8tub58nrqt05)" points="337.5,6,460.5,6,467.5,29.6094,491.5,29.6094,491.5,169,337.5,169,337.5,6" style="stroke:#000000;stroke-width:1.5;"/><line style="stroke:#000000;stroke-width:1.5;" x1="337.5" x2="467.5" y1="29.6094" y2="29.6094"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="117" x="341.5" y="22.5332">Qtools packages</text><path d="M536.58,45.676 C538.2046,40.6644 542.472,39.4303 546.1626,43.4946 C548.6316,36.5752 554.7087,36.7416 558.7436,41.8578 C560.814,35.6358 566.0429,35.8714 569.6771,40.2441 C571.8431,33.5067 575.7913,33.4914 580.9732,36.8797 C583.4037,32.0403 587.3431,30.4738 591.5016,34.9205 C596.3014,30.1436 601.0105,31.4412 603.176,37.7059 C606.9579,33.538 610.5669,33.5111 613.7714,38.3827 C617.4302,34.2642 622.1867,35.1731 624.263,40.1984 C629.5851,35.1097 634.4166,37.6355 636.1156,43.9608 C644.7457,36.8875 651.585,41.4894 653.5,51 C654.3643,51.3984 654.5505,51.9134 653.8377,52.6371 C660.5006,56.1643 661.8252,60.0279 656.2539,65.8007 C661.6884,69.2576 662.7846,74.8413 656.9417,78.8908 C663.2817,82.2419 663.1658,87.308 657.2728,90.9938 C663.7509,95.1179 663.9914,99.7598 658.023,104.5716 C662.6226,108.9196 662.4818,113.6993 656.7444,116.9823 C661.2534,120.5337 661.4401,126.2046 655.5288,128.6723 C661.6567,132.8623 661.4714,138.6677 655.4775,142.8137 C661.7349,151.766 656.7468,160.1949 646.5,161 C646.7446,160.7238 647.0628,160.8134 647.1503,161.1631 C644.6843,167.553 640.4168,168.4718 635.3269,164.0262 C632.1217,168.5646 628.9858,168.5131 625.5274,164.31 C622.8388,170.901 617.0331,171.1545 613.2002,165.458 C610.1464,170.1147 606.558,169.6119 603.7164,165.2352 C600.8679,172.0267 594.7305,172.1044 590.6942,166.4812 C587.0128,171.0897 582.3321,171.0063 579.7368,165.3247 C576.7767,171.2384 572.1442,170.0947 568.8212,165.7094 C564.6019,169.431 560.8874,169.3491 558.5426,163.6617 C554.5126,168.8231 548.78,169.367 546.0288,162.3481 C536.0023,168.0919 529.6714,165.6907 527.5,154 C528.7493,153.8945 529.5807,154.3424 529.1815,155.7876 C520.793,152.9105 520.484,146.4015 526.9428,141.2396 C519.9535,139.7667 519.3055,134.0377 523.9312,129.5678 C516.8752,126.5018 517.1734,121.9178 522.4781,117.3782 C515.4192,114.6316 514.5255,108.9701 520.2452,104.0781 C514.1349,99.8115 516.3107,93.9181 521.993,91.2595 C515.3888,85.5768 517.7546,80.7412 524.2449,77.1481 C518.1902,72.4614 518.0558,67.1368 525.6714,63.9248 C519.2753,53.4701 522.9059,46.4834 534.5,44 C535.8838,43.6051 536.7534,44.1383 536.58,45.676 " fill="#FFFFFF" filter="url(#f8tub58nrqt05)" style="stroke:#000000;stroke-width:1.5;"/><!--MD5=[352edbdab845c0208a9a8becddb298ee]
+entity qtools--><rect fill="#FEFECE" filter="url(#f8tub58nrqt05)" height="37.6094" style="stroke:#000000;stroke-width:1.5;" width="58" x="385.5" y="115"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="38" x="395.5" y="139.5332">qtools</text><!--MD5=[3eb419d4e82252b0fc8d1270f55be474]
+entity qtools-metadata--><rect fill="#FEFECE" filter="url(#f8tub58nrqt05)" height="37.6094" style="stroke:#000000;stroke-width:1.5;" width="122" x="353.5" y="42"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="102" x="363.5" y="66.5332">qtools-metadata</text><!--MD5=[7468467f3b6b392f1d176d828c753b77]
+entity db--><path d="M535.5,115.5 C535.5,105.5 590.5,105.5 590.5,105.5 C590.5,105.5 645.5,105.5 645.5,115.5 L645.5,142.1094 C645.5,152.1094 590.5,152.1094 590.5,152.1094 C590.5,152.1094 535.5,152.1094 535.5,142.1094 L535.5,115.5 " fill="#FEFECE" filter="url(#f8tub58nrqt05)" style="stroke:#000000;stroke-width:1.5;"/><path d="M535.5,115.5 C535.5,125.5 590.5,125.5 590.5,125.5 C590.5,125.5 645.5,125.5 645.5,115.5 " fill="none" style="stroke:#000000;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="90" x="545.5" y="144.0332">Metadatabase</text><!--MD5=[e2307af040e3f87d22824e7603ca28ec]
+entity api--><ellipse cx="590.5" cy="61" fill="#FEFECE" filter="url(#f8tub58nrqt05)" rx="8" ry="8" style="stroke:#A80036;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="77" x="552" y="92.5332">RESTful API</text><!--MD5=[4a4f0c4e31a67e7f0b6878b5f78e3034]
+entity instruments--><ellipse cx="42.5" cy="98" fill="#FEFECE" filter="url(#f8tub58nrqt05)" rx="8" ry="8" style="stroke:#A80036;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="73" x="6" y="129.5332">instruments</text><!--MD5=[31021d34eca147fafb8355324c9d51aa]
+entity other--><polygon fill="#FEFECE" filter="url(#f8tub58nrqt05)" points="146.5,42,156.5,32,293.5,32,293.5,69.6094,283.5,79.6094,146.5,79.6094,146.5,42" style="stroke:#000000;stroke-width:1.5;"/><line style="stroke:#000000;stroke-width:1.5;" x1="283.5" x2="293.5" y1="42" y2="32"/><line style="stroke:#000000;stroke-width:1.5;" x1="146.5" x2="283.5" y1="42" y2="42"/><line style="stroke:#000000;stroke-width:1.5;" x1="283.5" x2="283.5" y1="42" y2="79.6094"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="107" x="161.5" y="66.5332">other Framework</text><!--MD5=[2a802190cabf40ea04d1be7a7483ce36]
+entity qc--><polygon fill="#FEFECE" filter="url(#f8tub58nrqt05)" points="172,125,182,115,268,115,268,152.6094,258,162.6094,172,162.6094,172,125" style="stroke:#000000;stroke-width:1.5;"/><line style="stroke:#000000;stroke-width:1.5;" x1="258" x2="268" y1="125" y2="115"/><line style="stroke:#000000;stroke-width:1.5;" x1="172" x2="258" y1="125" y2="125"/><line style="stroke:#000000;stroke-width:1.5;" x1="258" x2="258" y1="125" y2="162.6094"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="56" x="187" y="149.5332">QCoDeS</text><!--MD5=[314c9b5bc4dd2dc6e633f2ffbcf881af]
+link db to api--><path d="M590.5,105.36 C590.5,93.58 590.5,81.79 590.5,70.01 " fill="none" id="db-api" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[fe7425f3d6b188fee09f251021f8fcba]
+reverse link instruments to qc--><path d="M56.97,101.15 C81.21,106.81 133.23,118.96 171.83,127.98 " fill="none" id="instruments-backto-qc" style="stroke:#A80036;stroke-width:1.0;stroke-dasharray:7.0,7.0;"/><polygon fill="#A80036" points="51.96,99.98,59.825,105.908,56.831,101.1085,61.6306,98.1145,51.96,99.98" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[0f7155e35dd3b10beedfc61fa5ddc9c9]
+reverse link instruments to other--><path d="M56.89,94.79 C76.08,90.2 112.79,81.42 146.43,73.37 " fill="none" id="instruments-backto-other" style="stroke:#A80036;stroke-width:1.0;stroke-dasharray:7.0,7.0;"/><polygon fill="#A80036" points="51.96,95.97,61.642,97.7754,56.8239,94.8113,59.788,89.9932,51.96,95.97" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[78233358099001998be5b23dea3455ba]
+link qc to qtools--><path d="M268.09,137.78 C304.82,136.82 354.61,135.53 385.37,134.73 " fill="none" id="qc-qtools" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[6fa7fa3ad9b7482e121df5e5910efd8e]
+link qtools to qtools-metadata--><path d="M414.5,114.89 C414.5,103.39 414.5,91.88 414.5,80.37 " fill="none" id="qtools-qtools-metadata" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[d62f62882a1a77b4d94af7a768768a6c]
+link other to qtools-metadata--><path d="M293.5,57.88 C313.22,58.4 334.35,58.94 353.31,59.44 " fill="none" id="other-qtools-metadata" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[1ec5ce55ff78016e654da85c15cc2ef0]
+link qtools-metadata to api--><path d="M475.87,61 C512.09,61 555.13,61 576.34,61 " fill="none" id="qtools-metadata-to-api" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="581.48,61,572.48,57,576.48,61,572.48,65,581.48,61" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[f066f47c9fb1680c5add9cfac2d244fb]
+@startuml
+skinparam componentStyle rectangle
+left to right direction
+
+interface instruments
+
+node "other Framework" as other
+
+node "QCoDeS" as qc
+
+
+package "Qtools packages" {
+    [qtools]
+    [qtools-metadata]
+}
+
+cloud {
+    database "Metadatabase" as db
+    interface "RESTful API" as api
+    db - api
+}
+
+
+
+qc .up.> instruments
+other .up.> instruments
+
+qc - - [qtools]
+[qtools] - [qtools-metadata]
+other - - [qtools-metadata]
+
+[qtools-metadata] - -> api
+
+@enduml
+
+PlantUML version 1.2022.0(Tue Jan 11 17:16:42 CET 2022)
+(GPL source distribution)
+Java Runtime: OpenJDK Runtime Environment
+JVM: OpenJDK 64-Bit Server VM
+Default Encoding: Cp1252
+Language: de
+Country: DE
+--></g></svg>
