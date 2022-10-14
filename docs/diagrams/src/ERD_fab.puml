@@ -1,0 +1,88 @@
+@startuml
+
+!includesub ERD_head.puml!HEAD
+
+!startsub FAB
+entity "Wafer" as wafer {
+    PK ID
+    --
+    FK factory_id
+    --
+    * name
+    * production_date
+    description
+    layout
+}
+
+entity "Factory" as factory {
+    PK ID
+    --
+    * name
+
+}
+
+entity "Sample" as sample {
+    PK ID
+    --
+    FK wafer_id
+    FK factory_id
+    FK layout_id
+    --
+    * name
+    description
+    creator
+}
+
+entity "SampleLayout" as sampleLayout {
+    PK ID
+    --
+    * name
+    mask
+}
+
+entity "Device" as device {
+    PK ID
+    --
+    FK sample_id
+    FK layout_id
+    --
+    * name
+    description
+    layout_parameters
+}
+
+' Verknüpfung DeviceLayout und SampleLayout?
+' Wie lässt sich das verknüpfen?
+entity "DeviceLayout" as deviceLayout {
+    PK ID
+    --
+    FK gates_id []
+    --
+    * name
+    mask
+    image
+    creator
+}
+
+entity "Gate" as gate {
+    PK ID
+    --
+    FK layout_id
+    --
+    * name
+    * function
+    number
+}
+
+wafer::ID ||--|{ sample::wafer_id : made of <
+wafer::factory_id }|--|| factory::ID : is produced by >
+sample::ID ||--|{ device::sample_id : is on <
+sample::factory_id }|--|| factory::ID : is produced by >
+sample::layout_id }|--|| sampleLayout::ID : has >
+deviceLayout::ID ||--|{ device::layout_id : has <
+deviceLayout::gates_id ||--|{ gate::layout_id : has >
+
+!endsub FAB
+
+
+@enduml

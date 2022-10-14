@@ -1,0 +1,124 @@
+@startuml
+
+!includesub ERD_head.puml!HEAD
+
+!startsub MEASUREMENT
+
+entity "MeasurementSeries" as measSeries {
+    PK ID
+    --
+    FK measurements_id []
+    --
+    * name
+}
+
+entity "Measurement" as meas {
+    PK ID
+    --
+    FK device_id
+    FK measurement_type_id
+    FK measurement_settings_id
+    FK measurement_mapping_id
+    FK experiment_setup_id
+    FK measurement_script_id
+    FK measurement_series_id
+    FK measurement_data_id []
+    --
+    * name
+    * datetime
+    * user
+    * valid
+    comments
+}
+
+entity "MeasurementData" as measData {
+    PK ID
+    --
+    * name
+    * data_type
+    * path_to_data
+}
+
+entity "ExperimentSetup" as exp {
+    PK ID
+    --
+    * name
+    temperature of cryostat
+    instruments / channels
+    standard_settings
+    filters
+}
+
+entity "MeasurementScript" as measScript {
+    PK ID
+    --
+    * name
+    language
+    script
+}
+
+entity "MeasurementSettings" as measSettings {
+    PK ID
+    --
+    * name
+    settings
+}
+
+entity "MeasurementMapping" as measMapping {
+    PK ID
+    --
+    * name
+    mapping
+}
+
+entity "MeasurementType" as measType {
+    PK ID
+    --
+    FK script_templates_id []
+    --
+    * name
+    extractable_parameters
+}
+
+measType::script_template }|--|{ measScript::ID : provides >
+meas::measurement_series_id }|--|| measSeries::measurements_id
+meas::script_id }|--|| measScript::ID : uses >
+meas::measurement_type_id }|--|| measType::ID : according to >
+meas::measurement_settings_id }|--|| measSettings::ID : set to >
+meas::measurement_mapping_id }|--|| measMapping::ID
+meas::experiment_setup_id }|--|| exp::ID : performed on >
+meas::measurement_data_id ||--|{ measData::ID : measured >
+
+!endsub MEASUREMENT
+
+
+!startsub ANALYSIS
+
+entity "Analysis" as analysis {
+    PK ID
+    --
+    * name
+    method
+    results
+    script
+    software_filter
+}
+
+entity "AnalysisResult" as analysisResults {
+    ' ID resulting from analysis method and measurement ID?
+    PK ID
+    --
+    FK measurement_id
+    FK analysis_id
+    --
+    * name
+    extracted parameters and their values
+}
+
+analysisResults::analysis_id }|--|| analysis::ID : due to >
+analysisResults::measurement_id }|--|| meas::ID : due to >
+
+!endsub ANALYSIS
+
+
+@enduml

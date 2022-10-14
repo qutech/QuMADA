@@ -1,0 +1,14 @@
+@startuml
+
+!startsub HEAD
+
+left to right direction
+hide circle
+'skinparam linetype ortho
+
+!define PK <size:12><&key></size><b>
+!define FK <size:12><&link-intact></size><i>
+
+!endsub HEAD
+
+@enduml
