@@ -1,6 +1,7 @@
 @startuml
 
 !includesub ERD_head.puml!HEAD
+!includesub ERD_head.puml!KEYS
 
 !startsub MEASUREMENT
 
@@ -9,7 +10,7 @@ entity "MeasurementSeries" as measSeries {
     --
     FK measurements_id []
     --
-    * name
+    * name : str
 }
 
 entity "Measurement" as meas {
@@ -24,25 +25,25 @@ entity "Measurement" as meas {
     FK measurement_series_id
     FK measurement_data_id []
     --
-    * name
-    * datetime
-    * user
-    * valid
-    comments
+    * name : str
+    * datetime : date
+    * user : str
+    * valid : bool
+    comments : str
 }
 
 entity "MeasurementData" as measData {
     PK ID
     --
-    * name
-    * data_type
-    * path_to_data
+    * name : str
+    * data_type : str
+    * path_to_data : link
 }
 
 entity "ExperimentSetup" as exp {
     PK ID
     --
-    * name
+    * name : str
     temperature of cryostat
     instruments / channels
     standard_settings
@@ -52,23 +53,23 @@ entity "ExperimentSetup" as exp {
 entity "MeasurementScript" as measScript {
     PK ID
     --
-    * name
-    language
-    script
+    * name : str
+    language : str
+    script : str
 }
 
 entity "MeasurementSettings" as measSettings {
     PK ID
     --
-    * name
-    settings
+    * name : str
+    settings : str
 }
 
 entity "MeasurementMapping" as measMapping {
     PK ID
     --
-    * name
-    mapping
+    * name : str
+    mapping : str
 }
 
 entity "MeasurementType" as measType {
@@ -76,8 +77,8 @@ entity "MeasurementType" as measType {
     --
     FK script_templates_id []
     --
-    * name
-    extractable_parameters
+    * name : str
+    extractable_parameters : str
 }
 
 measType::script_template }|--|{ measScript::ID : provides >
@@ -97,7 +98,7 @@ meas::measurement_data_id ||--|{ measData::ID : measured >
 entity "Analysis" as analysis {
     PK ID
     --
-    * name
+    * name : str
     method
     results
     script
@@ -111,7 +112,7 @@ entity "AnalysisResult" as analysisResults {
     FK measurement_id
     FK analysis_id
     --
-    * name
+    * name : str
     extracted parameters and their values
 }
 

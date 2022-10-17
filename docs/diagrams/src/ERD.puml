@@ -1,6 +1,7 @@
 @startuml
 
 !includesub ERD_head.puml!HEAD
+!includesub ERD_head.puml!KEYS
 
 !includesub ERD_fab.puml!FAB
 
