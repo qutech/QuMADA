@@ -10,6 +10,8 @@ See below for a detailed description of each entity and its data fields.
 Fabrication
 -----------
 
+.. image:: diagrams/ERD_fab/ERD_fab.svg
+
 Wafer
 ^^^^^
 
@@ -189,4 +191,37 @@ Terminal
 Measurement
 -----------
 
-to be added...
+.. image:: diagrams/ERD_measurement/ERD_measurement.svg
+
+Measurement
+^^^^^^^^^^^
+
+MeasurementType
+^^^^^^^^^^^^^^^
+
+MeasurementSettings
+^^^^^^^^^^^^^^^^^^^
+
+MeasurementMapping
+^^^^^^^^^^^^^^^^^^
+
+MeasurementScript
+^^^^^^^^^^^^^^^^^
+
+MeasurementSeries
+^^^^^^^^^^^^^^^^^
+
+MeasurementData
+^^^^^^^^^^^^^^^
+
+ExperimentSetup
+^^^^^^^^^^^^^^^
+
+Analysis
+--------
+
+Analysis
+^^^^^^^^
+
+AnalysisResult
+^^^^^^^^^^^^^^
