@@ -60,3 +60,7 @@ measurement map_gates
 measurement script run
     Loads a measurement script, its setup, maps gates to instruments and runs the script.
     This combines all of the above commands.
+
+
+
+

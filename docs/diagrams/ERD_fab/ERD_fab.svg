@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="750px" preserveAspectRatio="none" style="width:746px;height:750px;background:#FFFFFF;" version="1.1" viewBox="0 0 746 750" width="746px" zoomAndPan="magnify"><defs><filter height="300%" id="f1ku47x3xbd71p" width="300%" x="-1" y="-1"><feGaussianBlur result="blurOut" stdDeviation="2.0"/><feColorMatrix in="blurOut" result="blurOut2" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .4 0"/><feOffset dx="4.0" dy="4.0" in="blurOut2" result="blurOut3"/><feBlend in="SourceGraphic" in2="blurOut3" mode="normal"/></filter></defs><g><!--MD5=[f7585ca0b1fb9716c5d2e99beede627f]
+class wafer--><rect codeLine="6" fill="#FEFECE" filter="url(#f1ku47x3xbd71p)" height="159.7813" id="wafer" style="stroke:#A80036;stroke-width:1.5;" width="134" x="7" y="7"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="32" x="58" y="24.457">Wafer</text><line style="stroke:#A80036;stroke-width:1.5;" x1="8" x2="140" y1="32.0938" y2="32.0938"/><path d="M19.5,38.9297 C18.12,38.9297 17,40.0497 17,41.4297 C17,41.5897 17,41.7497 17.03,41.8997 L14,44.9297 L14,46.9297 L17,46.9297 L17,44.9297 L19,44.9297 L19,43.9297 L19.03,43.8997 C19.18,43.9297 19.34,43.9297 19.5,43.9297 C20.88,43.9297 22,42.8097 22,41.4297 C22,40.0497 20.88,38.9297 19.5,38.9297 M20,39.9297 C20.55,39.9297 21,40.3797 21,40.9297 C21,41.4797 20.55,41.9297 20,41.9297 C19.45,41.9297 19,41.4797 19,40.9297 C19,40.3797 19.45,39.9297 20,39.9297 " fill="#000000" style="stroke:;stroke-width:0.0;stroke-dasharray:;"/><text fill="#000000" font-family="sans-serif" font-size="11" font-weight="bold" lengthAdjust="spacing" textLength="10" x="26" y="47.5127">ID</text><line style="stroke:#A80036;stroke-width:1.0;" x1="8" x2="140" y1="53.9297" y2="53.9297"/><path d="M19.88,60.7956 C19.7,60.8056 19.52,60.8256 19.35,60.8856 C19.08,60.9856 18.82,61.1356 18.6,61.3556 A0.5,0.5 0 1 0 19.29,62.0456 C19.4,61.9356 19.53,61.8756 19.67,61.8256 C20.02,61.7056 20.45,61.7556 20.73,62.0456 C21.12,62.4356 21.12,63.0856 20.73,63.4856 L19.23,64.9856 C18.79,65.4256 18.43,65.4656 18.17,65.4556 C17.91,65.4456 17.76,65.3256 17.76,65.3256 A0.5,0.5 0 1 0 17.26,66.2056 C17.6,66.4256 17.6,66.4256 18.1,66.4556 C18.6,66.4856 19.3,66.2956 19.91,65.6756 L21.41,64.1756 C22.19,63.3956 22.19,62.1356 21.41,61.3656 C21.13,61.0856 20.8,60.9156 20.44,60.8356 C20.26,60.7956 20.06,60.7956 19.88,60.8056 M17.88,63.1056 C17.38,63.0856 16.69,63.2556 16.1,63.8556 L14.6,65.3556 C13.82,66.1356 13.82,67.3956 14.6,68.1656 C15.16,68.7256 15.96,68.8856 16.66,68.6356 C16.93,68.5356 17.19,68.3856 17.41,68.1656 A0.5,0.5 0 1 0 16.72,67.4756 C16.61,67.5856 16.48,67.6456 16.34,67.6956 C15.99,67.8156 15.56,67.7656 15.28,67.4756 C14.89,67.0856 14.89,66.4356 15.28,66.0356 L16.78,64.5356 C17.18,64.1356 17.53,64.0856 17.81,64.0956 C18.09,64.1056 18.28,64.1856 18.28,64.1856 A0.5,0.5 0 1 0 18.72,63.3056 C18.38,63.1056 18.38,63.1056 17.88,63.0856 " fill="#000000" style="stroke:;stroke-width:0.0;stroke-dasharray:;"/><text fill="#000000" font-family="sans-serif" font-size="11" font-style="italic" lengthAdjust="spacing" textLength="48" x="26" y="69.3486">factory_id</text><line style="stroke:#A80036;stroke-width:1.0;" x1="8" x2="140" y1="75.7656" y2="75.7656"/><ellipse cx="18" cy="86.7656" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="48" x="27" y="91.1846">name : str</text><ellipse cx="18" cy="100.6016" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="108" x="27" y="105.0205">production_date : date</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="75" x="27" y="118.8564">description : str</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="99" x="27" y="132.6924">heterostructure : link</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="54" x="27" y="146.5283">recipe : link</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="51" x="27" y="160.3643">layout : str</text><!--MD5=[4ff43964c430846c98e016b63ddfc361]
+class factory--><rect codeLine="19" fill="#FEFECE" filter="url(#f1ku47x3xbd71p)" height="82.6016" id="factory" style="stroke:#A80036;stroke-width:1.5;" width="74" x="623" y="72.5"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="39" x="640.5" y="89.957">Factory</text><line style="stroke:#A80036;stroke-width:1.5;" x1="624" x2="696" y1="97.5938" y2="97.5938"/><path d="M635.5,104.4297 C634.12,104.4297 633,105.5497 633,106.9297 C633,107.0897 633,107.2497 633.03,107.3997 L630,110.4297 L630,112.4297 L633,112.4297 L633,110.4297 L635,110.4297 L635,109.4297 L635.03,109.3997 C635.18,109.4297 635.34,109.4297 635.5,109.4297 C636.88,109.4297 638,108.3097 638,106.9297 C638,105.5497 636.88,104.4297 635.5,104.4297 M636,105.4297 C636.55,105.4297 637,105.8797 637,106.4297 C637,106.9797 636.55,107.4297 636,107.4297 C635.45,107.4297 635,106.9797 635,106.4297 C635,105.8797 635.45,105.4297 636,105.4297 " fill="#000000" style="stroke:;stroke-width:0.0;stroke-dasharray:;"/><text fill="#000000" font-family="sans-serif" font-size="11" font-weight="bold" lengthAdjust="spacing" textLength="10" x="642" y="113.0127">ID</text><line style="stroke:#A80036;stroke-width:1.0;" x1="624" x2="696" y1="119.4297" y2="119.4297"/><ellipse cx="634" cy="130.4297" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="48" x="643" y="134.8486">name : str</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="0" x="646" y="148.6846"/><!--MD5=[feae7f6826fe1bf241773ea10c1cf353]
+class sample--><rect codeLine="26" fill="#FEFECE" filter="url(#f1ku47x3xbd71p)" height="187.4531" id="sample" style="stroke:#A80036;stroke-width:1.5;" width="134" x="278" y="155"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="43" x="323.5" y="172.457">Sample</text><line style="stroke:#A80036;stroke-width:1.5;" x1="279" x2="411" y1="180.0938" y2="180.0938"/><path d="M290.5,186.9297 C289.12,186.9297 288,188.0497 288,189.4297 C288,189.5897 288,189.7497 288.03,189.8997 L285,192.9297 L285,194.9297 L288,194.9297 L288,192.9297 L290,192.9297 L290,191.9297 L290.03,191.8997 C290.18,191.9297 290.34,191.9297 290.5,191.9297 C291.88,191.9297 293,190.8097 293,189.4297 C293,188.0497 291.88,186.9297 290.5,186.9297 M291,187.9297 C291.55,187.9297 292,188.3797 292,188.9297 C292,189.4797 291.55,189.9297 291,189.9297 C290.45,189.9297 290,189.4797 290,188.9297 C290,188.3797 290.45,187.9297 291,187.9297 " fill="#000000" style="stroke:;stroke-width:0.0;stroke-dasharray:;"/><text fill="#000000" font-family="sans-serif" font-size="11" font-weight="bold" lengthAdjust="spacing" textLength="10" x="297" y="195.5127">ID</text><line style="stroke:#A80036;stroke-width:1.0;" x1="279" x2="411" y1="201.9297" y2="201.9297"/><path d="M290.88,208.7956 C290.7,208.8056 290.52,208.8256 290.35,208.8856 C290.08,208.9856 289.82,209.1356 289.6,209.3556 A0.5,0.5 0 1 0 290.29,210.0456 C290.4,209.9356 290.53,209.8756 290.67,209.8256 C291.02,209.7056 291.45,209.7556 291.73,210.0456 C292.12,210.4356 292.12,211.0856 291.73,211.4856 L290.23,212.9856 C289.79,213.4256 289.43,213.4656 289.17,213.4556 C288.91,213.4456 288.76,213.3256 288.76,213.3256 A0.5,0.5 0 1 0 288.26,214.2056 C288.6,214.4256 288.6,214.4256 289.1,214.4556 C289.6,214.4856 290.3,214.2956 290.91,213.6756 L292.41,212.1756 C293.19,211.3956 293.19,210.1356 292.41,209.3656 C292.13,209.0856 291.8,208.9156 291.44,208.8356 C291.26,208.7956 291.06,208.7956 290.88,208.8056 M288.88,211.1056 C288.38,211.0856 287.69,211.2556 287.1,211.8556 L285.6,213.3556 C284.82,214.1356 284.82,215.3956 285.6,216.1656 C286.16,216.7256 286.96,216.8856 287.66,216.6356 C287.93,216.5356 288.19,216.3856 288.41,216.1656 A0.5,0.5 0 1 0 287.72,215.4756 C287.61,215.5856 287.48,215.6456 287.34,215.6956 C286.99,215.8156 286.56,215.7656 286.28,215.4756 C285.89,215.0856 285.89,214.4356 286.28,214.0356 L287.78,212.5356 C288.18,212.1356 288.53,212.0856 288.81,212.0956 C289.09,212.1056 289.28,212.1856 289.28,212.1856 A0.5,0.5 0 1 0 289.72,211.3056 C289.38,211.1056 289.38,211.1056 288.88,211.0856 " fill="#000000" style="stroke:;stroke-width:0.0;stroke-dasharray:;"/><text fill="#000000" font-family="sans-serif" font-size="11" font-style="italic" lengthAdjust="spacing" textLength="41" x="297" y="217.3486">wafer_id</text><path d="M290.88,222.6316 C290.7,222.6416 290.52,222.6616 290.35,222.7216 C290.08,222.8216 289.82,222.9716 289.6,223.1916 A0.5,0.5 0 1 0 290.29,223.8816 C290.4,223.7716 290.53,223.7116 290.67,223.6616 C291.02,223.5416 291.45,223.5916 291.73,223.8816 C292.12,224.2716 292.12,224.9216 291.73,225.3216 L290.23,226.8216 C289.79,227.2616 289.43,227.3016 289.17,227.2916 C288.91,227.2816 288.76,227.1616 288.76,227.1616 A0.5,0.5 0 1 0 288.26,228.0416 C288.6,228.2616 288.6,228.2616 289.1,228.2916 C289.6,228.3216 290.3,228.1316 290.91,227.5116 L292.41,226.0116 C293.19,225.2316 293.19,223.9716 292.41,223.2016 C292.13,222.9216 291.8,222.7516 291.44,222.6716 C291.26,222.6316 291.06,222.6316 290.88,222.6416 M288.88,224.9416 C288.38,224.9216 287.69,225.0916 287.1,225.6916 L285.6,227.1916 C284.82,227.9716 284.82,229.2316 285.6,230.0016 C286.16,230.5616 286.96,230.7216 287.66,230.4716 C287.93,230.3716 288.19,230.2216 288.41,230.0016 A0.5,0.5 0 1 0 287.72,229.3116 C287.61,229.4216 287.48,229.4816 287.34,229.5316 C286.99,229.6516 286.56,229.6016 286.28,229.3116 C285.89,228.9216 285.89,228.2716 286.28,227.8716 L287.78,226.3716 C288.18,225.9716 288.53,225.9216 288.81,225.9316 C289.09,225.9416 289.28,226.0216 289.28,226.0216 A0.5,0.5 0 1 0 289.72,225.1416 C289.38,224.9416 289.38,224.9416 288.88,224.9216 " fill="#000000" style="stroke:;stroke-width:0.0;stroke-dasharray:;"/><text fill="#000000" font-family="sans-serif" font-size="11" font-style="italic" lengthAdjust="spacing" textLength="48" x="297" y="231.1846">factory_id</text><path d="M290.88,236.4675 C290.7,236.4775 290.52,236.4975 290.35,236.5575 C290.08,236.6575 289.82,236.8075 289.6,237.0275 A0.5,0.5 0 1 0 290.29,237.7175 C290.4,237.6075 290.53,237.5475 290.67,237.4975 C291.02,237.3775 291.45,237.4275 291.73,237.7175 C292.12,238.1075 292.12,238.7575 291.73,239.1575 L290.23,240.6575 C289.79,241.0975 289.43,241.1375 289.17,241.1275 C288.91,241.1175 288.76,240.9975 288.76,240.9975 A0.5,0.5 0 1 0 288.26,241.8775 C288.6,242.0975 288.6,242.0975 289.1,242.1275 C289.6,242.1575 290.3,241.9675 290.91,241.3475 L292.41,239.8475 C293.19,239.0675 293.19,237.8075 292.41,237.0375 C292.13,236.7575 291.8,236.5875 291.44,236.5075 C291.26,236.4675 291.06,236.4675 290.88,236.4775 M288.88,238.7775 C288.38,238.7575 287.69,238.9275 287.1,239.5275 L285.6,241.0275 C284.82,241.8075 284.82,243.0675 285.6,243.8375 C286.16,244.3975 286.96,244.5575 287.66,244.3075 C287.93,244.2075 288.19,244.0575 288.41,243.8375 A0.5,0.5 0 1 0 287.72,243.1475 C287.61,243.2575 287.48,243.3175 287.34,243.3675 C286.99,243.4875 286.56,243.4375 286.28,243.1475 C285.89,242.7575 285.89,242.1075 286.28,241.7075 L287.78,240.2075 C288.18,239.8075 288.53,239.7575 288.81,239.7675 C289.09,239.7775 289.28,239.8575 289.28,239.8575 A0.5,0.5 0 1 0 289.72,238.9775 C289.38,238.7775 289.38,238.7775 288.88,238.7575 " fill="#000000" style="stroke:;stroke-width:0.0;stroke-dasharray:;"/><text fill="#000000" font-family="sans-serif" font-size="11" font-style="italic" lengthAdjust="spacing" textLength="44" x="297" y="245.0205">layout_id</text><line style="stroke:#A80036;stroke-width:1.0;" x1="279" x2="411" y1="251.4375" y2="251.4375"/><ellipse cx="289" cy="262.4375" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="48" x="298" y="266.8564">name : str</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="75" x="298" y="280.6924">description : str</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="108" x="298" y="294.5283">fabrication_date : date</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="54" x="298" y="308.3643">recipe : link</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="57" x="298" y="322.2002">creator : str</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="69" x="298" y="336.0361">fabricator : str</text><!--MD5=[5eefcca8879b614446c793004d144c77]
+class sampleLayout--><rect codeLine="41" fill="#FEFECE" filter="url(#f1ku47x3xbd71p)" height="82.6016" id="sampleLayout" style="stroke:#A80036;stroke-width:1.5;" width="101" x="609.5" y="224.5"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="79" x="620.5" y="241.957">SampleLayout</text><line style="stroke:#A80036;stroke-width:1.5;" x1="610.5" x2="709.5" y1="249.5938" y2="249.5938"/><path d="M622,256.4297 C620.62,256.4297 619.5,257.5497 619.5,258.9297 C619.5,259.0897 619.5,259.2497 619.53,259.3997 L616.5,262.4297 L616.5,264.4297 L619.5,264.4297 L619.5,262.4297 L621.5,262.4297 L621.5,261.4297 L621.53,261.3997 C621.68,261.4297 621.84,261.4297 622,261.4297 C623.38,261.4297 624.5,260.3097 624.5,258.9297 C624.5,257.5497 623.38,256.4297 622,256.4297 M622.5,257.4297 C623.05,257.4297 623.5,257.8797 623.5,258.4297 C623.5,258.9797 623.05,259.4297 622.5,259.4297 C621.95,259.4297 621.5,258.9797 621.5,258.4297 C621.5,257.8797 621.95,257.4297 622.5,257.4297 " fill="#000000" style="stroke:;stroke-width:0.0;stroke-dasharray:;"/><text fill="#000000" font-family="sans-serif" font-size="11" font-weight="bold" lengthAdjust="spacing" textLength="10" x="628.5" y="265.0127">ID</text><line style="stroke:#A80036;stroke-width:1.0;" x1="610.5" x2="709.5" y1="271.4297" y2="271.4297"/><ellipse cx="620.5" cy="282.4297" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="48" x="629.5" y="286.8486">name : str</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="75" x="629.5" y="300.6846">description : str</text><!--MD5=[83a79df82c2dbbe82307647156e04bb1]
+class device--><rect codeLine="48" fill="#FEFECE" filter="url(#f1ku47x3xbd71p)" height="228.9609" id="device" style="stroke:#A80036;stroke-width:1.5;" width="144" x="588" y="349"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="37" x="641.5" y="366.457">Device</text><line style="stroke:#A80036;stroke-width:1.5;" x1="589" x2="731" y1="374.0938" y2="374.0938"/><path d="M600.5,380.9297 C599.12,380.9297 598,382.0497 598,383.4297 C598,383.5897 598,383.7497 598.03,383.8997 L595,386.9297 L595,388.9297 L598,388.9297 L598,386.9297 L600,386.9297 L600,385.9297 L600.03,385.8997 C600.18,385.9297 600.34,385.9297 600.5,385.9297 C601.88,385.9297 603,384.8097 603,383.4297 C603,382.0497 601.88,380.9297 600.5,380.9297 M601,381.9297 C601.55,381.9297 602,382.3797 602,382.9297 C602,383.4797 601.55,383.9297 601,383.9297 C600.45,383.9297 600,383.4797 600,382.9297 C600,382.3797 600.45,381.9297 601,381.9297 " fill="#000000" style="stroke:;stroke-width:0.0;stroke-dasharray:;"/><text fill="#000000" font-family="sans-serif" font-size="11" font-weight="bold" lengthAdjust="spacing" textLength="10" x="607" y="389.5127">ID</text><line style="stroke:#A80036;stroke-width:1.0;" x1="589" x2="731" y1="395.9297" y2="395.9297"/><path d="M600.88,402.7956 C600.7,402.8056 600.52,402.8256 600.35,402.8856 C600.08,402.9856 599.82,403.1356 599.6,403.3556 A0.5,0.5 0 1 0 600.29,404.0456 C600.4,403.9356 600.53,403.8756 600.67,403.8256 C601.02,403.7056 601.45,403.7556 601.73,404.0456 C602.12,404.4356 602.12,405.0856 601.73,405.4856 L600.23,406.9856 C599.79,407.4256 599.43,407.4656 599.17,407.4556 C598.91,407.4456 598.76,407.3256 598.76,407.3256 A0.5,0.5 0 1 0 598.26,408.2056 C598.6,408.4256 598.6,408.4256 599.1,408.4556 C599.6,408.4856 600.3,408.2956 600.91,407.6756 L602.41,406.1756 C603.19,405.3956 603.19,404.1356 602.41,403.3656 C602.13,403.0856 601.8,402.9156 601.44,402.8356 C601.26,402.7956 601.06,402.7956 600.88,402.8056 M598.88,405.1056 C598.38,405.0856 597.69,405.2556 597.1,405.8556 L595.6,407.3556 C594.82,408.1356 594.82,409.3956 595.6,410.1656 C596.16,410.7256 596.96,410.8856 597.66,410.6356 C597.93,410.5356 598.19,410.3856 598.41,410.1656 A0.5,0.5 0 1 0 597.72,409.4756 C597.61,409.5856 597.48,409.6456 597.34,409.6956 C596.99,409.8156 596.56,409.7656 596.28,409.4756 C595.89,409.0856 595.89,408.4356 596.28,408.0356 L597.78,406.5356 C598.18,406.1356 598.53,406.0856 598.81,406.0956 C599.09,406.1056 599.28,406.1856 599.28,406.1856 A0.5,0.5 0 1 0 599.72,405.3056 C599.38,405.1056 599.38,405.1056 598.88,405.0856 " fill="#000000" style="stroke:;stroke-width:0.0;stroke-dasharray:;"/><text fill="#000000" font-family="sans-serif" font-size="11" font-style="italic" lengthAdjust="spacing" textLength="51" x="607" y="411.3486">sample_id</text><path d="M600.88,416.6316 C600.7,416.6416 600.52,416.6616 600.35,416.7216 C600.08,416.8216 599.82,416.9716 599.6,417.1916 A0.5,0.5 0 1 0 600.29,417.8816 C600.4,417.7716 600.53,417.7116 600.67,417.6616 C601.02,417.5416 601.45,417.5916 601.73,417.8816 C602.12,418.2716 602.12,418.9216 601.73,419.3216 L600.23,420.8216 C599.79,421.2616 599.43,421.3016 599.17,421.2916 C598.91,421.2816 598.76,421.1616 598.76,421.1616 A0.5,0.5 0 1 0 598.26,422.0416 C598.6,422.2616 598.6,422.2616 599.1,422.2916 C599.6,422.3216 600.3,422.1316 600.91,421.5116 L602.41,420.0116 C603.19,419.2316 603.19,417.9716 602.41,417.2016 C602.13,416.9216 601.8,416.7516 601.44,416.6716 C601.26,416.6316 601.06,416.6316 600.88,416.6416 M598.88,418.9416 C598.38,418.9216 597.69,419.0916 597.1,419.6916 L595.6,421.1916 C594.82,421.9716 594.82,423.2316 595.6,424.0016 C596.16,424.5616 596.96,424.7216 597.66,424.4716 C597.93,424.3716 598.19,424.2216 598.41,424.0016 A0.5,0.5 0 1 0 597.72,423.3116 C597.61,423.4216 597.48,423.4816 597.34,423.5316 C596.99,423.6516 596.56,423.6016 596.28,423.3116 C595.89,422.9216 595.89,422.2716 596.28,421.8716 L597.78,420.3716 C598.18,419.9716 598.53,419.9216 598.81,419.9316 C599.09,419.9416 599.28,420.0216 599.28,420.0216 A0.5,0.5 0 1 0 599.72,419.1416 C599.38,418.9416 599.38,418.9416 598.88,418.9216 " fill="#000000" style="stroke:;stroke-width:0.0;stroke-dasharray:;"/><text fill="#000000" font-family="sans-serif" font-size="11" font-style="italic" lengthAdjust="spacing" textLength="44" x="607" y="425.1846">layout_id</text><line style="stroke:#A80036;stroke-width:1.0;" x1="589" x2="731" y1="431.6016" y2="431.6016"/><ellipse cx="599" cy="442.6016" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="48" x="608" y="447.0205">name : str</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="75" x="608" y="460.8564">description : str</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="65" x="608" y="474.6924">comment : str</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="112" x="608" y="488.5283">layout_parameters : str</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="52" x="608" y="502.3643">status : str</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="78" x="608" y="516.2002">microscope : str</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="68" x="608" y="530.0361">annealing : str</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="118" x="608" y="543.8721">responsible_person : str</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="89" x="608" y="557.708">deliver_date : date</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="100" x="608" y="571.5439">current_location : str</text><!--MD5=[96da207b98d527e8b4c96f6a2328d41d]
+class deviceLayout--><rect codeLine="68" fill="#FEFECE" filter="url(#f1ku47x3xbd71p)" height="159.7813" id="deviceLayout" style="stroke:#A80036;stroke-width:1.5;" width="101" x="294.5" y="489"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="73" x="308.5" y="506.457">DeviceLayout</text><line style="stroke:#A80036;stroke-width:1.5;" x1="295.5" x2="394.5" y1="514.0938" y2="514.0938"/><path d="M307,520.9297 C305.62,520.9297 304.5,522.0497 304.5,523.4297 C304.5,523.5897 304.5,523.7497 304.53,523.8997 L301.5,526.9297 L301.5,528.9297 L304.5,528.9297 L304.5,526.9297 L306.5,526.9297 L306.5,525.9297 L306.53,525.8997 C306.68,525.9297 306.84,525.9297 307,525.9297 C308.38,525.9297 309.5,524.8097 309.5,523.4297 C309.5,522.0497 308.38,520.9297 307,520.9297 M307.5,521.9297 C308.05,521.9297 308.5,522.3797 308.5,522.9297 C308.5,523.4797 308.05,523.9297 307.5,523.9297 C306.95,523.9297 306.5,523.4797 306.5,522.9297 C306.5,522.3797 306.95,521.9297 307.5,521.9297 " fill="#000000" style="stroke:;stroke-width:0.0;stroke-dasharray:;"/><text fill="#000000" font-family="sans-serif" font-size="11" font-weight="bold" lengthAdjust="spacing" textLength="10" x="313.5" y="529.5127">ID</text><line style="stroke:#A80036;stroke-width:1.0;" x1="295.5" x2="394.5" y1="535.9297" y2="535.9297"/><path d="M307.38,542.7956 C307.2,542.8056 307.02,542.8256 306.85,542.8856 C306.58,542.9856 306.32,543.1356 306.1,543.3556 A0.5,0.5 0 1 0 306.79,544.0456 C306.9,543.9356 307.03,543.8756 307.17,543.8256 C307.52,543.7056 307.95,543.7556 308.23,544.0456 C308.62,544.4356 308.62,545.0856 308.23,545.4856 L306.73,546.9856 C306.29,547.4256 305.93,547.4656 305.67,547.4556 C305.41,547.4456 305.26,547.3256 305.26,547.3256 A0.5,0.5 0 1 0 304.76,548.2056 C305.1,548.4256 305.1,548.4256 305.6,548.4556 C306.1,548.4856 306.8,548.2956 307.41,547.6756 L308.91,546.1756 C309.69,545.3956 309.69,544.1356 308.91,543.3656 C308.63,543.0856 308.3,542.9156 307.94,542.8356 C307.76,542.7956 307.56,542.7956 307.38,542.8056 M305.38,545.1056 C304.88,545.0856 304.19,545.2556 303.6,545.8556 L302.1,547.3556 C301.32,548.1356 301.32,549.3956 302.1,550.1656 C302.66,550.7256 303.46,550.8856 304.16,550.6356 C304.43,550.5356 304.69,550.3856 304.91,550.1656 A0.5,0.5 0 1 0 304.22,549.4756 C304.11,549.5856 303.98,549.6456 303.84,549.6956 C303.49,549.8156 303.06,549.7656 302.78,549.4756 C302.39,549.0856 302.39,548.4356 302.78,548.0356 L304.28,546.5356 C304.68,546.1356 305.03,546.0856 305.31,546.0956 C305.59,546.1056 305.78,546.1856 305.78,546.1856 A0.5,0.5 0 1 0 306.22,545.3056 C305.88,545.1056 305.88,545.1056 305.38,545.0856 " fill="#000000" style="stroke:;stroke-width:0.0;stroke-dasharray:;"/><text fill="#000000" font-family="sans-serif" font-size="11" font-style="italic" lengthAdjust="spacing" textLength="70" x="313.5" y="551.3486">terminals_id []</text><line style="stroke:#A80036;stroke-width:1.0;" x1="295.5" x2="394.5" y1="557.7656" y2="557.7656"/><ellipse cx="305.5" cy="568.7656" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="48" x="314.5" y="573.1846">name : str</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="75" x="314.5" y="587.0205">description : str</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="64" x="314.5" y="600.8564">image : bytea</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="57" x="314.5" y="614.6924">creator : str</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="73" x="314.5" y="628.5283">layout_file : link</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="73" x="314.5" y="642.3643">layout_cell : str</text><!--MD5=[8aabf11e8043fa0dee4c5b12e2ed7122]
+class terminal--><rect codeLine="81" fill="#FEFECE" filter="url(#f1ku47x3xbd71p)" height="118.2734" id="terminal" style="stroke:#A80036;stroke-width:1.5;" width="87" x="616.5" y="618"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="49" x="635.5" y="635.457">Terminal</text><line style="stroke:#A80036;stroke-width:1.5;" x1="617.5" x2="702.5" y1="643.0938" y2="643.0938"/><path d="M629,649.9297 C627.62,649.9297 626.5,651.0497 626.5,652.4297 C626.5,652.5897 626.5,652.7497 626.53,652.8997 L623.5,655.9297 L623.5,657.9297 L626.5,657.9297 L626.5,655.9297 L628.5,655.9297 L628.5,654.9297 L628.53,654.8997 C628.68,654.9297 628.84,654.9297 629,654.9297 C630.38,654.9297 631.5,653.8097 631.5,652.4297 C631.5,651.0497 630.38,649.9297 629,649.9297 M629.5,650.9297 C630.05,650.9297 630.5,651.3797 630.5,651.9297 C630.5,652.4797 630.05,652.9297 629.5,652.9297 C628.95,652.9297 628.5,652.4797 628.5,651.9297 C628.5,651.3797 628.95,650.9297 629.5,650.9297 " fill="#000000" style="stroke:;stroke-width:0.0;stroke-dasharray:;"/><text fill="#000000" font-family="sans-serif" font-size="11" font-weight="bold" lengthAdjust="spacing" textLength="10" x="635.5" y="658.5127">ID</text><line style="stroke:#A80036;stroke-width:1.0;" x1="617.5" x2="702.5" y1="664.9297" y2="664.9297"/><path d="M629.38,671.7956 C629.2,671.8056 629.02,671.8256 628.85,671.8856 C628.58,671.9856 628.32,672.1356 628.1,672.3556 A0.5,0.5 0 1 0 628.79,673.0456 C628.9,672.9356 629.03,672.8756 629.17,672.8256 C629.52,672.7056 629.95,672.7556 630.23,673.0456 C630.62,673.4356 630.62,674.0856 630.23,674.4856 L628.73,675.9856 C628.29,676.4256 627.93,676.4656 627.67,676.4556 C627.41,676.4456 627.26,676.3256 627.26,676.3256 A0.5,0.5 0 1 0 626.76,677.2056 C627.1,677.4256 627.1,677.4256 627.6,677.4556 C628.1,677.4856 628.8,677.2956 629.41,676.6756 L630.91,675.1756 C631.69,674.3956 631.69,673.1356 630.91,672.3656 C630.63,672.0856 630.3,671.9156 629.94,671.8356 C629.76,671.7956 629.56,671.7956 629.38,671.8056 M627.38,674.1056 C626.88,674.0856 626.19,674.2556 625.6,674.8556 L624.1,676.3556 C623.32,677.1356 623.32,678.3956 624.1,679.1656 C624.66,679.7256 625.46,679.8856 626.16,679.6356 C626.43,679.5356 626.69,679.3856 626.91,679.1656 A0.5,0.5 0 1 0 626.22,678.4756 C626.11,678.5856 625.98,678.6456 625.84,678.6956 C625.49,678.8156 625.06,678.7656 624.78,678.4756 C624.39,678.0856 624.39,677.4356 624.78,677.0356 L626.28,675.5356 C626.68,675.1356 627.03,675.0856 627.31,675.0956 C627.59,675.1056 627.78,675.1856 627.78,675.1856 A0.5,0.5 0 1 0 628.22,674.3056 C627.88,674.1056 627.88,674.1056 627.38,674.0856 " fill="#000000" style="stroke:;stroke-width:0.0;stroke-dasharray:;"/><text fill="#000000" font-family="sans-serif" font-size="11" font-style="italic" lengthAdjust="spacing" textLength="44" x="635.5" y="680.3486">layout_id</text><line style="stroke:#A80036;stroke-width:1.0;" x1="617.5" x2="702.5" y1="686.7656" y2="686.7656"/><ellipse cx="627.5" cy="697.7656" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="48" x="636.5" y="702.1846">name : str</text><ellipse cx="627.5" cy="711.6016" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="61" x="636.5" y="716.0205">function : str</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="56" x="636.5" y="729.8564">number : int</text><!--MD5=[15f713d0342201cfcc3c40616b1d12e2]
+link wafer to sample--><path codeLine="91" d="M150.06,42.43 C232.34,51.47 186.66,201.5 268.91,210.57 " fill="none" id="wafer-sample" style="stroke:#A80036;stroke-width:1.0;"/><line style="stroke:#A80036;stroke-width:1.0;" x1="269.0115" x2="277.3215" y1="210.5713" y2="205.0086"/><line style="stroke:#A80036;stroke-width:1.0;" x1="269.0115" x2="276.6785" y1="210.5713" y2="216.9914"/><line style="stroke:#A80036;stroke-width:1.0;" x1="269.0115" x2="277" y1="210.5713" y2="211"/><line style="stroke:#A80036;stroke-width:1.0;" x1="267.2287" x2="266.8" y1="206.4698" y2="214.4584"/><line style="stroke:#A80036;stroke-width:1.0;" x1="145.7799" x2="146.2086" y1="46.2086" y2="38.2201"/><line style="stroke:#A80036;stroke-width:1.0;" x1="148.7756" x2="149.2043" y1="46.3694" y2="38.3809"/><line style="stroke:#A80036;stroke-width:1.0;" x1="149.9885" x2="142" y1="42.4287" y2="42"/><polygon fill="#000000" points="181.1139,44.0928,183.935,53.1754,188.7348,49.7826,181.1139,44.0928" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="46" x="193" y="53.4951">made of</text><!--MD5=[0e59b744b182324f2bffe1c5120d6abc]
+link wafer to factory--><path codeLine="92" d="M150.08,63.02 C354.87,64.12 409.03,106.85 613.72,107.98 " fill="none" id="wafer-factory" style="stroke:#A80036;stroke-width:1.0;"/><line style="stroke:#A80036;stroke-width:1.0;" x1="618.0143" x2="617.9857" y1="103.9857" y2="111.9857"/><line style="stroke:#A80036;stroke-width:1.0;" x1="615.0143" x2="614.9858" y1="103.975" y2="111.975"/><line style="stroke:#A80036;stroke-width:1.0;" x1="614.0001" x2="622" y1="107.9714" y2="108"/><line style="stroke:#A80036;stroke-width:1.0;" x1="149.9999" x2="141.9786" y1="63.0286" y2="69"/><line style="stroke:#A80036;stroke-width:1.0;" x1="149.9999" x2="142.0214" y1="63.0286" y2="57"/><line style="stroke:#A80036;stroke-width:1.0;" x1="149.9999" x2="142" y1="63.0286" y2="63"/><line style="stroke:#A80036;stroke-width:1.0;" x1="151.9857" x2="152.0142" y1="67.0357" y2="59.0357"/><polygon fill="#000000" points="304.9767,61.6584,296.2575,57.8601,295.6901,63.7106,304.9767,61.6584" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="85" x="309" y="66.4951">is produced by</text><!--MD5=[e2a2ea025c9cbe5e47e743e99f54ab8a]
+link sample to device--><path codeLine="93" d="M421.2,189.49 C431.55,188.1 436.46,184.27 450,183 C494.25,178.85 516.09,154.27 550,183 C585.93,213.43 542.68,383.31 579.21,403.12 " fill="none" id="sample-device" style="stroke:#A80036;stroke-width:1.0;"/><line style="stroke:#A80036;stroke-width:1.0;" x1="579.2223" x2="588.4047" y1="403.1271" y2="399.1667"/><line style="stroke:#A80036;stroke-width:1.0;" x1="579.2223" x2="585.5953" y1="403.1271" y2="410.8333"/><line style="stroke:#A80036;stroke-width:1.0;" x1="579.2223" x2="587" y1="403.1271" y2="405"/><line style="stroke:#A80036;stroke-width:1.0;" x1="578.2144" x2="576.3414" y1="398.77" y2="406.5477"/><line style="stroke:#A80036;stroke-width:1.0;" x1="417.2421" x2="416.7422" y1="193.7422" y2="185.7579"/><line style="stroke:#A80036;stroke-width:1.0;" x1="420.2363" x2="419.7364" y1="193.5548" y2="185.5704"/><line style="stroke:#A80036;stroke-width:1.0;" x1="420.9844" x2="413" y1="189.5001" y2="190"/><polygon fill="#000000" points="480.5267,157.1559,483.5426,166.1756,488.2683,162.6803,480.5267,157.1559" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="28" x="492.5" y="166.4951">is on</text><!--MD5=[20dfa17e4404b9aee9917eb8ca6ebe97]
+link sample to factory--><path codeLine="94" d="M421.06,224.07 C476.57,225.02 499.49,234.93 550,205 C593.66,179.12 571.14,115.49 613.9,108.61 " fill="none" id="sample-factory" style="stroke:#A80036;stroke-width:1.0;"/><line style="stroke:#A80036;stroke-width:1.0;" x1="617.7116" x2="618.3109" y1="104.3109" y2="112.2884"/><line style="stroke:#A80036;stroke-width:1.0;" x1="614.72" x2="615.3194" y1="104.5357" y2="112.5132"/><line style="stroke:#A80036;stroke-width:1.0;" x1="614.0225" x2="622" y1="108.5994" y2="108"/><line style="stroke:#A80036;stroke-width:1.0;" x1="420.9998" x2="412.9571" y1="224.0571" y2="229.9998"/><line style="stroke:#A80036;stroke-width:1.0;" x1="420.9998" x2="413.0429" y1="224.0571" y2="218.0002"/><line style="stroke:#A80036;stroke-width:1.0;" x1="420.9998" x2="413" y1="224.0571" y2="224"/><line style="stroke:#A80036;stroke-width:1.0;" x1="422.9712" x2="423.0283" y1="228.0713" y2="220.0715"/><polygon fill="#000000" points="459.2899,193.6073,450.0197,195.7322,453.0392,200.7752,459.2899,193.6073" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="85" x="464" y="201.4951">is produced by</text><!--MD5=[bfee60eb236904afb5027cfddcbcec64]
+link sample to sampleLayout--><path codeLine="95" d="M420.95,238.33 C432.91,242.89 433.83,257.89 450,263 C514.76,283.48 536.61,261.83 600.94,260.11 " fill="none" id="sample-sampleLayout" style="stroke:#A80036;stroke-width:1.0;"/><line style="stroke:#A80036;stroke-width:1.0;" x1="604.9433" x2="605.0575" y1="256.0575" y2="264.0567"/><line style="stroke:#A80036;stroke-width:1.0;" x1="601.9436" x2="602.0579" y1="256.1004" y2="264.0996"/><line style="stroke:#A80036;stroke-width:1.0;" x1="601.0008" x2="609" y1="260.1143" y2="260"/><line style="stroke:#A80036;stroke-width:1.0;" x1="420.8912" x2="412.0136" y1="238.3152" y2="242.9184"/><line style="stroke:#A80036;stroke-width:1.0;" x1="420.8912" x2="413.9864" y1="238.3152" y2="231.0816"/><line style="stroke:#A80036;stroke-width:1.0;" x1="420.8912" x2="413" y1="238.3152" y2="237"/><line style="stroke:#A80036;stroke-width:1.0;" x1="422.2063" x2="423.5215" y1="242.5896" y2="234.6984"/><polygon fill="#000000" points="491.9638,254.7764,483.3373,250.7722,482.6312,256.6075,491.9638,254.7764" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="21" x="496" y="259.4951">has</text><!--MD5=[b43127a3444c671885073759722b91aa]
+link deviceLayout to device--><path codeLine="96" d="M405.25,523.73 C491,518.05 493.09,423.77 578.99,418.25 " fill="none" id="deviceLayout-device" style="stroke:#A80036;stroke-width:1.0;"/><line style="stroke:#A80036;stroke-width:1.0;" x1="579.0037" x2="586.8179" y1="418.2427" y2="412.0028"/><line style="stroke:#A80036;stroke-width:1.0;" x1="579.0037" x2="587.1821" y1="418.2427" y2="423.9972"/><line style="stroke:#A80036;stroke-width:1.0;" x1="579.0037" x2="587" y1="418.2427" y2="418"/><line style="stroke:#A80036;stroke-width:1.0;" x1="576.8832" x2="577.126" y1="414.3053" y2="422.3016"/><line style="stroke:#A80036;stroke-width:1.0;" x1="401.1333" x2="400.8621" y1="527.8621" y2="519.8667"/><line style="stroke:#A80036;stroke-width:1.0;" x1="404.1316" x2="403.8603" y1="527.7603" y2="519.7649"/><line style="stroke:#A80036;stroke-width:1.0;" x1="404.9954" x2="397" y1="523.7287" y2="524"/><polygon fill="#000000" points="482.726,419.7706,491.9829,417.5887,488.9325,412.5644,482.726,419.7706" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="21" x="496" y="422.4951">has</text><!--MD5=[90ece39ed29b4c2993c6886ebbb09010]
+link deviceLayout to terminal--><path codeLine="97" d="M405.06,545.23 C507.04,551.07 505.92,667.84 607.82,673.77 " fill="none" id="deviceLayout-terminal" style="stroke:#A80036;stroke-width:1.0;"/><line style="stroke:#A80036;stroke-width:1.0;" x1="608.0033" x2="616.1714" y1="673.7715" y2="668.0024"/><line style="stroke:#A80036;stroke-width:1.0;" x1="608.0033" x2="615.8286" y1="673.7715" y2="679.9976"/><line style="stroke:#A80036;stroke-width:1.0;" x1="608.0033" x2="616" y1="673.7715" y2="674"/><line style="stroke:#A80036;stroke-width:1.0;" x1="606.1183" x2="605.8898" y1="669.716" y2="677.7128"/><line style="stroke:#A80036;stroke-width:1.0;" x1="400.8839" x2="401.1128" y1="549.1128" y2="541.1161"/><line style="stroke:#A80036;stroke-width:1.0;" x1="403.8827" x2="404.1116" y1="549.1986" y2="541.2019"/><line style="stroke:#A80036;stroke-width:1.0;" x1="404.9967" x2="397" y1="545.2289" y2="545"/><polygon fill="#000000" points="491.2229,551.8529,485.1572,544.5278,482.01,549.4921,491.2229,551.8529" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="21" x="496" y="554.4951">has</text><!--MD5=[dfe9afba6189d8b41218c2a8e3e7d8e7]
+@startuml
+
+!includesub ERD_head.puml!HEAD
+!includesub ERD_head.puml!KEYS
+
+!startsub FAB
+entity "Wafer" as wafer {
+    PK ID
+    - -
+    FK factory_id
+    - -
+    * name : str
+    * production_date : date
+    description : str
+    heterostructure : link
+    recipe : link
+    layout : str
+}
+
+entity "Factory" as factory {
+    PK ID
+    - -
+    * name : str
+
+}
+
+entity "Sample" as sample {
+    PK ID
+    - -
+    FK wafer_id
+    FK factory_id
+    FK layout_id
+    - -
+    * name : str
+    description : str
+    fabrication_date : date
+    recipe : link
+    creator : str
+    fabricator : str
+}
+
+entity "SampleLayout" as sampleLayout {
+    PK ID
+    - -
+    * name : str
+    description : str
+}
+
+entity "Device" as device {
+    PK ID
+    - -
+    FK sample_id
+    FK layout_id
+    - -
+    * name : str
+    description : str
+    comment : str
+    layout_parameters : str
+    status : str
+    microscope : str
+    annealing : str
+    responsible_person : str
+    deliver_date : date
+    current_location : str
+}
+
+' Verknüpfung DeviceLayout und SampleLayout?
+' Wie lässt sich das verknüpfen?
+entity "DeviceLayout" as deviceLayout {
+    PK ID
+    - -
+    FK terminals_id []
+    - -
+    * name : str
+    description : str
+    image : bytea
+    creator : str
+    layout_file : link
+    layout_cell : str
+}
+
+entity "Terminal" as terminal {
+    PK ID
+    - -
+    FK layout_id
+    - -
+    * name : str
+    * function : str
+    number : int
+}
+
+wafer::ID ||- -|{ sample::wafer_id : made of <
+wafer::factory_id }|- -|| factory::ID : is produced by >
+sample::ID ||- -|{ device::sample_id : is on <
+sample::factory_id }|- -|| factory::ID : is produced by >
+sample::layout_id }|- -|| sampleLayout::ID : has >
+deviceLayout::ID ||- -|{ device::layout_id : has <
+deviceLayout::terminals_id ||- -|{ terminal::layout_id : has >
+
+!endsub FAB
+
+
+@enduml
+
+@startuml
+
+
+left to right direction
+hide circle
+
+
+
+
+entity "Wafer" as wafer {
+    <size:12><&key></size><b> ID
+    - -
+    <size:12><&link-intact></size><i> factory_id
+    - -
+    * name : str
+    * production_date : date
+    description : str
+    heterostructure : link
+    recipe : link
+    layout : str
+}
+
+entity "Factory" as factory {
+    <size:12><&key></size><b> ID
+    - -
+    * name : str
+
+}
+
+entity "Sample" as sample {
+    <size:12><&key></size><b> ID
+    - -
+    <size:12><&link-intact></size><i> wafer_id
+    <size:12><&link-intact></size><i> factory_id
+    <size:12><&link-intact></size><i> layout_id
+    - -
+    * name : str
+    description : str
+    fabrication_date : date
+    recipe : link
+    creator : str
+    fabricator : str
+}
+
+entity "SampleLayout" as sampleLayout {
+    <size:12><&key></size><b> ID
+    - -
+    * name : str
+    description : str
+}
+
+entity "Device" as device {
+    <size:12><&key></size><b> ID
+    - -
+    <size:12><&link-intact></size><i> sample_id
+    <size:12><&link-intact></size><i> layout_id
+    - -
+    * name : str
+    description : str
+    comment : str
+    layout_parameters : str
+    status : str
+    microscope : str
+    annealing : str
+    responsible_person : str
+    deliver_date : date
+    current_location : str
+}
+
+entity "DeviceLayout" as deviceLayout {
+    <size:12><&key></size><b> ID
+    - -
+    <size:12><&link-intact></size><i> terminals_id []
+    - -
+    * name : str
+    description : str
+    image : bytea
+    creator : str
+    layout_file : link
+    layout_cell : str
+}
+
+entity "Terminal" as terminal {
+    <size:12><&key></size><b> ID
+    - -
+    <size:12><&link-intact></size><i> layout_id
+    - -
+    * name : str
+    * function : str
+    number : int
+}
+
+wafer::ID ||- -|{ sample::wafer_id : made of <
+wafer::factory_id }|- -|| factory::ID : is produced by >
+sample::ID ||- -|{ device::sample_id : is on <
+sample::factory_id }|- -|| factory::ID : is produced by >
+sample::layout_id }|- -|| sampleLayout::ID : has >
+deviceLayout::ID ||- -|{ device::layout_id : has <
+deviceLayout::terminals_id ||- -|{ terminal::layout_id : has >
+
+
+
+@enduml
+
+PlantUML version 1.2022.0(Tue Jan 11 17:16:42 CET 2022)
+(GPL source distribution)
+Java Runtime: OpenJDK Runtime Environment
+JVM: OpenJDK 64-Bit Server VM
+Default Encoding: Cp1252
+Language: de
+Country: DE
+--></g></svg>

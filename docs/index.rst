@@ -15,6 +15,7 @@ Welcome to qtools's documentation!
    usage
    tutorials
    qtools
+   examples
 
 
 
