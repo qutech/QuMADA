@@ -15,19 +15,24 @@ Fabrication
 Wafer
 ^^^^^
 
-name
+name (str)
   Wafer name
 
-production_date
+production_date (date)
   Date of finished production
 
-heterostructure
-  Design of the heterostructure
-
-description
+description (str)
   Description of wafer
 
-layout
+heterostructure (link)
+  Design of the heterostructure
+
+recipe (link)
+  Recipe followed, if all samples fabricated from wafer share the same recipe.
+  Includes notes on fabrication done.
+
+
+layout (str)
   Layout, if all samples fabricated from wafer share the same layout
 
 
@@ -35,29 +40,29 @@ layout
 Factory
 ^^^^^^^
 
+name (str)
+  Factory name
 
 
 Sample
 ^^^^^^
 
-
-
-name
+name (str)
   Sample name
 
-description
+description (str)
   Description of the sample
 
-creator
+fabrication_date (date)
+  Date of the finished fabrication
+
+creator (str)
   Name of creator of the recipe
 
-recipe
+recipe (link)
   Recipe followed, includes notes on fabrication done
 
-fabrication_date
-  (new) Date of finished fabrication
-
-fabricator
+fabricator (str)
   Name of person responsible for fabrication
 
 
@@ -65,55 +70,47 @@ fabricator
 SampleLayout
 ^^^^^^^^^^^^
 
-name
+name (str)
   Layout name
 
-description
+description (str)
   Description of the layout
-
-~mask~
 
 
 Device
 ^^^^^^
 
-name
+name (str)
   Device name
 
-description
+description (str)
   Description of the device
 
-comment
+comment (str)
   Comment on the state of the device
 
-~link_to_details~
-
-
-layout_parameters
+layout_parameters (str)
   Relevant parameters of the device layout
 
-status
+status (str)
   State of the device
   *This should probably be limited to a few choices*
 
-microscope
+microscope (str)
   Results of microscope investigation
   *This should probably be limited to a few choices*
 
-annealing
+annealing (str)
   Annealing parameters
   *Is this still necessary?*
 
-~owner~ responsible person
+responsible_person (str)
   Person responsible for the device at the current time
 
-~receiver~
-
-
-deliver_date
+deliver_date (date)
   Date when the device was delivered to the responsible person
 
-current_location
+current_location (str)
   Current location of the device
 
 
@@ -121,25 +118,23 @@ current_location
 DeviceLayout
 ^^^^^^^^^^^^
 
-name
+name (str)
   Device layout name
 
-description
+description (str)
   Description of the device layout
 
-~mask~
+image (bytea)
+  Image of the DeviceLayout
+  *Is this necessary?*
 
-
-image
-  ?
-
-creator
+creator (str)
   Name of creator of the layout
 
-layout_file
+layout_file (link)
   Link to layout design file
 
-layout_cell
+layout_cell (str)
   Cell referencing the location of the specific device layout
   *Should default to "Top"*
 
@@ -148,42 +143,50 @@ layout_cell
 Terminal
 ^^^^^^^^
 
+name (str)
+  Terminal layout name
+
+function (str)
+  Function of the terminal in the device
+
+number (int)
+  Assigned terminal number
 
 
-Measurement
------------
+.. Measurement
+.. -----------
 
-.. image:: diagrams/ERD_measurement/ERD_measurement.svg
+.. .. image:: diagrams/ERD_measurement/ERD_measurement.svg
 
-Measurement
-^^^^^^^^^^^
+.. Measurement
+.. ^^^^^^^^^^^
 
-MeasurementType
-^^^^^^^^^^^^^^^
+.. MeasurementType
+.. ^^^^^^^^^^^^^^^
 
-MeasurementSettings
-^^^^^^^^^^^^^^^^^^^
+.. MeasurementSettings
+.. ^^^^^^^^^^^^^^^^^^^
 
-MeasurementMapping
-^^^^^^^^^^^^^^^^^^
+.. MeasurementMapping
+.. ^^^^^^^^^^^^^^^^^^
 
-MeasurementScript
-^^^^^^^^^^^^^^^^^
+.. MeasurementScript
+.. ^^^^^^^^^^^^^^^^^
 
-MeasurementSeries
-^^^^^^^^^^^^^^^^^
+.. MeasurementSeries
+.. ^^^^^^^^^^^^^^^^^
 
-MeasurementData
-^^^^^^^^^^^^^^^
+.. MeasurementData
+.. ^^^^^^^^^^^^^^^
 
-ExperimentSetup
-^^^^^^^^^^^^^^^
+.. ExperimentSetup
+.. ^^^^^^^^^^^^^^^
 
-Analysis
---------
+.. Analysis
+.. --------
 
-Analysis
-^^^^^^^^
+.. Analysis
+.. ^^^^^^^^
 
-AnalysisResult
-^^^^^^^^^^^^^^
+.. AnalysisResult
+.. ^^^^^^^^^^^^^^
