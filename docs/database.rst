@@ -134,18 +134,21 @@ Relevant parameters of the device layout
 :type: str
 
 State of the device
+
 *This should probably be limited to a few choices*
 
 .. py:data:: microscope
 :type: str
 
 Results of microscope investigation
+
 *This should probably be limited to a few choices*
 
 .. py:data:: annealing
 :type: str
 
 Annealing parameters
+
 *Is this still necessary?*
 
 .. py:data:: responsible_person
@@ -198,6 +201,7 @@ Link to layout design file
 :type: str
 
 Cell referencing the location of the specific device layout
+
 *Should default to "Top"*
 
 
