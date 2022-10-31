@@ -15,142 +15,210 @@ Fabrication
 Wafer
 ^^^^^
 
-name (str)
-  Wafer name
+.. py:data:: name
+:type: str
 
-production_date (date)
-  Date of finished production
+Wafer name
 
-description (str)
-  Description of wafer
+.. py:data:: production_date
+:type: date
 
-heterostructure (link)
-  Design of the heterostructure
+Date of finished production
 
-recipe (link)
-  Recipe followed, if all samples fabricated from wafer share the same recipe.
-  Includes notes on fabrication done.
+.. py:data:: description
+:type: str
+
+Description of wafer
+
+.. py:data:: heterostructure
+:type: link
+
+Design of the heterostructure
+
+.. py:data:: recipe
+:type: link
+
+Recipe followed, if all samples fabricated from wafer share the same recipe.
+Includes notes on fabrication done.
 
 
-layout (str)
-  Layout, if all samples fabricated from wafer share the same layout
+.. py:data:: layout
+:type: str
+
+Layout, if all samples fabricated from wafer share the same layout
 
 
 
 Factory
 ^^^^^^^
 
-name (str)
-  Factory name
+.. py:data:: name
+:type: str
+
+Factory name
 
 
 Sample
 ^^^^^^
 
-name (str)
-  Sample name
+.. py:data:: name
+:type: str
 
-description (str)
-  Description of the sample
+Sample name
 
-fabrication_date (date)
-  Date of the finished fabrication
+.. py:data:: description
+:type: str
 
-creator (str)
-  Name of creator of the recipe
+Description of the sample
 
-recipe (link)
-  Recipe followed, includes notes on fabrication done
+.. py:data:: fabrication_date
+:type: date
 
-fabricator (str)
-  Name of person responsible for fabrication
+Date of the finished fabrication
+
+.. py:data:: creator
+:type: str
+
+Name of creator of the recipe
+
+.. py:data:: recipe
+:type: link
+
+Recipe followed, includes notes on fabrication done
+
+.. py:data:: fabricator
+:type: str
+
+Name of person responsible for fabrication
 
 
 
 SampleLayout
 ^^^^^^^^^^^^
 
-name (str)
-  Layout name
+.. py:data:: name
+:type: str
 
-description (str)
-  Description of the layout
+Layout name
+
+.. py:data:: description
+:type: str
+
+Description of the layout
 
 
 Device
 ^^^^^^
 
-name (str)
-  Device name
+.. py:data:: name
+:type: str
 
-description (str)
-  Description of the device
+Device name
 
-comment (str)
-  Comment on the state of the device
+.. py:data:: description
+:type: str
 
-layout_parameters (str)
-  Relevant parameters of the device layout
+Description of the device
 
-status (str)
-  State of the device
-  *This should probably be limited to a few choices*
+.. py:data:: comment
+:type: str
 
-microscope (str)
-  Results of microscope investigation
-  *This should probably be limited to a few choices*
+Comment on the state of the device
 
-annealing (str)
-  Annealing parameters
-  *Is this still necessary?*
+.. py:data:: layout_parameters
+:type: str
 
-responsible_person (str)
-  Person responsible for the device at the current time
+Relevant parameters of the device layout
 
-deliver_date (date)
-  Date when the device was delivered to the responsible person
+.. py:data:: status
+:type: str
 
-current_location (str)
-  Current location of the device
+State of the device
+*This should probably be limited to a few choices*
+
+.. py:data:: microscope
+:type: str
+
+Results of microscope investigation
+*This should probably be limited to a few choices*
+
+.. py:data:: annealing
+:type: str
+
+Annealing parameters
+*Is this still necessary?*
+
+.. py:data:: responsible_person
+:type: str
+
+Person responsible for the device at the current time
+
+.. py:data:: deliver_date
+:type: date
+
+Date when the device was delivered to the responsible person
+
+.. py:data:: current_location
+:type: str
+
+Current location of the device
 
 
 
 DeviceLayout
 ^^^^^^^^^^^^
 
-name (str)
-  Device layout name
+.. py:data:: name
+:type: str
 
-description (str)
-  Description of the device layout
+Device layout name
 
-image (bytea)
-  Image of the DeviceLayout
-  *Is this necessary?*
+.. py:data:: description
+:type: str
 
-creator (str)
-  Name of creator of the layout
+Description of the device layout
 
-layout_file (link)
-  Link to layout design file
+.. py:data:: image
+:type: bytea
 
-layout_cell (str)
-  Cell referencing the location of the specific device layout
-  *Should default to "Top"*
+Image of the DeviceLayout
+*Is this necessary?*
+
+.. py:data:: creator
+:type: str
+
+Name of creator of the layout
+
+.. py:data:: layout_file
+:type: link
+
+Link to layout design file
+
+.. py:data:: layout_cell
+:type: str
+
+Cell referencing the location of the specific device layout
+*Should default to "Top"*
 
 
 
 Terminal
 ^^^^^^^^
 
-name (str)
-  Terminal layout name
+.. py:data:: name
+:type: str
 
-function (str)
-  Function of the terminal in the device
+Terminal layout name
 
-number (int)
-  Assigned terminal number
+.. py:data:: function
+:type: str
+
+Function of the terminal in the device
+
+.. py:data:: number
+:type: int
+
+Assigned terminal number
 
 
 .. Measurement
