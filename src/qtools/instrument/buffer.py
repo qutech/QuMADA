@@ -60,6 +60,7 @@ def map_buffers(
         else:
             trigger = buffer.AVAILABLE_TRIGGERS[chosen - 1]
         buffer.trigger = trigger
+        print(f"{buffer.trigger=}")
 
 
 class Buffer(ABC):
@@ -67,13 +68,28 @@ class Buffer(ABC):
 
     SETTING_NAMES: set[str] = {
         "trigger",
-        "trigger_type",
+        "trigger_mode",
         "trigger_threshold",
         "delay",
         "num_points",
         "channel",
         "sample_rate",
+        "delay"
     }
+    
+    TRIGGER_MODE_NAMES: set[str] = {
+        "continuous",
+        "edge",
+        "tracking_edge",
+        "pulse",
+        "tracking_pulse",
+        "digital"
+        }
+    
+    TRIGGER_MODE_POLARITY_NAMES: set[str] = {
+        "positive",
+        "negative",
+        "both"}
 
     AVAILABLE_TRIGGERS: list[str] = []
 
@@ -165,6 +181,7 @@ class SR830Buffer(Buffer):
         """Sets instrument related settings for the buffer."""
         # TODO: sample_rate mit delay und num_points abgleichen
         # TODO: Trigger und SR abgleichen
+        # TODO: Are there different trigger modes?
         if not settings:
             settings = {}
 
@@ -272,6 +289,19 @@ class MFLIBuffer(Buffer):
         "aux_in_1",
         "aux_in_2",
     ]
+    
+    TRIGGER_MODE_MAPPING: dict = {
+        "continuous" : 0,
+        "edge": 1,
+        "pulse": 3,
+        "tracking_edge": 4,
+        "tracking_pulse": 7,
+        "digital": 6}
+    
+    TRIGGER_MODE_POLARITY_MAPPING: dict = {
+        "positive": 1,
+        "negative": 2,
+        "both": 3}
 
     def __init__(self, mfli: MFLI):
         self._session = mfli.session
@@ -293,9 +323,18 @@ class MFLIBuffer(Buffer):
             self._channel = settings["channel"]
 
         device.demods[self._channel].enable(True)
-
-        self._daq.type(settings.setdefault("trigger_type", 0))
-
+        
+        #Validate Trigger mode:
+        if settings.get("trigger_mode", None) not in self.TRIGGER_MODE_NAMES:
+            print(f"{settings.get('trigger_mode', None)} is not in {self.TRIGGER_MODE_NAMES}. Setting trigger mode to default value.")
+        if settings.get("trigger_mode_polarity", None) not in self.TRIGGER_MODE_POLARITY_NAMES:
+            print(f"{settings.get('trigger_mode_polarity', None)} is not in {self.TRIGGER_MODE_POLARITY_NAMES}. Setting trigger mode to default value.")
+        
+        self._daq.type(self.TRIGGER_MODE_MAPPING.get(
+            settings.get("trigger_mode", "continuous")))
+        self._daq.edge(self.TRIGGER_MODE_POLARITY_MAPPING.get(
+            settings.get("trigger_mode_polarity", "positive")))
+        
         self._daq.grid.mode(2)
 
         if "trigger_threshold" in settings:
@@ -312,6 +351,9 @@ class MFLIBuffer(Buffer):
             self._daq.count(num_bursts)
             self._daq.duration(settings["burst_duration"])
             self._daq.grid.cols(num_cols)
+            
+        if "delay" in settings:
+            self._daq.delay(settings["delay"])
 
     @property
     def trigger(self):
@@ -319,6 +361,7 @@ class MFLIBuffer(Buffer):
 
     @trigger.setter
     def trigger(self, trigger: str | None) -> None:
+        #TODO: Inform user about automatic changes of settings
         if trigger is None:
             self._daq.type(0)
         elif trigger in self.AVAILABLE_TRIGGERS:
@@ -331,11 +374,11 @@ class MFLIBuffer(Buffer):
                 self._daq.type(6)
             elif trigger == "aux_in_1":
                 self._daq.triggernode(samplenode.AuxIn0)
-                if self._daq.type() not in (1, 3):
+                if self._daq.type() not in (1, 3, 4, 7):
                     self._daq.type(1)
             elif trigger == "aux_in_2":
                 self._daq.triggernode(samplenode.AuxIn1)
-                if self._daq.type() not in (1, 3):
+                if self._daq.type() not in (1, 3, 4, 7):
                     self._daq.type(1)
         else:
             raise BufferException(f"Trigger input '{trigger}' is not supported.")
@@ -387,4 +430,4 @@ class MFLIBuffer(Buffer):
         ...
 
     def _get_node_from_parameter(self, parameter: Parameter):
-        return self._device.demods[self._channel].sample.__getattr__(parameter.label)
+        return self._device.demods[self._channel].sample.__getattr__(parameter.signal_name[1])
