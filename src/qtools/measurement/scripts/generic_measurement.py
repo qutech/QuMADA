@@ -11,7 +11,7 @@ from qcodes.utils.dataset.doNd import LinSweep, do1d, do2d, dond
 from qtools.measurement.doNd_enhanced.doNd_enhanced import _interpret_breaks, do1d_parallel, do1d_parallel_asym
 from qtools.measurement.measurement import MeasurementScript
 from qtools.utils.ramp_parameter import ramp_or_set_parameter
-from qtools.utils.utils import _validate_mapping
+#from qtools.utils.utils import _validate_mapping
 
 class Generic_1D_Sweep(MeasurementScript):
     def run(self, **dond_kwargs) -> list:
