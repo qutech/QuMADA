@@ -1,5 +1,6 @@
 import time
 from copy import deepcopy
+from time import sleep
 
 import qcodes as qc
 from qcodes.dataset.measurements import Measurement
@@ -7,9 +8,10 @@ from qcodes.instrument.specialized_parameters import ElapsedTimeParameter
 from qcodes.dataset.experiment_container import load_or_create_experiment
 from qcodes.instrument import Parameter
 from qcodes.utils.dataset.doNd import LinSweep, do1d, do2d, dond
-from qtools.measurement.doNd_enhanced.doNd_enhanced import _interpret_breaks, do1d_parallel
+from qtools.measurement.doNd_enhanced.doNd_enhanced import _interpret_breaks, do1d_parallel, do1d_parallel_asym
 from qtools.measurement.measurement import MeasurementScript
 from qtools.utils.ramp_parameter import ramp_or_set_parameter
+from qtools.utils.utils import _validate_mapping
 
 class Generic_1D_Sweep(MeasurementScript):
     def run(self, **dond_kwargs) -> list:
@@ -103,10 +105,36 @@ class Generic_nD_Sweep(MeasurementScript):
                     *tuple(self.gettable_channels),
                     measurement_name=measurement_name,
                     break_condition=_interpret_breaks(self.break_conditions),
+                    use_threads=True,
                     **dond_kwargs)
         self.reset()
         return data
 
+class Generic_1D_parallel_asymm_Sweep(MeasurementScript):
+    """
+    Sweeps all dynamic parameters in parallel, setpoints of first parameter are
+    used for all parameters.
+    """
+    def run(self, **do1d_kwargs):
+        self.initialize()
+        backsweep_after_break = self.settings.get("backsweep_after_break", False)
+        wait_time = self.settings.get("wait_time", 5)
+        dynamic_params = list()
+        for sweep in self.dynamic_sweeps:
+            ramp_or_set_parameter(sweep._param, sweep.get_setpoints()[0])
+            dynamic_params.append(sweep.param)
+        time.sleep(wait_time)
+        data = do1d_parallel_asym(*tuple(self.gettable_channels),
+                            param_set=dynamic_params,
+                            setpoints = [sweep.get_setpoints() for sweep in self.dynamic_sweeps],
+                            delay = self.dynamic_sweeps[0]._delay,
+                            measurement_name=self.metadata.measurement.name or "measurement",
+                            break_condition = _interpret_breaks(self.break_conditions),
+                            backsweep_after_break = backsweep_after_break,
+                            **do1d_kwargs
+                            )
+        return data
+    
 class Generic_1D_parallel_Sweep(MeasurementScript):
     """
     Sweeps all dynamic parameters in parallel, setpoints of first parameter are
