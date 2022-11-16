@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from qtools.data.metadata import Metadata
+from qtools_metadata.metadata import Metadata
 from qtools.measurement.measurement import MeasurementScript
 
 

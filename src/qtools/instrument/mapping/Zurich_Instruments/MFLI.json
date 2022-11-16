@@ -1,10 +1,15 @@
 {
     "parameter_names": {
-        "lockin_IDN": "IDN",
-        "lockin_amplitude": "amplitude",
-        "lockin_current": "current",
-        "lockin_frequency": "frequency",
-        "lockin_output_enabled": "output_enabled",
-        "lockin_phase": "phase"
+        "IDN": "IDN",
+        "amplitude": "amplitude",
+        "current": "current",
+        "current_x_component" : "current_x_component",
+        "current_y_component" : "current_y_component",
+        "frequency": "frequency",
+        "output_enabled": "output_enabled",
+        "phase": "phase",
+        "time_constant": "demod0_time_constant",
+        "filter_order": "demod0_order",
+        "output_range": "output_range"
     }
 }

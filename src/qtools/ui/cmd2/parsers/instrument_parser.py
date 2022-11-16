@@ -5,7 +5,7 @@ from cmd2 import Cmd, Cmd2ArgumentParser, CommandSet, with_argparser
 from qcodes.instrument.base import Instrument
 from qcodes.instrument.visa import VisaInstrument
 
-from qtools.instrument.instrument import is_instrument
+from qtools.instrument.instrument import is_instrument_class
 from qtools.instrument.mapping.base import (
     _generate_mapping_stub,
     add_mapping_to_instrument,
@@ -170,7 +170,7 @@ class InstrumentCommandSet(CommandSet):
     def instrument_generate_mapping(self, args):
         # generate a mapping stub from an initialized instrument
         instrument = self._cmd.station.components[args.instrument]
-        assert is_instrument(instrument)
+        assert is_instrument_class(instrument)
         _generate_mapping_stub(instrument, args.file)
 
     # function mapping

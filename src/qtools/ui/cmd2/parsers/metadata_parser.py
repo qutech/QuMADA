@@ -4,7 +4,7 @@ import pprint
 import yaml
 from cmd2 import Cmd, Cmd2ArgumentParser, CommandSet, with_argparser
 
-from qtools.data.metadata import Metadata
+from qtools_metadata.metadata import Metadata
 
 
 class MetadataCommandSet(CommandSet):

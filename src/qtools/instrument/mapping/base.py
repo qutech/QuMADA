@@ -1,16 +1,40 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Dict, Iterable, Mapping, Set, Union
+from abc import ABC, abstractmethod
+from typing import Any, Iterable, Mapping
 
+import jsonschema
 from qcodes.instrument.base import Instrument
 from qcodes.instrument.parameter import Parameter
 from qcodes.utils.metadata import Metadatable
+from qtools_metadata.measurement import MeasurementMapping
+from qtools_metadata.metadata import Metadata
 
 
 class MappingError(Exception):
     """Exception is raised, if an error occured during Mapping."""
-    ...
+
+
+class InstrumentMapping(ABC):
+    def __init__(self, mapping_path: str | None):
+        if mapping_path:
+            self._mapping = _load_instrument_mapping(mapping_path)
+
+    @property
+    def mapping(self) -> dict:
+        return self._mapping
+
+    @abstractmethod
+    def ramp(
+        self,
+        parameters: list[Parameter],
+        *,
+        start_values: list[float] | None = None,
+        end_values: list[float],
+        ramp_time: float,
+    ) -> None:
+        """Wrapper to ramp the provided parameters"""
 
 
 def filter_flatten_parameters(node) -> dict[Any, Parameter]:
@@ -31,7 +55,12 @@ def filter_flatten_parameters(node) -> dict[Any, Parameter]:
             values = list(node.values()) if isinstance(node, dict) else list(node)
         except KeyError:
             values = [node]
-
+        except IndexError:
+            values = []
+        # TODO: Lines 37 and 38 are only a hotfix for problems with the MFLI,
+        # The index error is raised somewhere within QCoDeS because the MFLI
+        # driver just adds keys that are missing instead of raising the KeyError
+        # properly. We should look into this later...
         for value in values:
             if isinstance(value, Parameter):
                 instrument_parameters[value.full_name] = value
@@ -65,8 +94,21 @@ def _load_instrument_mapping(path: str) -> Any:
     Returns:
         Any: Parsed JSON-object
     """
+    mapping_structure = {
+        "type": "object",
+        "properties": {
+            "parameter_names": {
+                "type": "object",
+                "additionalProperties": {"type": "string"},
+            }
+        },
+        "required": ["parameter_names"],
+    }
+
     with open(path) as file:
-        return json.load(file)
+        mapping_data = json.load(file)
+    jsonschema.validate(mapping_data, schema=mapping_structure)
+    return mapping_data
 
 
 def add_mapping_to_instrument(instrument: Instrument,
@@ -81,7 +123,9 @@ def add_mapping_to_instrument(instrument: Instrument,
         path (str): Path to the JSON file.
     """
     # TODO: chosen instrument name should not influence the mapping
-    mapping = _load_instrument_mapping(path)
+    helper_mapping = _load_instrument_mapping(path)
+    mapping = {}
+    mapping["parameter_names"] = {f"{instrument.name}_{key}":parameter for (key, parameter) in helper_mapping["parameter_names"].items()}
     parameters: dict[Any, Parameter] = filter_flatten_parameters(instrument)
     mapped_parameters = ((key, parameter) for key, parameter in parameters.items() if key in mapping["parameter_names"])
     for key, parameter in mapped_parameters:
@@ -113,7 +157,7 @@ def _generate_mapping_stub(instrument: Instrument,
     # Create mapping stub from flat dict of parameters
     mapping = {}
     parameters: dict[Any, Parameter] = filter_flatten_parameters(instrument)
-    mapping["parameter_names"] = {key: value.name for key, value in parameters.items()}
+    mapping["parameter_names"] = {key.removeprefix(f"{instrument.name}_"): value.name for key, value in parameters.items()}
 
     # Dump JSON file
     with open(path, "w") as file:
@@ -125,6 +169,9 @@ def map_gates_to_instruments(
     gate_parameters: Mapping[Any, Mapping[Any, Parameter] | Parameter],
     existing_gate_parameters: Mapping[Any, Mapping[Any, Parameter] | Parameter]
     | None = None,
+    *,
+    metadata: Metadata | None = None,
+    map_manually: bool = False,
 ) -> None:
     """
     Maps the gates, that were defined in the MeasurementScript to the instruments, that are initialized in QCoDeS.
@@ -134,12 +181,16 @@ def map_gates_to_instruments(
         gate_parameters (Mapping[Any, Union[Mapping[Any, Parameter], Parameter]]): Gates, as defined in the measurement script
         existing_gate_parameters (Mapping[Any, Union[Mapping[Any, Parameter], Parameter]] | None): Already existing mapping
                 that is used to automatically create the mapping for already known gates without user input.
+        metadata (Metadata | None): If provided, add mapping to the metadata object.
+        map_manually (bool): If set to True, don't try to automatically map parameters to gates. Defaults to False.
     """
     if existing_gate_parameters is None:
         existing_gate_parameters = {}
 
     # get all parameters in one flat list for the mapping process
     instrument_parameters = filter_flatten_parameters(components)
+    # TODO: We have to distinguish multi channel/module instruments. Possible approach:
+    #       [parameter]._instrument should be InstrumentChannel or InstrumentModule type
     for key, gate in gate_parameters.items():
         if isinstance(gate, Parameter):
             # TODO: map single parameter
@@ -177,17 +228,20 @@ def map_gates_to_instruments(
                         chosen_instrument = list(components.values())[int(chosen)]
                     chosen_instrument_parameters = {k: v for k, v in instrument_parameters.items() if v.root_instrument is chosen_instrument}
                     try:
+                        if map_manually:
+                            raise MappingError("map_manually set, mapping manually.")
                         # Only use chosen instrument's parameters for mapping
                         _map_gate_to_instrument(gate, chosen_instrument_parameters)
                         # Remove mapped parameters from parameter list
+                        # TODO: remove all parameters from Channel, if parent is a channel
                         keys_to_remove = (key for key in chosen_instrument_parameters.keys() if chosen_instrument_parameters[key] in gate.values())
                         for key in keys_to_remove:
                             instrument_parameters.pop(key, None)
 
-                    except MappingError as e:
+                    except MappingError as ex:
                         # Could not map instrument, do it manually
                         # TODO: Map to multiple instruments
-                        print(e)
+                        print(ex)
                         _map_gate_parameters_to_instrument_parameters(gate, chosen_instrument_parameters)
                         # Remove mapped parameters from parameter list
                         keys_to_remove = (key for key in chosen_instrument_parameters.keys() if chosen_instrument_parameters[key] in gate.values())
@@ -196,7 +250,14 @@ def map_gates_to_instruments(
                     break
                 except (IndexError, ValueError):
                     continue
-    print("Mapping:" + str(gate_parameters))
+    j = json.dumps(gate_parameters, default=lambda o: str(o))
+    # Add mapping to metadata, if provided
+    if metadata is not None:
+        if not metadata.measurement.mapping:
+            metadata.measurement.mapping = MeasurementMapping.create(
+                "automatic-mapping"
+            )
+        metadata.measurement.mapping.mapping = json.dumps(j)
 
 
 def _map_gate_to_instrument(gate: Mapping[Any, Parameter],

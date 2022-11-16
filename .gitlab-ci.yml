@@ -1,40 +1,25 @@
 image: python:3.9
 
-variables:
-  # Change pip's cache directory to be inside the project directory since we can
-  # only cache local items.
-  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
-  GIT_SUBMODULE_STRATEGY: normal
-
-# Pip's cache doesn't store the python packages
-# https://pip.pypa.io/en/stable/reference/pip_install/#caching
-#
-# If you want to also cache the installed packages, you have to install
-# them in a virtualenv and cache it as well.
-cache:
-  key:
-    $CI_COMMIT_BRANCH
-  paths:
-    - .cache/pip
-
 stages:
   - static_analysis
   - test
+  - deploy
 
-.global_script_before: &global_script_before
+before_script:
   - python -V  # Print out python version for debugging
   - pip install virtualenv
   - virtualenv venv
   - source venv/bin/activate
+  - regex='.*@ git+\(ssh\|https\):\/\/\(git@\)\?\(git-ce\.rwth-aachen\.de\/\)'
+  - sed -n "s/$regex/git+https:\/\/gitlab-ci-token:\${CI_JOB_TOKEN}@\3/p" setup.cfg >> ci_requirements.txt
+  - sed -i "/$regex/d" setup.cfg
   - pip install -r ci_requirements.txt
 
 pylint:
   stage: static_analysis
   allow_failure: true
-  before_script:
-  - *global_script_before
-  - pip install pylint pylint-gitlab
   script:
+  - pip install pylint pylint-gitlab
   - pylint --exit-zero --output-format=pylint_gitlab.GitlabCodeClimateReporter src > codeclimate.json
   artifacts:
     when: always
@@ -43,13 +28,28 @@ pylint:
 
 unit_test:
   stage: test
-  before_script:
-  - *global_script_before
-  - pip install pytest pytest-cov pytest-httpserver
   script:
+  - pip install pytest pytest-cov pytest-mock pytest-cases pytest-httpserver
   - pytest --junitxml=report.xml --cov=src --cov-report=xml --cov-report=term src/tests
+  coverage: /^TOTAL.+?(\d+%)$/
   artifacts:
     when: always
     reports:
       junit: report.xml
-      cobertura: coverage.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+
+pages:
+  stage: deploy
+  script:
+  - pip install sphinx sphinx_autodoc_typehints sphinx_autopackagesummary sphinx_rtd_theme
+  - sphinx-build -b html docs public
+  artifacts:
+    paths:
+    - public
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: always
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+      when: manual

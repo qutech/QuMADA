@@ -1,0 +1,153 @@
+#%% Imports
+import json
+import pathlib
+import subprocess
+
+import IPython.lib.backgroundjobs as bg
+from plottr.apps import inspectr
+
+from qcodes.station import Station
+from qcodes.instrument_drivers.Harvard.Decadac import Decadac
+from qcodes.instrument_drivers.stanford_research.SR830 import SR830
+from qcodes.instrument_drivers.tektronix.Keithley_2400 import Keithley_2400
+from qcodes.instrument_drivers.QDevil.QDevil_QDAC import QDac
+from qcodes.dataset import (
+    Measurement,
+    experiments,
+    initialise_or_create_database_at,
+    load_by_run_spec,
+    load_or_create_experiment,
+)
+from qcodes.monitor import monitor as qcmon
+
+import qtools_metadata.db as db
+from qtools_metadata.metadata import Metadata
+from qtools.instrument.mapping import (
+    add_mapping_to_instrument,
+    DECADAC_MAPPING,
+    SR830_MAPPING,
+    KEITHLEY_2400_MAPPING,
+    QDAC_MAPPING,
+    MFLI_MAPPING)
+from qtools.instrument.mapping.base import map_gates_to_instruments
+from qtools.instrument.custom_drivers.ZI.MFLI import MFLI
+from qtools.measurement.scripts import (
+    Generic_1D_Sweep,
+    Generic_nD_Sweep,
+    Generic_1D_parallel_Sweep,
+    Timetrace)
+from qtools.utils import parameter_file_helpers as param_helpers
+from qtools.utils.load_from_sqlite_db import load_db
+from qtools.utils.generate_sweeps import generate_sweep, replace_parameter_settings
+from qtools.utils.ramp_parameter import *
+
+#%% Experiment Setup
+
+# Setup qcodes station
+station = Station()
+
+# Setup instruments
+# Call add_mapping_to_instrument(instrument, mapping) to map the instrument's parameters to qtools-specific names.
+dac = Decadac(
+    "dac",
+    "ASRL3::INSTR",
+    min_val=-10,
+    max_val=10,
+    terminator="\n")
+add_mapping_to_instrument(dac, DECADAC_MAPPING)
+station.add_component(dac)
+
+lockin = SR830("lockin", "GPIB1::12::INSTR")
+add_mapping_to_instrument(lockin, SR830_MAPPING)
+station.add_component(lockin)
+qdac = QDac("qdac", "ASRL5::INSTR")
+add_mapping_to_instrument(qdac, QDAC_MAPPING)
+station.add_component(qdac)
+
+keithley = Keithley_2400("keithley", "GPIB1::27::INSTR")
+add_mapping_to_instrument(keithley, KEITHLEY_2400_MAPPING)
+station.add_component(keithley)
+
+
+#%% Metadata Setup
+base_path = pathlib.Path('C:/Users/Flash/Documents/qtools_scripts')
+
+# Set Metadata-DB URL
+db.api_url = "http://134.61.7.48:9123"
+
+# Load metadata.yaml
+with open(base_path / "metadata.yaml", "r") as file:
+    metadata = Metadata.from_yaml(file)
+
+# Save metadata to DB
+# metadata.save_to_db()
+
+experiment = load_or_create_experiment(
+    experiment_name="sensor_2d",
+    sample_name="gl_005d_sisyphos"
+)
+
+# %% Set up monitor
+monitor_process = subprocess.Popen(['python', '-m qcodes.monitor.monitor'], shell=True)
+# monitor.show()
+
+# %% Set up inspector
+jobs = bg.BackgroundJobManager()
+jobs.new(inspectr.main, base_path / 'measurements.db')
+
+#%% Measurement Setup
+mapping = None
+# %% Parameters
+# Set path for measurement data db
+load_db(base_path / 'measurements.db')
+
+# Write parameter file from excel and load
+excel_file = (pathlib.Path('C:/Users/Flash/AppData/Local/Temp/OneNote/16.0/NT/0')
+              / 'gl_005d - Sisyphos1.xlsx')
+parameter_file = base_path / 'parameters_gl_005d.json'
+parameters = param_helpers.excel_to_dac_parameter_file(excel_file, parameter_file,
+                                                       sample_header='Sample', dac_header='DAC/AWG')
+
+parameters = param_helpers.update_parameters(
+    parameter_file,
+    new_parameters=(
+        {}
+        | param_helpers.dynamic_dac_entry('TCD', start=-0.9, stop=-0.700, num_points=200, delay=5e-3)
+        | param_helpers.dynamic_dac_entry('NCD', start=-0.9, stop=-0.700, num_points=200, delay=5e-3)
+        # | param_helpers.dynamic_dac_entry('RT', start=-0.465, stop=-0.415, num_points=25, delay=1e-3)
+        # | param_helpers.dynamic_dac_entry('RB', start=-0.565, stop=-0.515, num_points=25, delay=1e-3)
+        # | param_helpers.dynamic_dac_entry('RP', start=-0.1, stop=-0.0, num_points=150, delay=1e-3)
+        | param_helpers.static_dac_entry('PD', -0.60, gettable=True)
+        | param_helpers.static_dac_entry('SD', -0.65, gettable=True)
+        # | param_helpers.static_dac_entry('NCD', NCD(), gettable=True)
+        # | param_helpers.static_dac_entry('TCD', TCD(), gettable=True)
+        | param_helpers.static_dac_entry('RT', -0.4421, gettable=True)
+        | param_helpers.static_dac_entry('RB', -0.515, gettable=True)
+        | param_helpers.static_dac_entry('RP', -0.02, gettable=True)
+        | param_helpers.static_smu_entry('source drain', 'amplitude', 1, gettable=False)
+        | param_helpers.static_smu_entry('source drain', 'time_constant', 5e-3, gettable=False)
+        | param_helpers.static_smu_entry('source drain', 'frequency', 321.09876550, gettable=False)
+        # | param_helpers.static_dac_entry('Bias', -1.0, gettable=False)
+        # | param_helpers.static_dac_entry('Ref', 0.0, gettable=False)
+    )
+)
+
+script = Generic_nD_Sweep()
+script.setup(parameters, metadata, ramp_rate=0.05)
+
+# %%% map measurement gates to instrument gates
+map_gates_to_instruments(station.components, script.gate_parameters,
+                         existing_gate_parameters=mapping)
+mapping = script.gate_parameters
+
+# %% Populate local namespace with gate names
+locals().update(**{gate: val['voltage'] for gate, val in mapping.items()
+                   if 'voltage' in val.keys()})
+
+all_qcparams = [param for key in mapping.keys() for param in mapping[key].values()]
+
+monitor = qcmon.Monitor(*all_qcparams)
+# %% run script
+script.run(write_period=1, use_threads=False, do_plot=True, show_progress=True,
+           enter_actions=[lambda: lockin.output_enabled(True)],
+           exit_actions=[lambda: lockin.output_enabled(False)])

@@ -1,0 +1,34 @@
+@startuml
+skinparam componentStyle rectangle
+left to right direction
+
+interface instruments
+
+node "other Framework" as other
+
+node "QCoDeS" as qc
+
+
+package "Qtools packages" {
+    [qtools]
+    [qtools-metadata]
+}
+
+cloud {
+    database "Metadatabase" as db
+    interface "RESTful API" as api
+    db - api
+}
+
+
+
+qc .up.> instruments
+other .up.> instruments
+
+qc -- [qtools]
+[qtools] - [qtools-metadata]
+other -- [qtools-metadata]
+
+[qtools-metadata] --> api
+
+@enduml

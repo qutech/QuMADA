@@ -1,0 +1,53 @@
+#%%
+import numpy as np
+from qcodes.instrument_drivers.stanford_research.SR830 import SR830
+from qtools.instrument.custom_drivers.ZI.MFLI import MFLI
+from qtools.instrument.instrument import SR830Buffer, MFLIBuffer
+
+#%%
+
+# lockin = SR830("lockin", "GPIB1::12::INSTR")
+lockin = MFLI("lockin", "dev4039")
+
+#%%
+from qcodes.instrument_drivers.QDevil.QDevil_QDAC import QDac
+qdac = QDac("qdac", "ASRL5::INSTR")
+
+#%%
+buffer = MFLIBuffer(lockin)
+settings = {
+    "channel": 0,
+    "trigger_threshold": 0.5,
+    # "sample_rate": 30000,
+    # "duration": 5,
+    # "burst_duration": 0.2,
+}
+buffer.setup_buffer(settings=settings)
+buffer.trigger = lockin.demod0_trig_in
+params = [lockin.current_x_component, lockin.current_y_component]
+buffer.subscribe(params)
+
+#%%
+qdac.ch02.slope.set(0.05)
+qdac.ch02.v.set(0)
+
+#%%
+buffer.start()
+
+#%%
+qdac.ch02.v.set(1)
+
+#%%
+buffer = SR830Buffer(lockin)
+buffer.setup_buffer(settings = {"sample_rate": 16})
+params = [lockin.X, lockin.Y]
+buffer.subscribe(params)
+buffer.trigger = SR830Buffer.ExternalTrigger("trigger")
+buffer.start()
+
+#%%
+buffer.stop()
+#%%
+data = buffer.read()
+
+# %%

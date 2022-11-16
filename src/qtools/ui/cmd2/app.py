@@ -1,11 +1,11 @@
 import inspect
 
+import qtools_metadata.db as db
 from cmd2 import Cmd
 from qcodes import Station
+from qtools_metadata.metadata import Metadata
 
-import qtools.data.db as db
-from qtools.data.metadata import Metadata
-from qtools.instrument.instrument import is_instrument
+from qtools.instrument.instrument import is_instrument_class
 from qtools.measurement.jobs import Job
 from qtools.measurement.measurement import MeasurementScript, is_measurement_script
 from qtools.ui.cmd2.parsers import (
@@ -43,7 +43,7 @@ class QToolsApp(Cmd):
         modules = import_submodules("qcodes.instrument_drivers")
         self.instrument_drivers = {}
         for _, module in modules.items():
-            members = inspect.getmembers(module, is_instrument)
+            members = inspect.getmembers(module, is_instrument_class)
             self.instrument_drivers.update(members)
 
         # import mappings

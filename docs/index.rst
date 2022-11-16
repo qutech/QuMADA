@@ -13,7 +13,10 @@ Welcome to qtools's documentation!
 
    installation
    usage
+   tutorials
+   database
    qtools
+   examples
 
 
 
