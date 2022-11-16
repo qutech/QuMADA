@@ -167,13 +167,19 @@ class Timetrace(MeasurementScript):
     Be aware that the timesteps can vary as the time it takes to record a
     datapoint is not constant, the argument only sets the wait time. However,
     the recorded "elapsed time" is accurate.
+    kwargs: 
+        auto_naming: Renames measurement automatically to Timetrace if True.
+        
     """
     def run(self):
         self.initialize()
         duration = self.settings.get("duration", 300)
         timestep = self.settings.get("timestep", 1)
         timer = ElapsedTimeParameter('time')
-        meas = Measurement(name = self.metadata.measurement.name or "timetrace")
+        auto_naming = self.settings.get("auto_naming", False)
+        if auto_naming:
+            self.metadata.measurement.name = "Timetrace"
+        meas = Measurement(name = self.metadata.measurement.name or "Timetrace")
         meas.register_parameter(timer)
         for parameter in self.gettable_channels:
             meas.register_parameter(parameter, setpoints=[timer,])
