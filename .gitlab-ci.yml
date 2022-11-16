@@ -10,8 +10,8 @@ before_script:
   - pip install virtualenv
   - virtualenv venv
   - source venv/bin/activate
-  - regex='.*@ git+\(ssh\|https\):\/\/git@\(git-ce\.rwth-aachen\.de\/\)'
-  - sed -n "s/$regex/git+https:\/\/gitlab-ci-token:\${CI_JOB_TOKEN}@\2/p" setup.cfg >> ci_requirements.txt
+  - regex='.*@ git+\(ssh\|https\):\/\/\(git@\)\?\(git-ce\.rwth-aachen\.de\/\)'
+  - sed -n "s/$regex/git+https:\/\/gitlab-ci-token:\${CI_JOB_TOKEN}@\3/p" setup.cfg >> ci_requirements.txt
   - sed -i "/$regex/d" setup.cfg
   - pip install -r ci_requirements.txt
 
