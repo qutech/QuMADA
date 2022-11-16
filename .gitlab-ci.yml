@@ -13,6 +13,8 @@ before_script:
   - regex='.*@ git+\(ssh\|https\):\/\/git@\(git-ce\.rwth-aachen\.de\/\)'
   - sed -n "s/$regex/git+https:\/\/gitlab-ci-token:\${CI_JOB_TOKEN}@\2/p" setup.cfg >> ci_requirements.txt
   - sed -i "/$regex/d" setup.cfg
+  - cat ci_requirements.txt
+  - cat setup.cfg
   - pip install -r ci_requirements.txt
 
 pylint:
