@@ -215,6 +215,7 @@ class MeasurementScript(ABC):
         self.buffers: set = {} #All buffers of gettable parameters
         
         ramp_rate = self.settings.get("ramp_rate", 0.3)
+        ramp_time = self.settings.get("ramp_time", 5)
         setpoint_intervall = self.settings.get("setpoint_intervall", 0.1)
         for gate, parameters in self.gate_parameters.items():
             for parameter, channel in parameters.items():
@@ -223,12 +224,14 @@ class MeasurementScript(ABC):
                         channel,
                         self.properties[gate][parameter]["value"],
                         ramp_rate=ramp_rate,
+                        ramp_time = ramp_time,
                         setpoint_intervall=setpoint_intervall,
                     )
                     ramp_or_set_parameter(
                         channel,
                         self.properties[gate][parameter]["value"],
                         ramp_rate=ramp_rate,
+                        ramp_time = ramp_time,
                         setpoint_intervall=setpoint_intervall,
                     )
                     self.static_parameters.append(
@@ -254,6 +257,7 @@ class MeasurementScript(ABC):
                             channel,
                             self.properties[gate][parameter]["value"],
                             ramp_rate=ramp_rate,
+                            ramp_time = ramp_time,
                             setpoint_intervall=setpoint_intervall,
                         )
                     except KeyError:
@@ -261,12 +265,14 @@ class MeasurementScript(ABC):
                             ramp_or_set_parameter(channel,
                                                   self.properties[gate][parameter]["start"],
                                                   ramp_rate=ramp_rate,
+                                                  ramp_time = ramp_time,
                                                   setpoint_intervall=setpoint_intervall)
                         except KeyError:
                             ramp_or_set_parameter(
                                 channel,
                                 self.properties[gate][parameter]["setpoints"][0],
                                 ramp_rate=ramp_rate,
+                                ramp_time = ramp_time,
                                 setpoint_intervall=setpoint_intervall,
                             )
                     self.dynamic_parameters.append(
