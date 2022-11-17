@@ -290,6 +290,7 @@ def do1d_parallel_asym(
         meas._extra_log_info = "Using 'qcodes.utils.dataset.doNd.do1d'"
 
     all_setpoint_params = (*param_set,) + tuple(s for s in additional_setpoints)
+    all_setpoint_params = [*param_set,] + [s for s in additional_setpoints]
     if len(all_setpoint_params) != len(setpoints):
         raise NotImplementedError("Setpoints list length does not match number of dynamic parameters")
         
@@ -316,7 +317,9 @@ def do1d_parallel_asym(
             f"falling back to unknown shape.")
         shapes = None
     
-    _register_parameters(meas, all_setpoint_params, setpoints = None)
+    _register_parameters(meas, [all_setpoint_params[0]], setpoints = None)
+    _register_parameters(meas, all_setpoint_params[1:], setpoints = (all_setpoint_params[0],),
+                         shapes=shapes)
     print(f"Measured parameters: {measured_parameters}")
     _register_parameters(meas, measured_params, setpoints=(all_setpoint_params[0],),
                          shapes=shapes)
