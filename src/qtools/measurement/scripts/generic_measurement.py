@@ -33,6 +33,9 @@ class Generic_1D_Sweep(MeasurementScript):
                                     initialization may take. If the ramp_speed is
                                     too small it will be increased to match the
                                     ramp_time. Default = 10
+                log_idle_params[bool]: Record dynamic parameters that are kept constant
+                                    during the sweeps of other parameters as gettable
+                                    params. Default True.
 
         Returns
         -------
@@ -50,11 +53,16 @@ class Generic_1D_Sweep(MeasurementScript):
                 measurement_name = f"{self.metadata.measurement.name} {dynamic_parameter['gate']}"            
             else:
                 measurement_name = self.metadata.measurment.name or "measurement"
+            if self.settings.get("log_idle_params", True):
+                idle_channels = [entry for entry  in self.dynamic_channels if entry!=sweep.param]
+                measured_channels = set((*self.gettable_channels, *idle_channels))
+            else:
+                measured_channels = set(self.gettable_channels)
             ramp_or_set_parameter(sweep._param, sweep.get_setpoints()[0])
             time.sleep(wait_time)
             data.append(
                 dond(sweep,
-                     *tuple(self.gettable_channels),
+                     *measured_channels,
                      measurement_name = measurement_name,
                      break_condition = _interpret_breaks(self.break_conditions),
                      **dond_kwargs
