@@ -189,13 +189,13 @@ class Timetrace(MeasurementScript):
             self.metadata.measurement.name = "Timetrace"
         meas = Measurement(name = self.metadata.measurement.name or "Timetrace")
         meas.register_parameter(timer)
-        for parameter in self.gettable_channels:
+        for parameter in [*self.gettable_channels, *self.dynamic_channels]:
             meas.register_parameter(parameter, setpoints=[timer,])
         with meas.run() as datasaver:
             start = timer.reset_clock()
             while timer() < duration:
                 now = timer()
-                results = [(channel, channel.get()) for channel in self.gettable_channels]
+                results = [(channel, channel.get()) for channel in [*self.gettable_channels,*self.dynamic_channels]]
                 datasaver.add_result((timer, now),
                                      *results)
                 time.sleep(timestep)
