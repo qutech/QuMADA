@@ -11,7 +11,7 @@ from qcodes.utils.dataset.doNd import LinSweep, do1d, do2d, dond
 from qtools.measurement.doNd_enhanced.doNd_enhanced import _interpret_breaks, do1d_parallel, do1d_parallel_asym
 from qtools.measurement.measurement import MeasurementScript
 from qtools.utils.ramp_parameter import ramp_or_set_parameter
-#from qtools.utils.utils import _validate_mapping
+from qtools.utils.utils import _validate_mapping
 
 class Generic_1D_Sweep(MeasurementScript):
     def run(self, **dond_kwargs) -> list:
@@ -241,3 +241,110 @@ class Timetrace_with_sweeps(MeasurementScript):
                 #time.sleep(timestep)
         dataset = datasaver.dataset
         return dataset
+    
+class Generic_1D_Sweep_buffered(MeasurementScript):
+    """
+    WIP Buffer measurement script
+    Trigger Types:
+            "software": Sends a software command to each buffer and dynamic parameters
+                        in order to start data acquisition and ramping. Timing 
+                        might be of slightly
+            "hardware": Expects a trigger command for each setpoint. Can be used
+                        with a preconfigured hardware trigger (Todo), a method,
+                        that starts a manually adjusted hardware trigger
+                        (has to be passed as trigger_start() method to
+                         measurement script) or a manual trigger.
+    trigger_start: A callable that triggers the trigger (called to start the measurement)
+                    or the keyword "manual" when triggering is done by user. Defauls is manual.
+    trigger_reset (optional): Callable to reset the trigger. Default is NONE.
+                       
+                
+    """
+    def run(self):
+        TRIGGER_TYPES = ["software",
+                       "hardware",
+                       "manual"
+            ]
+        trigger_start = self.settings.get("trigger_start", "manual")  # TODO: this should be set elsewhere
+        trigger_reset = self.settings.get("trigger_reset", None)
+        trigger_type = _validate_mapping(self.settings.get("trigger_type"), 
+                                         TRIGGER_TYPES,  
+                                         default = "software",
+                                         default_key_error= "software") 
+
+        datasets = []
+        self.initialize()
+        #meas.register_parameter(timer)
+        for dynamic_sweep in self.dynamic_sweeps:
+            dynamic_param = dynamic_sweep.param
+            meas = Measurement(name = self.metadata.measurement.name or "Buffered 1D Sweep")
+            meas.register_parameter(dynamic_param)
+            #TODO: Include later for tracking static parameters
+            # for parameter in self.dynamic_channels:
+            #     if not parameter == dynamic_param:
+            #         meas.register_parameter(parameter, setpoints = [dynamic_param,])
+                
+            for parameter in self.gettable_channels:
+                meas.register_parameter(parameter, setpoints=[dynamic_param,])
+                #Set trigger to low here
+            with meas.run() as datasaver:
+                data = {}
+                results = []
+                #start = timer.reset_clock()
+                #Add check if all gettable parameters have buffer?
+                self.ready_buffers()
+                if trigger_type == "manual":
+                    print(f"{trigger_type=}")
+                    dynamic_param.root_instrument._qtools_ramp([dynamic_param],
+                                                               end_values=[dynamic_sweep.get_setpoints()[-1]],
+                                                               ramp_time = self.buffer_settings["duration"])
+                #TODO: Replace by check if buffer has finished
+                while not list(self.buffers)[0].is_finished():
+                    time.sleep(0.1)
+                
+                if trigger_type == "hardware":
+                    if not trigger_start == "manual":
+                    #Set trigger to high here
+                        try:
+                            trigger_start()
+                        except:
+                            print("Please set a trigger or define a trigger_start method")
+                        pass
+                    elif trigger_start == "manual":
+                        try:
+                            dynamic_param.root_instrument._qtools_ramp([dynamic_param],
+                                                                        end_values=[dynamic_sweep.get_setpoints()[-1]],
+                                                                        ramp_time = self.buffer_settings["duration"])
+                            time.sleep(self.buffer_settings["duration"]*1.1)
+                            print("Waiting for buffer")
+                            time.sleep(5)
+                            try: 
+                                trigger_reset()
+                            except:
+                                print("No method to reset the trigger defined.")
+                        except:
+                            print("No ramp method found. Setting setpoints manually")
+                            for v in dynamic_sweep.get_setpoints():
+                                dynamic_param.set(v)
+                                sleep(dynamic_sweep._delay)
+
+                elif trigger_type== "software":
+
+                    dynamic_param.root_instrument._qtools_ramp([dynamic_param],
+                                    end_values=[dynamic_sweep.get_setpoints()[-1]],
+                                    ramp_time = self.buffer_settings["duration"])
+                    for buffer in self.buffers:
+                        buffer.force_trigger() #Does this method already exist?
+                    time.sleep(float(self.buffer_settings["duration"])*1.2)
+                    print("Waiting for buffer")
+                    time.sleep(5)
+                    # except:
+                    #     print("Something went wrong when trying to use software triggering")
+                
+                results = self.readout_buffers()
+                #TODO: Append values from other dynamic parameters
+                datasaver.add_result((dynamic_param, dynamic_sweep.get_setpoints()),
+                                     *results)
+                #time.sleep(5)
+                datasets.append(datasaver.dataset)
+        return datasets

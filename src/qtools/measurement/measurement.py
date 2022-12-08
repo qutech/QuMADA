@@ -27,6 +27,7 @@ from qtools.instrument.mapping.base import (
     _map_gate_to_instrument,
     filter_flatten_parameters,
 )
+from qtools.instrument.buffer import is_bufferable
 from qtools.utils.ramp_parameter import ramp_or_set_parameter
 
 
@@ -65,7 +66,7 @@ class MeasurementScript(ABC):
 
     The abstract function "run" has to be implemented.
     """
-
+#TODO: Put list elsewhere! Remove names that were added as workarounds (e.g. aux_voltage) as soon as possible
     PARAMETER_NAMES: set[str] = {
         "voltage",
         "current",
@@ -78,6 +79,8 @@ class MeasurementScript(ABC):
         "time_constant",
         "phase",
         "count",
+        "aux_voltage_1", 
+        "aux_voltage_2"
     }
 
     def __new__(cls, *args, **kwargs):
@@ -125,6 +128,7 @@ class MeasurementScript(ABC):
         *,
         add_script_to_metadata: bool = True,
         add_parameters_to_metadata: bool = True,
+        buffer_settings: dict = {},
         **settings: dict,
     ) -> None:
         """
@@ -149,6 +153,10 @@ class MeasurementScript(ABC):
         # TODO: Add settings to metadata
         self.metadata = metadata
         cls = type(self)
+        try:
+            self.buffer_settings.update(buffer_settings)
+        except:
+            self.buffer_settings = buffer_settings
 
         try:
             self.settings.update(settings)
@@ -219,7 +227,7 @@ class MeasurementScript(ABC):
         setpoint_intervall = self.settings.get("setpoint_intervall", 0.1)
         for gate, parameters in self.gate_parameters.items():
             for parameter, channel in parameters.items():
-                if self.properties[gate][parameter]["type"].find("static") >= 0:
+                if self.properties[gate][parameter]["type"].find("static") >= 0: #TODO: Handle strings
                     ramp_or_set_parameter(
                         channel,
                         self.properties[gate][parameter]["value"],
@@ -290,7 +298,12 @@ class MeasurementScript(ABC):
                         self.dynamic_sweeps.append(CustomSweep(channel,
                                                                self.properties[gate][parameter]["setpoints"],
                                                                delay = self.properties[gate][parameter].setdefault("delay", 0)))
-        self.buffers = {self._qtools_buffer for instrument in self.gettable_channels.instruments if hasattr(instrument, "_qtools_buffer")}
+        self.buffers = {channel.root_instrument._qtools_buffer for channel in self.gettable_channels if is_bufferable(channel)}
+        for gettable_param in self.gettable_channels:
+            if is_bufferable(gettable_param):
+                print(gettable_param)
+                gettable_param.root_instrument._qtools_buffer.subscribe([gettable_param])
+                
         self._relabel_instruments()
 
     @abstractmethod
@@ -354,6 +367,7 @@ class MeasurementScript(ABC):
         """
         for buffer in self.buffers:
             buffer.setup_buffer(settings = self.buffer_settings)
+            print(self.buffer_settings)
             buffer.start()
     
     def readout_buffers(self, **kwargs) -> dict:

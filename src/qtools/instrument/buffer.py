@@ -3,6 +3,8 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any, Mapping
 
+from jsonschema import validate
+
 import numpy as np
 from pyvisa import VisaIOError
 from qcodes.instrument.base import Instrument
@@ -11,7 +13,6 @@ from qcodes.instrument_drivers.stanford_research.SR830 import SR830
 from qcodes.utils.metadata import Metadatable
 
 from qtools.instrument.custom_drivers.ZI.MFLI import MFLI
-
 
 def is_bufferable(object: Instrument | Parameter):
     """Checks if the instrument or parameter is bufferable using the qtools Buffer definition."""
@@ -67,31 +68,62 @@ class Buffer(ABC):
     """Base class for a general buffer interface for an instrument."""
 
     SETTING_NAMES: set[str] = {
-        "trigger",
         "trigger_mode",
         "trigger_threshold",
         "delay",
         "num_points",
         "channel",
-        "sample_rate",
-        "delay"
+        "sampling_rate",
+        "duration",
+        "burst_duration",
     }
     
-    TRIGGER_MODE_NAMES: set[str] = {
+    TRIGGER_MODE_NAMES: list[str] = [
         "continuous",
         "edge",
         "tracking_edge",
         "pulse",
         "tracking_pulse",
-        "digital"
-        }
+        "digital",
+    ]
     
-    TRIGGER_MODE_POLARITY_NAMES: set[str] = {
+    TRIGGER_MODE_POLARITY_NAMES: list[str] = [
         "positive",
         "negative",
-        "both"}
+        "both",
+    ]
 
     AVAILABLE_TRIGGERS: list[str] = []
+    
+    settings_schema = {
+        "type": "object",
+        "properties": {
+            "trigger_mode": {"type": "string", "enum": TRIGGER_MODE_NAMES},
+            "trigger_mode_polarity": {"type": "string", "enum": TRIGGER_MODE_POLARITY_NAMES},
+            "trigger_threshold": {"type": "number"},
+            "delay": {"type": "number"},
+            "num_points": {"type": "integer"},
+            "channel": {"type": "integer"},
+            "sampling_rate": {"type": "number"},
+            "duration": {"type": "number"},
+            "burst_duration": {"type": "number"},
+        },
+        "oneOf": [
+            {
+                "required": ["sampling_rate", "duration"],
+                "not": {"required": ["num_points"]},
+            },
+            {
+                "required": ["sampling_rate", "num_points"],
+                "not": {"required": ["duration"]},
+            },
+            {
+                "required": ["duration", "num_points"],
+                "not": {"required": ["sampling_rate"]},
+            },
+        ],
+        "additionalProperties": False,
+    }
 
     @abstractmethod
     def setup_buffer(self, settings: dict) -> None:
@@ -147,12 +179,18 @@ class Buffer(ABC):
     @abstractmethod
     def start(self) -> None:
         """Start the buffer. This is not the trigger."""
-
+        
+    @abstractmethod
     def stop(self) -> None:
         """Stop the buffer."""
-
+        
+    @abstractmethod
     def is_ready(self) -> bool:
         """True, if buffer is correctly initialized and ready to measure."""
+
+    @abstractmethod
+    def is_finished(self) -> bool:
+        """True, if measurement is done and data has finished reading from the buffer."""
 
 
 # class SoftwareTrigger(Parameter):
@@ -179,13 +217,14 @@ class SR830Buffer(Buffer):
 
     def setup_buffer(self, settings: dict | None = None) -> None:
         """Sets instrument related settings for the buffer."""
-        # TODO: sample_rate mit delay und num_points abgleichen
+        # TODO: sampling_rate mit delay und num_points abgleichen
+        # TODO: Validation for sampling rates (look up in manual)
         # TODO: Trigger und SR abgleichen
         # TODO: Are there different trigger modes?
         if not settings:
             settings = {}
 
-        self._device.buffer_SR(settings.setdefault("sample_rate", 512))
+        self._device.buffer_SR(settings.setdefault("sampling_rate", 512))
         self._device.buffer_trig_mode("OFF")
 
     @property
@@ -278,6 +317,9 @@ class SR830Buffer(Buffer):
 
     def is_ready(self) -> bool:
         ...
+        
+    def is_finished(self) -> bool:
+        ...
 
 
 class MFLIBuffer(Buffer):
@@ -312,10 +354,10 @@ class MFLIBuffer(Buffer):
         self._trigger: str | None = None
         self._channel = 0
 
-    def setup_buffer(self, settings: dict | None = None) -> None:
-        if not settings:
-            settings = {}
-
+    def setup_buffer(self, settings: dict) -> None:
+        # validate settings
+        validate(settings, self.settings_schema)
+        
         device = self._device
         self._daq.device(device)
 
@@ -325,16 +367,10 @@ class MFLIBuffer(Buffer):
         device.demods[self._channel].enable(True)
         
         #Validate Trigger mode:
-        if settings.get("trigger_mode", None) not in self.TRIGGER_MODE_NAMES:
-            print(f"{settings.get('trigger_mode', None)} is not in {self.TRIGGER_MODE_NAMES}. Setting trigger mode to default value.")
-        if settings.get("trigger_mode_polarity", None) not in self.TRIGGER_MODE_POLARITY_NAMES:
-            print(f"{settings.get('trigger_mode_polarity', None)} is not in {self.TRIGGER_MODE_POLARITY_NAMES}. Setting trigger mode to default value.")
-        
-        self._daq.type(self.TRIGGER_MODE_MAPPING.get(
-            settings.get("trigger_mode", "continuous")))
-        self._daq.edge(self.TRIGGER_MODE_POLARITY_MAPPING.get(
-            settings.get("trigger_mode_polarity", "positive")))
-        
+        self._daq.edge(self.TRIGGER_MODE_MAPPING[settings.get("trigger_mode", "continuous")])
+        print(f"{self._daq.type()=}")
+        #self._daq.edge(self.TRIGGER_MODE_POLARITY_MAPPING[settings.get("trigger_mode_polarity", "positive")])
+        print(f"{self._daq.edge()=}")        
         self._daq.grid.mode(2)
 
         if "trigger_threshold" in settings:
@@ -342,10 +378,12 @@ class MFLIBuffer(Buffer):
             self._daq.level(settings["trigger_threshold"])
             self._device.triggers.in_[0].level(settings["trigger_threshold"])
             self._device.triggers.in_[1].level(settings["trigger_threshold"])
+        else: 
+            print("Warning: No trigger threshold specified!")
 
-        if all(k in settings for k in ("sample_rate", "burst_duration", "duration")):
+        if all(k in settings for k in ("sampling_rate", "burst_duration", "duration")):
             num_cols = int(
-                np.ceil(settings["sample_rate"] * settings["burst_duration"])
+                np.ceil(settings["sampling_rate"] * settings["burst_duration"])
             )
             num_bursts = int(np.ceil(settings["duration"] / settings["burst_duration"]))
             self._daq.count(num_bursts)
@@ -362,6 +400,7 @@ class MFLIBuffer(Buffer):
     @trigger.setter
     def trigger(self, trigger: str | None) -> None:
         #TODO: Inform user about automatic changes of settings
+        print(f"Running trigger setter with: {trigger}")
         if trigger is None:
             self._daq.type(0)
         elif trigger in self.AVAILABLE_TRIGGERS:
@@ -390,8 +429,12 @@ class MFLIBuffer(Buffer):
     def read(self) -> dict:
         data = self.read_raw()
         result_dict = {}
+        print(f"Finished? {self._daq.raw_module.finished()}")
+        #print(f"data = {data}")
         for parameter in self._subscribed_parameters:
             node = self._get_node_from_parameter(parameter)
+            print(f"node = {node}")
+            print(f"keys = {data.keys()}")
             key = next(key for key in data.keys() if str(key) == str(node))
             result_dict[parameter.name] = data[key][0].value
             if "timestamps" not in result_dict:
@@ -428,6 +471,9 @@ class MFLIBuffer(Buffer):
 
     def is_ready(self) -> bool:
         ...
+    
+    def is_finished(self) -> bool:
+        return self._daq.raw_module.finished()
 
     def _get_node_from_parameter(self, parameter: Parameter):
         return self._device.demods[self._channel].sample.__getattr__(parameter.signal_name[1])
