@@ -112,18 +112,29 @@ def _load_instrument_mapping(path: str) -> Any:
 
 
 def add_mapping_to_instrument(instrument: Instrument,
-                              path: str) -> None:
+                              *,
+                              path: str | None = None,
+                              mapping: InstrumentMapping | None = None) -> None:
     """
-    Loads instrument mapping from mapping JSON file and adds it as instrument attribute
+    Loads instrument mapping from mapping JSON file and adds it as instrument attribute.
+    Alternatively, provide a mapping object, that contains the mapping contents, as well as
+    wrapper functions e.g. for ramps
 
     instr._mapping
 
     Args:
         instrument (Instrument): Instrument, the mapping is added to.
         path (str): Path to the JSON file.
+        mapping (InstrumentMapping): mapping object
     """
-    # TODO: chosen instrument name should not influence the mapping
-    helper_mapping = _load_instrument_mapping(path)
+    if path is None and mapping is not None:
+        helper_mapping = mapping.mapping
+        instrument._qtools_ramp = mapping.ramp  # TODO: Better name??
+    elif path is not None and mapping is None:
+        helper_mapping = _load_instrument_mapping(path)
+    else:
+        raise ValueError("Arguments 'path' and 'mapping' are exclusive.")
+
     mapping = {}
     mapping["parameter_names"] = {f"{instrument.name}_{key}":parameter for (key, parameter) in helper_mapping["parameter_names"].items()}
     parameters: dict[Any, Parameter] = filter_flatten_parameters(instrument)
