@@ -3,6 +3,7 @@
         "IDN": "IDN",
         "amplitude": "amplitude",
         "current": "current",
+        "voltage": "voltage",
         "current_x_component" : "current_x_component",
         "current_y_component" : "current_y_component",
         "frequency": "frequency",
@@ -10,6 +11,8 @@
         "phase": "phase",
         "time_constant": "demod0_time_constant",
         "filter_order": "demod0_order",
-        "output_range": "output_range"
+        "output_range": "output_range",
+        "demod0_aux_in_1": "aux_voltage_1",
+        "demod0_aux_in_2": "aux_voltage_2"
     }
 }
