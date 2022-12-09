@@ -77,6 +77,7 @@ class Buffer(ABC):
         "sampling_rate",
         "duration",
         "burst_duration",
+        "grid_interpolation",
     }
 
     TRIGGER_MODE_NAMES: list[str] = [
@@ -94,6 +95,12 @@ class Buffer(ABC):
         "both",
     ]
 
+    GRID_INTERPOLATION_NAMES: list[str] = [
+        "exact",
+        "nearest",
+        "linear",
+    ]
+    
     AVAILABLE_TRIGGERS: list[str] = []
 
     settings_schema = {
@@ -101,6 +108,7 @@ class Buffer(ABC):
         "properties": {
             "trigger_mode": {"type": "string", "enum": TRIGGER_MODE_NAMES},
             "trigger_mode_polarity": {"type": "string", "enum": TRIGGER_MODE_POLARITY_NAMES},
+            "grid_interpolation": {"type": "string", "enum": GRID_INTERPOLATION_NAMES},
             "trigger_threshold": {"type": "number"},
             "delay": {"type": "number"},
             "num_points": {"type": "integer"},
@@ -395,6 +403,12 @@ class MFLIBuffer(Buffer):
         "negative": 2,
         "both": 3}
 
+    GRID_INTERPOLATION_MAPPING: dict = {
+        "nearest": 1,
+        "linear": 2,
+        "exact": 4}
+    #TODO: What happens in exact mode? Look up limitations...
+
     def __init__(self, mfli: MFLI):
         self._session = mfli.session
         self._device = mfli.instr
@@ -417,13 +431,11 @@ class MFLIBuffer(Buffer):
 
         device.demods[self._channel].enable(True)
 
-        #Validate Trigger mode:
-        self._daq.edge(self.TRIGGER_MODE_MAPPING[settings.get("trigger_mode", "continuous")])
-        print(f"{self._daq.type()=}")
-        #self._daq.edge(self.TRIGGER_MODE_POLARITY_MAPPING[settings.get("trigger_mode_polarity", "positive")])
-        print(f"{self._daq.edge()=}")
-        self._daq.grid.mode(2)
-
+        #TODO: Validate Trigger mode, edge and interpolation!:
+        self._daq.type(self.TRIGGER_MODE_MAPPING[settings.get("trigger_mode", "edge")])
+        self._daq.edge(self.TRIGGER_MODE_POLARITY_MAPPING[settings.get("trigger_mode_polarity", "positive")])
+        self._daq.grid.mode(self.GRID_INTERPOLATION_MAPPING[settings.get("grid_interpolation", "linear")])
+        self.trigger = self.trigger #Don't delete me, I am important!
         if "trigger_threshold" in settings:
             # TODO: better way to distinguish, which trigger level to set
             self._daq.level(settings["trigger_threshold"])
@@ -434,6 +446,7 @@ class MFLIBuffer(Buffer):
         
         
         self.num_points = settings #TODO: Maybe a bit confusing to do it that way?
+        #TODO: This won't work when num_points is passed with settings!
         if all(k in settings for k in ("sampling_rate", "burst_duration", "duration")):
             num_cols = self.num_points
             num_bursts = int(np.ceil(settings["duration"] / settings["burst_duration"]))
@@ -451,6 +464,7 @@ class MFLIBuffer(Buffer):
     @trigger.setter
     def trigger(self, trigger: str | None) -> None:
         #TODO: Inform user about automatic changes of settings
+        #TODO: This is done BEFORE the setup_buffer, so changes to trigger type will be overriden anyway?
         print(f"Running trigger setter with: {trigger}")
         if trigger is None:
             self._daq.type(0)
