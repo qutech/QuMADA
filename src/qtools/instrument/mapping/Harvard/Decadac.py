@@ -26,6 +26,8 @@ class DecadacMapping(InstrumentMapping):
         end_values: list[float],
         ramp_time: float,
         block: bool = False,
+        sync_trigger = None,
+        sync_trigger_level = 1,
     ) -> None:
         assert len(parameters) == len(end_values)
         if start_values is not None:
@@ -48,5 +50,25 @@ class DecadacMapping(InstrumentMapping):
         if not start_values:
             start_values = [param.get() for param in parameters]
         ramp_rates = np.abs((np.array(end_values)-np.array(start_values))/np.array(ramp_time))
+        if sync_trigger:
+            if sync_trigger in parameters:
+                raise Exception("Synchronized trigger cannot be part of parameters")
+            assert isinstance(sync_trigger.root_instrument, Decadac)
+            sync_trigger._instrument.enable_ramp(False)
+            sync_trigger.set(sync_trigger_level)
         for param, end_value, ramp_rate in zip(parameters, end_values, ramp_rates):
             param._instrument._ramp(end_value, ramp_rate, block = block)
+        if sync_trigger:
+            sync_trigger.set(0)
+            
+    def trigger(
+            self,
+            parameter,
+            level = 1
+            ) -> None:
+        instrument: Decadac = parameter.root_instrument
+        assert isinstance(instrument, Decadac)
+        parameter._instrument.enable_ramp(False)  
+        parameter.volt.set(level)
+        
+        

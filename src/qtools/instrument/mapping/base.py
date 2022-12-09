@@ -129,7 +129,12 @@ def add_mapping_to_instrument(instrument: Instrument,
     """
     if path is None and mapping is not None:
         helper_mapping = mapping.mapping
-        instrument._qtools_ramp = mapping.ramp  # TODO: Better name??
+        instrument._qtools_ramp = mapping.ramp
+        try:
+            instrument._qtools_trigger = mapping.trigger
+        except:
+            pass
+        # TODO: Better name??
     elif path is not None and mapping is None:
         helper_mapping = _load_instrument_mapping(path)
     else:

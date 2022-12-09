@@ -270,7 +270,8 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
         trigger_type = _validate_mapping(self.settings.get("trigger_type"), 
                                          TRIGGER_TYPES,  
                                          default = "software",
-                                         default_key_error= "software") 
+                                         default_key_error= "software")
+        sync_trigger = self.settings.get("sync_trigger", None)
 
         datasets = []
         self.initialize()
@@ -297,7 +298,8 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                     print(f"{trigger_type=}")
                     dynamic_param.root_instrument._qtools_ramp([dynamic_param],
                                                                end_values=[dynamic_sweep.get_setpoints()[-1]],
-                                                               ramp_time = self.buffer_settings["duration"])
+                                                               ramp_time = self.buffer_settings["duration"],
+                                                               sync_trigger = sync_trigger)
                 #TODO: Replace by check if buffer has finished
                 while not list(self.buffers)[0].is_finished():
                     time.sleep(0.1)
