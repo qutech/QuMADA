@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Mapping
-
-from jsonschema import validate
+from collections.abc import Mapping
+from typing import Any
 
 import numpy as np
+from jsonschema import validate
 from pyvisa import VisaIOError
 from qcodes.instrument.base import Instrument
 from qcodes.instrument.parameter import ManualParameter, Parameter
@@ -13,6 +13,7 @@ from qcodes.instrument_drivers.stanford_research.SR830 import SR830
 from qcodes.utils.metadata import Metadatable
 
 from qtools.instrument.custom_drivers.ZI.MFLI import MFLI
+
 
 def is_bufferable(object: Instrument | Parameter):
     """Checks if the instrument or parameter is bufferable using the qtools Buffer definition."""
@@ -77,7 +78,7 @@ class Buffer(ABC):
         "duration",
         "burst_duration",
     }
-    
+
     TRIGGER_MODE_NAMES: list[str] = [
         "continuous",
         "edge",
@@ -86,7 +87,7 @@ class Buffer(ABC):
         "tracking_pulse",
         "digital",
     ]
-    
+
     TRIGGER_MODE_POLARITY_NAMES: list[str] = [
         "positive",
         "negative",
@@ -94,7 +95,7 @@ class Buffer(ABC):
     ]
 
     AVAILABLE_TRIGGERS: list[str] = []
-    
+
     settings_schema = {
         "type": "object",
         "properties": {
@@ -179,11 +180,11 @@ class Buffer(ABC):
     @abstractmethod
     def start(self) -> None:
         """Start the buffer. This is not the trigger."""
-        
+
     @abstractmethod
     def stop(self) -> None:
         """Stop the buffer."""
-        
+
     @abstractmethod
     def is_ready(self) -> bool:
         """True, if buffer is correctly initialized and ready to measure."""
@@ -249,7 +250,7 @@ class SR830Buffer(Buffer):
     def force_trigger(self) -> None:
         raise NotImplementedError()
 
-    def read(self) -> dict:
+    def read_raw(self) -> dict:
         # TODO: Handle stopping buffer or not
         data = {}
         try:
@@ -266,6 +267,10 @@ class SR830Buffer(Buffer):
                 "Could not read the buffer. Buffer has to be stopped before readout."
             ) from ex
         return data
+
+    def read(self) -> dict:
+        # TODO: Add timetrace if possible
+        return self.read_raw()
 
     def subscribe(self, parameters: list[Parameter]) -> None:
         for parameter in parameters:
@@ -317,7 +322,7 @@ class SR830Buffer(Buffer):
 
     def is_ready(self) -> bool:
         ...
-        
+
     def is_finished(self) -> bool:
         ...
 
@@ -331,7 +336,7 @@ class MFLIBuffer(Buffer):
         "aux_in_1",
         "aux_in_2",
     ]
-    
+
     TRIGGER_MODE_MAPPING: dict = {
         "continuous" : 0,
         "edge": 1,
@@ -339,7 +344,7 @@ class MFLIBuffer(Buffer):
         "tracking_edge": 4,
         "tracking_pulse": 7,
         "digital": 6}
-    
+
     TRIGGER_MODE_POLARITY_MAPPING: dict = {
         "positive": 1,
         "negative": 2,
@@ -357,7 +362,7 @@ class MFLIBuffer(Buffer):
     def setup_buffer(self, settings: dict) -> None:
         # validate settings
         validate(settings, self.settings_schema)
-        
+
         device = self._device
         self._daq.device(device)
 
@@ -365,12 +370,12 @@ class MFLIBuffer(Buffer):
             self._channel = settings["channel"]
 
         device.demods[self._channel].enable(True)
-        
+
         #Validate Trigger mode:
         self._daq.edge(self.TRIGGER_MODE_MAPPING[settings.get("trigger_mode", "continuous")])
         print(f"{self._daq.type()=}")
         #self._daq.edge(self.TRIGGER_MODE_POLARITY_MAPPING[settings.get("trigger_mode_polarity", "positive")])
-        print(f"{self._daq.edge()=}")        
+        print(f"{self._daq.edge()=}")
         self._daq.grid.mode(2)
 
         if "trigger_threshold" in settings:
@@ -378,7 +383,7 @@ class MFLIBuffer(Buffer):
             self._daq.level(settings["trigger_threshold"])
             self._device.triggers.in_[0].level(settings["trigger_threshold"])
             self._device.triggers.in_[1].level(settings["trigger_threshold"])
-        else: 
+        else:
             print("Warning: No trigger threshold specified!")
 
         if all(k in settings for k in ("sampling_rate", "burst_duration", "duration")):
@@ -389,7 +394,7 @@ class MFLIBuffer(Buffer):
             self._daq.count(num_bursts)
             self._daq.duration(settings["burst_duration"])
             self._daq.grid.cols(num_cols)
-            
+
         if "delay" in settings:
             self._daq.delay(settings["delay"])
 
@@ -471,7 +476,7 @@ class MFLIBuffer(Buffer):
 
     def is_ready(self) -> bool:
         ...
-    
+
     def is_finished(self) -> bool:
         return self._daq.raw_module.finished()
 
