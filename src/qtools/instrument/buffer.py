@@ -73,7 +73,7 @@ class Buffer(ABC):
         "trigger_threshold",
         "delay",
         "num_points",
-        "channel",
+        "channel", #TODO: Remove? Should be part of the mapping.
         "sampling_rate",
         "duration",
         "burst_duration",
@@ -215,18 +215,40 @@ class SR830Buffer(Buffer):
         self._device = device
         self._trigger: str | None = None
         self._subscribed_parameters: set[Parameter] = set()
+        self._num_points: int | None = None
 
-    def setup_buffer(self, settings: dict | None = None) -> None:
+    def setup_buffer(self, settings: dict) -> None:
         """Sets instrument related settings for the buffer."""
         # TODO: sampling_rate mit delay und num_points abgleichen
         # TODO: Validation for sampling rates (look up in manual)
         # TODO: Trigger und SR abgleichen
         # TODO: Are there different trigger modes?
-        if not settings:
-            settings = {}
 
+        validate(settings, self.settings_schema)
         self._device.buffer_SR(settings.setdefault("sampling_rate", 512))
         self._device.buffer_trig_mode("OFF")
+        self.num_points = settings
+        self.delay = settings.get("delay", False)
+        if self.delay:
+            if self.delay != 0:
+                print("Warning: The SR830'S Trigger Input does not support delays. The delay parameter will have no influence!")
+    
+    @property
+    def num_points(self) -> int | None:
+        return self._num_points
+    
+    @num_points.setter
+    def num_points(self, settings: dict) -> None:
+        if all(k in settings for k in ("sampling_rate", "burst_duration", "num_points")):
+            raise Exception("You cannot define sampling_rate, burst_duration and num_points at the same time")
+        elif settings.get("num_points", False):
+            self._num_points = settings["num_points"]
+        elif all(k in settings for k in ("sampling_rate", "burst_duration")):
+                    self._num_points = int(
+                        np.ceil(settings["sampling_rate"] * settings["burst_duration"])
+                    )
+        if self._num_points > 16383:
+            raise Exception("SR830 is to small for this measurement. Please reduce the number of data points")
 
     @property
     def trigger(self) -> str | None:
@@ -237,10 +259,10 @@ class SR830Buffer(Buffer):
         if trigger is None:
             # TODO: standard value for Sample Rate
             self._device.buffer_SR(512)
-            self._device.buffer_trig_mode("Off")
+            self._device.buffer_trig_mode("OFF")
         elif trigger == "external":
-            self._device.buffer_SR("Trigger")
-            self._device.buffer_trig_mode("On")
+            self._device.buffer_SR("Trigger") 
+            self._device.buffer_trig_mode("ON")
         else:
             raise BufferException(
                 "SR830 does not support setting custom trigger inputs. Use 'external' and the input on the back of the unit."
@@ -324,7 +346,11 @@ class SR830Buffer(Buffer):
         ...
 
     def is_finished(self) -> bool:
-        ...
+        if self._device.buffer_npts() >= self.num_points:
+            self.stop()
+            return True
+        else:
+            return False
 
 
 class MFLIBuffer(Buffer):
