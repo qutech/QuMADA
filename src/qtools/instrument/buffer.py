@@ -215,6 +215,7 @@ class Buffer(ABC):
 #     def add_trigger(self, callable: Callable):
 #         self._triggers.append(callable)
 
+#TODO: Put buffer classes in separate files? Might become a bit crowded here in the future...
 
 class SR830Buffer(Buffer):
     """Buffer for Stanford SR830"""
@@ -232,8 +233,7 @@ class SR830Buffer(Buffer):
 
     def setup_buffer(self, settings: dict) -> None:
         """Sets instrument related settings for the buffer."""
-        # TODO: sampling_rate mit delay und num_points abgleichen
-        # TODO: Validation for sampling rates (look up in manual)
+        # TODO: Validation for sampling rates (look up in manual) Comment: Is this required? Is handled by driver...
         # TODO: Trigger und SR abgleichen
         # TODO: Are there different trigger modes?
 
@@ -241,11 +241,16 @@ class SR830Buffer(Buffer):
         self._device.buffer_SR(settings.setdefault("sampling_rate", 512))
         self._device.buffer_trig_mode("OFF")
         self.num_points = settings
-        self.delay = settings.get("delay", False)
-        if self.delay:
-            if self.delay != 0:
-                print("Warning: The SR830'S Trigger Input does not support delays. The delay parameter will have no influence!")
-    
+        self.delay_data_points = 0 #Datapoints to delete at the beginning of dataset due to delay.
+        self.delay = settings.get("delay", 0)
+        if self.delay < 0:
+            raise Exception("The SR830'S Trigger Input does not support negative delays.")
+        else:
+            self.delay_data_points = int(self.delay*self._device.buffer_SR())
+            self._num_points+=self.delay_data_points
+            if self._num_points > 16383:
+                raise Exception("SR830 is to small for this measurement. Please reduce the number of data points or the delay")
+            #TODO: There has to be a more elegant way for the setter.
     @property
     def num_points(self) -> int | None:
         return self._num_points
@@ -297,7 +302,7 @@ class SR830Buffer(Buffer):
 
                 # TODO: what structure has the data? do we get timestamps?
                 data[parameter.name] = self._device.__getattr__(f"{ch}_datatrace").get()
-                data[parameter.name] = data[parameter.name][:self.num_points]
+                data[parameter.name] = data[parameter.name][self.delay_data_points:self.num_points]
         except VisaIOError as ex:
             raise BufferException(
                 "Could not read the buffer. Buffer has to be stopped before readout."
