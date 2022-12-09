@@ -339,6 +339,107 @@ Therefore, we included some useful method in the "utils" section of QTools.
 
 
 
+Buffered Measurements
+----------------------
+
+Currently, QTools supports only basic buffered measurements with simple 1D Sweeps and data acquisition with either the SR 830 or the Zurich Instruments MFLI lockins.
+
+#############################
+Buffered 1D Measurements
+#############################
+
+Buffered measurements are required, as the communication between the measurement PC and the measurement hardware can slow down measurement significantly. For unbuffered measurements, QTools has to send get and set commands to the measurement hardware for every datapoints,
+whereas buffered measurements just require communication for starting the measurement and for reading the data after it finished.
+In Qtools buffered measurements are setup similarily to unbuffered ones. As for the gate mapping to get rid of driver specific commands for normal measurements, Qtools comes with a generic buffer class that maps the buffer and trigger settings
+to the used instruments. This requires a few changes to the way the measurement station is setup:
+
+.. code-block:: python
+	from qtools.instrument.buffered_instruments import BufferedMFLI as MFLI
+	from qcodes.instrument_drivers.Harvard.Decadac import Decadac
+	from qtools.instrument.mapping import (
+    add_mapping_to_instrument,
+    MFLI_MAPPING
+    )
+	from qtools.instrument.mapping.Harvard.Decadac import DecadacMapping
+	from qtools.instrument.mapping.base import map_gates_to_instruments
+	
+	station = qc.Station
+	
+	dac = Decadac(
+    "dac",
+    "ASRL6::INSTR",
+    min_val=-10,
+    max_val=10,
+    terminator="\n")
+	add_mapping_to_instrument(dac, mapping = DecadacMapping())
+	station.add_component(dac)
+	
+	mfli = MFLI("mfli", "DEV4121", "169.254.40.160")
+	add_mapping_to_instrument(mfli, path = MFLI_MAPPING)
+	station.add_component(mfli)
+
+(This code block expects you to do the basci qcodes and qtools imports on your own)
+
+For the MFLI the BufferedMFLI class is used instead of the normal driver. It inherits from the normal MFLI class but adds the _qtools_buffer property, which incorporates the Qtools buffer, to the MFLI.
+The Qtools buffer has methods to setup the buffer and triggers as well as to start, stop and readout measurements. Using a instrument for buffered measurements requires a wrapper mapping the instruments driver specific commands
+to the Qtools ones. Currently, QTools supports the MFLI and the SR830 (more to come), how to add additional instruments by yourself will be covered in a different section.
+
+The DecaDac's is required to do a smooth ramp, which requires usage of the built in ramp method. As this cannot be mapped by using the normal Qtools mapping.json file, we use the DecadacMapping class and pass it as the mapping-kwarg 
+(instead of "path") to "add_mapping_to_instrument". This does not only add the normal mapping but includes the _qtools_ramp() method which is used in Qtools' buffered measurement scripts for ramping channels. This method makes use of the
+built-in ramp method, but standardizes the input parameters so that different instruments can be used with the same measurement script. Note that instruments without built-in ramps can be used for the buffered measurements as well, but then require communication at 
+each setpoint, which slows down the measurement and can lead to asynchronicity.
+
+..Note
+	In some cases it is possible to add trigger channels to the _qtools_ramp method. Those are triggered, as soon as the ramp starts. However, this feature is still WIP and can lead to significat offsets due to time delays.
+	
+Setting up the buffer in Qtools is done via a settings dict (which can also be serialized into a yaml or json file). The parameters are:
+
+trigger_mode [str]:      
+		continuous,
+        edge,
+        tracking_edge,
+        pulse,
+        tracking_pulse,
+        digital.
+		
+		Note that some of those modes may not be available by some instruments. Furthermore, the trigger mode is changed automatically by the buffer class in some cases after the trigger input is assigned. For example using the trigger inputs of the MFLI
+		requires the digital trigger mode. 
+trigger_mode_polarity [str]: 
+		positive,
+		negative,
+		both
+		
+		Defines for edge triggers if rising or falling flanks trigger and for pulse triggers if negative or positive pulses.
+
+trigger_threshold [float]: 
+		Defines the voltage level required to start trigger event. Any number, range is limited by instrument specifications.
+		
+grid_interpolation [str]:
+		linear
+		nearest
+		exact
+		
+		Defines the interpolation between setpoints for 2D sweeps (Details in MFLI Documentation, TODO)	
+		
+delay [float]:  
+		Defines the time delay between the trigger signal and the start of the measurement. Some instruments (e.g. the MFLI) support negative delays, others don't support delays at all.
+		
+num_points [int]: 
+		Specify the number of points for the measurement. You can only define two of num_points, burst_duration and sampling_rate, the third one is calculated from the other two. Limited by buffer size.
+
+sampling_rate [float]:
+		The rate at which data is recorded. You can only define two of num_points, burst_duration and sampling_rate, the third one is calculated from the other two. Limited by instrument specifications.
+		
+duration [float]:
+		Overall duration of the measurement. In the future multiple burst are possible, right now duration shoult be the same as burst_duration. Limited by buffer size and sampling_rate.
+
+burst_duration [float]:
+		Duration of each measurement bursts. Right now, only one burst per measurement is possible, shoult be the same as duration. You can only define two of num_points, burst_duration and sampling_rate, the third one is calculated from the other two.
+
+
+	
+
+	
 
 
 
