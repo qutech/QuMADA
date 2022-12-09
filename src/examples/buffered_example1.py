@@ -12,7 +12,7 @@ from qcodes.instrument_drivers.Harvard.Decadac import Decadac
 from qcodes.instrument_drivers.tektronix.Keithley_2400 import Keithley_2400
 from qcodes.instrument_drivers.QDevil.QDevil_QDAC import QDac
 from qtools.instrument.buffered_instruments import BufferedMFLI as MFLI
-#from qtools.instrument.buffered_instruments import BufferedSR830 as SR830
+from qtools.instrument.buffered_instruments import BufferedSR830 as SR830
 from qcodes.dataset import (
     Measurement,
     experiments,
@@ -63,13 +63,13 @@ dac = Decadac(
 add_mapping_to_instrument(dac, mapping = DecadacMapping())
 station.add_component(dac)
 
-# lockin = SR830("lockin", "GPIB1::12::INSTR")
-# add_mapping_to_instrument(lockin, path = SR830_MAPPING)
-# station.add_component(lockin)
+lockin = SR830("lockin", "GPIB1::12::INSTR")
+add_mapping_to_instrument(lockin, path = SR830_MAPPING)
+station.add_component(lockin)
 
-keithley = Keithley_2400("keithley", "GPIB1::27::INSTR")
-add_mapping_to_instrument(keithley, path = KEITHLEY_2400_MAPPING)
-station.add_component(keithley)
+# keithley = Keithley_2400("keithley", "GPIB1::27::INSTR")
+# add_mapping_to_instrument(keithley, path = KEITHLEY_2400_MAPPING)
+# station.add_component(keithley)
 
 mfli = MFLI("mfli", "DEV4121", "169.254.40.160")
 add_mapping_to_instrument(mfli, path = MFLI_MAPPING)
@@ -84,13 +84,13 @@ metadata = create_metadata()
 load_db()
 #%% Setup measurement
 buffer_settings = {
-    "channel": 0, #?
+    #"channel": 0, #?
     "trigger_threshold": 0.005,
     "trigger_mode" : "digital",
-    "sampling_rate": 200,
+    "sampling_rate": 512,
     "duration": 1,
     "burst_duration": 1,
-    "delay" : 0,
+    "delay" : 0.5,
 }
 # qdac.ch01.sync_duration(0.2)
 # qdac.ch01.sync(1)
@@ -100,7 +100,10 @@ with open(r"C:\Users\lab2\Documents\DATA\Huckemann\Tests\BufferTest.yaml", "r") 
     parameters = yaml.safe_load(file)
 #%%
 script = Generic_1D_Sweep_buffered()
-script.setup(parameters, metadata, buffer_settings = buffer_settings, trigger_type = "manual")
+script.setup(parameters, metadata, 
+             buffer_settings = buffer_settings, 
+             trigger_type = "manual",
+             sync_trigger = dac.channels[19].volt)
 
 map_gates_to_instruments(station.components, script.gate_parameters)
 map_buffers(station.components, script.properties, script.gate_parameters)
