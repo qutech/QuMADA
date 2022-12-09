@@ -142,7 +142,20 @@ class Buffer(ABC):
     @abstractmethod
     def trigger(self, parameter: Parameter | None) -> None:
         ...
-
+        
+    @property
+    @abstractmethod
+    def num_points(self) -> int | None:
+        """
+        Number of points to write into buffer for each burst.
+        Required to setup qcodes datastructure and to compare with max. buffer length.
+        """
+        #TODO: Handle multiple bursts
+    @num_points.setter
+    @abstractmethod
+    def num_points(self) -> None:
+        ...
+        
     @abstractmethod
     def force_trigger(self) -> None:
         """Triggers the trigger."""
@@ -284,6 +297,7 @@ class SR830Buffer(Buffer):
 
                 # TODO: what structure has the data? do we get timestamps?
                 data[parameter.name] = self._device.__getattr__(f"{ch}_datatrace").get()
+                data[parameter.name] = data[parameter.name][:self.num_points]
         except VisaIOError as ex:
             raise BufferException(
                 "Could not read the buffer. Buffer has to be stopped before readout."
@@ -384,6 +398,7 @@ class MFLIBuffer(Buffer):
         self._subscribed_parameters: list[Parameter] = []
         self._trigger: str | None = None
         self._channel = 0
+        self._num_points: int | None = None
 
     def setup_buffer(self, settings: dict) -> None:
         # validate settings
@@ -411,11 +426,11 @@ class MFLIBuffer(Buffer):
             self._device.triggers.in_[1].level(settings["trigger_threshold"])
         else:
             print("Warning: No trigger threshold specified!")
-
+        
+        
+        self.num_points = settings #TODO: Maybe a bit confusing to do it that way?
         if all(k in settings for k in ("sampling_rate", "burst_duration", "duration")):
-            num_cols = int(
-                np.ceil(settings["sampling_rate"] * settings["burst_duration"])
-            )
+            num_cols = self.num_points
             num_bursts = int(np.ceil(settings["duration"] / settings["burst_duration"]))
             self._daq.count(num_bursts)
             self._daq.duration(settings["burst_duration"])
@@ -456,6 +471,21 @@ class MFLIBuffer(Buffer):
 
     def force_trigger(self) -> None:
         self._daq.forcetrigger(1)
+    
+    @property
+    def num_points(self) -> int | None:
+        return self._num_points
+    
+    @num_points.setter
+    def num_points(self, settings: dict) -> None:
+        if all(k in settings for k in ("sampling_rate", "burst_duration", "num_points")):
+            raise Exception("You cannot define sampling_rate, burst_duration and num_points at the same time")
+        elif settings.get("num_points", False):
+            self._num_points = settings["num_points"]
+        elif all(k in settings for k in ("sampling_rate", "burst_duration")):
+                    self._num_points = int(
+                        np.ceil(settings["sampling_rate"] * settings["burst_duration"])
+                    )
 
     def read(self) -> dict:
         data = self.read_raw()
