@@ -364,13 +364,19 @@ def do1d_parallel_asym(
             if callable(break_condition):
                 if break_condition():
                     if backsweep_after_break:
-                        tracked_setpoints.reverse()
+                        #tracked_setpoints.reverse()
+                        #need nested reverse?
+                        tracked_setpoints = [setpoints.reverse() for setpoints in tracked_setpoints]
                         time.sleep(wait_after_break)
-                        for set_point in tqdm(tracked_setpoints, disable=not show_progress):
-                            for param in param_set:
-                                param.set(set_point)
+                        for j in range(len(tracked_setpoints[0])):
+                            datasaver_backward_list = []
+                            for i,param in enumerate(param_set):
+                            #tqdm might not work anymore as intended; need j instead of object?
+                            #for set_point in tqdm(tracked_setpoints, disable=not show_progress):
+                                param.set(tracked_setpoints[i][j])
+                                datasaver_backwards_list.append((param_set[i], tracked_setpoints[i][j]))
                             datasaver.add_result(
-                                (param_set[0], set_point),
+                                *datasaver_backward_list,
                                 *process_params_meas(measured_params, use_threads=use_threads),
                                 *additional_setpoints_data
                             )
