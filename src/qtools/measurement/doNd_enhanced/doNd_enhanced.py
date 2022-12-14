@@ -374,7 +374,7 @@ def do1d_parallel_asym(
                             #tqdm might not work anymore as intended; need j instead of object?
                             #for set_point in tqdm(tracked_setpoints, disable=not show_progress):
                                 param.set(tracked_setpoints[i][j])
-                                datasaver_backwards_list.append((param_set[i], tracked_setpoints[i][j]))
+                                datasaver_backward_list.append((param_set[i], tracked_setpoints[i][j]))
                             datasaver.add_result(
                                 *datasaver_backward_list,
                                 *process_params_meas(measured_params, use_threads=use_threads),
