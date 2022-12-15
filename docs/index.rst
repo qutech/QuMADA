@@ -9,6 +9,7 @@ Welcome to qtools's documentation!
    installation
    tutorials
    examples
+   collecting
    qtools
 
 
