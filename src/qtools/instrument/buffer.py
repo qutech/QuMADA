@@ -246,35 +246,49 @@ class SR830Buffer(Buffer):
         # TODO: Are there different trigger modes?
 
         validate(settings, self.settings_schema)
+        self.settings: dict = settings
         self._device.buffer_SR(settings.setdefault("sampling_rate", 512))
         self._device.buffer_trig_mode("OFF")
-        self.num_points = settings
+        self._set_num_points()
         self.delay_data_points = 0 #Datapoints to delete at the beginning of dataset due to delay.
         self.delay = settings.get("delay", 0)
         if self.delay < 0:
             raise Exception("The SR830'S Trigger Input does not support negative delays.")
         else:
             self.delay_data_points = int(self.delay*self._device.buffer_SR())
-            self._num_points+=self.delay_data_points
-            if self._num_points > 16383:
-                raise Exception("SR830 is to small for this measurement. Please reduce the number of data points or the delay")
+            self.num_points = self.delay_data_points+ self.num_points
             #TODO: There has to be a more elegant way for the setter.
     @property
     def num_points(self) -> int | None:
         return self._num_points
     
     @num_points.setter
-    def num_points(self, settings: dict) -> None:
-        if all(k in settings for k in ("sampling_rate", "burst_duration", "num_points")):
+    def num_points(self, num_points) -> None:
+        if num_points > 16383:
+            raise Exception("SR830 is to small for this measurement. Please reduce the number of data points or the delay")
+        self._num_points = int(num_points)
+
+    def _set_num_points(self) -> None:
+        """
+        Calculates number of datapoints and sets
+        the num_points accordingly.
+        Raises
+        ------
+        Exception
+           Exception if number of points is overdefined.
+
+        Returns
+        -------
+        None
+        """
+        if all(k in self.settings for k in ("sampling_rate", "burst_duration", "num_points")):
             raise Exception("You cannot define sampling_rate, burst_duration and num_points at the same time")
-        elif settings.get("num_points", False):
-            self._num_points = settings["num_points"]
-        elif all(k in settings for k in ("sampling_rate", "burst_duration")):
-                    self._num_points = int(
-                        np.ceil(settings["sampling_rate"] * settings["burst_duration"])
+        elif self.settings.get("num_points", False):
+            self.num_points = self.settings["num_points"]
+        elif all(k in self.settings for k in ("sampling_rate", "burst_duration")):
+                    self.num_points = int(
+                        np.ceil(self.settings["sampling_rate"] * self.settings["burst_duration"])
                     )
-        if self._num_points > 16383:
-            raise Exception("SR830 is to small for this measurement. Please reduce the number of data points")
 
     @property
     def trigger(self) -> str | None:
@@ -296,7 +310,7 @@ class SR830Buffer(Buffer):
         self._trigger = trigger
 
     def force_trigger(self) -> None:
-        raise NotImplementedError()
+        self._device.buffer_start()
 
     def read_raw(self) -> dict:
         # TODO: Handle stopping buffer or not
@@ -422,7 +436,7 @@ class MFLIBuffer(Buffer):
     def setup_buffer(self, settings: dict) -> None:
         # validate settings
         validate(settings, self.settings_schema)
-
+        self.settings: dict = settings
         device = self._device
         self._daq.device(device)
 
@@ -445,7 +459,7 @@ class MFLIBuffer(Buffer):
             print("Warning: No trigger threshold specified!")
         
         
-        self.num_points = settings #TODO: Maybe a bit confusing to do it that way?
+        self._set_num_points()
         #TODO: This won't work when num_points is passed with settings!
         if all(k in settings for k in ("sampling_rate", "burst_duration", "duration")):
             num_cols = self.num_points
@@ -465,7 +479,7 @@ class MFLIBuffer(Buffer):
     def trigger(self, trigger: str | None) -> None:
         #TODO: Inform user about automatic changes of settings
         #TODO: This is done BEFORE the setup_buffer, so changes to trigger type will be overriden anyway?
-        print(f"Running trigger setter with: {trigger}")
+        #print(f"Running trigger setter with: {trigger}")
         if trigger is None:
             self._daq.type(0)
         elif trigger in self.AVAILABLE_TRIGGERS:
@@ -490,31 +504,45 @@ class MFLIBuffer(Buffer):
 
     def force_trigger(self) -> None:
         self._daq.forcetrigger(1)
-    
+
     @property
     def num_points(self) -> int | None:
         return self._num_points
     
     @num_points.setter
-    def num_points(self, settings: dict) -> None:
-        if all(k in settings for k in ("sampling_rate", "burst_duration", "num_points")):
-            raise Exception("You cannot define sampling_rate, burst_duration and num_points at the same time")
-        elif settings.get("num_points", False):
-            self._num_points = settings["num_points"]
-        elif all(k in settings for k in ("sampling_rate", "burst_duration")):
-                    self._num_points = int(
-                        np.ceil(settings["sampling_rate"] * settings["burst_duration"])
-                    )
+    def num_points(self, num_points) -> None:
+        if num_points > 8388608:
+            raise Exception("Buffer is to small for this measurement. Please reduce the number of data points")
+        self._num_points = int(num_points)
 
+    def _set_num_points(self) -> None:
+        """
+        Calculates number of datapoints and sets
+        the num_points accordingly.
+        Raises
+        ------
+        Exception
+           Exception if number of points is overdefined.
+
+        Returns
+        -------
+        None
+        """
+        if all(k in self.settings for k in ("sampling_rate", "burst_duration", "num_points")):
+            raise Exception("You cannot define sampling_rate, burst_duration and num_points at the same time")
+        elif self.settings.get("num_points", False):
+            self.num_points = self.settings["num_points"]
+        elif all(k in self.settings for k in ("sampling_rate", "burst_duration")):
+                    self.num_points = int(
+                        np.ceil(self.settings["sampling_rate"] * self.settings["burst_duration"])
+                    )
+                    
     def read(self) -> dict:
         data = self.read_raw()
         result_dict = {}
-        print(f"Finished? {self._daq.raw_module.finished()}")
         #print(f"data = {data}")
         for parameter in self._subscribed_parameters:
             node = self._get_node_from_parameter(parameter)
-            print(f"node = {node}")
-            print(f"keys = {data.keys()}")
             key = next(key for key in data.keys() if str(key) == str(node))
             result_dict[parameter.name] = data[key][0].value
             if "timestamps" not in result_dict:
