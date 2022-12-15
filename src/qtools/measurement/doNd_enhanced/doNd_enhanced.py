@@ -19,7 +19,8 @@ from qcodes.utils.threading import (
 )
 from tqdm.auto import tqdm
 from qcodes import config
-import matplotlib
+import matplotlib.axes
+import matplotlib.colorbar
 from qcodes.dataset.data_set import DataSet
 from qcodes.dataset.experiment_container import Experiment
 from qcodes.dataset.measurements import Measurement
