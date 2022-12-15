@@ -366,7 +366,7 @@ def do1d_parallel_asym(
                     if backsweep_after_break:
                         #tracked_setpoints.reverse()
                         #need nested reverse?
-                        tracked_setpoints = [setpoints.reverse() for setpoints in tracked_setpoints]
+                        tracked_setpoints = [setpoints[::-1] for setpoints in tracked_setpoints]
                         time.sleep(wait_after_break)
                         for j in range(len(tracked_setpoints[0])):
                             datasaver_backward_list = []
