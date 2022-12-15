@@ -14,4 +14,5 @@ mypy
 
 pytest
 pytest-cov
-pytest-httpserver
+pytest-cases
+pytest-mock
