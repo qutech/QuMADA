@@ -7,10 +7,9 @@ Welcome to qtools's documentation!
    :numbered:
 
    installation
-   usage
    tutorials
-   qtools
    examples
+   qtools
 
 
 
