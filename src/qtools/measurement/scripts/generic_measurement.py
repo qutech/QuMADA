@@ -52,7 +52,7 @@ class Generic_1D_Sweep(MeasurementScript):
             if include_gate_name:
                 measurement_name = f"{self.metadata.measurement.name} {dynamic_parameter['gate']}"            
             else:
-                measurement_name = self.metadata.measurment.name or "measurement"
+                measurement_name = self.metadata.measurement.name or "measurement"
             if self.settings.get("log_idle_params", True):
                 idle_channels = [entry for entry  in self.dynamic_channels if entry!=sweep.param]
                 measured_channels = set((*self.gettable_channels, *idle_channels))
