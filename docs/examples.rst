@@ -348,29 +348,30 @@ Currently, QTools supports only basic buffered measurements with simple 1D Sweep
 Buffered 1D Measurements
 #############################
 
-Buffered measurements are required, as the communication between the measurement PC and the measurement hardware can slow down measurement significantly. For unbuffered measurements, QTools has to send get and set commands to the measurement hardware for every datapoints,
-whereas buffered measurements just require communication for starting the measurement and for reading the data after it finished.
+Buffered measurements are required, as the communication between the measurement PC and the measurement hardware can slow down measurement significantly. For unbuffered measurements QTools has to send get and set commands to the measurement hardware for every datapoint,
+whereas buffered measurements just require communication for starting the measurement and for reading the data afterwards.
 In Qtools buffered measurements are setup similarily to unbuffered ones. As for the gate mapping to get rid of driver specific commands for normal measurements, Qtools comes with a generic buffer class that maps the buffer and trigger settings
 to the used instruments. This requires a few changes to the way the measurement station is setup:
 
 .. code-block:: python
+
 	from qtools.instrument.buffered_instruments import BufferedMFLI as MFLI
 	from qcodes.instrument_drivers.Harvard.Decadac import Decadac
 	from qtools.instrument.mapping import (
-    add_mapping_to_instrument,
-    MFLI_MAPPING
-    )
+		add_mapping_to_instrument,
+		MFLI_MAPPING
+		)
 	from qtools.instrument.mapping.Harvard.Decadac import DecadacMapping
 	from qtools.instrument.mapping.base import map_gates_to_instruments
 	
 	station = qc.Station
 	
 	dac = Decadac(
-    "dac",
-    "ASRL6::INSTR",
-    min_val=-10,
-    max_val=10,
-    terminator="\n")
+		"dac",
+		"ASRL6::INSTR",
+		min_val=-10,
+		max_val=10,
+		terminator="\n")
 	add_mapping_to_instrument(dac, mapping = DecadacMapping())
 	station.add_component(dac)
 	
@@ -378,7 +379,7 @@ to the used instruments. This requires a few changes to the way the measurement 
 	add_mapping_to_instrument(mfli, path = MFLI_MAPPING)
 	station.add_component(mfli)
 
-(This code block expects you to do the basci qcodes and qtools imports on your own)
+(This tutorial expects you to do the basic qcodes and qtools imports on your own)
 
 For the MFLI the BufferedMFLI class is used instead of the normal driver. It inherits from the normal MFLI class but adds the _qtools_buffer property, which incorporates the Qtools buffer, to the MFLI.
 The Qtools buffer has methods to setup the buffer and triggers as well as to start, stop and readout measurements. Using a instrument for buffered measurements requires a wrapper mapping the instruments driver specific commands
@@ -387,20 +388,16 @@ to the Qtools ones. Currently, QTools supports the MFLI and the SR830 (more to c
 The DecaDac's is required to do a smooth ramp, which requires usage of the built in ramp method. As this cannot be mapped by using the normal Qtools mapping.json file, we use the DecadacMapping class and pass it as the mapping-kwarg 
 (instead of "path") to "add_mapping_to_instrument". This does not only add the normal mapping but includes the _qtools_ramp() method which is used in Qtools' buffered measurement scripts for ramping channels. This method makes use of the
 built-in ramp method, but standardizes the input parameters so that different instruments can be used with the same measurement script. Note that instruments without built-in ramps can be used for the buffered measurements as well, but then require communication at 
-each setpoint, which slows down the measurement and can lead to asynchronicity.
+each setpoint, which slows down the measurement and can lead to asynchronicity. It is strongly adviced to use this feature only for debugging.
 
-..Note
-	In some cases it is possible to add trigger channels to the _qtools_ramp method. Those are triggered, as soon as the ramp starts. However, this feature is still WIP and can lead to significat offsets due to time delays.
+.. note::
+
+	In some cases it is possible to add trigger channels to the _qtools_ramp method. Those are triggered as soon as the ramp starts. However, this feature is still WIP and can lead to significat offsets due to time delays.
 	
 Setting up the buffer in Qtools is done via a settings dict (which can also be serialized into a yaml or json file). The parameters are:
 
 trigger_mode [str]:      
-		continuous,
-        edge,
-        tracking_edge,
-        pulse,
-        tracking_pulse,
-        digital.
+		continuous, edge, tracking_edge, pulse, tracking_pulse, digital.
 		
 		Note that some of those modes may not be available by some instruments. Furthermore, the trigger mode is changed automatically by the buffer class in some cases after the trigger input is assigned. For example using the trigger inputs of the MFLI
 		requires the digital trigger mode. 
@@ -409,20 +406,18 @@ trigger_mode_polarity [str]:
 		negative,
 		both
 		
-		Defines for edge triggers if rising or falling flanks trigger and for pulse triggers if negative or positive pulses.
+		Defines if rising or falling flanks(pulses) trigger for edge triggers(pulse triggers).
 
 trigger_threshold [float]: 
 		Defines the voltage level required to start trigger event. Any number, range is limited by instrument specifications.
 		
 grid_interpolation [str]:
-		linear
-		nearest
-		exact
+		linear, nearest, exact
 		
 		Defines the interpolation between setpoints for 2D sweeps (Details in MFLI Documentation, TODO)	
 		
 delay [float]:  
-		Defines the time delay between the trigger signal and the start of the measurement. Some instruments (e.g. the MFLI) support negative delays, others don't support delays at all.
+		Defines the time delay between the trigger signal and the start of the measurement. Some instruments (e.g. the MFLI) support negative delays. Delays can reduce available buffer size in some cases
 		
 num_points [int]: 
 		Specify the number of points for the measurement. You can only define two of num_points, burst_duration and sampling_rate, the third one is calculated from the other two. Limited by buffer size.
@@ -431,10 +426,114 @@ sampling_rate [float]:
 		The rate at which data is recorded. You can only define two of num_points, burst_duration and sampling_rate, the third one is calculated from the other two. Limited by instrument specifications.
 		
 duration [float]:
-		Overall duration of the measurement. In the future multiple burst are possible, right now duration shoult be the same as burst_duration. Limited by buffer size and sampling_rate.
+		Overall duration of the measurement. In the future multiple burst are possible, right now duration should be the same as burst_duration. Limited by buffer size and sampling_rate.
 
 burst_duration [float]:
-		Duration of each measurement bursts. Right now, only one burst per measurement is possible, shoult be the same as duration. You can only define two of num_points, burst_duration and sampling_rate, the third one is calculated from the other two.
+		Duration of each measurement burst. Right now, only one burst per measurement is possible, should be the same as duration. You can only define two of num_points, burst_duration and sampling_rate, the third one is calculated from the other two.
+		
+For buffered measurements, the number of setpoints is defined by the num_points of the buffer settings instead of the number of points defined by the dynamic parameters in the gate_parameters. As only smooth ramps for dynamic parameters are supported at the moment,
+the num_points and the delay set in the gate_params is ignored. Only "start" and "stop" or the first and last entry of the "setpoints" is used to define the sweep. Qtools will automatically configure the sweeps of the dynamic parameters to match the settings of the buffers.
+
+.. code-block:: python
+
+	buffer_settings = {
+		"trigger_threshold": 0.05,
+		"trigger_mode" : "edge",
+		"trigger_mode_polarity": "positive",
+		"grid_interpolation" : "linear",
+		"sampling_rate": 512,
+		"duration": 1,
+		"burst_duration": 1,
+		"delay" : 0.2,
+	}
+	
+	with open(r"C:\Users\lab2\Documents\DATA\Huckemann\Tests\BufferTest.yaml", "r") as file:
+		parameters = yaml.safe_load(file)
+
+The yaml file could for example look like this:
+
+.. code-block:: yaml
+	
+	MFLI_Aux_1:
+	  aux_voltage_1:
+		type: gettable
+	CH01:
+	  voltage:
+		type: dynamic
+		start: 0
+		stop: 0.5
+		
+.. note::
+
+	Break conditions are not supported for buffered measurements, as the the measurement data is received after the measurement is completed.
+		
+The measurement script is then setup in almost the same way as for normal, unbuffered measurements:
+
+.. code-block:: python
+
+	script = Generic_1D_Sweep_buffered()
+	script.setup(parameters, metadata, 
+				  buffer_settings = buffer_settings, 
+				  trigger_type = "manual",
+				  sync_trigger = dac.channels[19].volt)
+
+	map_gates_to_instruments(station.components, script.gate_parameters)
+	map_buffers(station.components, script.properties, script.gate_parameters)
+	
+Instead of the Generic_1D_Sweep we are now using the buffed version. It requires the buffer_settings as input argument as well as the trigger_type.
+The trigger type defines, how the measurement is started, it can be either "manual", meaning the script does not care about triggers and just starts the sweep once the script.run is executed, 
+"software", which sends software triggers to all instruments or any callable, that starts a trigger signal. 
+Be aware of the difference between the trigger_mode specified in the buffer settings and the trigger_type of the measurement script.
+The former is a setting of the measurement instrument and defines for which type of trigger signal the buffer starts recording data.
+The latter tells the measurement script how to start the measurement.
+
+.. note::
+
+	The "software" triggering is mainly for testing purposes, as there can be significant delays due to the communication with multiple instruments.
+	It is not recommended to use it for measurements.
+	
+"manual" can be used for example with the QDac, which has sync trigger outputs that send a pulse once another channel is ramped. 
+You can specify a sync_trigger in the script.setup() which is then passed on to the ramp method (if supported by the instrument) and will automatically raise the trigger once the measurement is started in "manual" mode.
+In this example the Dac's last channel will be used to trigger the measurement.
+
+In addition to the familiar map_gates_to_instruments, we have to execute map_buffers() as well. 
+It is used to specify the trigger inputs used to trigger the available buffers.
+
+.. code-block:: 
+	
+	Choose the trigger input for lockin: 1
+	buffer.trigger='external'
+	Available trigger inputs:
+	[0]: None
+	[1]: trigger_in_1
+	[2]: trigger_in_2
+	[3]: aux_in_1
+	[4]: aux_in_2
+	Choose the trigger input for mfli: 1
+	
+If required the buffer settings are changed to allow usage of the chosen trigger input. In our example, choosing the trigger_in_1 for the MFLI will change the trigger_mode from "edge" to "digital",
+as the MFLI's trigger inputs require this setting and would raise an exception during the measurement.
+
+.. code-block:: python
+	
+	script.run()
+	
+Afterwards, we can simply run the measurement.
+
+
+
+
+
+
+
+
+
+		
+
+
+
+		
+
 
 
 	
