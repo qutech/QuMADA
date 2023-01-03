@@ -48,7 +48,7 @@ def _validate_mapping(entry, valid_entries, mapping: dict = None, default = None
             return entry
         else:
             print(f"{entry} is not in {valid_entries}. Using default value: {default}")
-            return default  
+            return default
     if entry in mapping.keys():
         if entry in valid_entries:
             return mapping.get(entry)

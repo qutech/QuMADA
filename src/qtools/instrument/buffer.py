@@ -100,7 +100,7 @@ class Buffer(ABC):
         "nearest",
         "linear",
     ]
-    
+
     AVAILABLE_TRIGGERS: list[str] = []
 
     settings_schema = {
@@ -150,7 +150,7 @@ class Buffer(ABC):
     @abstractmethod
     def trigger(self, parameter: Parameter | None) -> None:
         ...
-        
+
     @property
     @abstractmethod
     def num_points(self) -> int | None:
@@ -163,7 +163,7 @@ class Buffer(ABC):
     @abstractmethod
     def num_points(self) -> None:
         ...
-        
+
     @abstractmethod
     def force_trigger(self) -> None:
         """Triggers the trigger."""
@@ -261,7 +261,7 @@ class SR830Buffer(Buffer):
     @property
     def num_points(self) -> int | None:
         return self._num_points
-    
+
     @num_points.setter
     def num_points(self, num_points) -> None:
         if num_points > 16383:
@@ -301,7 +301,7 @@ class SR830Buffer(Buffer):
             self._device.buffer_SR(512)
             self._device.buffer_trig_mode("OFF")
         elif trigger == "external":
-            self._device.buffer_SR("Trigger") 
+            self._device.buffer_SR("Trigger")
             self._device.buffer_trig_mode("ON")
         else:
             raise BufferException(
@@ -457,8 +457,8 @@ class MFLIBuffer(Buffer):
             self._device.triggers.in_[1].level(settings["trigger_threshold"])
         else:
             print("Warning: No trigger threshold specified!")
-        
-        
+
+
         self._set_num_points()
         #TODO: This won't work when num_points is passed with settings!
         if all(k in settings for k in ("sampling_rate", "burst_duration", "duration")):
@@ -508,7 +508,7 @@ class MFLIBuffer(Buffer):
     @property
     def num_points(self) -> int | None:
         return self._num_points
-    
+
     @num_points.setter
     def num_points(self, num_points) -> None:
         if num_points > 8388608:
@@ -536,7 +536,7 @@ class MFLIBuffer(Buffer):
                     self.num_points = int(
                         np.ceil(self.settings["sampling_rate"] * self.settings["burst_duration"])
                     )
-                    
+
     def read(self) -> dict:
         data = self.read_raw()
         result_dict = {}

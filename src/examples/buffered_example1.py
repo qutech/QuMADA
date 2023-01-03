@@ -100,8 +100,8 @@ with open(r"C:\Users\lab2\Documents\DATA\Huckemann\Tests\BufferTest.yaml", "r") 
     parameters = yaml.safe_load(file)
 #%%
 script = Generic_1D_Sweep_buffered()
-script.setup(parameters, metadata, 
-             buffer_settings = buffer_settings, 
+script.setup(parameters, metadata,
+             buffer_settings = buffer_settings,
              trigger_type = "manual",
              sync_trigger = dac.channels[19].volt)
 

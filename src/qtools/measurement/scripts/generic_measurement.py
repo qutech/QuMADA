@@ -27,9 +27,9 @@ class Generic_1D_Sweep(MeasurementScript):
                                     default = 5 sek
                 include_gate_name[Bool]: Append name of ramped gate to measurement
                                     name. Default True.
-                ramp_speed[float]: Speed at which parameters are ramped during 
+                ramp_speed[float]: Speed at which parameters are ramped during
                                     initialization in units. Default = 0.3
-                ramp_time[float]: Amount of time in s ramping of each parameter during 
+                ramp_time[float]: Amount of time in s ramping of each parameter during
                                     initialization may take. If the ramp_speed is
                                     too small it will be increased to match the
                                     ramp_time. Default = 10
@@ -50,7 +50,7 @@ class Generic_1D_Sweep(MeasurementScript):
         time.sleep(wait_time)
         for sweep, dynamic_parameter in zip(self.dynamic_sweeps, self.dynamic_parameters):
             if include_gate_name:
-                measurement_name = f"{self.metadata.measurement.name} {dynamic_parameter['gate']}"            
+                measurement_name = f"{self.metadata.measurement.name} {dynamic_parameter['gate']}"
             else:
                 measurement_name = self.metadata.measurment.name or "measurement"
             if self.settings.get("log_idle_params", True):
@@ -86,9 +86,9 @@ class Generic_nD_Sweep(MeasurementScript):
                                     default = 5 sek
                 include_gate_name[Bool]: Append name of ramped gates to measurement
                                     name. Default True.
-                ramp_speed[float]: Speed at which parameters are ramped during 
+                ramp_speed[float]: Speed at which parameters are ramped during
                                     initialization in units. Default = 0.3
-                ramp_time[float]: Amount of time in s ramping of each parameter during 
+                ramp_time[float]: Amount of time in s ramping of each parameter during
                                     initialization may take. If the ramp_speed is
                                     too small it will be increased to match the
                                     ramp_time. Default = 10
@@ -97,7 +97,7 @@ class Generic_nD_Sweep(MeasurementScript):
         -------
         data : QCoDeS dataset with measurement data
         """
-        
+
         self.initialize()
         wait_time = self.settings.get("wait_time", 5)
         include_gate_name = self.settings.get("include_gate_name", True)
@@ -105,7 +105,7 @@ class Generic_nD_Sweep(MeasurementScript):
             measurement_name = f"{self.metadata.measurement.name} Gates: {[gate['gate'] for gate in self.dynamic_parameters]}"
         else:
             measurement_name = self.metadata.measurement.name or "measurement"
-         
+
         for sweep in self.dynamic_sweeps:
             ramp_or_set_parameter(sweep._param, sweep.get_setpoints()[0])
         time.sleep(wait_time)
@@ -142,7 +142,7 @@ class Generic_1D_parallel_asymm_Sweep(MeasurementScript):
                             **do1d_kwargs
                             )
         return data
-    
+
 class Generic_1D_parallel_Sweep(MeasurementScript):
     """
     Sweeps all dynamic parameters in parallel, setpoints of first parameter are
@@ -175,9 +175,9 @@ class Timetrace(MeasurementScript):
     Be aware that the timesteps can vary as the time it takes to record a
     datapoint is not constant, the argument only sets the wait time. However,
     the recorded "elapsed time" is accurate.
-    kwargs: 
+    kwargs:
         auto_naming: Renames measurement automatically to Timetrace if True.
-        
+
     """
     def run(self):
         self.initialize()
@@ -219,8 +219,8 @@ class Timetrace_with_sweeps(MeasurementScript):
         meas = Measurement(name = self.metadata.measurement.name or "timetrace")
         meas.register_parameter(timer)
         setpoints = [timer]
-        for parameter in self.dynamic_channels: 
-            meas.register_parameter(parameter)            
+        for parameter in self.dynamic_channels:
+            meas.register_parameter(parameter)
             setpoints.append(parameter)
         for parameter in self.gettable_channels:
             meas.register_parameter(parameter, setpoints=setpoints)
@@ -241,13 +241,13 @@ class Timetrace_with_sweeps(MeasurementScript):
                 #time.sleep(timestep)
         dataset = datasaver.dataset
         return dataset
-    
+
 class Generic_1D_Sweep_buffered(MeasurementScript):
     """
     WIP Buffer measurement script
     Trigger Types:
             "software": Sends a software command to each buffer and dynamic parameters
-                        in order to start data acquisition and ramping. Timing 
+                        in order to start data acquisition and ramping. Timing
                         might be off slightly
             "hardware": Expects a trigger command for each setpoint. Can be used
                         with a preconfigured hardware trigger (Todo), a method,
@@ -256,7 +256,7 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                          measurement script) or a manual trigger.
             "manual"  : The trigger setup is done by the user. The measurent script will
                         just start the first ramp. Usefull for synchronized trigger outputs
-                        as in the QDac. 
+                        as in the QDac.
     trigger_start: A callable that triggers the trigger (called to start the measurement)
                     or the keyword "manual" when triggering is done by user. Defauls is manual.
     trigger_reset (optional): Callable to reset the trigger. Default is NONE.
@@ -270,19 +270,19 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
             ]
         trigger_start = self.settings.get("trigger_start", "manual")  # TODO: this should be set elsewhere
         trigger_reset = self.settings.get("trigger_reset", None)
-        trigger_type = _validate_mapping(self.settings.get("trigger_type"), 
-                                         TRIGGER_TYPES,  
+        trigger_type = _validate_mapping(self.settings.get("trigger_type"),
+                                         TRIGGER_TYPES,
                                          default = "software",
                                          default_key_error= "software")
         include_gate_name = self.settings.get("include_gate_name", True)
         sync_trigger = self.settings.get("sync_trigger", None)
-        
+
         datasets = []
         self.initialize()
         #meas.register_parameter(timer)
         for dynamic_sweep, dynamic_parameter in zip(self.dynamic_sweeps, self.dynamic_parameters):
             if include_gate_name:
-                measurement_name = f"{self.metadata.measurement.name} {dynamic_parameter['gate']}"            
+                measurement_name = f"{self.metadata.measurement.name} {dynamic_parameter['gate']}"
             else:
                 measurement_name = self.metadata.measurment.name or "Buffered 1D Sweep"
             # if self.settings.get("log_idle_params", True):
@@ -294,7 +294,7 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
             meas = Measurement(name = measurement_name)
             meas.register_parameter(dynamic_param)
 
-                
+
             for parameter in self.gettable_channels:
                 meas.register_parameter(parameter, setpoints=[dynamic_param,])
                 #Set trigger to low here
@@ -304,7 +304,7 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                 #start = timer.reset_clock()
                 #Add check if all gettable parameters have buffer?
                 self.ready_buffers()
-                
+
                 if trigger_type == "manual":
                     try:
                         dynamic_param.root_instrument._qtools_ramp([dynamic_param],
@@ -325,17 +325,17 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                     except:
                         print("Please set a trigger or define a trigger_start method")
                     pass
-                
+
                 elif trigger_type== "software":
                     dynamic_param.root_instrument._qtools_ramp([dynamic_param],
                                     end_values=[dynamic_sweep.get_setpoints()[-1]],
                                     ramp_time = self.buffer_settings["duration"])
                     for buffer in self.buffers:
                         buffer.force_trigger()
-                        
+
                 while not list(self.buffers)[0].is_finished():
                     time.sleep(0.1)
-                try: 
+                try:
                     trigger_reset()
                 except:
                     print("No method to reset the trigger defined.")
@@ -346,13 +346,13 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                                      *results)
                 datasets.append(datasaver.dataset)
         return datasets
-    
+
 class Generic_2D_Sweep_buffered(MeasurementScript):
     """
     WIP Buffer measurement script
     Trigger Types:
             "software": Sends a software command to each buffer and dynamic parameters
-                        in order to start data acquisition and ramping. Timing 
+                        in order to start data acquisition and ramping. Timing
                         might be off slightly
             "hardware": Expects a trigger command for each setpoint. Can be used
                         with a preconfigured hardware trigger (Todo), a method,
@@ -361,7 +361,7 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
                          measurement script) or a manual trigger.
             "manual"  : The trigger setup is done by the user. The measurent script will
                         just start the first ramp. Usefull for synchronized trigger outputs
-                        as in the QDac. 
+                        as in the QDac.
     trigger_start: A callable that triggers the trigger (called to start the measurement)
                     or the keyword "manual" when triggering is done by user. Defauls is manual.
     trigger_reset (optional): Callable to reset the trigger. Default is NONE.
@@ -374,19 +374,19 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
             ]
         trigger_start = self.settings.get("trigger_start", "manual")  # TODO: this should be set elsewhere
         trigger_reset = self.settings.get("trigger_reset", None)
-        trigger_type = _validate_mapping(self.settings.get("trigger_type"), 
-                                         TRIGGER_TYPES,  
+        trigger_type = _validate_mapping(self.settings.get("trigger_type"),
+                                         TRIGGER_TYPES,
                                          default = "software",
                                          default_key_error= "software")
         include_gate_name = self.settings.get("include_gate_name", True)
         sync_trigger = self.settings.get("sync_trigger", None)
-        
+
         datasets = []
         self.initialize()
         #meas.register_parameter(timer)
         for dynamic_sweep, dynamic_parameter in zip(self.dynamic_sweeps, self.dynamic_parameters):
             if include_gate_name:
-                measurement_name = f"{self.metadata.measurement.name} {dynamic_parameter['gate']}"            
+                measurement_name = f"{self.metadata.measurement.name} {dynamic_parameter['gate']}"
             else:
                 measurement_name = self.metadata.measurment.name or "Buffered 1D Sweep"
             # if self.settings.get("log_idle_params", True):
@@ -398,7 +398,7 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
             meas = Measurement(name = measurement_name)
             meas.register_parameter(dynamic_param)
 
-                
+
             for parameter in self.gettable_channels:
                 meas.register_parameter(parameter, setpoints=[dynamic_param,])
                 #Set trigger to low here
@@ -408,7 +408,7 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
                 #start = timer.reset_clock()
                 #Add check if all gettable parameters have buffer?
                 self.ready_buffers()
-                
+
                 if trigger_type == "manual":
                     try:
                         dynamic_param.root_instrument._qtools_ramp([dynamic_param],
@@ -429,17 +429,17 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
                     except:
                         print("Please set a trigger or define a trigger_start method")
                     pass
-                
+
                 elif trigger_type== "software":
                     dynamic_param.root_instrument._qtools_ramp([dynamic_param],
                                     end_values=[dynamic_sweep.get_setpoints()[-1]],
                                     ramp_time = self.buffer_settings["duration"])
                     for buffer in self.buffers:
                         buffer.force_trigger()
-                        
+
                 while not list(self.buffers)[0].is_finished():
                     time.sleep(0.1)
-                try: 
+                try:
                     trigger_reset()
                 except:
                     print("No method to reset the trigger defined.")

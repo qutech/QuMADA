@@ -79,7 +79,7 @@ class MeasurementScript(ABC):
         "time_constant",
         "phase",
         "count",
-        "aux_voltage_1", 
+        "aux_voltage_1",
         "aux_voltage_2"
     }
 
@@ -121,7 +121,7 @@ class MeasurementScript(ABC):
                 gate[parameter_name] = parameter
             else:
                 raise Exception("Gate {gate_name} is not a dictionary.")
-                
+
     def _set_buffered_num_points(self) -> None:
         """
         Calculates number of datapoints when buffered measurements are performed and sets
@@ -240,7 +240,7 @@ class MeasurementScript(ABC):
         TODO: Put Sweep-Generation somewhere else?
         TODO: Allow setting ramp rate for setting the parameters manually
         """
-        self.gettable_parameters: list[str] = [] 
+        self.gettable_parameters: list[str] = []
         self.gettable_channels: list[str] = []
         self.break_conditions: list[str] = []
         self.static_parameters: list[str] = []
@@ -248,7 +248,7 @@ class MeasurementScript(ABC):
         self.dynamic_channels: list[str] = []
         self.dynamic_sweeps: list[str] = []
         self.buffers: set = {} #All buffers of gettable parameters
-        
+
         ramp_rate = self.settings.get("ramp_rate", 0.3)
         ramp_time = self.settings.get("ramp_time", 5)
         setpoint_intervall = self.settings.get("setpoint_intervall", 0.1)
@@ -317,7 +317,7 @@ class MeasurementScript(ABC):
                     # Generate sweeps from parameters
                     if self.buffered:
                         try:
-                            self.dynamic_sweeps.append(LinSweep(channel, 
+                            self.dynamic_sweeps.append(LinSweep(channel,
                                                                 self.properties[gate][parameter]["start"],
                                                                 self.properties[gate][parameter]["stop"],
                                                                 self.buffered_num_points,
@@ -402,11 +402,11 @@ class MeasurementScript(ABC):
     def ready_buffers(self, **kwargs) -> None:
         """
         Setup all buffers registered in the measurement and start them
-        
+
         Parameters
         ----------
         **kwargs : None so far...
-        
+
         Returns
         -------
         None
@@ -415,7 +415,7 @@ class MeasurementScript(ABC):
             buffer.setup_buffer(settings = self.buffer_settings)
             #print(self.buffer_settings)
             buffer.start()
-    
+
     def readout_buffers(self, **kwargs) -> dict:
         """
         Readout all buffer and return the results as list of tuples
@@ -431,7 +431,7 @@ class MeasurementScript(ABC):
         dict
             Results, list with one tuple for each subscribed parameter. Tuple
             contains (parameter, measurement_data).
-    
+
         #TODO: Handle multiple bursts etc.
         """
         data = {}
@@ -445,7 +445,7 @@ class MeasurementScript(ABC):
                     #TODO: Add option to include timestamps here.
                     pass
         return results
-    
+
     def _relabel_instruments(self) -> None:
         """
         Changes the labels of all instrument channels to the
@@ -493,8 +493,8 @@ class MeasurementScript(ABC):
                 metadata.save_to_db()
             except Exception as e:
                 print(f"Metadata could not inserted into database: {e}")
-                
-                
+
+
 class VirtualGate():
     """Virtual Gate"""
     def __init__(self):

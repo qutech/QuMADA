@@ -32,10 +32,10 @@ class MFLI(Instrument):
         self.instr = instr = session.connect_device(device)
         if instr._device_type != "MFLI":
             raise TypeError("The type of instrument you are trying to connect is not supported.")
-        
+
         #self.daq = tk_mfli.DAQModule(self.instr)
         demod0 = self.instr.demods[0]
-        
+
         self.add_parameter(
             "voltage",
             label = "V",
@@ -66,7 +66,7 @@ class MFLI(Instrument):
             docstring = "X component of sample measured by demod1"
             )
         self.current_x_component.signal_name = ("demod0", "x")
-        
+
         self.add_parameter(
             name = "phase",
             label = "Phase",
@@ -117,7 +117,7 @@ class MFLI(Instrument):
         #     get_parser = bool,
         #     docstring = "Turns Output1 on or off"
         #     )
-        
+
         self.add_parameter(
             name = "output_range",
             label = "Output range",
@@ -136,7 +136,7 @@ class MFLI(Instrument):
             set_cmd = lambda t: self.instr.demods[0].timeconstant(t),
             docstring = "Time constant of the low-pass filter of demod0"
             )
-        
+
         self.add_parameter(
             name = "demod0_order",
             label = "Demod0 filter order",
@@ -144,24 +144,24 @@ class MFLI(Instrument):
             set_cmd = lambda x: demod0.order(x),
             docstring = "Gets/Sets the order of the demod 0 filter."
             )
-        
+
         self.add_parameter(
             name = "demod0_aux_in_1",
             label = "Demod0 AuxIn 1",
             get_cmd = lambda : demod0.sample()["auxin0"],
             set_cmd = None,
             get_parser = float,
-            docstring = "Aux In 1 of demod0"   
+            docstring = "Aux In 1 of demod0"
         )
         self.demod0_aux_in_1.signal_name = ("demod0", "auxin0")
-    
+
         self.add_parameter(
             name = "demod0_aux_in_2",
             label = "Demod0 AuxIn 2",
             get_cmd = lambda : demod0.sample()["auxin1"],
             set_cmd = None,
             get_parser = float,
-            docstring = "Aux In 2 of demod0"   
+            docstring = "Aux In 2 of demod0"
         )
         self.demod0_aux_in_2.signal_name = ("demod0", "auxin1")
         self.add_parameter(
@@ -171,5 +171,3 @@ class MFLI(Instrument):
             set_cmd = None,
             docstring = "Gets/Sets the order of the demod 0 filter."
             )
-        
-            

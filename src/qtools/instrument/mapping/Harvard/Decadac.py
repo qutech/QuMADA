@@ -60,7 +60,7 @@ class DecadacMapping(InstrumentMapping):
             param._instrument._ramp(end_value, ramp_rate, block = block)
         if sync_trigger:
             sync_trigger.set(0)
-            
+
     def trigger(
             self,
             parameter,
@@ -68,7 +68,5 @@ class DecadacMapping(InstrumentMapping):
             ) -> None:
         instrument: Decadac = parameter.root_instrument
         assert isinstance(instrument, Decadac)
-        parameter._instrument.enable_ramp(False)  
+        parameter._instrument.enable_ramp(False)
         parameter.volt.set(level)
-        
-        
