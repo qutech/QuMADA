@@ -4,9 +4,8 @@ Measurement
 import inspect
 import json
 from abc import ABC, abstractmethod
-from collections.abc import MutableMapping, MutableSequence
+from collections.abc import MutableSequence
 from contextlib import suppress
-from dataclasses import dataclass, field
 from datetime import datetime
 from functools import wraps
 from typing import Any, Union
@@ -17,7 +16,6 @@ from qcodes import Station
 from qcodes.instrument import Parameter
 from qcodes.instrument.parameter import _BaseParameter
 from qcodes.utils.dataset.doNd import AbstractSweep, ActionsT, LinSweep
-from qcodes.utils.metadata import Metadatable
 from qtools_metadata.measurement import MeasurementData
 from qtools_metadata.measurement import MeasurementScript as DomainMeasurementScript
 from qtools_metadata.measurement import MeasurementSettings

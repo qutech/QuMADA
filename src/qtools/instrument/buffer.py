@@ -8,7 +8,7 @@ import numpy as np
 from jsonschema import validate
 from pyvisa import VisaIOError
 from qcodes.instrument.base import Instrument
-from qcodes.instrument.parameter import ManualParameter, Parameter
+from qcodes.instrument.parameter import Parameter
 from qcodes.instrument_drivers.stanford_research.SR830 import SR830
 from qcodes.utils.metadata import Metadatable
 
