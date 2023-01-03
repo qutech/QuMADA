@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import json
 from abc import ABC, abstractmethod
-from typing import Any, Iterable, Mapping
+from collections.abc import Iterable, Mapping
+from typing import Any
 
 import jsonschema
 from qcodes.instrument.base import Instrument
@@ -47,6 +48,7 @@ def filter_flatten_parameters(node) -> dict[Any, Parameter]:
     Returns:
         Dict[Any, Parameter]: Flat dict of parameters
     """
+
     def recurse(node) -> None:
         """Recursive part of the function. Fills instrument_parameters dict."""
         # TODO: Handle InstrumentChannel
@@ -111,10 +113,12 @@ def _load_instrument_mapping(path: str) -> Any:
     return mapping_data
 
 
-def add_mapping_to_instrument(instrument: Instrument,
-                              *,
-                              path: str | None = None,
-                              mapping: InstrumentMapping | None = None) -> None:
+def add_mapping_to_instrument(
+    instrument: Instrument,
+    *,
+    path: str | None = None,
+    mapping: InstrumentMapping | None = None,
+) -> None:
     """
     Loads instrument mapping from mapping JSON file and adds it as instrument attribute.
     Alternatively, provide a mapping object, that contains the mapping contents, as well as
@@ -141,15 +145,21 @@ def add_mapping_to_instrument(instrument: Instrument,
         raise ValueError("Arguments 'path' and 'mapping' are exclusive.")
 
     mapping = {}
-    mapping["parameter_names"] = {f"{instrument.name}_{key}":parameter for (key, parameter) in helper_mapping["parameter_names"].items()}
+    mapping["parameter_names"] = {
+        f"{instrument.name}_{key}": parameter
+        for (key, parameter) in helper_mapping["parameter_names"].items()
+    }
     parameters: dict[Any, Parameter] = filter_flatten_parameters(instrument)
-    mapped_parameters = ((key, parameter) for key, parameter in parameters.items() if key in mapping["parameter_names"])
+    mapped_parameters = (
+        (key, parameter)
+        for key, parameter in parameters.items()
+        if key in mapping["parameter_names"]
+    )
     for key, parameter in mapped_parameters:
         parameter.__setattr__("_mapping", mapping["parameter_names"][key])
 
 
-def _generate_mapping_stub(instrument: Instrument,
-                           path: str) -> None:
+def _generate_mapping_stub(instrument: Instrument, path: str) -> None:
     """
     Generates JSON stub of instrument parametes and saves it under the provided path. Overwrites existing files by default.
 
@@ -173,7 +183,10 @@ def _generate_mapping_stub(instrument: Instrument,
     # Create mapping stub from flat dict of parameters
     mapping = {}
     parameters: dict[Any, Parameter] = filter_flatten_parameters(instrument)
-    mapping["parameter_names"] = {key.removeprefix(f"{instrument.name}_"): value.name for key, value in parameters.items()}
+    mapping["parameter_names"] = {
+        key.removeprefix(f"{instrument.name}_"): value.name
+        for key, value in parameters.items()
+    }
 
     # Dump JSON file
     with open(path, "w") as file:
@@ -224,7 +237,10 @@ def map_gates_to_instruments(
                 try:
                     # Automatically maps all parameters to their corresponding gates
                     # based on the existing mapping
-                    for existing_gate, existing_parameters in existing_gate_parameters.items():
+                    for (
+                        existing_gate,
+                        existing_parameters,
+                    ) in existing_gate_parameters.items():
                         if existing_gate == key:
                             if isinstance(existing_parameters, Parameter):
                                 # TODO: single parameter
@@ -240,9 +256,17 @@ def map_gates_to_instruments(
                     # TODO: Does not work with instruments that have only one parameter
                     # (Lists letters of parametername instead of parameter)
                     if not flag:
-                        chosen = int(input(f"Which instrument shall be mapped to gate \"{key}\" ({gate}): "))
+                        chosen = int(
+                            input(
+                                f'Which instrument shall be mapped to gate "{key}" ({gate}): '
+                            )
+                        )
                         chosen_instrument = list(components.values())[int(chosen)]
-                    chosen_instrument_parameters = {k: v for k, v in instrument_parameters.items() if v.root_instrument is chosen_instrument}
+                    chosen_instrument_parameters = {
+                        k: v
+                        for k, v in instrument_parameters.items()
+                        if v.root_instrument is chosen_instrument
+                    }
                     try:
                         if map_manually:
                             raise MappingError("map_manually set, mapping manually.")
@@ -250,7 +274,11 @@ def map_gates_to_instruments(
                         _map_gate_to_instrument(gate, chosen_instrument_parameters)
                         # Remove mapped parameters from parameter list
                         # TODO: remove all parameters from Channel, if parent is a channel
-                        keys_to_remove = (key for key in chosen_instrument_parameters.keys() if chosen_instrument_parameters[key] in gate.values())
+                        keys_to_remove = (
+                            key
+                            for key in chosen_instrument_parameters.keys()
+                            if chosen_instrument_parameters[key] in gate.values()
+                        )
                         for key in keys_to_remove:
                             instrument_parameters.pop(key, None)
 
@@ -258,9 +286,15 @@ def map_gates_to_instruments(
                         # Could not map instrument, do it manually
                         # TODO: Map to multiple instruments
                         print(ex)
-                        _map_gate_parameters_to_instrument_parameters(gate, chosen_instrument_parameters)
+                        _map_gate_parameters_to_instrument_parameters(
+                            gate, chosen_instrument_parameters
+                        )
                         # Remove mapped parameters from parameter list
-                        keys_to_remove = (key for key in chosen_instrument_parameters.keys() if chosen_instrument_parameters[key] in gate.values())
+                        keys_to_remove = (
+                            key
+                            for key in chosen_instrument_parameters.keys()
+                            if chosen_instrument_parameters[key] in gate.values()
+                        )
                         for key in keys_to_remove:
                             instrument_parameters.pop(key, None)
                     break
@@ -276,8 +310,9 @@ def map_gates_to_instruments(
         metadata.measurement.mapping.mapping = json.dumps(j)
 
 
-def _map_gate_to_instrument(gate: Mapping[Any, Parameter],
-                            instrument_parameters: Mapping[Any, Parameter]) -> None:
+def _map_gate_to_instrument(
+    gate: Mapping[Any, Parameter], instrument_parameters: Mapping[Any, Parameter]
+) -> None:
     """
     Maps the gate parameters of one specific gate to the parameters of one specific instrument.
 
@@ -285,16 +320,28 @@ def _map_gate_to_instrument(gate: Mapping[Any, Parameter],
         gate (Mapping[Any, Parameter]): Gate parameters
         instrument_parameters (Mapping[Any, Parameter]): Instrument parameters available for mapping
     """
-    mapped_parameters = {key: parameter for key, parameter in instrument_parameters.items() if hasattr(parameter, "_mapping")}
+    mapped_parameters = {
+        key: parameter
+        for key, parameter in instrument_parameters.items()
+        if hasattr(parameter, "_mapping")
+    }
     for key, parameter in gate.items():
         # Map only parameters that are not set already
         if parameter is None:
-            candidates = [parameter for parameter in mapped_parameters.values() if parameter._mapping == key]
+            candidates = [
+                parameter
+                for parameter in mapped_parameters.values()
+                if parameter._mapping == key
+            ]
             try:
                 gate[key] = candidates.pop(0)
             except IndexError:
-                instrument_name = next(iter(instrument_parameters.values())).instrument.name
-                raise MappingError(f"No mapping candidate for \"{key}\" in instrument \"{instrument_name}\" found.")
+                instrument_name = next(
+                    iter(instrument_parameters.values())
+                ).instrument.name
+                raise MappingError(
+                    f'No mapping candidate for "{key}" in instrument "{instrument_name}" found.'
+                )
 
 
 def _map_gate_parameters_to_instrument_parameters(
@@ -309,8 +356,16 @@ def _map_gate_parameters_to_instrument_parameters(
         gate_parameters (Mapping[Any, Parameter]): Gate parameters
         instrument_parameters (Mapping[Any, Parameter]): Instrument parameters available for mapping
     """
-    mapped_parameters = {key: parameter for key, parameter in instrument_parameters.items() if hasattr(parameter, "_mapping")}
-    unmapped_parameters = {key: parameter for key, parameter in instrument_parameters.items() if not hasattr(parameter, "_mapping")}
+    mapped_parameters = {
+        key: parameter
+        for key, parameter in instrument_parameters.items()
+        if hasattr(parameter, "_mapping")
+    }
+    unmapped_parameters = {
+        key: parameter
+        for key, parameter in instrument_parameters.items()
+        if not hasattr(parameter, "_mapping")
+    }
 
     # This is ugly
     for key, parameter in gate_parameters.items():
@@ -318,7 +373,9 @@ def _map_gate_parameters_to_instrument_parameters(
             # Filter instrument parameters, if _mapping attribute is equal to key_gp
             # if there is no mapping provided, append those parameters to the list
             # if there are no filtered candidates available, show all parameters
-            candidates = {k: p for k, p in mapped_parameters.items() if p._mapping == key}
+            candidates = {
+                k: p for k, p in mapped_parameters.items() if p._mapping == key
+            }
             if append_unmapped_parameters:
                 candidates = candidates | unmapped_parameters
             if not len(candidates):
@@ -331,7 +388,11 @@ def _map_gate_parameters_to_instrument_parameters(
             chosen = None
             while True:
                 try:
-                    chosen = int(input(f"Please choose an instrument parameter for gate parameter \"{key}\": "))
+                    chosen = int(
+                        input(
+                            f'Please choose an instrument parameter for gate parameter "{key}": '
+                        )
+                    )
                     gate_parameters[key] = candidates_values[int(chosen)]
                     break
                 except (IndexError, ValueError):

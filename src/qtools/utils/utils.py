@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Tue Aug  2 17:01:34 2022
 
@@ -6,24 +5,31 @@ Created on Tue Aug  2 17:01:34 2022
 """
 import numpy as np
 
+
 #%%
 def flatten_array(l) -> list:
     """
     Flattens nested lists and arrays, returns flattened list
     """
     results = []
+
     def rec(sublist, results):
         for entry in sublist:
             if isinstance(entry, list) or isinstance(entry, np.ndarray):
                 rec(entry, results)
             else:
                 results.append(entry)
+
     rec(l, results)
     return results
 
+
 #%%
 
-def _validate_mapping(entry, valid_entries, mapping: dict = None, default = None, default_key_error = None):
+
+def _validate_mapping(
+    entry, valid_entries, mapping: dict = None, default=None, default_key_error=None
+):
     """
     Returns mapped value with validation check.
 
@@ -53,7 +59,9 @@ def _validate_mapping(entry, valid_entries, mapping: dict = None, default = None
         if entry in valid_entries:
             return mapping.get(entry)
         else:
-            print(f"{mapping.get(entry)} is not in {valid_entries}. Using default value: {default}")
+            print(
+                f"{mapping.get(entry)} is not in {valid_entries}. Using default value: {default}"
+            )
             return default
     else:
         print(f"{entry} is not in mapping. Using default value: {default_key_error}")

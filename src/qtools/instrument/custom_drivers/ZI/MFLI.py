@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Mon May 16 16:42:39 2022
 
@@ -6,14 +5,22 @@ Created on Mon May 16 16:42:39 2022
 MFLI driver for zhinst-toolkit version 0.3.3 (and above)
 """
 
+from collections.abc import MutableMapping, MutableSequence
+from typing import Any, Union
+
 import numpy as np
 import qcodes as qc
 from qcodes.instrument.base import Instrument
-from qcodes.instrument.parameter import ParameterWithSetpoints, Parameter, ParamRawDataType
-#import qtools as qt
-from zhinst.toolkit import Session
+from qcodes.instrument.parameter import (
+    Parameter,
+    ParameterWithSetpoints,
+    ParamRawDataType,
+)
 from qcodes.utils.validators import Arrays, ComplexNumbers, Enum, Ints, Numbers, Strings
-from typing import Any, MutableMapping, MutableSequence, Union#
+
+# import qtools as qt
+from zhinst.toolkit import Session
+
 
 class MFLI(Instrument):
     """
@@ -22,8 +29,15 @@ class MFLI(Instrument):
     with QTools.
     Not finished, most parameters are still missing.
     """
-    def __init__(self, name: str, device: str, serverhost: str = "localhost",
-                 existing_session: Session = None, **kwargs):
+
+    def __init__(
+        self,
+        name: str,
+        device: str,
+        serverhost: str = "localhost",
+        existing_session: Session = None,
+        **kwargs
+    ):
         super().__init__(name, **kwargs)
         if type(existing_session) == Session:
             session = existing_session
@@ -31,81 +45,90 @@ class MFLI(Instrument):
             self.session = session = Session(serverhost)
         self.instr = instr = session.connect_device(device)
         if instr._device_type != "MFLI":
-            raise TypeError("The type of instrument you are trying to connect is not supported.")
+            raise TypeError(
+                "The type of instrument you are trying to connect is not supported."
+            )
 
-        #self.daq = tk_mfli.DAQModule(self.instr)
+        # self.daq = tk_mfli.DAQModule(self.instr)
         demod0 = self.instr.demods[0]
 
         self.add_parameter(
             "voltage",
-            label = "V",
-            unit = "V",
-            get_cmd = lambda: np.sqrt(demod0.sample()["x"]**2+demod0.sample()["y"]**2) * np.sqrt(2),
-            get_parser = float,
-            set_cmd = False,
-            docstring = "Absolute voltage as measured by demod0",
+            label="V",
+            unit="V",
+            get_cmd=lambda: np.sqrt(
+                demod0.sample()["x"] ** 2 + demod0.sample()["y"] ** 2
             )
+            * np.sqrt(2),
+            get_parser=float,
+            set_cmd=False,
+            docstring="Absolute voltage as measured by demod0",
+        )
         self.voltage.signal_name = ("demod0", "r")
         self.add_parameter(
             "current",
-            label = "R",
-            unit = "A",
-            get_cmd = lambda: np.sqrt(demod0.sample()["x"]**2+demod0.sample()["y"]**2) * np.sqrt(2),
-            get_parser = float,
-            set_cmd = None,
-            docstring = "Absolute current as measured by demod0",
+            label="R",
+            unit="A",
+            get_cmd=lambda: np.sqrt(
+                demod0.sample()["x"] ** 2 + demod0.sample()["y"] ** 2
             )
+            * np.sqrt(2),
+            get_parser=float,
+            set_cmd=None,
+            docstring="Absolute current as measured by demod0",
+        )
         self.current.signal_name = ("demod0", "r")
         self.add_parameter(
             "current_x_component",
-            label = "X",
-            unit = "A",
-            get_cmd = lambda: demod0.sample()["x"],
-            get_parser = float,
-            set_cmd = None,
-            docstring = "X component of sample measured by demod1"
-            )
+            label="X",
+            unit="A",
+            get_cmd=lambda: demod0.sample()["x"],
+            get_parser=float,
+            set_cmd=None,
+            docstring="X component of sample measured by demod1",
+        )
         self.current_x_component.signal_name = ("demod0", "x")
 
         self.add_parameter(
-            name = "phase",
-            label = "Phase",
-            unit = "rad",
-            get_cmd = lambda: demod0.sample()["phase"],
-            get_parser = float,
-            set_cmd = None,
-            docstring = "Phase of the measured current in radians"
-            )
+            name="phase",
+            label="Phase",
+            unit="rad",
+            get_cmd=lambda: demod0.sample()["phase"],
+            get_parser=float,
+            set_cmd=None,
+            docstring="Phase of the measured current in radians",
+        )
         self.phase.signal_name = ("demod0", "phase")
         self.add_parameter(
             "current_y_component",
-            label = "Y",
-            unit = "A",
-            get_cmd = lambda: demod0.sample()["y"],
-            get_parser = float,
-            set_cmd = None,
-            docstring = "X component of sample measured by demod1")
+            label="Y",
+            unit="A",
+            get_cmd=lambda: demod0.sample()["y"],
+            get_parser=float,
+            set_cmd=None,
+            docstring="X component of sample measured by demod1",
+        )
         self.current_y_component.signal_name = ("demod0", "y")
 
         self.add_parameter(
-            name = "frequency",
-            label = "Frequency",
-            unit = "Hz",
-            get_cmd = lambda: demod0.sample()["frequency"],
-            get_parser = float,
-            set_cmd = lambda f: self.instr.oscs[0].freq(f),
-            docstring = "Frequency of the oscillator"
-            )
+            name="frequency",
+            label="Frequency",
+            unit="Hz",
+            get_cmd=lambda: demod0.sample()["frequency"],
+            get_parser=float,
+            set_cmd=lambda f: self.instr.oscs[0].freq(f),
+            docstring="Frequency of the oscillator",
+        )
 
         self.add_parameter(
-            name = "amplitude",
-            label = "Amplitude",
-            unit = "V",
-            get_cmd = lambda : self.instr.sigouts[0].amplitudes[1](),
-            get_parser = float,
-            set_cmd = lambda a: self.instr.sigouts[0].amplitudes[1](a),
-            docstring = "Amplitude of the voltage output"
-            )
+            name="amplitude",
+            label="Amplitude",
+            unit="V",
+            get_cmd=lambda: self.instr.sigouts[0].amplitudes[1](),
+            get_parser=float,
+            set_cmd=lambda a: self.instr.sigouts[0].amplitudes[1](a),
+            docstring="Amplitude of the voltage output",
+        )
 
         # self.add_parameter(
         #     name = "output_enabled",
@@ -119,55 +142,55 @@ class MFLI(Instrument):
         #     )
 
         self.add_parameter(
-            name = "output_range",
-            label = "Output range",
-            unit = "V",
-            get_cmd = lambda: self.instr.sigouts[0].range(),
-            set_cmd = lambda x: self.instr.sigouts[0].range(x),
-            docstring = "Range of the output"
-            )
+            name="output_range",
+            label="Output range",
+            unit="V",
+            get_cmd=lambda: self.instr.sigouts[0].range(),
+            set_cmd=lambda x: self.instr.sigouts[0].range(x),
+            docstring="Range of the output",
+        )
 
         self.add_parameter(
-            name = "demod0_time_constant",
+            name="demod0_time_constant",
             label="Time constant",
-            unit = "s",
-            get_cmd = lambda : demod0.timeconstant(),
-            get_parser = float,
-            set_cmd = lambda t: self.instr.demods[0].timeconstant(t),
-            docstring = "Time constant of the low-pass filter of demod0"
-            )
+            unit="s",
+            get_cmd=lambda: demod0.timeconstant(),
+            get_parser=float,
+            set_cmd=lambda t: self.instr.demods[0].timeconstant(t),
+            docstring="Time constant of the low-pass filter of demod0",
+        )
 
         self.add_parameter(
-            name = "demod0_order",
-            label = "Demod0 filter order",
-            get_cmd = lambda : demod0.order(),
-            set_cmd = lambda x: demod0.order(x),
-            docstring = "Gets/Sets the order of the demod 0 filter."
-            )
+            name="demod0_order",
+            label="Demod0 filter order",
+            get_cmd=lambda: demod0.order(),
+            set_cmd=lambda x: demod0.order(x),
+            docstring="Gets/Sets the order of the demod 0 filter.",
+        )
 
         self.add_parameter(
-            name = "demod0_aux_in_1",
-            label = "Demod0 AuxIn 1",
-            get_cmd = lambda : demod0.sample()["auxin0"],
-            set_cmd = None,
-            get_parser = float,
-            docstring = "Aux In 1 of demod0"
+            name="demod0_aux_in_1",
+            label="Demod0 AuxIn 1",
+            get_cmd=lambda: demod0.sample()["auxin0"],
+            set_cmd=None,
+            get_parser=float,
+            docstring="Aux In 1 of demod0",
         )
         self.demod0_aux_in_1.signal_name = ("demod0", "auxin0")
 
         self.add_parameter(
-            name = "demod0_aux_in_2",
-            label = "Demod0 AuxIn 2",
-            get_cmd = lambda : demod0.sample()["auxin1"],
-            set_cmd = None,
-            get_parser = float,
-            docstring = "Aux In 2 of demod0"
+            name="demod0_aux_in_2",
+            label="Demod0 AuxIn 2",
+            get_cmd=lambda: demod0.sample()["auxin1"],
+            set_cmd=None,
+            get_parser=float,
+            docstring="Aux In 2 of demod0",
         )
         self.demod0_aux_in_2.signal_name = ("demod0", "auxin1")
         self.add_parameter(
-            name = "demod0_trig_in",
-            label = "Demod0 Trigger Input",
-            get_cmd = None,
-            set_cmd = None,
-            docstring = "Gets/Sets the order of the demod 0 filter."
-            )
+            name="demod0_trig_in",
+            label="Demod0 Trigger Input",
+            get_cmd=None,
+            set_cmd=None,
+            docstring="Gets/Sets the order of the demod 0 filter.",
+        )
