@@ -6,16 +6,9 @@ Created on Tue Jan  3 15:20:07 2023
 """
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-from collections.abc import Mapping
-from typing import Any
-
 import numpy as np
 from jsonschema import validate
-from pyvisa import VisaIOError
-from qcodes.instrument.base import Instrument
-from qcodes.instrument.parameter import ManualParameter, Parameter
-from qcodes.utils.metadata import Metadatable
+from qcodes.instrument.parameter import Parameter
 
 from qtools.instrument.custom_drivers.Dummies.dummy_dmm import DummyDmm
 from qtools.instrument.buffer import Buffer, BufferException
@@ -48,8 +41,8 @@ class DummyDMMBuffer(Buffer):
             self.delay_data_points = int(self.delay*self._device.buffer_SR())
             self.num_points = self.delay_data_points+ self.num_points
             self._device.buffer_n_points(self.num_points)
-            #TODO: There has to be a more elegant way for the setter.
         self._device.buffer.ready_buffer()
+        
     @property
     def num_points(self) -> int | None:
         return self._num_points
@@ -61,6 +54,7 @@ class DummyDMMBuffer(Buffer):
         self._num_points = int(num_points)
 
     def _set_num_points(self) -> None:
+        #TODO: Move to parent Buffer Class?
         """
         Calculates number of datapoints and sets
         the num_points accordingly.
@@ -88,33 +82,19 @@ class DummyDMMBuffer(Buffer):
 
     @trigger.setter
     def trigger(self, trigger: str | None) -> None:
-        if trigger is None:
-            # TODO: standard value for Sample Rate
-            self._device.buffer_SR(512)
-            self._device.buffer_trig_mode("OFF")
-        elif trigger == "external":
-            self._device.buffer_SR("Trigger") 
-            self._device.buffer_trig_mode("ON")
-        else:
-            raise BufferException(
-                "SR830 does not support setting custom trigger inputs. Use 'external' and the input on the back of the unit."
-            )
-        self._trigger = trigger
+        if trigger == "software":
+            self._trigger = trigger
 
     def force_trigger(self) -> None:
         self._device.start()
 
     def read_raw(self) -> dict:
         data = {}
-        try:
-            for parameter in self._subscribed_parameters:
-                index = self._device.buffer.subscribed_params.index(parameter)
-                data[parameter.name] = self._device.buffer.get()[index]
-                data[parameter.name] = data[parameter.name][self.delay_data_points:self.num_points]
-        except VisaIOError as ex:
-            raise BufferException(
-                "Could not read the buffer. Buffer has to be stopped before readout."
-            ) from ex
+
+        for parameter in self._subscribed_parameters:
+            index = self._device.buffer.subscribed_params.index(parameter)
+            data[parameter.name] = self._device.buffer.get()[index]
+            data[parameter.name] = data[parameter.name][self.delay_data_points:self.num_points]
         return data
 
     def read(self) -> dict:

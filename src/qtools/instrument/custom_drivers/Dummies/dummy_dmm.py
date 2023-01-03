@@ -5,9 +5,8 @@ Created on Mon Jan  2 17:21:37 2023
 @author: till3
 """
 # most of the drivers only need a couple of these... moved all up here for clarity below
-from time import sleep, time
+from time import sleep
 import numpy as np
-import ctypes  # only for DLL-based instrument
 
 import qcodes as qc
 
@@ -20,7 +19,6 @@ from qcodes.instrument import (
     InstrumentModule,
     Parameter,
 )
-import random
 import threading
 from qcodes.utils import validators as vals
 from qcodes.validators import Arrays, ComplexNumbers, Enum, Ints, Numbers, Strings

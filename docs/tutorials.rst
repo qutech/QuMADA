@@ -319,3 +319,91 @@ Accessing Measurent Data and Plotting the Measurement
 
 Qtools does not have separate live-plotting tool so far, instead you have to use the plottr-inspectr as described in the `QCoDeS documentation <https://qcodes.github.io/Qcodes/examples/plotting/How-to-use-Plottr-with-QCoDeS-for-live-plotting.html>`_.
 However, the "utils section" has a couple of tools that make working with the QCoDeS database, in which the data is stored, easier.
+
+
+
+
+Adding the Qtools Buffer Class to Instruments
+-----------------------------------------------
+
+Using Qtools for doing buffered measurements requires the measurement instruments to have a Qtools "Buffered" Class.
+In analogy to the gate mapping it will map the instrument's buffer's properties and functions to a common Qtools interface.
+
+In this tutorial we will go through the most important steps for writing such a class using a Dummy DMM.
+The Dummy DMMs Driver can be found in qtools/instrument/custom_drivers/Dummies/dummy_dmm.py.
+
+Our custom buffer inherits from 
+
+.. py:class:: Buffer(ABC)
+
+Buffer() contains list of allowed setting names, trigger modes, triggers, etc. required to validate the input parameters.
+Furthermore, a couple of required properties and (abstract)methods are defined. This is required to ensure compatibility of custom buffer classes 
+with QTools measurements.
+
+.. code-block:: python
+
+	class DummyDMMBuffer(Buffer):
+
+		"""Buffer for Dummy DMM"""
+
+		AVAILABLE_TRIGGERS: list[str] = ["software"]
+
+		def __init__(self, device: DummyDmm):
+			self._device = device
+			self._trigger: str | None = None
+			self._subscribed_parameters: set[Parameter] = set()
+			self._num_points: int | None = None
+		
+Our buffer class requires a list of valid triggers (for real instrument those represent different trigger inputs), a trigger property, which is set later during the measurement,
+a set of subscribed parameters, which will later contain the parameters you want to measure and the number of datapoints to be stored in the buffer. This value is set when mapping the instruments
+to the gate parameters, but is required to compare the number of setpoints with the buffer length.
+
+Now we can add the other required methods and parameters:
+
+.. py:function:: num_points
+
+A num_points property is required a represents the number of setpoints of the measurements. It tells QCodes how many datapoints have to be read out and allows
+it to return only the relevant data. Depending on the measurement instrument it is necessary to pass this information on to the driver/the instrument, however, this is done in the setup 
+method below.
+Keep in mind that the buffer settings can contain any combination of two of the parameters sampling_rate, burst_duration and num_points.
+In some cases it is required to calculate the num_points from the other two. A possible implementation could look as follows. 
+
+.. code-block:: python
+
+	@property
+	def num_points(self) -> int | None:
+		return self._num_points
+
+	@num_points.setter
+    def num_points(self, num_points) -> None:
+        if num_points > 16383:
+            raise Exception("Dummy Dacs Buffer is to small for this measurement. Please reduce the number of data points or the delay")
+        self._num_points = int(num_points)
+
+    def _set_num_points(self) -> None:
+
+        if all(k in self.settings for k in ("sampling_rate", "burst_duration", "num_points")):
+            raise Exception("You cannot define sampling_rate, burst_duration and num_points at the same time")
+        elif self.settings.get("num_points", False):
+            self.num_points = self.settings["num_points"]
+        elif all(k in self.settings for k in ("sampling_rate", "burst_duration")):
+                    self.num_points = int(
+                        np.ceil(self.settings["sampling_rate"] * self.settings["burst_duration"])
+						
+.. py:function:: subscribe(self, parameters: list[Parameter]) -> None
+
+We have to tell the Qtools Buffer as well as the instruments which parameters shall be measured. Therefore, we need a subscribe method.
+It requires a list of parameters to add. The subscribe method has to make sure that the chosen parameters are valid (part of the instrument and
+usable in combination with the buffer and each other), tell the measurement instrument to write the parameters' measurement values into its buffer and 
+add the parameters to the _subscribed_parameters property of the buffer class. 
+
+.. code-block:: python
+
+    def subscribe(self, parameters: list[Parameter]) -> None:
+        assert type(parameters) == list
+        for parameter in parameters:
+            self._device.buffer.subscribe(parameter)
+            self._subscribed_parameters.add(parameter)
+
+
+
