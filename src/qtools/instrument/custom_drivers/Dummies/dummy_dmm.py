@@ -39,13 +39,15 @@ class dmm_results_sinus(Parameter):
     
 class dmm_buffer(Parameter):
     
-    def __init__(self, name, **kwargs):
+    def __init__(self, name,**kwargs):
         super().__init__(name, **kwargs)
         self.buffer_data = []
         self.buffer_length = 512
         self.SR = 512
         self.is_finished = True
         self.subscribed_params =  list()
+        self.triggered: bool = False
+        self._is_triggered = threading.Event()
                 
     def subscribe(self, param):
         assert param.root_instrument == self.root_instrument
@@ -66,6 +68,7 @@ class dmm_buffer(Parameter):
         
         
     def _run(self):
+        _is_triggered = self._is_triggered.wait()
         for i in range(0, self.buffer_length):
             for j in range(len(self.subscribed_params)):
                 datapoint = self.subscribed_params[j]()
@@ -75,14 +78,14 @@ class dmm_buffer(Parameter):
                     self.buffer_data[j].append(self.subscribed_params[j]()[i])
             sleep(1/self.SR) 
         self.is_finished = True
-        
+            
     def reset(self):
         self.buffer_data = []
             
     def get_raw(self):
         return self.buffer_data
 
-class DummyDmm(Instrument):
+class DummyDmm(Instrument): 
     
     def __init__(self, name, **kwargs):
         super().__init__(name, **kwargs)
@@ -121,8 +124,14 @@ class DummyDmm(Instrument):
         self.add_parameter(
             "buffer_n_points",
             set_cmd = None,
-            vals = Ints(0,16500)
+            vals = Ints(0,16383)
             )
+        
+        self.add_parameter(
+            "triggered",
+            set_cmd = None,
+            vals = vals.Bool())
+        self.triggered(False)
         
         self.add_function(
             "start",
@@ -136,8 +145,10 @@ class DummyDmm(Instrument):
             "reset_buffer",
             call_cmd = self._reset_buffer)
         
-        
-        
+    def _force_trigger(self):
+        self.buffer._is_triggered.set()
+        return None
+                
     def _start_buffer(self):
         print("Started buffer")
         self.buffer.start()
@@ -146,6 +157,7 @@ class DummyDmm(Instrument):
     def _ready_buffer(self):
         print("Buffer is now ready")
         self.buffer.ready_buffer()
+        self.buffer._is_triggered = threading.Event()
         return None
     
     def _reset_buffer(self):

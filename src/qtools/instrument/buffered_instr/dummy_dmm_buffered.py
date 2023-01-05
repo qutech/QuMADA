@@ -86,7 +86,7 @@ class DummyDMMBuffer(Buffer):
             self._trigger = trigger
 
     def force_trigger(self) -> None:
-        self._device.start()
+        self._device._force_trigger()
 
     def read_raw(self) -> dict:
         data = {}
