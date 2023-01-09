@@ -59,7 +59,7 @@ pre-commit install
 
 ### Documentation
 
-You can access the current documentation [here](https://qutech.pages.git-ce.rwth-aachen.de/lab_software/qtools)
+You can access the current documentation [here](https://qutech.pages.git-ce.rwth-aachen.de/lab_software/qtools/qtools)
 or build your own:
 
 Run
