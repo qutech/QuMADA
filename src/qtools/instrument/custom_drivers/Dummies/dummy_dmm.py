@@ -47,7 +47,7 @@ class dmm_buffer(Parameter):
         self.is_finished = True
         self.subscribed_params =  list()
         self.triggered: bool = False
-        self._is_triggered = threading.Event()
+        self._is_triggered = self.root_instrument._trigger_event
                 
     def subscribe(self, param):
         assert param.root_instrument == self.root_instrument
@@ -87,8 +87,10 @@ class dmm_buffer(Parameter):
 
 class DummyDmm(Instrument): 
     
-    def __init__(self, name, **kwargs):
+    def __init__(self, name, trigger_event = threading.Event(), **kwargs):
         super().__init__(name, **kwargs)
+        
+        self._trigger_event = trigger_event
         
         self.add_parameter(
             "voltage", 
@@ -157,7 +159,7 @@ class DummyDmm(Instrument):
     def _ready_buffer(self):
         print("Buffer is now ready")
         self.buffer.ready_buffer()
-        self.buffer._is_triggered = threading.Event()
+        self.buffer._is_triggered = self._trigger_event
         return None
     
     def _reset_buffer(self):

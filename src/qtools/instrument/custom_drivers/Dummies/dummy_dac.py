@@ -28,10 +28,10 @@ from qcodes.utils import validators as vals
 
 class DummyDac(Instrument): 
     
-    def __init__(self, name, **kwargs):
+    def __init__(self, name, trigger_event = threading.Event(), **kwargs):
         super().__init__(name, **kwargs)
         
-        self._is_triggered = threading.Event()
+        self._is_triggered = trigger_event
         
         self.add_parameter(
             "voltage", 
@@ -41,13 +41,17 @@ class DummyDac(Instrument):
             )
         self.voltage.set(0)
         
+        self.add_function(
+            "force_trigger",
+            call_cmd=self._is_triggered.set)
+        
     def _run_ramp(self, start, stop, duration, stepsize = 0.01):
         num_points = int((stop-start)/stepsize)
         for setpoint in np.linspace(start, stop, num_points):
             self.voltage(setpoint)
             sleep(duration/num_points)
             
-    def _ramp(self, start, stop, duration, stepsize = 0.01):
+    def ramp(self, start, stop, duration, stepsize = 0.01):
         self.thread = threading.Thread(target=self._run_ramp, 
                                        args=(self, start, stop, duration, stepsize),
                                        daemon = True)

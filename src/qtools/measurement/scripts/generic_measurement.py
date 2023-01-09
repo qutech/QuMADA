@@ -371,9 +371,13 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
 
                 if trigger_type == "hardware":
                     # Set trigger to high here
+                    dynamic_param.root_instrument._qtools_ramp(
+                        [dynamic_param],
+                        end_values = [dynamic_sweep.get_setpoints()[-1]],
+                        ramp_time=self.buffer_settings["duration"])
                     try:
                         trigger_start()
-                    except:
+                    except AttributeError:
                         print("Please set a trigger or define a trigger_start method")
                     pass
 

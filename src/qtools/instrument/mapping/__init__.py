@@ -26,6 +26,7 @@ KEITHLEY_2450_MAPPING = _build_path("tektronix/Keithley_2450_voltage_source.json
 MFLI_MAPPING = _build_path("Zurich_Instruments/MFLI.json")
 QDAC_MAPPING = _build_path("QDevil/QDac.json")
 DUMMY_DMM_MAPPING = _build_path("Dummies/DummyDmm.json")
+DUMMY_DAC_MAPPING = _build_path("Dummies/DummyDac.json")
 
 __all__ = [
     MappingError,
@@ -38,5 +39,6 @@ __all__ = [
     KEITHLEY_2450_MAPPING,
     MFLI_MAPPING,
     QDAC_MAPPING,
-    DUMMY_DMM_MAPPING
+    DUMMY_DMM_MAPPING,
+    DUMMY_DAC_MAPPING
 ]
