@@ -17,7 +17,8 @@ class QDacMapping(InstrumentMapping):
         *,
         start_values: list[float] | None = None,
         end_values: list[float],
-        ramp_time: float
+        ramp_time: float,
+        **kwargs
     ) -> None:
         assert len(parameters) == len(end_values)
         if start_values is not None:
@@ -27,7 +28,7 @@ class QDacMapping(InstrumentMapping):
             raise Exception("Maximum length of rampable parameters is 8.")
 
         # check, if all parameters are from the same instrument
-        instruments = {parameter.root_instrument for parameter in parameters}
+        instruments = [parameter.root_instrument for parameter in parameters]
         if len(instruments) > 1:
             raise Exception(
                 "Parameters are from more than one instrument. This would lead to non synchronized ramps."
@@ -36,11 +37,8 @@ class QDacMapping(InstrumentMapping):
         instrument: QDac = instruments.pop()
         assert isinstance(instrument, QDac)
 
-        p = re.compile(r"chan\d{2}")
-        channellist = [
-            int(p.match(parameter.name_parts[1]).group(1)) for parameter in parameters
-        ]
-
+        channellist = [instrument.channels.index(param._instrument)+1 for param in parameters]
+        
         if not start_values:
             start_values = []
 

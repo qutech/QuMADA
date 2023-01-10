@@ -252,7 +252,7 @@ class SR830Buffer(Buffer):
 
         validate(settings, self.settings_schema)
         self.settings: dict = settings
-        self._device.buffer_SR(settings.setdefault("sampling_rate", 512))
+        self._device.buffer_SR(settings.get("sampling_rate", 512))
         self._device.buffer_trig_mode("OFF")
         self._set_num_points()
         self.delay_data_points = (
@@ -302,6 +302,10 @@ class SR830Buffer(Buffer):
             )
         elif self.settings.get("num_points", False):
             self.num_points = self.settings["num_points"]
+            if self.settings.get("sampling_rate", False):
+                self._device.buffer_SR(self.settings["sampling_rate"])
+            else:
+                self._device.buffer_SR(self.num_points/self.settings["burst_duration"])
         elif all(k in self.settings for k in ("sampling_rate", "burst_duration")):
             self.num_points = int(
                 np.ceil(
