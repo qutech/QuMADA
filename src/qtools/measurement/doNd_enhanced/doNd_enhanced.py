@@ -3,8 +3,8 @@ Created on Mon Nov 29 12:57:40 2021
 
 @author: lab
 """
-
 from __future__ import annotations
+import warnings
 import logging
 import sys
 import time
@@ -185,17 +185,26 @@ def do1d_parallel(
         sys.stdout.flush()
         sys.stderr.flush()
         
+        
+        sweep_data = {}
+        for channel in measured_params:
+            sweep_data[channel] : list[float] = []
+
         for set_point in tqdm(setpoints, disable=not show_progress):
             for param in param_set:
                 param.set(set_point)
             tracked_setpoints.append(set_point)
+            time.sleep(delay)
             datasaver.add_result(
                 (param_set[0], set_point),
                 *process_params_meas(measured_params, use_threads=use_threads),
                 *additional_setpoints_data
             )
+            
+            for channel in measured_params:
+                sweep_data[channel].append(channel.get())
             if callable(break_condition):
-                if break_condition():
+                if break_condition(sweep_data):
                     if backsweep_after_break:
                         tracked_setpoints.reverse()
                         time.sleep(wait_after_break)
@@ -209,7 +218,8 @@ def do1d_parallel(
                             )
                         break
                     else:
-                        raise BreakConditionInterrupt("Break condition was met.")
+                        warnings.warn("Break condition was met.")
+						break
 
 
     param_set[0].post_delay = original_delay
@@ -355,6 +365,7 @@ def do1d_parallel_asym(
             for i in range(len(param_set)):
                 param_set[i].set(setpoints[i][j])
                 tracked_setpoints[i].append(setpoints[i][j])
+                time.sleep(delay)
                 datasaver_list.append((param_set[i], setpoints[i][j]))
             datasaver.add_result(
                 *datasaver_list,
@@ -376,12 +387,15 @@ def do1d_parallel_asym(
                             )
                         break
                     else:
-                        raise BreakConditionInterrupt("Break condition was met.")
+                        warnings.warn("Break condition was met.")
+						break
 
 
     param_set[0].post_delay = original_delay
 
     return _handle_plotting(dataset, do_plot, interrupted())
+
+	
 def _interpret_breaks(break_conditions: list, **kwargs) -> Callable[[], bool] | None:
     """
     Translates break conditions and returns callable to check them.
@@ -436,3 +450,70 @@ def _interpret_breaks(break_conditions: list, **kwargs) -> Callable[[], bool] | 
         f = lambda: eval_binary_expr(cond["channel"].get(), ops[1], float(ops[2]))
         conditions.append(f)
     return partial(check_conditions, conditions) if conditions else None
+
+
+def _dev_interpret_breaks(break_conditions: list, sweep_values: dict, **kwargs) -> Callable[[], bool] | None:
+    """
+    Translates break conditions and returns callable to check them.
+
+    Parameters
+    ----------
+    break_conditions : List of dictionaries containing:
+            "channel": Gettable parameter to check
+            "break_condition": String specifying the break condition.
+                    Syntax:
+                        Parameter to check: only "val" supported so far.
+                        Comparator: "<",">" or "=="
+                        Value: float
+                    The parts have to be separated by blanks.
+
+    **kwargs : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    Callable
+        Function, that returns a boolean, True if break conditions are fulfilled.
+
+    """
+
+    def eval_binary_expr(op1: Any, oper: str, op2: Any) -> bool:
+        # evaluates the string "op1 [operator] op2
+        # supports <, > and == as operators
+        ops = {
+        '>' : operator.gt,
+        '<' : operator.lt,
+        '==' : operator.eq,
+        }
+        # Why convert explicitly to float?
+        # op1, op2 = float(op1), float(op2)
+        return ops[oper](op1, op2)
+
+    def check_conditions(conditions: list[Callable[[], bool]]):
+        for cond in conditions:
+            if cond():
+                return True
+        return False
+
+    conditions = []
+    # Create break condition callables
+    for cond in break_conditions:
+        ops = cond["break_condition"].split(" ")
+        data = sweep_values[cond["channel"]]
+        if ops[0] == "val":
+            f = lambda: eval_binary_expr(data[-1], ops[1], float(ops[2]))
+        elif ops[0] == "grad":
+            if(int(ops[1]) >= len(data)):
+                f = lambda: False
+            elif(float(ops[1]) < len(data)):
+                if data[len(data)-1] != 0:
+                    dx = (data[len(data)-1] - data[len(data)-1-int(ops[1])]) / data[len(data)-1]
+                    f = lambda: eval_binary_expr(dx, ops[2], float(ops[3]))
+                else:
+                    f = lambda: False
+        else:
+            raise NotImplementedError(
+                'NOT IMPLEMENTED'
+            )
+        conditions.append(f)
+    return check_conditions(conditions) if conditions else None

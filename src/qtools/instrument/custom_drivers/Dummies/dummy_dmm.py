@@ -21,7 +21,7 @@ from qcodes.instrument import (
 )
 import threading
 from qcodes.utils import validators as vals
-from qcodes.validators import Arrays, ComplexNumbers, Enum, Ints, Numbers, Strings
+
 #%%
 class dmm_results_random(Parameter):
     
