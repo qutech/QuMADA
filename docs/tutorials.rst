@@ -4,7 +4,7 @@ Tutorials
 First steps: Example Measurements (WIP)
 ---------------------------------
 
-QTools is QCoDeS based measurement framework that helps you performing measurements easily as well as dumping all required metadata in a database.
+QTools is a QCoDeS based measurement framework that helps you performing measurements easily as well as dumping all required metadata in a database.
 Before you start with this basic tutorial make sure to get familiar with QCoDeS, we recommend to work through the 15-Minute-To-QCoDeS tutorial to learn about setting up
 a database for the measurement data, Experiment containers, the measurement context manager and the station object.
 In this tutorial we assume that you already set up a QCoDeS database and created an experiment.
