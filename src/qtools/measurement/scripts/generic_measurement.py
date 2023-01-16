@@ -1,4 +1,3 @@
-import time
 from time import sleep
 
 from qcodes.dataset.measurements import Measurement
@@ -50,7 +49,7 @@ class Generic_1D_Sweep(MeasurementScript):
         wait_time = self.settings.get("wait_time", 5)
         include_gate_name = self.settings.get("include_gate_name", True)
         data = list()
-        time.sleep(wait_time)
+        sleep(wait_time)
         for sweep, dynamic_parameter in zip(self.dynamic_sweeps, self.dynamic_parameters):
             if include_gate_name:
                 measurement_name = f"{self.metadata.measurement.name} {dynamic_parameter['gate']}"
@@ -62,7 +61,7 @@ class Generic_1D_Sweep(MeasurementScript):
             else:
                 measured_channels = set(self.gettable_channels)
             ramp_or_set_parameter(sweep._param, sweep.get_setpoints()[0])
-            time.sleep(wait_time)
+            sleep(wait_time)
             data.append(
                 dond(
                     sweep,
@@ -113,7 +112,7 @@ class Generic_nD_Sweep(MeasurementScript):
 
         for sweep in self.dynamic_sweeps:
             ramp_or_set_parameter(sweep._param, sweep.get_setpoints()[0])
-        time.sleep(wait_time)
+        sleep(wait_time)
         data = dond(
             *tuple(self.dynamic_sweeps),
             *tuple(self.gettable_channels),
@@ -140,7 +139,7 @@ class Generic_1D_parallel_asymm_Sweep(MeasurementScript):
         for sweep in self.dynamic_sweeps:
             ramp_or_set_parameter(sweep._param, sweep.get_setpoints()[0])
             dynamic_params.append(sweep.param)
-        time.sleep(wait_time)
+        sleep(wait_time)
         data = do1d_parallel_asym(
             *tuple(self.gettable_channels),
             param_set=dynamic_params,
@@ -168,7 +167,7 @@ class Generic_1D_parallel_Sweep(MeasurementScript):
         for sweep in self.dynamic_sweeps:
             ramp_or_set_parameter(sweep._param, sweep.get_setpoints()[0])
             dynamic_params.append(sweep.param)
-        time.sleep(wait_time)
+        sleep(wait_time)
         data = do1d_parallel(
             *tuple(self.gettable_channels),
             param_set=dynamic_params,
@@ -217,7 +216,7 @@ class Timetrace(MeasurementScript):
                 now = timer()
                 results = [(channel, channel.get()) for channel in [*self.gettable_channels, *self.dynamic_channels]]
                 datasaver.add_result((timer, now), *results)
-                time.sleep(timestep)
+                sleep(timestep)
         dataset = datasaver.dataset
         return dataset
 
@@ -257,7 +256,7 @@ class Timetrace_with_sweeps(MeasurementScript):
                     set_values = [(sweep._param, sweep.get_setpoints()[i]) for sweep in self.dynamic_sweeps]
                     results = [(channel, channel.get()) for channel in self.gettable_channels]
                     datasaver.add_result((timer, now), *set_values, *results)
-                # time.sleep(timestep)
+                # sleep(timestep)
         dataset = datasaver.dataset
         return dataset
 
@@ -369,7 +368,7 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                         buffer.force_trigger()
 
                 while not list(self.buffers)[0].is_finished():
-                    time.sleep(0.1)
+                    sleep(0.1)
                 try:
                     trigger_reset()
                 except:
@@ -496,7 +495,7 @@ class Generic_1D_Hysteresis_buffered(MeasurementScript):
                             buffer.force_trigger()
 
                     while not list(self.buffers)[0].is_finished():
-                        time.sleep(0.1)
+                        sleep(0.1)
                     try:
                         trigger_reset()
                     except:
@@ -615,7 +614,7 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
                         buffer.force_trigger()
 
                 while not list(self.buffers)[0].is_finished():
-                    time.sleep(0.1)
+                    sleep(0.1)
                 try:
                     trigger_reset()
                 except:
