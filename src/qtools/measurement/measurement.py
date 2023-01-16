@@ -256,7 +256,7 @@ class MeasurementScript(ABC):
         self.dynamic_parameters: list[str] = []
         self.dynamic_channels: list[str] = []
         self.dynamic_sweeps: list[str] = []
-        self.buffers: set = {}  # All buffers of gettable parameters
+        self.buffers: set = set()  # All buffers of gettable parameters
 
         ramp_rate = self.settings.get("ramp_rate", 0.3)
         ramp_time = self.settings.get("ramp_time", 5)
