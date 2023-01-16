@@ -105,7 +105,7 @@ class DummyDmm(Instrument):
             "buffer_SR",
             unit = "Sa/s",
             set_cmd = None,
-            vals = Ints(0, 512),
+            vals = vals.Ints(0, 512),
              )
         
         self.add_parameter(
@@ -119,7 +119,7 @@ class DummyDmm(Instrument):
         self.add_parameter(
             "buffer_n_points",
             set_cmd = None,
-            vals = Ints(0,16383)
+            vals = vals.Ints(0,16383)
             )
         
         self.add_parameter(
