@@ -28,15 +28,13 @@ class QDacMapping(InstrumentMapping):
         # check, if all parameters are from the same instrument
         instruments = [parameter.root_instrument for parameter in parameters]
         if len(instruments) > 1:
-            raise Exception(
-                "Parameters are from more than one instrument. This would lead to non synchronized ramps."
-            )
+            raise Exception("Parameters are from more than one instrument. This would lead to non synchronized ramps.")
 
         instrument: QDac = instruments.pop()
         assert isinstance(instrument, QDac)
 
-        channellist = [instrument.channels.index(param._instrument)+1 for param in parameters]
-        
+        channellist = [instrument.channels.index(param._instrument) + 1 for param in parameters]
+
         if not start_values:
             start_values = []
 

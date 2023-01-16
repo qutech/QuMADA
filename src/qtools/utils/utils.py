@@ -27,9 +27,7 @@ def flatten_array(l) -> list:
 #%%
 
 
-def _validate_mapping(
-    entry, valid_entries, mapping: dict = None, default=None, default_key_error=None
-):
+def _validate_mapping(entry, valid_entries, mapping: dict = None, default=None, default_key_error=None):
     """
     Returns mapped value with validation check.
 
@@ -59,9 +57,7 @@ def _validate_mapping(
         if entry in valid_entries:
             return mapping.get(entry)
         else:
-            print(
-                f"{mapping.get(entry)} is not in {valid_entries}. Using default value: {default}"
-            )
+            print(f"{mapping.get(entry)} is not in {valid_entries}. Using default value: {default}")
             return default
     else:
         print(f"{entry} is not in mapping. Using default value: {default_key_error}")

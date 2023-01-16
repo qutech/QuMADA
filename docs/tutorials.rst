@@ -17,7 +17,7 @@ It contains a couple of blocks for the steps you have to do in order to set up t
 	#Required to load parameter json or yaml
 	import json
 	import yaml
-	
+
 	#Drivers for the measurement instruments
 	from qcodes.station import Station
 	from qcodes.instrument_drivers.Harvard.Decadac import Decadac
@@ -118,7 +118,7 @@ In this sample we just add a couple of real instruments. Of course you can add Q
 
 	There is a known bug that requires the instrument's name to be the same as the name found in the corresponding mapping file.
 	This is especcially relevant when you want to use two instruments of the same type. We are working on a fix for this issue.
-	As a workaround, you can create a second mapping file for the second instrument and alter the instrument name on the left side of 
+	As a workaround, you can create a second mapping file for the second instrument and alter the instrument name on the left side of
 	the mapping file to the name of the second instrument.
 
 #############
@@ -150,7 +150,7 @@ The connection to the metadabase is required for loading information of already 
 In case you have not already initialized a QCoDeS database you can easily do so by using the load_db(path_to_db [optional) method, which either takes the path to the database you want to use or, when no argument is supplied,
 opens an open-file prompt allowing you to simply pick the database you want to use (be aware that the prompt might pop up behind other windows).
 
-At this point we have taken care of all preliminary steps required before defining the measurement. 
+At this point we have taken care of all preliminary steps required before defining the measurement.
 Except for changing the measurement name in the metadata object, you will have to do those steps only when exchanging the sample or altering the setup.
 
 From now on, we will go through a typical workflow for characterizing a gate-defined Single Electron Transistor (SET) in a semiconductor heterostructure such as Si/SiGe or Si MOS.
@@ -271,7 +271,7 @@ For our first measurement we use the Generic_1D_parallel_Sweep method, which ram
 	This measurement script uses the setpoints of the first gate_parameter to define the sweeps, the other parameter's setpoints are ignored at the current state.
 	It is not trivial to merge arbitrary setpoint arrays with different delays into one sweep, we might improve the script in the future.
 
-	
+
 Note that we do not directly pass the arguments when creating the object but use the built-in "setup" method. It is required to pass the parameters and a metadata object.
 All measurement_script objects have an initialize and a reset method, which take care of ramping/setting all parameters to the correct values and furthermore create a couple of attributes,
 like lists of all sweeps, different parameters and so on. Furthermore, they will automatically relabel the parameters in the QCoDeS datasets to match the gate names you specified.
@@ -297,19 +297,19 @@ capable of handling existing mappings with different parameters than the current
 .. code-block:: python
 
 	map_gates_to_instruments(station.components, measurement_script.gate_parameter)
-	
-You are now asked for each registered gate/terminal to specify an instrument (or instrument channel) to map to. All available instruments are listed, you simply have to type in the number corresponding to the correct instrument. 
+
+You are now asked for each registered gate/terminal to specify an instrument (or instrument channel) to map to. All available instruments are listed, you simply have to type in the number corresponding to the correct instrument.
 As Qtools' :ref:`gate mapping<Station and Instruments>` has well defined parameter names the parameters are mapped automatically once the correct measurement instrument is specified.
 
 .. note::
-	
+
 	Right now there are some issues with multichannel instruments such as the DecaDac. The different channels are all part of the same instrument, whenever you assign a parameter to the instrument the first unassigned channel will be mapped.
 	In general this means that the channels are assigned in the order of their numbers (first parameter mapped to Channel 1, second parameter mapped to Channel 2, etc.) Make sure to add the parameters to the gate_parameters.yaml in the corresponding order.
-	
+
 
 Finally you can use
 
-.. py:function:: measurement_script.run() 
+.. py:function:: measurement_script.run()
 
 to start the measurement.
 
@@ -332,12 +332,12 @@ In analogy to the gate mapping it will map the instrument's buffer's properties 
 In this tutorial we will go through the most important steps for writing such a class using a Dummy DMM.
 The Dummy DMMs Driver can be found in qtools/instrument/custom_drivers/Dummies/dummy_dmm.py.
 
-Our custom buffer inherits from 
+Our custom buffer inherits from
 
 .. py:class:: Buffer(ABC)
 
 Buffer() contains list of allowed setting names, trigger modes, triggers, etc. required to validate the input parameters.
-Furthermore, a couple of required properties and (abstract)methods are defined. This is required to ensure compatibility of custom buffer classes 
+Furthermore, a couple of required properties and (abstract)methods are defined. This is required to ensure compatibility of custom buffer classes
 with QTools measurements.
 
 .. code-block:: python
@@ -353,7 +353,7 @@ with QTools measurements.
 			self._trigger: str | None = None
 			self._subscribed_parameters: set[Parameter] = set()
 			self._num_points: int | None = None
-		
+
 Our buffer class requires a list of valid triggers (for real instrument those represent different trigger inputs), a trigger property, which is set later during the measurement,
 a set of subscribed parameters, which will later contain the parameters you want to measure and the number of datapoints to be stored in the buffer. This value is set when mapping the instruments
 to the gate parameters, but is required to compare the number of setpoints with the buffer length.
@@ -363,10 +363,10 @@ Now we can add the other required methods and parameters:
 .. py:function:: num_points
 
 A num_points property is required a represents the number of setpoints of the measurements. It tells QCodes how many datapoints have to be read out and allows
-it to return only the relevant data. Depending on the measurement instrument it is necessary to pass this information on to the driver/the instrument, however, this is done in the setup 
+it to return only the relevant data. Depending on the measurement instrument it is necessary to pass this information on to the driver/the instrument, however, this is done in the setup
 method below.
 Keep in mind that the buffer settings can contain any combination of two of the parameters sampling_rate, burst_duration and num_points.
-In some cases it is required to calculate the num_points from the other two. A possible implementation could look as follows. 
+In some cases it is required to calculate the num_points from the other two. A possible implementation could look as follows.
 
 .. code-block:: python
 
@@ -389,13 +389,13 @@ In some cases it is required to calculate the num_points from the other two. A p
         elif all(k in self.settings for k in ("sampling_rate", "burst_duration")):
                     self.num_points = int(
                         np.ceil(self.settings["sampling_rate"] * self.settings["burst_duration"])
-						
+
 .. py:function:: subscribe(self, parameters: list[Parameter]) -> None
 
 We have to tell the Qtools Buffer as well as the instruments which parameters shall be measured. Therefore, we need a subscribe method.
 It requires a list of parameters to add. The subscribe method has to make sure that the chosen parameters are valid (part of the instrument and
-usable in combination with the buffer and each other), tell the measurement instrument to write the parameters' measurement values into its buffer and 
-add the parameters to the _subscribed_parameters property of the buffer class. 
+usable in combination with the buffer and each other), tell the measurement instrument to write the parameters' measurement values into its buffer and
+add the parameters to the _subscribed_parameters property of the buffer class.
 
 .. code-block:: python
 
@@ -404,6 +404,3 @@ add the parameters to the _subscribed_parameters property of the buffer class.
         for parameter in parameters:
             self._device.buffer.subscribe(parameter)
             self._subscribed_parameters.add(parameter)
-
-
-

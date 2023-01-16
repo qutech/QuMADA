@@ -4,11 +4,12 @@ from time import sleep
 from qcodes.dataset.measurements import Measurement
 from qcodes.instrument.specialized_parameters import ElapsedTimeParameter
 from qcodes.utils.dataset.doNd import dond
+
 from qtools.measurement.doNd_enhanced.doNd_enhanced import (
-    _interpret_breaks, 
-    _dev_interpret_breaks, 
-    do1d_parallel, 
-    do1d_parallel_asym
+    _dev_interpret_breaks,
+    _interpret_breaks,
+    do1d_parallel,
+    do1d_parallel_asym,
 )
 from qtools.measurement.measurement import MeasurementScript
 from qtools.utils.ramp_parameter import ramp_or_set_parameter
@@ -50,19 +51,13 @@ class Generic_1D_Sweep(MeasurementScript):
         include_gate_name = self.settings.get("include_gate_name", True)
         data = list()
         time.sleep(wait_time)
-        for sweep, dynamic_parameter in zip(
-            self.dynamic_sweeps, self.dynamic_parameters
-        ):
+        for sweep, dynamic_parameter in zip(self.dynamic_sweeps, self.dynamic_parameters):
             if include_gate_name:
-                measurement_name = (
-                    f"{self.metadata.measurement.name} {dynamic_parameter['gate']}"
-                )
+                measurement_name = f"{self.metadata.measurement.name} {dynamic_parameter['gate']}"
             else:
                 measurement_name = self.metadata.measurment.name or "measurement"
             if self.settings.get("log_idle_params", True):
-                idle_channels = [
-                    entry for entry in self.dynamic_channels if entry != sweep.param
-                ]
+                idle_channels = [entry for entry in self.dynamic_channels if entry != sweep.param]
                 measured_channels = {*self.gettable_channels, *idle_channels}
             else:
                 measured_channels = set(self.gettable_channels)
@@ -110,7 +105,9 @@ class Generic_nD_Sweep(MeasurementScript):
         wait_time = self.settings.get("wait_time", 5)
         include_gate_name = self.settings.get("include_gate_name", True)
         if include_gate_name:
-            measurement_name = f"{self.metadata.measurement.name} Gates: {[gate['gate'] for gate in self.dynamic_parameters]}"
+            measurement_name = (
+                f"{self.metadata.measurement.name} Gates: {[gate['gate'] for gate in self.dynamic_parameters]}"
+            )
         else:
             measurement_name = self.metadata.measurement.name or "measurement"
 
@@ -178,7 +175,7 @@ class Generic_1D_parallel_Sweep(MeasurementScript):
             setpoints=self.dynamic_sweeps[0].get_setpoints(),
             delay=self.dynamic_sweeps[0]._delay,
             measurement_name=self.metadata.measurement.name or "measurement",
-	    break_condition = lambda x : _dev_interpret_breaks(self.break_conditions, x),
+            break_condition=lambda x: _dev_interpret_breaks(self.break_conditions, x),
             backsweep_after_break=backsweep_after_break,
             **do1d_kwargs,
         )
@@ -218,10 +215,7 @@ class Timetrace(MeasurementScript):
             start = timer.reset_clock()
             while timer() < duration:
                 now = timer()
-                results = [
-                    (channel, channel.get())
-                    for channel in [*self.gettable_channels, *self.dynamic_channels]
-                ]
+                results = [(channel, channel.get()) for channel in [*self.gettable_channels, *self.dynamic_channels]]
                 datasaver.add_result((timer, now), *results)
                 time.sleep(timestep)
         dataset = datasaver.dataset
@@ -255,20 +249,13 @@ class Timetrace_with_sweeps(MeasurementScript):
             start = timer.reset_clock()
             while timer() < duration:
                 for sweep in self.dynamic_sweeps:
-                    ramp_or_set_parameter(
-                        sweep._param, sweep.get_setpoints()[0], ramp_time=timestep
-                    )
+                    ramp_or_set_parameter(sweep._param, sweep.get_setpoints()[0], ramp_time=timestep)
                 now = timer()
                 for i in range(0, len(self.dynamic_sweeps[0].get_setpoints())):
                     for sweep in self.dynamic_sweeps:
                         sweep._param.set(sweep.get_setpoints()[i])
-                    set_values = [
-                        (sweep._param, sweep.get_setpoints()[i])
-                        for sweep in self.dynamic_sweeps
-                    ]
-                    results = [
-                        (channel, channel.get()) for channel in self.gettable_channels
-                    ]
+                    set_values = [(sweep._param, sweep.get_setpoints()[i]) for sweep in self.dynamic_sweeps]
+                    results = [(channel, channel.get()) for channel in self.gettable_channels]
                     datasaver.add_result((timer, now), *set_values, *results)
                 # time.sleep(timestep)
         dataset = datasaver.dataset
@@ -299,9 +286,7 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
     def run(self):
         self.buffered = True
         TRIGGER_TYPES = ["software", "hardware", "manual"]
-        trigger_start = self.settings.get(
-            "trigger_start", "manual"
-        )  # TODO: this should be set elsewhere
+        trigger_start = self.settings.get("trigger_start", "manual")  # TODO: this should be set elsewhere
         trigger_reset = self.settings.get("trigger_reset", None)
         trigger_type = _validate_mapping(
             self.settings.get("trigger_type"),
@@ -315,13 +300,9 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
         datasets = []
         self.initialize()
         # meas.register_parameter(timer)
-        for dynamic_sweep, dynamic_parameter in zip(
-            self.dynamic_sweeps, self.dynamic_parameters
-        ):
+        for dynamic_sweep, dynamic_parameter in zip(self.dynamic_sweeps, self.dynamic_parameters):
             if include_gate_name:
-                measurement_name = (
-                    f"{self.metadata.measurement.name} {dynamic_parameter['gate']}"
-                )
+                measurement_name = f"{self.metadata.measurement.name} {dynamic_parameter['gate']}"
             else:
                 measurement_name = self.metadata.measurment.name or "Buffered 1D Sweep"
             # if self.settings.get("log_idle_params", True):
@@ -369,8 +350,9 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                     # Set trigger to high here
                     dynamic_param.root_instrument._qtools_ramp(
                         [dynamic_param],
-                        end_values = [dynamic_sweep.get_setpoints()[-1]],
-                        ramp_time=self.buffer_settings["duration"])
+                        end_values=[dynamic_sweep.get_setpoints()[-1]],
+                        ramp_time=self.buffer_settings["duration"],
+                    )
                     try:
                         trigger_start()
                     except AttributeError:
@@ -395,12 +377,9 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
 
                 results = self.readout_buffers()
                 # TODO: Append values from other dynamic parameters
-                datasaver.add_result(
-                    (dynamic_param, dynamic_sweep.get_setpoints()), *results
-                )
+                datasaver.add_result((dynamic_param, dynamic_sweep.get_setpoints()), *results)
                 datasets.append(datasaver.dataset)
         return datasets
-
 
 
 class Generic_1D_Hysteresis_buffered(MeasurementScript):
@@ -428,9 +407,7 @@ class Generic_1D_Hysteresis_buffered(MeasurementScript):
     def run(self):
         self.buffered = True
         TRIGGER_TYPES = ["software", "hardware", "manual"]
-        trigger_start = self.settings.get(
-            "trigger_start", "manual"
-        )  # TODO: this should be set elsewhere
+        trigger_start = self.settings.get("trigger_start", "manual")  # TODO: this should be set elsewhere
         trigger_reset = self.settings.get("trigger_reset", None)
         trigger_type = _validate_mapping(
             self.settings.get("trigger_type"),
@@ -445,13 +422,9 @@ class Generic_1D_Hysteresis_buffered(MeasurementScript):
         datasets = []
         self.initialize()
         # meas.register_parameter(timer)
-        for dynamic_sweep, dynamic_parameter in zip(
-            self.dynamic_sweeps, self.dynamic_parameters
-        ):
+        for dynamic_sweep, dynamic_parameter in zip(self.dynamic_sweeps, self.dynamic_parameters):
             if include_gate_name:
-                measurement_name = (
-                    f"{self.metadata.measurement.name} {dynamic_parameter['gate']}"
-                )
+                measurement_name = f"{self.metadata.measurement.name} {dynamic_parameter['gate']}"
             else:
                 measurement_name = self.metadata.measurment.name or "Buffered 1D Sweep"
             # if self.settings.get("log_idle_params", True):
@@ -476,17 +449,17 @@ class Generic_1D_Hysteresis_buffered(MeasurementScript):
                 data = {}
                 results = []
                 set_points = []
-                for iiter in range(0,iterations):
+                for iiter in range(0, iterations):
                     for buffer in self.buffers:
                         buffer.start()
-                    if(iiter % 2 == 0):
-                        end_value = dynamic_sweep.get_setpoints()[-1];
+                    if iiter % 2 == 0:
+                        end_value = dynamic_sweep.get_setpoints()[-1]
                         set_points.extend(dynamic_sweep.get_setpoints())
                     else:
-                        end_value = dynamic_sweep.get_setpoints()[0];
+                        end_value = dynamic_sweep.get_setpoints()[0]
                         _revers = list(reversed(dynamic_sweep.get_setpoints()))
                         set_points.extend(_revers)
-                    
+
                     # Add check if all gettable parameters have buffer?
                     if trigger_type == "manual":
                         try:
@@ -504,7 +477,7 @@ class Generic_1D_Hysteresis_buffered(MeasurementScript):
                             for v in dynamic_sweep.get_setpoints():
                                 dynamic_param.set(v)
                                 sleep(dynamic_sweep._delay)
-    
+
                     if trigger_type == "hardware":
                         # Set trigger to high here
                         try:
@@ -512,7 +485,7 @@ class Generic_1D_Hysteresis_buffered(MeasurementScript):
                         except:
                             print("Please set a trigger or define a trigger_start method")
                         pass
-    
+
                     elif trigger_type == "software":
                         dynamic_param.root_instrument._qtools_ramp(
                             [dynamic_param],
@@ -521,24 +494,22 @@ class Generic_1D_Hysteresis_buffered(MeasurementScript):
                         )
                         for buffer in self.buffers:
                             buffer.force_trigger()
-    
+
                     while not list(self.buffers)[0].is_finished():
                         time.sleep(0.1)
                     try:
                         trigger_reset()
                     except:
                         print("No method to reset the trigger defined.")
-                    _temp = self.readout_buffers()                  
+                    _temp = self.readout_buffers()
                     if iiter == 0:
                         results = _temp
                     else:
                         for ii in range(len(_temp)):
                             results[ii][1].extend(_temp[ii][1])
                     # TODO: Append values from other dynamic parameters
-                    
-                datasaver.add_result(
-                    (dynamic_param, set_points), *results
-                )
+
+                datasaver.add_result((dynamic_param, set_points), *results)
                 datasets.append(datasaver.dataset)
         return datasets
 
@@ -566,9 +537,7 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
 
     def run(self):
         TRIGGER_TYPES = ["software", "hardware", "manual"]
-        trigger_start = self.settings.get(
-            "trigger_start", "manual"
-        )  # TODO: this should be set elsewhere
+        trigger_start = self.settings.get("trigger_start", "manual")  # TODO: this should be set elsewhere
         trigger_reset = self.settings.get("trigger_reset", None)
         trigger_type = _validate_mapping(
             self.settings.get("trigger_type"),
@@ -582,13 +551,9 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
         datasets = []
         self.initialize()
         # meas.register_parameter(timer)
-        for dynamic_sweep, dynamic_parameter in zip(
-            self.dynamic_sweeps, self.dynamic_parameters
-        ):
+        for dynamic_sweep, dynamic_parameter in zip(self.dynamic_sweeps, self.dynamic_parameters):
             if include_gate_name:
-                measurement_name = (
-                    f"{self.metadata.measurement.name} {dynamic_parameter['gate']}"
-                )
+                measurement_name = f"{self.metadata.measurement.name} {dynamic_parameter['gate']}"
             else:
                 measurement_name = self.metadata.measurment.name or "Buffered 1D Sweep"
             # if self.settings.get("log_idle_params", True):
@@ -658,8 +623,6 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
 
                 results = self.readout_buffers()
                 # TODO: Append values from other dynamic parameters
-                datasaver.add_result(
-                    (dynamic_param, dynamic_sweep.get_setpoints()), *results
-                )
+                datasaver.add_result((dynamic_param, dynamic_sweep.get_setpoints()), *results)
                 datasets.append(datasaver.dataset)
         return datasets

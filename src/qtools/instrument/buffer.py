@@ -19,9 +19,7 @@ def is_bufferable(object: Instrument | Parameter):
     """Checks if the instrument or parameter is bufferable using the qtools Buffer definition."""
     if isinstance(object, Parameter):
         object = object.root_instrument
-    return hasattr(object, "_qtools_buffer") and isinstance(
-        object._qtools_buffer, Buffer
-    )
+    return hasattr(object, "_qtools_buffer") and isinstance(object._qtools_buffer, Buffer)
     # TODO: check, if parameter can really be buffered
 
 
@@ -255,14 +253,10 @@ class SR830Buffer(Buffer):
         self._device.buffer_SR(settings.get("sampling_rate", 512))
         self._device.buffer_trig_mode("OFF")
         self._set_num_points()
-        self.delay_data_points = (
-            0  # Datapoints to delete at the beginning of dataset due to delay.
-        )
+        self.delay_data_points = 0  # Datapoints to delete at the beginning of dataset due to delay.
         self.delay = settings.get("delay", 0)
         if self.delay < 0:
-            raise Exception(
-                "The SR830'S Trigger Input does not support negative delays."
-            )
+            raise Exception("The SR830'S Trigger Input does not support negative delays.")
         else:
             self.delay_data_points = int(self.delay * self._device.buffer_SR())
             self.num_points = self.delay_data_points + self.num_points
@@ -293,25 +287,16 @@ class SR830Buffer(Buffer):
         -------
         None
         """
-        if all(
-            k in self.settings
-            for k in ("sampling_rate", "burst_duration", "num_points")
-        ):
-            raise Exception(
-                "You cannot define sampling_rate, burst_duration and num_points at the same time"
-            )
+        if all(k in self.settings for k in ("sampling_rate", "burst_duration", "num_points")):
+            raise Exception("You cannot define sampling_rate, burst_duration and num_points at the same time")
         elif self.settings.get("num_points", False):
             self.num_points = self.settings["num_points"]
             if self.settings.get("sampling_rate", False):
                 self._device.buffer_SR(self.settings["sampling_rate"])
             else:
-                self._device.buffer_SR(self.num_points/self.settings["burst_duration"])
+                self._device.buffer_SR(self.num_points / self.settings["burst_duration"])
         elif all(k in self.settings for k in ("sampling_rate", "burst_duration")):
-            self.num_points = int(
-                np.ceil(
-                    self.settings["sampling_rate"] * self.settings["burst_duration"]
-                )
-            )
+            self.num_points = int(np.ceil(self.settings["sampling_rate"] * self.settings["burst_duration"]))
 
     @property
     def trigger(self) -> str | None:
@@ -347,13 +332,9 @@ class SR830Buffer(Buffer):
 
                 # TODO: what structure has the data? do we get timestamps?
                 data[parameter.name] = self._device.__getattr__(f"{ch}_datatrace").get()
-                data[parameter.name] = data[parameter.name][
-                    self.delay_data_points : self.num_points
-                ]
+                data[parameter.name] = data[parameter.name][self.delay_data_points : self.num_points]
         except VisaIOError as ex:
-            raise BufferException(
-                "Could not read the buffer. Buffer has to be stopped before readout."
-            ) from ex
+            raise BufferException("Could not read the buffer. Buffer has to be stopped before readout.") from ex
         return data
 
     def read(self) -> dict:
@@ -365,22 +346,14 @@ class SR830Buffer(Buffer):
             name = parameter.name
             if name in self.ch1_names:
                 self._device.ch1_display(name)
-                param_to_remove = {
-                    param
-                    for param in self._subscribed_parameters
-                    if param.name in self.ch1_names
-                }
+                param_to_remove = {param for param in self._subscribed_parameters if param.name in self.ch1_names}
                 self._subscribed_parameters.difference_update(
                     param_to_remove
                 )  # remove previously subscribed parameter from ch1
                 self._subscribed_parameters.add(parameter)
             elif name in self.ch2_names:
                 self._device.ch2_display(name)
-                param_to_remove = {
-                    param
-                    for param in self._subscribed_parameters
-                    if param.name in self.ch2_names
-                }
+                param_to_remove = {param for param in self._subscribed_parameters if param.name in self.ch2_names}
                 self._subscribed_parameters.difference_update(
                     param_to_remove
                 )  # remove previously subscribed parameter from ch2
@@ -467,16 +440,8 @@ class MFLIBuffer(Buffer):
 
         # TODO: Validate Trigger mode, edge and interpolation!:
         self._daq.type(self.TRIGGER_MODE_MAPPING[settings.get("trigger_mode", "edge")])
-        self._daq.edge(
-            self.TRIGGER_MODE_POLARITY_MAPPING[
-                settings.get("trigger_mode_polarity", "positive")
-            ]
-        )
-        self._daq.grid.mode(
-            self.GRID_INTERPOLATION_MAPPING[
-                settings.get("grid_interpolation", "linear")
-            ]
-        )
+        self._daq.edge(self.TRIGGER_MODE_POLARITY_MAPPING[settings.get("trigger_mode_polarity", "positive")])
+        self._daq.grid.mode(self.GRID_INTERPOLATION_MAPPING[settings.get("grid_interpolation", "linear")])
         self.trigger = self.trigger  # Don't delete me, I am important!
         if "trigger_threshold" in settings:
             # TODO: better way to distinguish, which trigger level to set
@@ -539,9 +504,7 @@ class MFLIBuffer(Buffer):
     @num_points.setter
     def num_points(self, num_points) -> None:
         if num_points > 8388608:
-            raise Exception(
-                "Buffer is to small for this measurement. Please reduce the number of data points"
-            )
+            raise Exception("Buffer is to small for this measurement. Please reduce the number of data points")
         self._num_points = int(num_points)
 
     def _set_num_points(self) -> None:
@@ -557,21 +520,12 @@ class MFLIBuffer(Buffer):
         -------
         None
         """
-        if all(
-            k in self.settings
-            for k in ("sampling_rate", "burst_duration", "num_points")
-        ):
-            raise Exception(
-                "You cannot define sampling_rate, burst_duration and num_points at the same time"
-            )
+        if all(k in self.settings for k in ("sampling_rate", "burst_duration", "num_points")):
+            raise Exception("You cannot define sampling_rate, burst_duration and num_points at the same time")
         elif self.settings.get("num_points", False):
             self.num_points = self.settings["num_points"]
         elif all(k in self.settings for k in ("sampling_rate", "burst_duration")):
-            self.num_points = int(
-                np.ceil(
-                    self.settings["sampling_rate"] * self.settings["burst_duration"]
-                )
-            )
+            self.num_points = int(np.ceil(self.settings["sampling_rate"] * self.settings["burst_duration"]))
 
     def read(self) -> dict:
         data = self.read_raw()
@@ -620,6 +574,4 @@ class MFLIBuffer(Buffer):
         return self._daq.raw_module.finished()
 
     def _get_node_from_parameter(self, parameter: Parameter):
-        return self._device.demods[self._channel].sample.__getattr__(
-            parameter.signal_name[1]
-        )
+        return self._device.demods[self._channel].sample.__getattr__(parameter.signal_name[1])

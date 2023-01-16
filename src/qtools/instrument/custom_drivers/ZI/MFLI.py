@@ -21,12 +21,7 @@ class MFLI(Instrument):
     """
 
     def __init__(
-        self,
-        name: str,
-        device: str,
-        serverhost: str = "localhost",
-        existing_session: Session = None,
-        **kwargs
+        self, name: str, device: str, serverhost: str = "localhost", existing_session: Session = None, **kwargs
     ):
         super().__init__(name, **kwargs)
         if type(existing_session) == Session:
@@ -35,9 +30,7 @@ class MFLI(Instrument):
             self.session = session = Session(serverhost)
         self.instr = instr = session.connect_device(device)
         if instr._device_type != "MFLI":
-            raise TypeError(
-                "The type of instrument you are trying to connect is not supported."
-            )
+            raise TypeError("The type of instrument you are trying to connect is not supported.")
 
         # self.daq = tk_mfli.DAQModule(self.instr)
         demod0 = self.instr.demods[0]
@@ -46,10 +39,7 @@ class MFLI(Instrument):
             "voltage",
             label="V",
             unit="V",
-            get_cmd=lambda: np.sqrt(
-                demod0.sample()["x"] ** 2 + demod0.sample()["y"] ** 2
-            )
-            * np.sqrt(2),
+            get_cmd=lambda: np.sqrt(demod0.sample()["x"] ** 2 + demod0.sample()["y"] ** 2) * np.sqrt(2),
             get_parser=float,
             set_cmd=False,
             docstring="Absolute voltage as measured by demod0",
@@ -59,10 +49,7 @@ class MFLI(Instrument):
             "current",
             label="R",
             unit="A",
-            get_cmd=lambda: np.sqrt(
-                demod0.sample()["x"] ** 2 + demod0.sample()["y"] ** 2
-            )
-            * np.sqrt(2),
+            get_cmd=lambda: np.sqrt(demod0.sample()["x"] ** 2 + demod0.sample()["y"] ** 2) * np.sqrt(2),
             get_parser=float,
             set_cmd=None,
             docstring="Absolute current as measured by demod0",

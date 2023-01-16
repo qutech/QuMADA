@@ -90,14 +90,10 @@ class MeasurementScript(ABC):
 
     def __init__(self):
         self.properties: dict[Any, Any] = {}
-        self.gate_parameters: dict[
-            Any, Union[dict[Any, Union[Parameter, None]], Parameter, None]
-        ] = {}
+        self.gate_parameters: dict[Any, Union[dict[Any, Union[Parameter, None]], Parameter, None]] = {}
         self._buffered_num_points: int | None = None
 
-    def add_gate_parameter(
-        self, parameter_name: str, gate_name: str = None, parameter: Parameter = None
-    ) -> None:
+    def add_gate_parameter(self, parameter_name: str, gate_name: str = None, parameter: Parameter = None) -> None:
         """
         Adds a gate parameter to self.gate_parameters.
 
@@ -108,9 +104,7 @@ class MeasurementScript(ABC):
             parameter (Parameter): Custom parameter. Set this, if you want to set a custom parameter. Defaults to None.
         """
         if parameter_name not in MeasurementScript.PARAMETER_NAMES:
-            raise NameError(
-                f'parameter_name "{parameter_name}" not in MeasurementScript.PARAMETER_NAMES.'
-            )
+            raise NameError(f'parameter_name "{parameter_name}" not in MeasurementScript.PARAMETER_NAMES.')
         if not gate_name:
             self.gate_parameters[parameter_name] = parameter
         else:
@@ -136,23 +130,13 @@ class MeasurementScript(ABC):
         -------
         None
         """
-        if all(
-            k in self.buffer_settings
-            for k in ("sampling_rate", "burst_duration", "num_points")
-        ):
-            raise Exception(
-                "You cannot define sampling_rate, burst_duration and num_points at the same time"
-            )
+        if all(k in self.buffer_settings for k in ("sampling_rate", "burst_duration", "num_points")):
+            raise Exception("You cannot define sampling_rate, burst_duration and num_points at the same time")
         elif self.buffer_settings.get("num_points", False):
             self.buffered_num_points = self.buffer_settings["num_points"]
-        elif all(
-            k in self.buffer_settings for k in ("sampling_rate", "burst_duration")
-        ):
+        elif all(k in self.buffer_settings for k in ("sampling_rate", "burst_duration")):
             self.buffered_num_points = int(
-                np.ceil(
-                    self.buffer_settings["sampling_rate"]
-                    * self.buffer_settings["burst_duration"]
-                )
+                np.ceil(self.buffer_settings["sampling_rate"] * self.buffer_settings["burst_duration"])
             )
 
     def setup(
@@ -204,9 +188,7 @@ class MeasurementScript(ABC):
         if add_script_to_metadata:
             try:
                 if not metadata.measurement.script:
-                    metadata.measurement.script = DomainMeasurementScript.create(
-                        cls.__name__
-                    )
+                    metadata.measurement.script = DomainMeasurementScript.create(cls.__name__)
                 script = metadata.measurement.script
 
                 script.language = "python"
@@ -219,9 +201,7 @@ class MeasurementScript(ABC):
         if add_parameters_to_metadata:
             try:
                 if not metadata.measurement.settings:
-                    metadata.measurement.settings = MeasurementSettings.create(
-                        f"{cls.__name__}Settings"
-                    )
+                    metadata.measurement.settings = MeasurementSettings.create(f"{cls.__name__}Settings")
                 settings = metadata.measurement.settings
 
                 settings.settings = json.dumps(parameters)
@@ -263,9 +243,7 @@ class MeasurementScript(ABC):
         setpoint_intervall = self.settings.get("setpoint_intervall", 0.1)
         for gate, parameters in self.gate_parameters.items():
             for parameter, channel in parameters.items():
-                if (
-                    self.properties[gate][parameter]["type"].find("static") >= 0
-                ):  # TODO: Handle strings
+                if self.properties[gate][parameter]["type"].find("static") >= 0:  # TODO: Handle strings
                     ramp_or_set_parameter(
                         channel,
                         self.properties[gate][parameter]["value"],
@@ -280,22 +258,14 @@ class MeasurementScript(ABC):
                         ramp_time=ramp_time,
                         setpoint_intervall=setpoint_intervall,
                     )
-                    self.static_parameters.append(
-                        {"gate": gate, "parameter": parameter}
-                    )
+                    self.static_parameters.append({"gate": gate, "parameter": parameter})
 
                 if self.properties[gate][parameter]["type"].find("gettable") >= 0:
-                    self.gettable_parameters.append(
-                        {"gate": gate, "parameter": parameter}
-                    )
+                    self.gettable_parameters.append({"gate": gate, "parameter": parameter})
                     self.gettable_channels.append(channel)
                     with suppress(KeyError):
-                        for condition in self.properties[gate][parameter][
-                            "break_conditions"
-                        ]:
-                            self.break_conditions.append(
-                                {"channel": channel, "break_condition": condition}
-                            )
+                        for condition in self.properties[gate][parameter]["break_conditions"]:
+                            self.break_conditions.append({"channel": channel, "break_condition": condition})
                 elif self.properties[gate][parameter]["type"].find("dynamic") >= 0:
                     # Handle different possibilities for starting points
                     try:
@@ -323,9 +293,7 @@ class MeasurementScript(ABC):
                                 ramp_time=ramp_time,
                                 setpoint_intervall=setpoint_intervall,
                             )
-                    self.dynamic_parameters.append(
-                        {"gate": gate, "parameter": parameter}
-                    )
+                    self.dynamic_parameters.append({"gate": gate, "parameter": parameter})
                     self.dynamic_channels.append(channel)
                     # Generate sweeps from parameters
                     if self.buffered:
@@ -346,9 +314,7 @@ class MeasurementScript(ABC):
                                     self.properties[gate][parameter]["setpoints"][0],
                                     self.properties[gate][parameter]["setpoints"][-1],
                                     self.buffered_num_points,
-                                    delay=self.properties[gate][parameter].setdefault(
-                                        "delay", 0
-                                    ),
+                                    delay=self.properties[gate][parameter].setdefault("delay", 0),
                                 )
                             )
                     else:
@@ -367,22 +333,16 @@ class MeasurementScript(ABC):
                                 CustomSweep(
                                     channel,
                                     self.properties[gate][parameter]["setpoints"],
-                                    delay=self.properties[gate][parameter].setdefault(
-                                        "delay", 0
-                                    ),
+                                    delay=self.properties[gate][parameter].setdefault("delay", 0),
                                 )
                             )
         if self.buffered:
             self.buffers = {
-                channel.root_instrument._qtools_buffer
-                for channel in self.gettable_channels
-                if is_bufferable(channel)
+                channel.root_instrument._qtools_buffer for channel in self.gettable_channels if is_bufferable(channel)
             }
             for gettable_param in self.gettable_channels:
                 if is_bufferable(gettable_param):
-                    gettable_param.root_instrument._qtools_buffer.subscribe(
-                        [gettable_param]
-                    )
+                    gettable_param.root_instrument._qtools_buffer.subscribe([gettable_param])
                 else:
                     raise Exception(f"{gettable_param} is not bufferable.")
         self._relabel_instruments()
@@ -491,9 +451,7 @@ class MeasurementScript(ABC):
             for key, parameter in parameters.items():
                 parameter.label = f"{gate} {key}"
 
-    def _add_datetime_to_metadata_if_empty(
-        self, *args, add_datetime_to_metadata: bool = True, **kwargs
-    ):
+    def _add_datetime_to_metadata_if_empty(self, *args, add_datetime_to_metadata: bool = True, **kwargs):
         if add_datetime_to_metadata:
             try:
                 metadata = self.metadata
@@ -512,16 +470,12 @@ class MeasurementScript(ABC):
                     metadata.measurement.data = []
                 datalist = metadata.measurement.data
                 db_location = qc.config.core.db_location
-                data = MeasurementData.create(
-                    f"{cls.__name__}Data", "sqlite3", db_location
-                )
+                data = MeasurementData.create(f"{cls.__name__}Data", "sqlite3", db_location)
                 datalist.append(data)
             except Exception as e:
                 print(f"Data could not be added to metadata: {e}")
 
-    def _insert_metadata_into_db(
-        self, *args, insert_metadata_into_db: bool = True, **kwargs
-    ):
+    def _insert_metadata_into_db(self, *args, insert_metadata_into_db: bool = True, **kwargs):
         if insert_metadata_into_db:
             try:
                 metadata = self.metadata

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Tue Jan  3 15:20:07 2023
 
@@ -10,8 +9,9 @@ import numpy as np
 from jsonschema import validate
 from qcodes.instrument.parameter import Parameter
 
-from qtools.instrument.custom_drivers.Dummies.dummy_dmm import DummyDmm
 from qtools.instrument.buffer import Buffer
+from qtools.instrument.custom_drivers.Dummies.dummy_dmm import DummyDmm
+
 
 #%%
 class DummyDMMBuffer(Buffer):
@@ -31,30 +31,33 @@ class DummyDMMBuffer(Buffer):
         validate(settings, self.settings_schema)
         self.settings: dict = settings
         self._device.buffer_SR(settings.setdefault("sampling_rate", 512))
-        #self._device.buffer_trig_mode("OFF")
-        self._set_num_points() #Method defined below
-        self.delay_data_points = 0 #Datapoints to delete at the beginning of dataset due to delay.
+        # self._device.buffer_trig_mode("OFF")
+        self._set_num_points()  # Method defined below
+        # Datapoints to delete at the beginning of dataset due to delay.
+        self.delay_data_points = 0
         self.delay = settings.get("delay", 0)
         if self.delay < 0:
             raise Exception("The Dummy Dac does not support negative delays.")
         else:
-            self.delay_data_points = int(self.delay*self._device.buffer_SR())
-            self.num_points = self.delay_data_points+ self.num_points
+            self.delay_data_points = int(self.delay * self._device.buffer_SR())
+            self.num_points = self.delay_data_points + self.num_points
             self._device.buffer_n_points(self.num_points)
         self._device.buffer.ready_buffer()
-        
+
     @property
     def num_points(self) -> int | None:
         return self._num_points
-    
+
     @num_points.setter
     def num_points(self, num_points) -> None:
         if num_points > 16383:
-            raise Exception("Dummy Dacs Buffer is to small for this measurement. Please reduce the number of data points or the delay")
+            raise Exception(
+                "Dummy Dacs Buffer is to small for this measurement. Please reduce the number of data points or the delay"
+            )
         self._num_points = int(num_points)
 
     def _set_num_points(self) -> None:
-        #TODO: Move to parent Buffer Class?
+        # TODO: Move to parent Buffer Class?
         """
         Calculates number of datapoints and sets
         the num_points accordingly.
@@ -72,9 +75,7 @@ class DummyDMMBuffer(Buffer):
         elif self.settings.get("num_points", False):
             self.num_points = self.settings["num_points"]
         elif all(k in self.settings for k in ("sampling_rate", "burst_duration")):
-                    self.num_points = int(
-                        np.ceil(self.settings["sampling_rate"] * self.settings["burst_duration"])
-                    )
+            self.num_points = int(np.ceil(self.settings["sampling_rate"] * self.settings["burst_duration"]))
 
     @property
     def trigger(self) -> str | None:
@@ -94,7 +95,7 @@ class DummyDMMBuffer(Buffer):
         for parameter in self._subscribed_parameters:
             index = self._device.buffer.subscribed_params.index(parameter)
             data[parameter.name] = self._device.buffer.get()[index]
-            data[parameter.name] = data[parameter.name][self.delay_data_points:self.num_points]
+            data[parameter.name] = data[parameter.name][self.delay_data_points : self.num_points]
         return data
 
     def read(self) -> dict:
@@ -113,7 +114,7 @@ class DummyDMMBuffer(Buffer):
             if parameter in self._device.buffer.subscribed_params:
                 self._device.buffer.subscribed_params.remove(parameter)
                 self._subscribed_parameters.remove(parameter)
-            else: 
+            else:
                 print(f"{parameter} is not subscribed")
 
     def is_subscribed(self, parameter: Parameter) -> bool:
@@ -124,7 +125,7 @@ class DummyDMMBuffer(Buffer):
 
     def stop(self) -> None:
         ...
-        
+
     def is_ready(self) -> bool:
         ...
 

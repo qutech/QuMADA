@@ -38,18 +38,14 @@ class DecadacMapping(InstrumentMapping):
         # check, if all parameters are from the same instrument
         instruments = {parameter.root_instrument for parameter in parameters}
         if len(instruments) > 1:
-            raise Exception(
-                "Parameters are from more than one instrument. This would lead to non synchronized ramps."
-            )
+            raise Exception("Parameters are from more than one instrument. This would lead to non synchronized ramps.")
 
         instrument: Decadac = instruments.pop()
         assert isinstance(instrument, Decadac)
 
         if not start_values:
             start_values = [param.get() for param in parameters]
-        ramp_rates = np.abs(
-            (np.array(end_values) - np.array(start_values)) / np.array(ramp_time)
-        )
+        ramp_rates = np.abs((np.array(end_values) - np.array(start_values)) / np.array(ramp_time))
         if sync_trigger:
             if sync_trigger in parameters:
                 raise Exception("Synchronized trigger cannot be part of parameters")
