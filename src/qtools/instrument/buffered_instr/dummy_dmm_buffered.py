@@ -11,7 +11,7 @@ from jsonschema import validate
 from qcodes.instrument.parameter import Parameter
 
 from qtools.instrument.custom_drivers.Dummies.dummy_dmm import DummyDmm
-from qtools.instrument.buffer import Buffer, BufferException
+from qtools.instrument.buffer import Buffer
 
 #%%
 class DummyDMMBuffer(Buffer):

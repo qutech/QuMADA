@@ -5,18 +5,8 @@ Created on Mon May 16 16:42:39 2022
 MFLI driver for zhinst-toolkit version 0.3.3 (and above)
 """
 
-from collections.abc import MutableMapping, MutableSequence
-from typing import Any, Union
-
 import numpy as np
-import qcodes as qc
 from qcodes.instrument.base import Instrument
-from qcodes.instrument.parameter import (
-    Parameter,
-    ParameterWithSetpoints,
-    ParamRawDataType,
-)
-from qcodes.utils.validators import Arrays, ComplexNumbers, Enum, Ints, Numbers, Strings
 
 # import qtools as qt
 from zhinst.toolkit import Session

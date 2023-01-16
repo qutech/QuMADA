@@ -22,10 +22,6 @@ from qtools_metadata.measurement import MeasurementSettings
 from qtools_metadata.metadata import Metadata
 
 from qtools.instrument.buffer import is_bufferable
-from qtools.instrument.mapping.base import (
-    _map_gate_to_instrument,
-    filter_flatten_parameters,
-)
 from qtools.utils.ramp_parameter import ramp_or_set_parameter
 from qtools.utils.utils import flatten_array
 

@@ -1,13 +1,9 @@
 import time
-from copy import deepcopy
 from time import sleep
 
-import qcodes as qc
-from qcodes.dataset.experiment_container import load_or_create_experiment
 from qcodes.dataset.measurements import Measurement
-from qcodes.instrument import Parameter
 from qcodes.instrument.specialized_parameters import ElapsedTimeParameter
-from qcodes.utils.dataset.doNd import LinSweep, do1d, do2d, dond
+from qcodes.utils.dataset.doNd import dond
 from qtools.measurement.doNd_enhanced.doNd_enhanced import (
     _interpret_breaks, 
     _dev_interpret_breaks, 

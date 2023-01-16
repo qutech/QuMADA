@@ -10,17 +10,8 @@ from __future__ import annotations
 from time import sleep
 import numpy as np
 
-import qcodes as qc
+from qcodes.instrument import Instrument
 
-from qcodes.instrument import (
-    Instrument,
-    VisaInstrument,
-    ManualParameter,
-    MultiParameter,
-    InstrumentChannel,
-    InstrumentModule,
-    Parameter,
-)
 import threading
 from qcodes.utils import validators as vals
 

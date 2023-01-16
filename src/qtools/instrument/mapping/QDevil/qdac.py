@@ -1,5 +1,3 @@
-import re
-
 from qcodes.instrument.parameter import Parameter
 from qcodes.instrument_drivers.QDevil.QDevil_QDAC import QDac
 

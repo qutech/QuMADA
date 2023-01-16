@@ -11,7 +11,6 @@ Created on Tue Dec  6 17:16:04 2022
 @author: lab2
 """
 
-import numpy as np
 from qcodes.instrument.parameter import Parameter
 from qtools.instrument.custom_drivers.Dummies.dummy_dac import DummyDac
 
