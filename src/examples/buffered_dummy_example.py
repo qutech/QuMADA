@@ -76,8 +76,17 @@ buffer_settings = {
 }
 
 #%% Measurement Setup
-with open(r"C:\Users\till3\Documents\PythonScripts\Test Measurements\testsettings.yaml") as file:
-    parameters = yaml.safe_load(file)
+# with open(r"C:\Users\till3\Documents\PythonScripts\Test Measurements\testsettings.yaml") as file:
+#     parameters = yaml.safe_load(file)
+parameters = {
+    "dmm": {"voltage": {"type": "gettable"}},
+    "dac": {
+        "voltage": {
+            "type": "dynamic",
+            "setpoints": [0, 5],
+        }
+    },
+}
 #%%
 script = Generic_1D_Sweep_buffered()
 script.setup(
@@ -93,4 +102,6 @@ map_gates_to_instruments(station.components, script.gate_parameters)
 map_buffers(station.components, script.properties, script.gate_parameters)
 
 #%% Run measurement
-script.run(insert_metadata_into_db=True)
+script.run(insert_metadata_into_db=False)
+
+# %%
