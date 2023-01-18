@@ -22,6 +22,7 @@ def browsefiles(**kwargs):
         filetypes ([tuple([str:label],[str: suffix])], def: txt and all files):
             Selectable filetypes
     '''
+    print("A popup window opened, it is possibly hidden behind other windows...")
     initialdir = kwargs.get("initialdir", curdir)
     filetypes = kwargs.get("filetypes", (("Text files", "*.txt*"),
                                          ("all files", "*.*")))

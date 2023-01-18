@@ -4,11 +4,11 @@ Measurement
 import inspect
 import json
 from abc import ABC, abstractmethod
+from collections.abc import MutableSequence
 from contextlib import suppress
-from dataclasses import dataclass, field
 from datetime import datetime
 from functools import wraps
-from typing import Any, MutableMapping, MutableSequence, Union
+from typing import Any, Union
 
 import numpy as np
 import qcodes as qc
@@ -16,18 +16,14 @@ from qcodes import Station
 from qcodes.instrument import Parameter
 from qcodes.instrument.parameter import _BaseParameter
 from qcodes.utils.dataset.doNd import AbstractSweep, ActionsT, LinSweep
-from qcodes.utils.metadata import Metadatable
-from qtools.utils.utils import flatten_array
 from qtools_metadata.measurement import MeasurementData
 from qtools_metadata.measurement import MeasurementScript as DomainMeasurementScript
 from qtools_metadata.measurement import MeasurementSettings
 from qtools_metadata.metadata import Metadata
 
-from qtools.instrument.mapping.base import (
-    _map_gate_to_instrument,
-    filter_flatten_parameters,
-)
+from qtools.instrument.buffers.buffer import is_bufferable
 from qtools.utils.ramp_parameter import ramp_or_set_parameter
+from qtools.utils.utils import flatten_array
 
 
 def is_measurement_script(o):
@@ -43,6 +39,7 @@ def create_hook(func, hook):
     Decorator to hook a function onto an existing function.
     The hook function can use keyword-only arguments, which are omitted prior to execution of the main function.
     """
+
     @wraps(func)
     def wrapper(*args, **kwargs):
         hook(*args, **kwargs)
@@ -56,6 +53,7 @@ def create_hook(func, hook):
         ).name
         unused_kwargs = sig.bind(*args, **kwargs).arguments.get(varkw) or {}
         return func(*args, **unused_kwargs)
+
     return wrapper
 
 
@@ -66,6 +64,7 @@ class MeasurementScript(ABC):
     The abstract function "run" has to be implemented.
     """
 
+    # TODO: Put list elsewhere! Remove names that were added as workarounds (e.g. aux_voltage) as soon as possible
     PARAMETER_NAMES: set[str] = {
         "voltage",
         "current",
@@ -78,24 +77,23 @@ class MeasurementScript(ABC):
         "time_constant",
         "phase",
         "count",
+        "aux_voltage_1",
+        "aux_voltage_2",
     }
 
     def __new__(cls, *args, **kwargs):
         # reverse order, so insert metadata is run second
-        cls.run = create_hook(cls.run, cls._add_datetime_to_metadata_if_empty)
         cls.run = create_hook(cls.run, cls._insert_metadata_into_db)
         cls.run = create_hook(cls.run, cls._add_data_to_metadata)
+        cls.run = create_hook(cls.run, cls._add_datetime_to_metadata_if_empty)
         return super().__new__(cls, *args, **kwargs)
-
 
     def __init__(self):
         self.properties: dict[Any, Any] = {}
         self.gate_parameters: dict[Any, Union[dict[Any, Union[Parameter, None]], Parameter, None]] = {}
+        self._buffered_num_points: int | None = None
 
-    def add_gate_parameter(self,
-                           parameter_name: str,
-                           gate_name: str = None,
-                           parameter: Parameter = None) -> None:
+    def add_gate_parameter(self, parameter_name: str, gate_name: str = None, parameter: Parameter = None) -> None:
         """
         Adds a gate parameter to self.gate_parameters.
 
@@ -106,7 +104,7 @@ class MeasurementScript(ABC):
             parameter (Parameter): Custom parameter. Set this, if you want to set a custom parameter. Defaults to None.
         """
         if parameter_name not in MeasurementScript.PARAMETER_NAMES:
-            raise NameError(f"parameter_name \"{parameter_name}\" not in MeasurementScript.PARAMETER_NAMES.")
+            raise NameError(f'parameter_name "{parameter_name}" not in MeasurementScript.PARAMETER_NAMES.')
         if not gate_name:
             self.gate_parameters[parameter_name] = parameter
         else:
@@ -118,6 +116,29 @@ class MeasurementScript(ABC):
             else:
                 raise Exception("Gate {gate_name} is not a dictionary.")
 
+    def _set_buffered_num_points(self) -> None:
+        """
+        Calculates number of datapoints when buffered measurements are performed and sets
+        the buffered_num_points accordingly. Required to define QCoDeS datastructure.
+
+        Raises
+        ------
+        Exception
+           Exception if number of points is overdefined.
+
+        Returns
+        -------
+        None
+        """
+        if all(k in self.buffer_settings for k in ("sampling_rate", "burst_duration", "num_points")):
+            raise Exception("You cannot define sampling_rate, burst_duration and num_points at the same time")
+        elif self.buffer_settings.get("num_points", False):
+            self.buffered_num_points = self.buffer_settings["num_points"]
+        elif all(k in self.buffer_settings for k in ("sampling_rate", "burst_duration")):
+            self.buffered_num_points = int(
+                np.ceil(self.buffer_settings["sampling_rate"] * self.buffer_settings["burst_duration"])
+            )
+
     def setup(
         self,
         parameters: dict,
@@ -125,6 +146,7 @@ class MeasurementScript(ABC):
         *,
         add_script_to_metadata: bool = True,
         add_parameters_to_metadata: bool = True,
+        buffer_settings: dict = {},
         **settings: dict,
     ) -> None:
         """
@@ -148,7 +170,14 @@ class MeasurementScript(ABC):
         """
         # TODO: Add settings to metadata
         self.metadata = metadata
+        # TODO: Better place to put this?
+        self.buffered = False
         cls = type(self)
+        try:
+            self.buffer_settings.update(buffer_settings)
+        except:
+            self.buffer_settings = buffer_settings
+        self._set_buffered_num_points()
 
         try:
             self.settings.update(settings)
@@ -159,9 +188,7 @@ class MeasurementScript(ABC):
         if add_script_to_metadata:
             try:
                 if not metadata.measurement.script:
-                    metadata.measurement.script = DomainMeasurementScript.create(
-                        cls.__name__
-                    )
+                    metadata.measurement.script = DomainMeasurementScript.create(cls.__name__)
                 script = metadata.measurement.script
 
                 script.language = "python"
@@ -174,15 +201,12 @@ class MeasurementScript(ABC):
         if add_parameters_to_metadata:
             try:
                 if not metadata.measurement.settings:
-                    metadata.measurement.settings = MeasurementSettings.create(
-                        f"{cls.__name__}Settings"
-                    )
+                    metadata.measurement.settings = MeasurementSettings.create(f"{cls.__name__}Settings")
                 settings = metadata.measurement.settings
 
                 settings.settings = json.dumps(parameters)
             except Exception as e:
                 print(f"Parameters could not be added to metadata: {e}")
-
 
         # Add gate parameters
         for gate, vals in parameters.items():
@@ -205,48 +229,43 @@ class MeasurementScript(ABC):
         TODO: Put Sweep-Generation somewhere else?
         TODO: Allow setting ramp rate for setting the parameters manually
         """
-        self.gettable_parameters: list[str] = [] 
+        self.gettable_parameters: list[str] = []
         self.gettable_channels: list[str] = []
         self.break_conditions: list[str] = []
         self.static_parameters: list[str] = []
         self.dynamic_parameters: list[str] = []
         self.dynamic_channels: list[str] = []
         self.dynamic_sweeps: list[str] = []
-        self.buffers: set = {} #All buffers of gettable parameters
-        
+        self.buffers: set = set()  # All buffers of gettable parameters
+
         ramp_rate = self.settings.get("ramp_rate", 0.3)
+        ramp_time = self.settings.get("ramp_time", 5)
         setpoint_intervall = self.settings.get("setpoint_intervall", 0.1)
         for gate, parameters in self.gate_parameters.items():
             for parameter, channel in parameters.items():
-                if self.properties[gate][parameter]["type"].find("static") >= 0:
+                if self.properties[gate][parameter]["type"].find("static") >= 0:  # TODO: Handle strings
                     ramp_or_set_parameter(
                         channel,
                         self.properties[gate][parameter]["value"],
                         ramp_rate=ramp_rate,
+                        ramp_time=ramp_time,
                         setpoint_intervall=setpoint_intervall,
                     )
                     ramp_or_set_parameter(
                         channel,
                         self.properties[gate][parameter]["value"],
                         ramp_rate=ramp_rate,
+                        ramp_time=ramp_time,
                         setpoint_intervall=setpoint_intervall,
                     )
-                    self.static_parameters.append(
-                        {"gate": gate, "parameter": parameter}
-                    )
+                    self.static_parameters.append({"gate": gate, "parameter": parameter})
 
                 if self.properties[gate][parameter]["type"].find("gettable") >= 0:
-                    self.gettable_parameters.append(
-                        {"gate": gate, "parameter": parameter}
-                    )
+                    self.gettable_parameters.append({"gate": gate, "parameter": parameter})
                     self.gettable_channels.append(channel)
                     with suppress(KeyError):
-                        for condition in self.properties[gate][parameter][
-                            "break_conditions"
-                        ]:
-                            self.break_conditions.append(
-                                {"channel": channel, "break_condition": condition}
-                            )
+                        for condition in self.properties[gate][parameter]["break_conditions"]:
+                            self.break_conditions.append({"channel": channel, "break_condition": condition})
                 elif self.properties[gate][parameter]["type"].find("dynamic") >= 0:
                     # Handle different possibilities for starting points
                     try:
@@ -254,37 +273,78 @@ class MeasurementScript(ABC):
                             channel,
                             self.properties[gate][parameter]["value"],
                             ramp_rate=ramp_rate,
+                            ramp_time=ramp_time,
                             setpoint_intervall=setpoint_intervall,
                         )
                     except KeyError:
                         try:
-                            ramp_or_set_parameter(channel,
-                                                  self.properties[gate][parameter]["start"],
-                                                  ramp_rate=ramp_rate,
-                                                  setpoint_intervall=setpoint_intervall)
+                            ramp_or_set_parameter(
+                                channel,
+                                self.properties[gate][parameter]["start"],
+                                ramp_rate=ramp_rate,
+                                ramp_time=ramp_time,
+                                setpoint_intervall=setpoint_intervall,
+                            )
                         except KeyError:
                             ramp_or_set_parameter(
                                 channel,
                                 self.properties[gate][parameter]["setpoints"][0],
                                 ramp_rate=ramp_rate,
+                                ramp_time=ramp_time,
                                 setpoint_intervall=setpoint_intervall,
                             )
-                    self.dynamic_parameters.append(
-                        {"gate": gate, "parameter": parameter}
-                    )
+                    self.dynamic_parameters.append({"gate": gate, "parameter": parameter})
                     self.dynamic_channels.append(channel)
                     # Generate sweeps from parameters
-                    try:
-                        self.dynamic_sweeps.append(LinSweep(channel,
-                                                            self.properties[gate][parameter]["start"],
-                                                            self.properties[gate][parameter]["stop"],
-                                                            self.properties[gate][parameter]["num_points"],
-                                                            self.properties[gate][parameter]["delay"]))
-                    except KeyError:
-                        self.dynamic_sweeps.append(CustomSweep(channel,
-                                                               self.properties[gate][parameter]["setpoints"],
-                                                               delay = self.properties[gate][parameter].setdefault("delay", 0)))
-        self.buffers = {self._qtools_buffer for instrument in self.gettable_channels.instruments if hasattr(instrument, "_qtools_buffer")}
+                    if self.buffered:
+                        try:
+                            self.dynamic_sweeps.append(
+                                LinSweep(
+                                    channel,
+                                    self.properties[gate][parameter]["start"],
+                                    self.properties[gate][parameter]["stop"],
+                                    self.buffered_num_points,
+                                    self.properties[gate][parameter]["delay"],
+                                )
+                            )
+                        except KeyError:
+                            self.dynamic_sweeps.append(
+                                LinSweep(
+                                    channel,
+                                    self.properties[gate][parameter]["setpoints"][0],
+                                    self.properties[gate][parameter]["setpoints"][-1],
+                                    self.buffered_num_points,
+                                    delay=self.properties[gate][parameter].setdefault("delay", 0),
+                                )
+                            )
+                    else:
+                        try:
+                            self.dynamic_sweeps.append(
+                                LinSweep(
+                                    channel,
+                                    self.properties[gate][parameter]["start"],
+                                    self.properties[gate][parameter]["stop"],
+                                    self.properties[gate][parameter]["num_points"],
+                                    self.properties[gate][parameter]["delay"],
+                                )
+                            )
+                        except KeyError:
+                            self.dynamic_sweeps.append(
+                                CustomSweep(
+                                    channel,
+                                    self.properties[gate][parameter]["setpoints"],
+                                    delay=self.properties[gate][parameter].setdefault("delay", 0),
+                                )
+                            )
+        if self.buffered:
+            self.buffers = {
+                channel.root_instrument._qtools_buffer for channel in self.gettable_channels if is_bufferable(channel)
+            }
+            for gettable_param in self.gettable_channels:
+                if is_bufferable(gettable_param):
+                    gettable_param.root_instrument._qtools_buffer.subscribe([gettable_param])
+                else:
+                    raise Exception(f"{gettable_param} is not bufferable.")
         self._relabel_instruments()
 
     @abstractmethod
@@ -337,19 +397,19 @@ class MeasurementScript(ABC):
     def ready_buffers(self, **kwargs) -> None:
         """
         Setup all buffers registered in the measurement and start them
-        
+
         Parameters
         ----------
         **kwargs : None so far...
-        
+
         Returns
         -------
         None
         """
         for buffer in self.buffers:
-            buffer.setup_buffer(settings = self.buffer_settings)
+            buffer.setup_buffer(settings=self.buffer_settings)
             buffer.start()
-    
+
     def readout_buffers(self, **kwargs) -> dict:
         """
         Readout all buffer and return the results as list of tuples
@@ -365,7 +425,7 @@ class MeasurementScript(ABC):
         dict
             Results, list with one tuple for each subscribed parameter. Tuple
             contains (parameter, measurement_data).
-    
+
         #TODO: Handle multiple bursts etc.
         """
         data = {}
@@ -376,10 +436,10 @@ class MeasurementScript(ABC):
             for param in buffer._subscribed_parameters:
                 results.append((param, flatten_array(data[buffer][param.name])))
                 if kwargs.get("timestamps", False):
-                    #TODO: Add option to include timestamps here.
+                    # TODO: Add option to include timestamps here.
                     pass
         return results
-    
+
     def _relabel_instruments(self) -> None:
         """
         Changes the labels of all instrument channels to the
@@ -390,9 +450,7 @@ class MeasurementScript(ABC):
             for key, parameter in parameters.items():
                 parameter.label = f"{gate} {key}"
 
-    def _add_datetime_to_metadata_if_empty(
-        self, *args, add_datetime_to_metadata: bool = True, **kwargs
-    ):
+    def _add_datetime_to_metadata_if_empty(self, *args, add_datetime_to_metadata: bool = True, **kwargs):
         if add_datetime_to_metadata:
             try:
                 metadata = self.metadata
@@ -411,26 +469,23 @@ class MeasurementScript(ABC):
                     metadata.measurement.data = []
                 datalist = metadata.measurement.data
                 db_location = qc.config.core.db_location
-                data = MeasurementData.create(
-                    f"{cls.__name__}Data", "sqlite3", db_location
-                )
+                data = MeasurementData.create(f"{cls.__name__}Data", "sqlite3", db_location)
                 datalist.append(data)
             except Exception as e:
                 print(f"Data could not be added to metadata: {e}")
 
-    def _insert_metadata_into_db(
-        self, *args, insert_metadata_into_db: bool = True, **kwargs
-    ):
+    def _insert_metadata_into_db(self, *args, insert_metadata_into_db: bool = True, **kwargs):
         if insert_metadata_into_db:
             try:
                 metadata = self.metadata
                 metadata.save_to_db()
             except Exception as e:
                 print(f"Metadata could not inserted into database: {e}")
-                
-                
-class VirtualGate():
+
+
+class VirtualGate:
     """Virtual Gate"""
+
     def __init__(self):
         self._functions = []
 
@@ -453,13 +508,13 @@ class CustomSweep(AbstractSweep):
         setpoints: Array of setpoints.
         delay: Time in seconds between two consequtive sweep points
     """
+
     def __init__(
         self,
         param: _BaseParameter,
         setpoints: np.ndarray,
         delay: float = 0,
-        post_actions: ActionsT = ()
-
+        post_actions: ActionsT = (),
     ):
         self._param = param
         self._setpoints = setpoints

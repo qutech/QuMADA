@@ -7,11 +7,12 @@ sphinx_rtd_theme
 
 pre-commit
 pyupgrade
-darker
+black
 
 pylint
 mypy
 
 pytest
 pytest-cov
-pytest-httpserver
+pytest-cases
+pytest-mock
