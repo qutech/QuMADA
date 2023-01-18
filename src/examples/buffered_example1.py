@@ -19,9 +19,9 @@ from qcodes.instrument_drivers.tektronix.Keithley_2400 import Keithley_2400
 from qcodes.station import Station
 from qtools_metadata.metadata import Metadata
 
-from qtools.instrument.buffer import map_buffers
 from qtools.instrument.buffered_instruments import BufferedMFLI as MFLI
 from qtools.instrument.buffered_instruments import BufferedSR830 as SR830
+from qtools.instrument.buffers.buffer import map_buffers
 from qtools.instrument.mapping import (
     KEITHLEY_2400_MAPPING,
     MFLI_MAPPING,

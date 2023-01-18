@@ -1,7 +1,7 @@
 from qcodes.instrument_drivers.stanford_research.SR830 import SR830
 
-from qtools.instrument.buffer import MFLIBuffer, SR830Buffer
-from qtools.instrument.buffered_instr.dummy_dmm_buffered import DummyDMMBuffer
+from qtools.instrument.buffers.buffer import MFLIBuffer, SR830Buffer
+from qtools.instrument.buffers.dummy_dmm_buffer import DummyDMMBuffer
 from qtools.instrument.custom_drivers.Dummies.dummy_dmm import DummyDmm
 from qtools.instrument.custom_drivers.ZI.MFLI import MFLI, Session
 

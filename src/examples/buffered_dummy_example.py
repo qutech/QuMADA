@@ -21,8 +21,8 @@ from qcodes.dataset import (
 from qcodes.station import Station
 from qtools_metadata.metadata import Metadata
 
-from qtools.instrument.buffer import map_buffers
 from qtools.instrument.buffered_instruments import BufferedDummyDMM as DummyDmm
+from qtools.instrument.buffers.buffer import map_buffers
 from qtools.instrument.custom_drivers.Dummies.dummy_dac import DummyDac
 from qtools.instrument.mapping import DUMMY_DMM_MAPPING, add_mapping_to_instrument
 from qtools.instrument.mapping.base import map_gates_to_instruments
