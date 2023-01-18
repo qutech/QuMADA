@@ -1,5 +1,6 @@
 #%% Imports
 import json
+import yaml
 
 from qcodes.station import Station
 from qcodes.instrument_drivers.Harvard.Decadac import Decadac
@@ -15,7 +16,6 @@ from qcodes.dataset import (
 )
 
 import qtools_metadata.db as db
-from qtools_metadata.metadata import Metadata
 from qtools.instrument.mapping import (
     add_mapping_to_instrument,
     DECADAC_MAPPING,
@@ -51,6 +51,7 @@ station.add_component(dac)
 lockin = SR830("lockin", "GPIB1::12::INSTR")
 add_mapping_to_instrument(lockin, SR830_MAPPING)
 station.add_component(lockin)
+
 qdac = QDac("qdac", "ASRL5::INSTR")
 add_mapping_to_instrument(qdac, QDAC_MAPPING)
 station.add_component(qdac)
@@ -59,18 +60,11 @@ keithley = Keithley_2400("keithley", "GPIB1::27::INSTR")
 add_mapping_to_instrument(keithley, KEITHLEY_2400_MAPPING)
 station.add_component(keithley)
 
-
 #%% Metadata Setup
+from qtools_metadata.metadata import create_metadata, save_metadata_object_to_db
 
-# Set Metadata-DB URL
 db.api_url = "http://134.61.7.48:9124"
-
-# Load metadata.yaml
-with open("metadata.yaml", "r") as file:
-    metadata = Metadata.from_yaml(file)
-
-# Save metadata to DB
-# metadata.save_to_db()
+metadata = create_metadata()
 
 
 #%% Measurement Setup
@@ -80,8 +74,8 @@ load_db()
 # load_db("path/to/measurements.db")
 
 # Load parameters
-with open("parameters.json", "r") as file:
-    parameters = json.load(file)
+with open("parameters.yaml", "r") as file:
+    parameters = yaml.safe_load(file)
 
 script = Generic_1D_Sweep()
 script.setup(parameters, metadata)
