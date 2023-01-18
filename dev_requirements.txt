@@ -7,7 +7,7 @@ sphinx_rtd_theme
 
 pre-commit
 pyupgrade
-darker
+black
 
 pylint
 mypy
