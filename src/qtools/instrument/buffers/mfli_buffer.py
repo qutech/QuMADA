@@ -120,7 +120,7 @@ class MFLIBuffer(Buffer):
     @num_points.setter
     def num_points(self, num_points) -> None:
         if num_points > 8388608:
-            raise Exception("Buffer is to small for this measurement. Please reduce the number of data points")
+            raise BufferException("Buffer is to small for this measurement. Please reduce the number of data points")
         self._num_points = int(num_points)
 
     def _set_num_points(self) -> None:
@@ -137,7 +137,7 @@ class MFLIBuffer(Buffer):
         None
         """
         if all(k in self.settings for k in ("sampling_rate", "burst_duration", "num_points")):
-            raise Exception("You cannot define sampling_rate, burst_duration and num_points at the same time")
+            raise BufferException("You cannot define sampling_rate, burst_duration and num_points at the same time")
         elif self.settings.get("num_points", False):
             self.num_points = self.settings["num_points"]
         elif all(k in self.settings for k in ("sampling_rate", "burst_duration")):

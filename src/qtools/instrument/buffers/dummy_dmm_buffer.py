@@ -37,7 +37,7 @@ class DummyDMMBuffer(Buffer):
         self.delay_data_points = 0
         self.delay = settings.get("delay", 0)
         if self.delay < 0:
-            raise Exception("The Dummy Dac does not support negative delays.")
+            raise BufferException("The Dummy Dac does not support negative delays.")
         else:
             self.delay_data_points = int(self.delay * self._device.buffer_SR())
             self.num_points = self.delay_data_points + self.num_points
@@ -51,7 +51,7 @@ class DummyDMMBuffer(Buffer):
     @num_points.setter
     def num_points(self, num_points) -> None:
         if num_points > 16383:
-            raise Exception(
+            raise BufferException(
                 "Dummy Dacs Buffer is to small for this measurement. Please reduce the number of data points or the delay"
             )
         self._num_points = int(num_points)
@@ -71,7 +71,7 @@ class DummyDMMBuffer(Buffer):
         None
         """
         if all(k in self.settings for k in ("sampling_rate", "burst_duration", "num_points")):
-            raise Exception("You cannot define sampling_rate, burst_duration and num_points at the same time")
+            raise BufferException("You cannot define sampling_rate, burst_duration and num_points at the same time")
         elif self.settings.get("num_points", False):
             self.num_points = self.settings["num_points"]
         elif all(k in self.settings for k in ("sampling_rate", "burst_duration")):

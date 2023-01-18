@@ -37,7 +37,7 @@ class SR830Buffer(Buffer):
         self.delay_data_points = 0  # Datapoints to delete at the beginning of dataset due to delay.
         self.delay = settings.get("delay", 0)
         if self.delay < 0:
-            raise Exception("The SR830'S Trigger Input does not support negative delays.")
+            raise BufferException("The SR830'S Trigger Input does not support negative delays.")
         else:
             self.delay_data_points = int(self.delay * self._device.buffer_SR())
             self.num_points = self.delay_data_points + self.num_points
@@ -50,7 +50,7 @@ class SR830Buffer(Buffer):
     @num_points.setter
     def num_points(self, num_points) -> None:
         if num_points > 16383:
-            raise Exception(
+            raise BufferException(
                 "SR830 is to small for this measurement. Please reduce the number of data points or the delay"
             )
         self._num_points = int(num_points)
@@ -69,7 +69,7 @@ class SR830Buffer(Buffer):
         None
         """
         if all(k in self.settings for k in ("sampling_rate", "burst_duration", "num_points")):
-            raise Exception("You cannot define sampling_rate, burst_duration and num_points at the same time")
+            raise BufferException("You cannot define sampling_rate, burst_duration and num_points at the same time")
         elif self.settings.get("num_points", False):
             self.num_points = self.settings["num_points"]
             if self.settings.get("sampling_rate", False):
@@ -140,7 +140,7 @@ class SR830Buffer(Buffer):
                 )  # remove previously subscribed parameter from ch2
                 self._subscribed_parameters.add(parameter)
             else:
-                raise Exception(f"Parameter {parameter.name} can not be buffered.")
+                raise BufferException(f"Parameter {parameter.name} can not be buffered.")
 
     def unsubscribe(self, parameters: list[Parameter]) -> None:
         for parameter in parameters:
@@ -150,7 +150,7 @@ class SR830Buffer(Buffer):
             elif name in ["Y", "Phase", "Y Noise", "aux_in3", "aux_in4"]:
                 self._subscribed_parameters.remove(parameter)
             else:
-                raise Exception(f"Parameter {parameter.name} can not be buffered.")
+                raise BufferException(f"Parameter {parameter.name} can not be buffered.")
 
     def is_subscribed(self, parameter: Parameter) -> bool:
         return parameter in self._subscribed_parameters
