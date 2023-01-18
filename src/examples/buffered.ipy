@@ -2,8 +2,7 @@
 import numpy as np
 from qcodes.instrument_drivers.stanford_research.SR830 import SR830
 from qtools.instrument.custom_drivers.ZI.MFLI import MFLI
-from qtools.instrument.buffers.mfli_buffer import MFLIBuffer
-from qtools.instrument.buffers.sr830_buffer import SR830Buffer
+from qtools.instrument.buffers import MFLIBuffer, SR830Buffer
 
 #%%
 
