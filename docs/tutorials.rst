@@ -1,7 +1,7 @@
 Tutorials
 =========
 
-First steps: Example Measurements (WIP)
+First steps: Example Measurements
 ---------------------------------
 
 QTools is a QCoDeS based measurement framework that helps you performing measurements easily as well as dumping all required metadata in a database.
@@ -97,11 +97,11 @@ Adding the mapping is easily done by using the "add_mapping_to_instrument" comma
 		min_val=-10,
 		max_val=10,
 		terminator="\n")
-	add_mapping_to_instrument(dac, DECADAC_MAPPING)
+	add_mapping_to_instrument(dac, path = DECADAC_MAPPING)
 	station.add_component(dac)
 
 	lockin = SR830("lockin", "GPIB1::12::INSTR")
-	add_mapping_to_instrument(lockin, SR830_MAPPING)
+	add_mapping_to_instrument(lockin, path = SR830_MAPPING)
 	station.add_component(lockin)
 
 	qdac = QDac("qdac", "ASRL5::INSTR")
@@ -109,7 +109,7 @@ Adding the mapping is easily done by using the "add_mapping_to_instrument" comma
 	station.add_component(qdac)
 
 	keithley = Keithley_2400("keithley", "GPIB1::27::INSTR")
-	add_mapping_to_instrument(keithley, KEITHLEY_2400_MAPPING)
+	add_mapping_to_instrument(keithley, path = KEITHLEY_2400_MAPPING)
 	station.add_component(keithley)
 
 In this sample we just add a couple of real instruments. Of course you can add QCoDeS dummy instruments as well and provide mappings for them.
@@ -134,15 +134,17 @@ The easiest way to create the metadata-object is by entering the data into the m
 
 .. code-block:: python
 
-	# Set Metadata-DB URL
+	#%% Metadata Setup
+	from qtools_metadata.metadata import create_metadata, save_metadata_object_to_db
+
 	db.api_url = "http://134.61.7.48:9124"
-	# Load metadata.yaml
-	with open("metadata.yaml", "r") as file:
-		metadata = Metadata.from_yaml(file)
+	metadata = create_metadata()
+	
 
 .. note::
 
-	The metadata acquisition process is currently overhauled. For more details look into the Metadata section of this documentation.
+	There are currently some issues with the metadatabase, e.g. communication with the database can take very long in some cases. You can pass "insert_metadata_into_db=False" into the run-method of the script
+	when you do not want to save the measurement into the metadatabase.
 
 The connection to the metadabase is required for loading information of already existing samples and measurements (so you do not have to enter them again) and
 - of course - for storing the data. Right now, we are only interested in creating the metadata object for usage in our measurements.
@@ -262,7 +264,7 @@ the details about how the measurement has to be performed and some metadata such
 .. code-block:: python
 
 	script = Generic_1D_parallel_Sweep()
-	script.setup(parameters, metadata, ramp_rate = 0.3, back_after_break = True)
+	script.setup(parameters, metadata, ramp_rate = 0.3, backsweep_after_break = True)
 
 For our first measurement we use the Generic_1D_parallel_Sweep method, which ramps all dynamic parameter in parallel.
 
@@ -323,7 +325,7 @@ However, the "utils section" has a couple of tools that make working with the QC
 
 
 
-Adding the Qtools Buffer Class to Instruments
+Adding the Qtools Buffer Class to Instruments (WIP)
 -----------------------------------------------
 
 Using Qtools for doing buffered measurements requires the measurement instruments to have a Qtools "Buffered" Class.
