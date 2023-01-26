@@ -15,6 +15,7 @@ from PyQt5.QtWidgets import (
     QApplication,
     QHBoxLayout,
     QLabel,
+    QMainWindow,
     QPushButton,
     QTreeView,
     QVBoxLayout,
@@ -22,6 +23,7 @@ from PyQt5.QtWidgets import (
 )
 from qcodes.instrument.parameter import Parameter
 from qcodes.station import Station
+from qcodes.tests.instrument_mocks import DummyChannelInstrument
 from qcodes.utils.metadata import Metadatable
 from qtools_metadata.metadata import Metadata
 
@@ -46,68 +48,90 @@ TerminalParameters = Mapping[Any, Mapping[Any, Parameter] | Parameter]
 #     def rowCount(self, )
 
 
-class DragItem(QLabel):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.setContentsMargins(25, 5, 25, 5)
-        self.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.setStyleSheet("border: 1px solid black;")
-        self.data = self.text()
+# class DragItem(QLabel):
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         self.setContentsMargins(25, 5, 25, 5)
+#         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
+#         self.setStyleSheet("border: 1px solid black;")
+#         self.data = self.text()
 
-    def mouseMoveEvent(self, event: QMouseEvent) -> None:
-        if event.buttons() == Qt.LeftButton:
-            drag = QDrag(self)
-            mime = QMimeData()
-            drag.setMimeData(mime)
+#     def mouseMoveEvent(self, event: QMouseEvent) -> None:
+#         if event.buttons() == Qt.LeftButton:
+#             drag = QDrag(self)
+#             mime = QMimeData()
+#             drag.setMimeData(mime)
 
-            pixmap = QPixmap(self.size())
-            self.render(pixmap)
-            drag.setPixmap(pixmap)
+#             pixmap = QPixmap(self.size())
+#             self.render(pixmap)
+#             drag.setPixmap(pixmap)
 
-            drag.exec_(Qt.MoveAction)
+#             drag.exec_(Qt.MoveAction)
 
 
-class DragWidget(QWidget):
+class TreeView(QWidget):
+    def __init__(self):
+        super().__init__()
+
+        self.tree = QTreeView()
+        self.model = QStandardItemModel()
+        self.parent_item = self.model.invisibleRootItem()
+        self.tree.header().setDefaultSectionSize(180)
+        self.tree.setModel(self.model)
+
+
+class TerminalTreeView(TreeView):
     def __init__(self):
         super().__init__()
         self.setAcceptDrops(True)
 
-    def dragEnterEvent(self, event: QDragEnterEvent) -> None:
-        event.accept()
+        layout = QVBoxLayout()
+        layout.addWidget(self.tree)
+        self.setLayout(layout)
 
-    def dropEvent(self, event: QDropEvent) -> None:
-        pos = event.pos()
-        widget = event.source()
+        self.model.setHorizontalHeaderLabels(["Terminal"])
 
-        for i in range(self.layout().count()):
-            w = self.layout().itemAt(i).widget()
-            if pos.x() < w.x() + w.size().width() // 2:
-                self.layout().insertWidget(i - 1, widget)
-                break
-        event.accept()
+    def import_data(self, terminal_parameters: TerminalParameters) -> None:
+        for name, value in terminal_parameters.items():
+            item = QStandardItem(name)
+            item.source = value
+            self.parent_item.appendRow(item)
+
+            if isinstance(value, Mapping):
+                for name2, value2 in value.items():
+                    subitem = QStandardItem(name2)
+                    subitem.source = value2
+                    item.appendRow(subitem)
+
+    # def dragEnterEvent(self, event: QDragEnterEvent) -> None:
+    #     event.accept()
+
+    # def dropEvent(self, event: QDropEvent) -> None:
+    #     pos = event.pos()
+    #     widget = event.source()
+
+    #     for i in range(self.layout().count()):
+    #         w = self.layout().itemAt(i).widget()
+    #         if pos.x() < w.x() + w.size().width() // 2:
+    #             self.layout().insertWidget(i - 1, widget)
+    #             break
+    #     event.accept()
 
 
-class Window(QWidget):
-    def __init__(self, components: Mapping[Any, Metadatable]):
+class InstrumentTreeView(TreeView):
+    def __init__(self):
         super().__init__()
         self.setAcceptDrops(True)
-        self.tree = QTreeView()
 
-        layout = QVBoxLayout(self)
+        layout = QVBoxLayout()
         layout.addWidget(self.tree)
+        self.setLayout(layout)
 
-        self.model = QStandardItemModel()
-        self.model.setHorizontalHeaderLabels(["Name", "Terminal"])
-        self.parent_item = self.model.invisibleRootItem()
-        self.tree.header().setDefaultSectionSize(180)
-        self.tree.setModel(self.model)
-        self.import_data(components)
-        self.tree.expandAll()
+        self.model.setHorizontalHeaderLabels(["Name", "Type", "Terminal"])
 
     def import_data(self, components: Mapping[Any, Metadatable]) -> None:
         def recurse(node, parent) -> None:
             """Recursive part of the function. Fills instrument_parameters dict."""
-            # TODO: Handle InstrumentChannel
             # TODO: Change this try-except-phrase to match-case, when switched to Python3.10
             try:
                 values = list(node.values()) if isinstance(node, dict) else list(node)
@@ -119,12 +143,13 @@ class Window(QWidget):
             for value in values:
                 if isinstance(value, Parameter):
                     item = QStandardItem(value.name)
-                    parent.appendRow(item)
+                    item.source = value
+                    type_ = QStandardItem(str(value.__class__))
+                    parent.appendRow([item, type_])
                 else:
                     if isinstance(value, Iterable) and not isinstance(value, str):
-                        item = QStandardItem("Iterable")
-                        parent.appendRow(item)
-                        recurse(value, item)
+                        # parent.appendRow(item)
+                        recurse(value, parent)
                     elif isinstance(value, Metadatable):
                         # Object of some Metadatable type, try to get __dict__ and _filter_flatten_parameters
                         try:
@@ -132,6 +157,7 @@ class Window(QWidget):
                             if value_hash not in seen:
                                 seen.add(value_hash)
                                 item = QStandardItem(value.name)
+                                item.source = value
                                 parent.appendRow(item)
                                 recurse(vars(value), item)
                         except TypeError:
@@ -160,7 +186,22 @@ def map_terminals_gui(
         metadata (Metadata | None): If provided, add mapping to the metadata object.
     """
     app = QApplication([])
-    w = Window(components=components)
+    w = QMainWindow()
+    container = QWidget()
+    layout = QHBoxLayout()
+
+    instrument_tree = InstrumentTreeView()
+    instrument_tree.import_data(components)
+
+    terminal_tree = TerminalTreeView()
+    terminal_tree.import_data(terminal_parameters)
+
+    layout.addWidget(instrument_tree)
+    layout.addWidget(terminal_tree)
+    layout.addStretch(1)
+    container.setLayout(layout)
+
+    w.setCentralWidget(container)
     w.show()
     app.exec_()
 
@@ -180,4 +221,17 @@ if __name__ == "__main__":
     add_mapping_to_instrument(dac, mapping=DummyDacMapping())
     station.add_component(dac)
 
-    map_terminals_gui(station.components, {})
+    dci = DummyChannelInstrument("dci")
+    station.add_component(dci)
+
+    parameters: TerminalParameters = {
+        "dmm": {"voltage": {"type": "gettable"}},
+        "dac": {
+            "voltage": {
+                "type": "dynamic",
+                "setpoints": [0, 5],
+            }
+        },
+    }
+
+    map_terminals_gui(station.components, parameters)
