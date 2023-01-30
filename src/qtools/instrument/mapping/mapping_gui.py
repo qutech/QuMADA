@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from collections.abc import Iterable, Mapping
 from typing import Any
 
@@ -14,9 +16,7 @@ from PyQt5.QtGui import (
 from PyQt5.QtWidgets import (
     QApplication,
     QHBoxLayout,
-    QLabel,
     QMainWindow,
-    QPushButton,
     QTreeView,
     QVBoxLayout,
     QWidget,
@@ -36,100 +36,83 @@ from qtools.instrument.mapping.Dummies.DummyDac import DummyDacMapping
 TerminalParameters = Mapping[Any, Mapping[Any, Parameter] | Parameter]
 
 
-# class ComponentModel(QAbstractItemModel):
+class TerminalTreeView(QTreeView):
+    class DragStandardItem(QStandardItem):
+        def mouseMoveEvent(self, event: QMouseEvent) -> None:
+            if event.buttons() == Qt.LeftButton:
+                drag = QDrag(self)
+                mime = QMimeData()
+                drag.setMimeData(mime)
 
-#     def __init__(self, components: Mapping[Any, Metadatable]) -> None:
-#         super().__init__()
-#         self.root = components
+                pixmap = QPixmap(self.size())
+                self.render(pixmap)
+                drag.setPixmap(pixmap)
 
-#     def columnCount(self):
-#         return 2
+                drag.exec_(Qt.MoveAction)
 
-#     def rowCount(self, )
-
-
-# class DragItem(QLabel):
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-#         self.setContentsMargins(25, 5, 25, 5)
-#         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
-#         self.setStyleSheet("border: 1px solid black;")
-#         self.data = self.text()
-
-#     def mouseMoveEvent(self, event: QMouseEvent) -> None:
-#         if event.buttons() == Qt.LeftButton:
-#             drag = QDrag(self)
-#             mime = QMimeData()
-#             drag.setMimeData(mime)
-
-#             pixmap = QPixmap(self.size())
-#             self.render(pixmap)
-#             drag.setPixmap(pixmap)
-
-#             drag.exec_(Qt.MoveAction)
-
-
-class TreeView(QWidget):
     def __init__(self):
         super().__init__()
 
-        self.tree = QTreeView()
-        self.model = QStandardItemModel()
-        self.parent_item = self.model.invisibleRootItem()
-        self.tree.header().setDefaultSectionSize(180)
-        self.tree.setModel(self.model)
+        model = QStandardItemModel()
+        model.setHorizontalHeaderLabels(["Terminal"])
+        self.setModel(model)
 
+        self.terminal_parameters = None
 
-class TerminalTreeView(TreeView):
-    def __init__(self):
-        super().__init__()
         self.setAcceptDrops(True)
-
-        layout = QVBoxLayout()
-        layout.addWidget(self.tree)
-        self.setLayout(layout)
-
-        self.model.setHorizontalHeaderLabels(["Terminal"])
+        self.setDragEnabled(True)
 
     def import_data(self, terminal_parameters: TerminalParameters) -> None:
+        parent = self.model().invisibleRootItem()
+        self.terminal_parameters = terminal_parameters
         for name, value in terminal_parameters.items():
-            item = QStandardItem(name)
-            item.source = value
-            self.parent_item.appendRow(item)
+            item = TerminalTreeView.DragStandardItem(name)
+            item.source = (name, value)
+            parent.appendRow(item)
 
             if isinstance(value, Mapping):
                 for name2, value2 in value.items():
-                    subitem = QStandardItem(name2)
-                    subitem.source = value2
+                    subitem = TerminalTreeView.DragStandardItem(name2)
+                    subitem.source = (f"{name}.{name2}", value2)
                     item.appendRow(subitem)
 
-    # def dragEnterEvent(self, event: QDragEnterEvent) -> None:
-    #     event.accept()
 
-    # def dropEvent(self, event: QDropEvent) -> None:
-    #     pos = event.pos()
-    #     widget = event.source()
-
-    #     for i in range(self.layout().count()):
-    #         w = self.layout().itemAt(i).widget()
-    #         if pos.x() < w.x() + w.size().width() // 2:
-    #             self.layout().insertWidget(i - 1, widget)
-    #             break
-    #     event.accept()
-
-
-class InstrumentTreeView(TreeView):
+class InstrumentTreeView(QTreeView):
     def __init__(self):
         super().__init__()
+
+        model = QStandardItemModel()
+        model.setHorizontalHeaderLabels(["Name", "Type", "Terminal"])
+        self.setModel(model)
+
         self.setAcceptDrops(True)
+        self.setDropIndicatorShown(True)
 
-        layout = QVBoxLayout()
-        layout.addWidget(self.tree)
-        self.setLayout(layout)
+    def dragEnterEvent(self, event: QDragEnterEvent) -> None:
+        # TODO: Check mime type for correct type
+        event.accept()
 
-        self.model.setHorizontalHeaderLabels(["Name", "Type", "Terminal"])
+    def dropEvent(self, event: QDropEvent) -> None:
+        tree = event.source()
+        assert isinstance(tree, TerminalTreeView)
+        terminal = tree.model().itemFromIndex(tree.currentIndex()).source
+
+        dest_index = self.indexAt(event.pos())
+
+        model = self.model()
+        row = dest_index.row()
+        parent = dest_index.parent()
+
+        # Create cell, if its not there yet
+        if not model.hasIndex(row, 2, parent):
+            model.insertColumn(2, parent)
+        # Add terminal name to instrument row
+        model.setData(parent.child(row, 2), terminal[0])
 
     def import_data(self, components: Mapping[Any, Metadatable]) -> None:
+        parent = self.model().invisibleRootItem()
+        seen: set[int] = set()
+
         def recurse(node, parent) -> None:
             """Recursive part of the function. Fills instrument_parameters dict."""
             # TODO: Change this try-except-phrase to match-case, when switched to Python3.10
@@ -164,8 +147,7 @@ class InstrumentTreeView(TreeView):
                             # End of tree
                             pass
 
-        seen: set[int] = set()
-        recurse(components, self.parent_item)
+        recurse(components, parent)
 
 
 def map_terminals_gui(
