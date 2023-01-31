@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Iterable, Mapping
 from typing import Any
 
-from PyQt5.QtCore import QMimeData, QModelIndex, Qt
+from PyQt5.QtCore import QMimeData, Qt
 from PyQt5.QtGui import (
     QDrag,
     QDragEnterEvent,
@@ -13,14 +13,7 @@ from PyQt5.QtGui import (
     QStandardItem,
     QStandardItemModel,
 )
-from PyQt5.QtWidgets import (
-    QApplication,
-    QHBoxLayout,
-    QMainWindow,
-    QTreeView,
-    QVBoxLayout,
-    QWidget,
-)
+from PyQt5.QtWidgets import QApplication, QHBoxLayout, QMainWindow, QTreeView, QWidget
 from qcodes.instrument.parameter import Parameter
 from qcodes.station import Station
 from qcodes.tests.instrument_mocks import DummyChannelInstrument
@@ -37,7 +30,14 @@ TerminalParameters = Mapping[Any, Mapping[Any, Parameter] | Parameter]
 
 
 class TerminalTreeView(QTreeView):
+    """
+    QTreeView, that displays qtools `TerminalParameters` (`Mapping[Any, Mapping[Any, Parameter] | Parameter]`) datastructure.
+    Items are draggable to map them to instruments.
+    """
+
     class DragStandardItem(QStandardItem):
+        """Draggable QStandardItem from TerminalTreeView."""
+
         def mouseMoveEvent(self, event: QMouseEvent) -> None:
             if event.buttons() == Qt.LeftButton:
                 drag = QDrag(self)
@@ -63,6 +63,7 @@ class TerminalTreeView(QTreeView):
         self.setDragEnabled(True)
 
     def import_data(self, terminal_parameters: TerminalParameters) -> None:
+        """Build up tree with provided terminal parameters."""
         parent = self.model().invisibleRootItem()
         self.terminal_parameters = terminal_parameters
         for name, value in terminal_parameters.items():
@@ -78,6 +79,8 @@ class TerminalTreeView(QTreeView):
 
 
 class InstrumentTreeView(QTreeView):
+    """QTreeView, that displays qcodes instruments."""
+
     def __init__(self):
         super().__init__()
 
@@ -89,10 +92,18 @@ class InstrumentTreeView(QTreeView):
         self.setDropIndicatorShown(True)
 
     def dragEnterEvent(self, event: QDragEnterEvent) -> None:
+        """Check for correct mime type to accept the dragging event."""
         # TODO: Check mime type for correct type
         event.accept()
 
     def dropEvent(self, event: QDropEvent) -> None:
+        """
+        Map terminal (parameters) with the dropped on instrument (parameter).
+        If a terminal parameter is dropped on an instrument parameter, they are mapped.
+        If a terminal is dropped on an instrument, they are automatically mapped as much as possible.
+        If a terminal parameter is dropped on an instrument, it is automatically mapped to one of the instrument's parameters.
+        If a terminal is dropped on an instrument parameter, it is automatically mapped to the whole instrument as much as possible.
+        """
         tree = event.source()
         assert isinstance(tree, TerminalTreeView)
         terminal = tree.model().itemFromIndex(tree.currentIndex()).source
@@ -110,6 +121,7 @@ class InstrumentTreeView(QTreeView):
         model.setData(parent.child(row, 2), terminal[0])
 
     def import_data(self, components: Mapping[Any, Metadatable]) -> None:
+        """Build up tree with provided instruments."""
         parent = self.model().invisibleRootItem()
         seen: set[int] = set()
 
@@ -162,9 +174,9 @@ def map_terminals_gui(
 
     Args:
         components (Mapping[Any, Metadatable]): Instruments/Components in QCoDeS
-        gate_parameters (Mapping[Any, Union[Mapping[Any, Parameter], Parameter]]): Gates, as defined in the measurement script
-        existing_gate_parameters (Mapping[Any, Union[Mapping[Any, Parameter], Parameter]] | None): Already existing mapping
-                that is used to automatically create the mapping for already known gates without user input.
+        terminal_parameters (Mapping[Any, Union[Mapping[Any, Parameter], Parameter]]): Terminals, as defined in the measurement script
+        existing_terminal_parameters (Mapping[Any, Union[Mapping[Any, Parameter], Parameter]] | None): Already existing mapping
+                that is used to automatically create the mapping for already known terminals without user input.
         metadata (Metadata | None): If provided, add mapping to the metadata object.
     """
     app = QApplication([])
