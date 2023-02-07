@@ -13,7 +13,16 @@ from PyQt5.QtGui import (
     QStandardItem,
     QStandardItemModel,
 )
-from PyQt5.QtWidgets import QApplication, QHBoxLayout, QMainWindow, QTreeView, QWidget
+from PyQt5.QtWidgets import (
+    QApplication,
+    QGridLayout,
+    QHBoxLayout,
+    QMainWindow,
+    QPushButton,
+    QTreeView,
+    QWidget,
+)
+from qcodes.instrument.instrument import Instrument
 from qcodes.instrument.parameter import Parameter
 from qcodes.station import Station
 from qcodes.tests.instrument_mocks import DummyChannelInstrument
@@ -25,6 +34,7 @@ from qtools.instrument.custom_drivers.Dummies.dummy_dmm import DummyDmm
 from qtools.instrument.mapping import DUMMY_DMM_MAPPING
 from qtools.instrument.mapping.base import add_mapping_to_instrument
 from qtools.instrument.mapping.Dummies.DummyDac import DummyDacMapping
+from qtools.measurement.scripts.generic_measurement import Generic_1D_Sweep
 
 TerminalParameters = Mapping[Any, Mapping[Any, Parameter] | Parameter]
 
@@ -39,6 +49,7 @@ class TerminalTreeView(QTreeView):
         """Draggable QStandardItem from TerminalTreeView."""
 
         def mouseMoveEvent(self, event: QMouseEvent) -> None:
+            """Initiate drag and set preview pixmap."""
             if event.buttons() == Qt.LeftButton:
                 drag = QDrag(self)
                 mime = QMimeData()
@@ -62,6 +73,10 @@ class TerminalTreeView(QTreeView):
         self.setAcceptDrops(True)
         self.setDragEnabled(True)
 
+    def map_parameter(self, parameter: Parameter, traverse: tuple[str, str]):
+        """Maps a instrument parameter to a specific terminal parameter accessed by the given traversal info."""
+        self.terminal_parameters[traverse[0]][traverse[1]] = parameter
+
     def import_data(self, terminal_parameters: TerminalParameters) -> None:
         """Build up tree with provided terminal parameters."""
         parent = self.model().invisibleRootItem()
@@ -74,7 +89,7 @@ class TerminalTreeView(QTreeView):
             if isinstance(value, Mapping):
                 for name2, value2 in value.items():
                     subitem = TerminalTreeView.DragStandardItem(name2)
-                    subitem.source = (f"{name}.{name2}", value2)
+                    subitem.source = (name, name2, value2)
                     item.appendRow(subitem)
 
 
@@ -85,7 +100,7 @@ class InstrumentTreeView(QTreeView):
         super().__init__()
 
         model = QStandardItemModel()
-        model.setHorizontalHeaderLabels(["Name", "Type", "Terminal"])
+        model.setHorizontalHeaderLabels(["Name", "Terminal"])
         self.setModel(model)
 
         self.setAcceptDrops(True)
@@ -113,12 +128,34 @@ class InstrumentTreeView(QTreeView):
         model = self.model()
         row = dest_index.row()
         parent = dest_index.parent()
+        instr_param = model.itemFromIndex(parent.child(row, 0)).source
 
+        # Decide what to do´
+        if isinstance(terminal, tuple) and isinstance(instr_param, Parameter):
+            # map directly
+            tree.map_parameter(instr_param, terminal)
+            self.add_terminal_to_view(parent, row, f"{terminal[0]}.{terminal[1]}")
+        elif isinstance(terminal, dict) and isinstance(instr_param, Instrument):
+            # map automatically as much as possible
+            ...
+        elif isinstance(terminal, tuple) and isinstance(instr_param, Instrument):
+            # map automatically to one parameter
+            ...
+        elif isinstance(terminal, dict) and isinstance(instr_param, Parameter):
+            # map automatically as much as possible to parameter's parent
+            ...
+
+    def add_terminal_to_view(self, parent, row, terminal_name):
+        model = self.model()
         # Create cell, if its not there yet
-        if not model.hasIndex(row, 2, parent):
-            model.insertColumn(2, parent)
+        if not model.hasIndex(row, 1, parent):
+            model.insertColumn(1, parent)
         # Add terminal name to instrument row
-        model.setData(parent.child(row, 2), terminal[0])
+        model.setData(parent.child(row, 1), terminal_name)
+
+    def update_mapped_terminals_column(self, terminal_parameters):
+        """Update the column with mapped terminals."""
+        ...
 
     def import_data(self, components: Mapping[Any, Metadatable]) -> None:
         """Build up tree with provided instruments."""
@@ -140,10 +177,9 @@ class InstrumentTreeView(QTreeView):
                     item = QStandardItem(value.name)
                     item.source = value
                     type_ = QStandardItem(str(value.__class__))
-                    parent.appendRow([item, type_])
+                    parent.appendRow(item)
                 else:
                     if isinstance(value, Iterable) and not isinstance(value, str):
-                        # parent.appendRow(item)
                         recurse(value, parent)
                     elif isinstance(value, Metadatable):
                         # Object of some Metadatable type, try to get __dict__ and _filter_flatten_parameters
@@ -179,23 +215,54 @@ def map_terminals_gui(
                 that is used to automatically create the mapping for already known terminals without user input.
         metadata (Metadata | None): If provided, add mapping to the metadata object.
     """
+
+    def map_automatically():
+        ...
+
+    def reset_mapping():
+        ...
+
     app = QApplication([])
     w = QMainWindow()
-    container = QWidget()
-    layout = QHBoxLayout()
 
+    container = QWidget()
+    layout = QGridLayout()
+
+    # Tree views
     instrument_tree = InstrumentTreeView()
     instrument_tree.import_data(components)
 
     terminal_tree = TerminalTreeView()
     terminal_tree.import_data(terminal_parameters)
 
-    layout.addWidget(instrument_tree)
-    layout.addWidget(terminal_tree)
-    layout.addStretch(1)
-    container.setLayout(layout)
+    # Buttons
+    button_container = QWidget()
+    button_layout = QHBoxLayout()
 
+    button_map_auto = QPushButton("Map automatically")
+    button_map_auto.clicked.connect(map_automatically)
+
+    button_reset_mapping = QPushButton("Reset mapping")
+    button_reset_mapping.clicked.connect(reset_mapping)
+
+    button_exit = QPushButton("Exit")
+    button_exit.clicked.connect(app.exit)
+
+    # Button layout
+    button_layout.addWidget(button_map_auto)
+    button_layout.addWidget(button_reset_mapping)
+    button_layout.addStretch()
+    button_layout.addWidget(button_exit)
+    button_container.setLayout(button_layout)
+
+    # Main layout
+    layout.addWidget(instrument_tree, 0, 0)
+    layout.addWidget(terminal_tree, 0, 1)
+    layout.addWidget(button_container, 1, 0, 1, 2)
+
+    container.setLayout(layout)
     w.setCentralWidget(container)
+
     w.show()
     app.exec_()
 
@@ -227,5 +294,12 @@ if __name__ == "__main__":
             }
         },
     }
+    script = Generic_1D_Sweep()
+    script.setup(
+        parameters,
+        None,
+        add_script_to_metadata=False,
+        add_parameters_to_metadata=False,
+    )
 
-    map_terminals_gui(station.components, parameters)
+    map_terminals_gui(station.components, script.gate_parameters)
