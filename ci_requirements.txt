@@ -1,5 +1,1 @@
 -e .
-
-pyvisa-sim
-pyqt5
-qtconsole
