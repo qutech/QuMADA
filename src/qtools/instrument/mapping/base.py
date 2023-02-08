@@ -6,8 +6,8 @@ from collections.abc import Iterable, Mapping
 from typing import Any
 
 import jsonschema
-from qcodes.instrument.base import Instrument
-from qcodes.instrument.parameter import Parameter
+from qcodes.instrument import Instrument
+from qcodes.parameters import Parameter
 from qcodes.utils.metadata import Metadatable
 from qtools_metadata.measurement import MeasurementMapping
 from qtools_metadata.metadata import Metadata

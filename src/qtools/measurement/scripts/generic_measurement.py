@@ -1,7 +1,7 @@
 from time import sleep
 
 from qcodes.dataset.measurements import Measurement
-from qcodes.instrument.specialized_parameters import ElapsedTimeParameter
+from qcodes.parameters.specialized_parameters import ElapsedTimeParameter
 from qcodes.utils.dataset.doNd import dond
 
 from qtools.measurement.doNd_enhanced.doNd_enhanced import (

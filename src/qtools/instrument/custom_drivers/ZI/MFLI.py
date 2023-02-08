@@ -6,7 +6,7 @@ MFLI driver for zhinst-toolkit version 0.3.3 (and above)
 """
 
 import numpy as np
-from qcodes.instrument.base import Instrument
+from qcodes.instrument import Instrument
 
 # import qtools as qt
 from zhinst.toolkit import Session

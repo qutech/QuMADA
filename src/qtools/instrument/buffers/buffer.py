@@ -4,8 +4,8 @@ from abc import ABC, abstractmethod
 from collections.abc import Mapping
 from typing import Any
 
-from qcodes.instrument.base import Instrument
-from qcodes.instrument.parameter import Parameter
+from qcodes.instrument import Instrument
+from qcodes.parameters import Parameter
 from qcodes.utils.metadata import Metadatable
 
 

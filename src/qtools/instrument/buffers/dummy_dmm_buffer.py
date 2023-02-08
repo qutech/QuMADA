@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import numpy as np
 from jsonschema import validate
-from qcodes.instrument.parameter import Parameter
+from qcodes.parameters import Parameter
 
 from qtools.instrument.buffers.buffer import Buffer
 from qtools.instrument.custom_drivers.Dummies.dummy_dmm import DummyDmm

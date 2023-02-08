@@ -1,5 +1,5 @@
-from qcodes.instrument.parameter import Parameter
 from qcodes.instrument_drivers.QDevil.QDevil_QDAC import QDac
+from qcodes.parameters import Parameter
 
 from qtools.instrument.mapping import QDAC_MAPPING
 from qtools.instrument.mapping.base import InstrumentMapping

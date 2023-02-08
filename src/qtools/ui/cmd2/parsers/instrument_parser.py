@@ -2,8 +2,7 @@ import argparse
 import pprint
 
 from cmd2 import Cmd, Cmd2ArgumentParser, CommandSet, with_argparser
-from qcodes.instrument.base import Instrument
-from qcodes.instrument.visa import VisaInstrument
+from qcodes.instrument import VisaInstrument
 
 from qtools.instrument.instrument import is_instrument_class
 from qtools.instrument.mapping.base import (
@@ -21,28 +20,18 @@ class InstrumentCommandSet(CommandSet):
 
     # Instrument parser
     instrument_parser = Cmd2ArgumentParser()
-    instrument_subparsers = instrument_parser.add_subparsers(
-        title="subcommands", help="subcommand help"
-    )
+    instrument_subparsers = instrument_parser.add_subparsers(title="subcommands", help="subcommand help")
 
     # instrument list
-    parser_instrument_list = instrument_subparsers.add_parser(
-        "list", help="List all initialized instruments."
-    )
-    parser_instrument_list.add_argument(
-        "--depth", default=1, type=int, help="depth of the snapshot to print"
-    )
+    parser_instrument_list = instrument_subparsers.add_parser("list", help="List all initialized instruments.")
+    parser_instrument_list.add_argument("--depth", default=1, type=int, help="depth of the snapshot to print")
 
     # instrument add
-    parser_instrument_add = instrument_subparsers.add_parser(
-        "add", help="add instrument to station."
-    )
+    parser_instrument_add = instrument_subparsers.add_parser("add", help="add instrument to station.")
     instrument_add_subparsers = parser_instrument_add.add_subparsers()
 
     # instrument add visa
-    parser_instrument_add_visa = instrument_add_subparsers.add_parser(
-        "visa", help="Add VISA instrument to station."
-    )
+    parser_instrument_add_visa = instrument_add_subparsers.add_parser("visa", help="Add VISA instrument to station.")
     parser_instrument_add_visa.add_argument(
         "name",
         metavar="NAME",
@@ -54,13 +43,9 @@ class InstrumentCommandSet(CommandSet):
         help="Instrument driver",
         choices_provider=choices_complete_instrument_drivers,
     )
-    parser_instrument_add_visa.add_argument(
-        "address", metavar="ADDRESS", help="VISA-address to the instrument."
-    )
+    parser_instrument_add_visa.add_argument("address", metavar="ADDRESS", help="VISA-address to the instrument.")
     parser_instrument_add_visa.add_argument("--visalib", help="VISAlib to use.")
-    parser_instrument_add_visa.add_argument(
-        "--terminator", help="VISA terminator to use."
-    )
+    parser_instrument_add_visa.add_argument("--terminator", help="VISA terminator to use.")
     parser_instrument_add_visa.add_argument(
         "--mapping",
         help="Mapping file for the instrument",
@@ -68,9 +53,7 @@ class InstrumentCommandSet(CommandSet):
     )
 
     # instrument add dummy
-    parser_instrument_add_dummy = instrument_add_subparsers.add_parser(
-        "dummy", help="Add Dummy instrument to station."
-    )
+    parser_instrument_add_dummy = instrument_add_subparsers.add_parser("dummy", help="Add Dummy instrument to station.")
     parser_instrument_add_dummy.add_argument(
         "name",
         metavar="NAME",
@@ -78,12 +61,8 @@ class InstrumentCommandSet(CommandSet):
     )
 
     # instrument delete
-    parser_instrument_delete = instrument_subparsers.add_parser(
-        "delete", help="Remove instrument from station."
-    )
-    parser_instrument_delete.add_argument(
-        "name", metavar="NAME", help="Name of the instrument."
-    )
+    parser_instrument_delete = instrument_subparsers.add_parser("delete", help="Remove instrument from station.")
+    parser_instrument_delete.add_argument("name", metavar="NAME", help="Name of the instrument.")
 
     # instrument load_station
     parser_instrument_load_station = instrument_subparsers.add_parser(
@@ -99,9 +78,7 @@ class InstrumentCommandSet(CommandSet):
     )
 
     # instrument save_station
-    parser_instrument_save_station = instrument_subparsers.add_parser(
-        "save_station", help="Save a station to file."
-    )
+    parser_instrument_save_station = instrument_subparsers.add_parser("save_station", help="Save a station to file.")
     parser_instrument_save_station.add_argument(
         "file",
         metavar="FILE",
@@ -115,9 +92,7 @@ class InstrumentCommandSet(CommandSet):
         "generate_mapping",
         help="Generate a mapping stub from an initialized instrument.",
     )
-    parser_instrument_generate_mapping.add_argument(
-        "name", metavar="NAME", help="Name of the instrument."
-    )
+    parser_instrument_generate_mapping.add_argument("name", metavar="NAME", help="Name of the instrument.")
     parser_instrument_generate_mapping.add_argument(
         "file",
         metavar="FILE",
@@ -132,17 +107,13 @@ class InstrumentCommandSet(CommandSet):
 
     def instrument_add(self, args):
         try:
-            instrument_class: type[VisaInstrument] = self._cmd.instrument_drivers[
-                args.driver
-            ]
+            instrument_class: type[VisaInstrument] = self._cmd.instrument_drivers[args.driver]
             kwargs = {}
             if args.terminator:
                 kwargs["terminator"] = args.terminator
             if args.visalib:
                 kwargs["visalib"] = args.visalib
-            instrument = instrument_class(
-                name=args.name, address=args.address, **kwargs
-            )
+            instrument = instrument_class(name=args.name, address=args.address, **kwargs)
             if args.mapping:
                 # This does not yet work correctly, because the chosen instrument name has to fit the name in the mapping file.
                 path = next(p for p in self._cmd.mappings if p.name == args.mapping)

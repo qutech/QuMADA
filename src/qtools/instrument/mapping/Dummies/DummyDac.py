@@ -5,7 +5,7 @@ Created on Tue Dec  6 17:16:04 2022
 """
 from __future__ import annotations
 
-from qcodes.instrument.parameter import Parameter
+from qcodes.parameters import Parameter
 
 from qtools.instrument.custom_drivers.Dummies.dummy_dac import DummyDac
 from qtools.instrument.mapping import DUMMY_DAC_MAPPING
