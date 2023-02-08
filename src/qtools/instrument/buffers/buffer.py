@@ -5,8 +5,8 @@ from collections.abc import Mapping
 from typing import Any
 
 from qcodes.instrument import Instrument
+from qcodes.metadatable import Metadatable
 from qcodes.parameters import Parameter
-from qcodes.utils.metadata import Metadatable
 
 
 def is_bufferable(object: Instrument | Parameter):

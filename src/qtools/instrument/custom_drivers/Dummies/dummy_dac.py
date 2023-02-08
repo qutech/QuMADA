@@ -12,7 +12,7 @@ from time import sleep
 
 import numpy as np
 from qcodes.instrument import Instrument
-from qcodes.utils import validators as vals
+from qcodes.validators import validators as vals
 
 #%%
 

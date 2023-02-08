@@ -22,26 +22,23 @@ from qcodes.dataset.data_set import DataSet
 from qcodes.dataset.data_set_protocol import DataSetProtocol, res_type
 from qcodes.dataset.descriptions.detect_shapes import detect_shape_of_measurement
 from qcodes.dataset.descriptions.versioning.rundescribertypes import Shapes
-from qcodes.dataset.experiment_container import Experiment
-from qcodes.dataset.measurements import Measurement
-from qcodes.dataset.plotting import plot_dataset
-from qcodes.parameters import ParameterBase
-
-# from qcodes.utils.dataset.doNd import *
-from qcodes.utils.dataset.doNd import (
+from qcodes.dataset.dond.do_nd_utils import (
     BreakConditionInterrupt,
-    UnsafeThreadingException,
     _catch_interrupts,
     _handle_plotting,
     _register_actions,
     _register_parameters,
     _set_write_period,
 )
-from qcodes.utils.threading import (
+from qcodes.dataset.experiment_container import Experiment
+from qcodes.dataset.measurements import Measurement
+from qcodes.dataset.plotting import plot_dataset
+from qcodes.dataset.threading import (
     SequentialParamsCaller,
     ThreadPoolParamsCaller,
     process_params_meas,
 )
+from qcodes.parameters import ParameterBase
 from tqdm.auto import tqdm
 
 ActionsT = Sequence[Callable[[], None]]

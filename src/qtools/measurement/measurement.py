@@ -13,8 +13,9 @@ from typing import Any, Union
 import numpy as np
 import qcodes as qc
 from qcodes import Station
+from qcodes.dataset import AbstractSweep, LinSweep
+from qcodes.dataset.dond.do_nd_utils import ActionsT
 from qcodes.parameters import Parameter, ParameterBase
-from qcodes.utils.dataset.doNd import AbstractSweep, ActionsT, LinSweep
 from qtools_metadata.measurement import MeasurementData
 from qtools_metadata.measurement import MeasurementScript as DomainMeasurementScript
 from qtools_metadata.measurement import MeasurementSettings

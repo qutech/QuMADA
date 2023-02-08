@@ -7,8 +7,8 @@ from typing import Any
 
 import jsonschema
 from qcodes.instrument import Instrument
+from qcodes.metadatable import Metadatable
 from qcodes.parameters import Parameter
-from qcodes.utils.metadata import Metadatable
 from qtools_metadata.measurement import MeasurementMapping
 from qtools_metadata.metadata import Metadata
 
