@@ -27,6 +27,7 @@ MFLI_MAPPING = _build_path("Zurich_Instruments/MFLI.json")
 QDAC_MAPPING = _build_path("QDevil/QDac.json")
 DUMMY_DMM_MAPPING = _build_path("Dummies/DummyDmm.json")
 DUMMY_DAC_MAPPING = _build_path("Dummies/DummyDac.json")
+DUMMY_CHANNEL_MAPPING = _build_path("Dummies/DummyChannel.json")
 
 __all__ = [
     MappingError,
