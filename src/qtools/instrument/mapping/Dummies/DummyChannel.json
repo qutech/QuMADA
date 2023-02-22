@@ -1,0 +1,11 @@
+{
+    "parameter_names": {
+        "IDN": "IDN",
+        "ChanA_temperature": "temperature",
+        "ChanB_temperature": "temperature",
+        "ChanC_temperature": "temperature",
+        "ChanD_temperature": "temperature",
+        "ChanE_temperature": "temperature",
+        "ChanF_temperature": "temperature"
+            }
+}
