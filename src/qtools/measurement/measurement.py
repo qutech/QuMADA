@@ -123,22 +123,41 @@ class MeasurementScript(ABC):
 
         Raises
         ------
-        Exception
-           Exception if number of points is overdefined.
+        None
 
         Returns
         -------
         None
         """
-        if all(k in self.buffer_settings for k in ("sampling_rate", "burst_duration", "num_points")):
-            raise Exception("You cannot define sampling_rate, burst_duration and num_points at the same time")
-        elif self.buffer_settings.get("num_points", False):
-            self.buffered_num_points = self.buffer_settings["num_points"]
-        elif all(k in self.buffer_settings for k in ("sampling_rate", "burst_duration")):
-            self.buffered_num_points = int(
-                np.ceil(self.buffer_settings["sampling_rate"] * self.buffer_settings["burst_duration"])
-            )
 
+        if "burst_duration" in self.buffer_settings:
+            self._burst_duration = self.buffer_settings["burst_duration"]
+            
+        if "duration" in self.buffer_settings:
+            if "burst_duration" in self.buffer_settings:
+                self._num_bursts = np.ceil(
+                    self.buffer_settings["duration"]/self._burst_duration)
+            elif "num_bursts" in self.buffer_settings:
+                self._num_bursts = int(self.buffer_settings["num_bursts"])
+                self._burst_duration = self.buffer_settings["duration"]/self._num_bursts
+                
+        if "num_points" in self.buffer_settings:
+            self.buffered_num_points = int(self.buffer_settings["num_points"])
+            if "sampling_rate" in self.buffer_settings:
+                self._burst_duration = float(
+                    self.buffered_num_points/self.buffer_settings["sampling_rate"])
+            
+        elif "sampling_rate" in self.buffer_settings:
+            self._sampling_rate = float(
+                self.buffer_settings["sampling_rate"])
+            if self._burst_duration is not None:
+                self.buffered_num_points = int(np.ceil(
+                    self._sampling_rate*self._burst_duration))
+            elif all(k in self.buffer_settings for k in ("duration", "num_bursts")):
+                self._burst_duration = float(
+                    self.buffer_settings["duration"]/self.buffer_settings["num_bursts"])
+        
+        
     def setup(
         self,
         parameters: dict,
@@ -188,7 +207,8 @@ class MeasurementScript(ABC):
         if add_script_to_metadata:
             try:
                 if not metadata.measurement.script:
-                    metadata.measurement.script = DomainMeasurementScript.create(cls.__name__)
+                    metadata.measurement.script = DomainMeasurementScript.create(
+                        cls.__name__)
                 script = metadata.measurement.script
 
                 script.language = "python"
@@ -201,7 +221,8 @@ class MeasurementScript(ABC):
         if add_parameters_to_metadata:
             try:
                 if not metadata.measurement.settings:
-                    metadata.measurement.settings = MeasurementSettings.create(f"{cls.__name__}Settings")
+                    metadata.measurement.settings = MeasurementSettings.create(
+                        f"{cls.__name__}Settings")
                 settings = metadata.measurement.settings
 
                 settings.settings = json.dumps(parameters)
@@ -258,7 +279,8 @@ class MeasurementScript(ABC):
                         ramp_time=ramp_time,
                         setpoint_intervall=setpoint_intervall,
                     )
-                    self.static_parameters.append({"gate": gate, "parameter": parameter})
+                    self.static_parameters.append(
+                        {"gate": gate, "parameter": parameter})
 
                 if self.properties[gate][parameter]["type"].find("gettable") >= 0:
                     self.gettable_parameters.append({"gate": gate, "parameter": parameter})
@@ -304,7 +326,7 @@ class MeasurementScript(ABC):
                                     self.properties[gate][parameter]["start"],
                                     self.properties[gate][parameter]["stop"],
                                     self.buffered_num_points,
-                                    self.properties[gate][parameter]["delay"],
+                                    delay=self.properties[gate][parameter].setdefault("delay", 0),
                                 )
                             )
                         except KeyError:
@@ -325,7 +347,7 @@ class MeasurementScript(ABC):
                                     self.properties[gate][parameter]["start"],
                                     self.properties[gate][parameter]["stop"],
                                     self.properties[gate][parameter]["num_points"],
-                                    self.properties[gate][parameter]["delay"],
+                                    delay=self.properties[gate][parameter].setdefault("delay", 0),
                                 )
                             )
                         except KeyError:

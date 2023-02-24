@@ -25,6 +25,7 @@ def map_buffers(
     components: Mapping[Any, Metadatable],
     properties: dict,
     gate_parameters: Mapping[Any, Mapping[Any, Parameter] | Parameter],
+    overwrite_trigger=None,
 ) -> None:
     """
     Maps the bufferable instruments of gate parameters.
@@ -48,7 +49,14 @@ def map_buffers(
         print("[0]: None")
         for idx, trigger in enumerate(buffer.AVAILABLE_TRIGGERS, 1):
             print(f"[{idx}]: {trigger}")
-        chosen = int(input(f"Choose the trigger input for {instrument.name}: "))
+        #TODO: Just a workaround, fix this!
+        if overwrite_trigger is not None:
+            try:
+                chosen = int(overwrite_trigger)
+            except:
+                chosen = int(input(f"Choose the trigger input for {instrument.name}: "))
+        else:        
+            chosen = int(input(f"Choose the trigger input for {instrument.name}: "))
         if chosen == 0:
             trigger = None
         else:
@@ -70,6 +78,7 @@ class Buffer(ABC):
         "duration",
         "burst_duration",
         "grid_interpolation",
+        "num_bursts",
     }
 
     TRIGGER_MODE_NAMES: list[str] = [
@@ -111,6 +120,7 @@ class Buffer(ABC):
             "sampling_rate": {"type": "number"},
             "duration": {"type": "number"},
             "burst_duration": {"type": "number"},
+            "num_bursts" : {"type": "integer"}
         },
         "oneOf": [
             {
