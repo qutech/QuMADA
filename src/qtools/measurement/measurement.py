@@ -470,7 +470,9 @@ class MeasurementScript(ABC):
                 datalist = metadata.measurement.data
                 db_location = qc.config.core.db_location
                 data = MeasurementData.create(f"{cls.__name__}Data", "sqlite3", db_location)
-                datalist.append(data)
+                # Add only if not already in list
+                if not data in datalist:
+                    datalist.append(data)
             except Exception as e:
                 print(f"Data could not be added to metadata: {e}")
 
