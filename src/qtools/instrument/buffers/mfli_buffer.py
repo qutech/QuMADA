@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 from jsonschema import validate
-from qcodes.instrument.parameter import Parameter
+from qcodes.parameters import Parameter
 
 from qtools.instrument.buffers.buffer import Buffer, BufferException
 from qtools.instrument.custom_drivers.ZI.MFLI import MFLI

@@ -9,8 +9,9 @@ import threading
 from time import sleep
 
 import numpy as np
-from qcodes.instrument import Instrument, Parameter
-from qcodes.utils import validators as vals
+from qcodes.instrument import Instrument
+from qcodes.parameters import Parameter
+from qcodes.validators import validators as vals
 
 
 #%%

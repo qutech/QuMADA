@@ -13,9 +13,9 @@ from typing import Any, Union
 import numpy as np
 import qcodes as qc
 from qcodes import Station
-from qcodes.instrument import Parameter
-from qcodes.instrument.parameter import _BaseParameter
-from qcodes.utils.dataset.doNd import AbstractSweep, ActionsT, LinSweep
+from qcodes.dataset import AbstractSweep, LinSweep
+from qcodes.dataset.dond.do_nd_utils import ActionsT
+from qcodes.parameters import Parameter, ParameterBase
 from qtools_metadata.measurement import MeasurementData
 from qtools_metadata.measurement import MeasurementScript as DomainMeasurementScript
 from qtools_metadata.measurement import MeasurementSettings
@@ -513,7 +513,7 @@ class CustomSweep(AbstractSweep):
 
     def __init__(
         self,
-        param: _BaseParameter,
+        param: ParameterBase,
         setpoints: np.ndarray,
         delay: float = 0,
         post_actions: ActionsT = (),
@@ -531,7 +531,7 @@ class CustomSweep(AbstractSweep):
         return self._setpoints
 
     @property
-    def param(self) -> _BaseParameter:
+    def param(self) -> ParameterBase:
         return self._param
 
     @property

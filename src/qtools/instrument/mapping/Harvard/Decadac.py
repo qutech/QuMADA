@@ -5,9 +5,9 @@ Created on Tue Dec  6 17:16:04 2022
 """
 
 import numpy as np
-from qcodes.instrument.parameter import Parameter
-from qcodes.instrument_drivers.Harvard.Decadac import Decadac
+from qcodes.parameters import Parameter
 
+from qtools.instrument.custom_drivers.Harvard.Decadac import Decadac
 from qtools.instrument.mapping import DECADAC_MAPPING
 from qtools.instrument.mapping.base import InstrumentMapping
 

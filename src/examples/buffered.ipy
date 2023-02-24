@@ -10,7 +10,7 @@ from qtools.instrument.buffers import MFLIBuffer, SR830Buffer
 lockin = MFLI("lockin", "dev4039")
 
 #%%
-from qcodes.instrument_drivers.QDevil.QDevil_QDAC import QDac
+from qcodes_contrib_drivers.drivers.QDevil.QDAC1 import QDac
 qdac = QDac("qdac", "ASRL5::INSTR")
 
 #%%

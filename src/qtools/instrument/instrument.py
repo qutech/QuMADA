@@ -1,5 +1,6 @@
 import inspect
-from qcodes.instrument.base import Instrument
+
+from qcodes.instrument import Instrument
 
 
 def is_instrument_class(o):

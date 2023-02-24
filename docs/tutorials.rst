@@ -23,7 +23,7 @@ It contains a couple of blocks for the steps you have to do in order to set up t
 	from qcodes.instrument_drivers.Harvard.Decadac import Decadac
 	from qcodes.instrument_drivers.stanford_research.SR830 import SR830
 	from qcodes.instrument_drivers.tektronix.Keithley_2400 import Keithley_2400
-	from qcodes.instrument_drivers.QDevil.QDevil_QDAC import QDac
+	from qcodes_contrib_drivers.drivers.QDevil.QDAC1 import QDac
 
 	#You need this to set up the QCoDeS database and experiment
 	from qcodes.dataset import (
@@ -139,7 +139,7 @@ The easiest way to create the metadata-object is by entering the data into the m
 
 	db.api_url = "http://134.61.7.48:9124"
 	metadata = create_metadata()
-	
+
 
 .. note::
 

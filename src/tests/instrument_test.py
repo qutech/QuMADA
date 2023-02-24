@@ -1,8 +1,7 @@
 # pylint: disable=missing-function-docstring
 import pytest
-from qcodes.instrument.base import Instrument
-from qcodes.instrument.parameter import Parameter
-from qcodes.instrument.visa import VisaInstrument
+from qcodes.instrument import Instrument, VisaInstrument
+from qcodes.parameters import Parameter
 from qcodes.tests.instrument_mocks import DummyInstrument
 
 from qtools.instrument.instrument import is_instrument_class

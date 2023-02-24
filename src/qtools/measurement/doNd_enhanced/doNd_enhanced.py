@@ -22,32 +22,29 @@ from qcodes.dataset.data_set import DataSet
 from qcodes.dataset.data_set_protocol import DataSetProtocol, res_type
 from qcodes.dataset.descriptions.detect_shapes import detect_shape_of_measurement
 from qcodes.dataset.descriptions.versioning.rundescribertypes import Shapes
-from qcodes.dataset.experiment_container import Experiment
-from qcodes.dataset.measurements import Measurement
-from qcodes.dataset.plotting import plot_dataset
-from qcodes.instrument.parameter import _BaseParameter
-
-# from qcodes.utils.dataset.doNd import *
-from qcodes.utils.dataset.doNd import (
+from qcodes.dataset.dond.do_nd_utils import (
     BreakConditionInterrupt,
-    UnsafeThreadingException,
     _catch_interrupts,
     _handle_plotting,
     _register_actions,
     _register_parameters,
     _set_write_period,
 )
-from qcodes.utils.threading import (
+from qcodes.dataset.experiment_container import Experiment
+from qcodes.dataset.measurements import Measurement
+from qcodes.dataset.plotting import plot_dataset
+from qcodes.dataset.threading import (
     SequentialParamsCaller,
     ThreadPoolParamsCaller,
     process_params_meas,
 )
+from qcodes.parameters import ParameterBase
 from tqdm.auto import tqdm
 
 ActionsT = Sequence[Callable[[], None]]
 BreakConditionT = Callable[[], bool]
 
-ParamMeasT = Union[_BaseParameter, Callable[[], None]]
+ParamMeasT = Union[ParameterBase, Callable[[], None]]
 
 AxesTuple = tuple[matplotlib.axes.Axes, matplotlib.colorbar.Colorbar]
 AxesTupleList = tuple[list[matplotlib.axes.Axes], list[Optional[matplotlib.colorbar.Colorbar]]]
@@ -139,7 +136,7 @@ def do1d_parallel(
 
     all_setpoint_params = (param_set[0],) + tuple(s for s in additional_setpoints)
 
-    measured_parameters = tuple(param for param in param_meas if isinstance(param, _BaseParameter))
+    measured_parameters = tuple(param for param in param_meas if isinstance(param, ParameterBase))
     measured_params = (*param_set[1:], *param_meas)
     setpoints_length = len(setpoints)
     if backsweep_after_break:
@@ -301,7 +298,7 @@ def do1d_parallel_asym(
             raise NotImplementedError(
                 "Setpoints for different parameters have different length. This is not yet supported"
             )
-    measured_parameters = tuple(param for param in param_meas if isinstance(param, _BaseParameter))
+    measured_parameters = tuple(param for param in param_meas if isinstance(param, ParameterBase))
     measured_params = param_meas
     setpoints_length = len(setpoints[0])
     if backsweep_after_break:
@@ -356,15 +353,15 @@ def do1d_parallel_asym(
             if callable(break_condition):
                 if break_condition():
                     if backsweep_after_break:
-                        #tracked_setpoints.reverse()
-                        #need nested reverse?
+                        # tracked_setpoints.reverse()
+                        # need nested reverse?
                         tracked_setpoints = [setpoints[::-1] for setpoints in tracked_setpoints]
                         time.sleep(wait_after_break)
                         for j in range(len(tracked_setpoints[0])):
                             datasaver_backward_list = []
-                            for i,param in enumerate(param_set):
-                            #tqdm might not work anymore as intended; need j instead of object?
-                            #for set_point in tqdm(tracked_setpoints, disable=not show_progress):
+                            for i, param in enumerate(param_set):
+                                # tqdm might not work anymore as intended; need j instead of object?
+                                # for set_point in tqdm(tracked_setpoints, disable=not show_progress):
                                 param.set(tracked_setpoints[i][j])
                                 datasaver_backward_list.append((param_set[i], tracked_setpoints[i][j]))
                             datasaver.add_result(

@@ -3,8 +3,8 @@ from __future__ import annotations
 import numpy as np
 from jsonschema import validate
 from pyvisa import VisaIOError
-from qcodes.instrument.parameter import Parameter
 from qcodes.instrument_drivers.stanford_research.SR830 import SR830
+from qcodes.parameters import Parameter
 
 from qtools.instrument.buffers.buffer import Buffer, BufferException
 

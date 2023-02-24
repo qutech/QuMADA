@@ -14,9 +14,9 @@ from qcodes.dataset import (
     load_or_create_experiment,
 )
 from qcodes.instrument_drivers.Harvard.Decadac import Decadac
-from qcodes.instrument_drivers.QDevil.QDevil_QDAC import QDac
 from qcodes.instrument_drivers.tektronix.Keithley_2400 import Keithley_2400
 from qcodes.station import Station
+from qcodes_contrib_drivers.drivers.QDevil.QDAC1 import QDac
 from qtools_metadata.metadata import Metadata
 
 from qtools.instrument.buffered_instruments import BufferedMFLI as MFLI

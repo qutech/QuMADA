@@ -5,12 +5,12 @@ from typing import Union, cast
 import qcodes.validators as vals
 from qcodes.instrument import ChannelList, InstrumentChannel, VisaInstrument
 
-number = Union[float, int]
+
+Number = Union[float, int]
 
 
 class DACException(Exception):
     pass
-
 
 
 class DacReader:
@@ -432,7 +432,7 @@ class Decadac(VisaInstrument, DacReader):
     DAC_SLOT_CLASS = DacSlot
 
     def __init__(self, name: str, address: str,
-                 min_val: number=-5, max_val: number=5,
+                 min_val: Number = -5, max_val: Number = 5,
                  **kwargs) -> None:
         """
 
