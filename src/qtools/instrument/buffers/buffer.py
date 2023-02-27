@@ -49,13 +49,13 @@ def map_buffers(
         print("[0]: None")
         for idx, trigger in enumerate(buffer.AVAILABLE_TRIGGERS, 1):
             print(f"[{idx}]: {trigger}")
-        #TODO: Just a workaround, fix this!
+        # TODO: Just a workaround, fix this!
         if overwrite_trigger is not None:
             try:
                 chosen = int(overwrite_trigger)
             except:
                 chosen = int(input(f"Choose the trigger input for {instrument.name}: "))
-        else:        
+        else:
             chosen = int(input(f"Choose the trigger input for {instrument.name}: "))
         if chosen == 0:
             trigger = None
@@ -120,7 +120,7 @@ class Buffer(ABC):
             "sampling_rate": {"type": "number"},
             "duration": {"type": "number"},
             "burst_duration": {"type": "number"},
-            "num_bursts" : {"type": "integer"}
+            "num_bursts": {"type": "integer"},
         },
         "oneOf": [
             {

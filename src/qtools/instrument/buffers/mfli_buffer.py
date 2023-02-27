@@ -57,12 +57,9 @@ class MFLIBuffer(Buffer):
         device.demods[self._channel].enable(True)
 
         # TODO: Validate Trigger mode, edge and interpolation!:
-        self._daq.type(self.TRIGGER_MODE_MAPPING[settings.get(
-            "trigger_mode", "edge")])
-        self._daq.edge(self.TRIGGER_MODE_POLARITY_MAPPING[settings.get(
-            "trigger_mode_polarity", "positive")])
-        self._daq.grid.mode(self.GRID_INTERPOLATION_MAPPING[settings.get(
-            "grid_interpolation", "linear")])
+        self._daq.type(self.TRIGGER_MODE_MAPPING[settings.get("trigger_mode", "edge")])
+        self._daq.edge(self.TRIGGER_MODE_POLARITY_MAPPING[settings.get("trigger_mode_polarity", "positive")])
+        self._daq.grid.mode(self.GRID_INTERPOLATION_MAPPING[settings.get("grid_interpolation", "linear")])
         self.trigger = self.trigger  # Don't delete me, I am important!
         if "trigger_threshold" in settings:
             # TODO: better way to distinguish, which trigger level to set
@@ -73,7 +70,7 @@ class MFLIBuffer(Buffer):
             print("Warning: No trigger threshold specified!")
         self._set_num_points()
         self._daq.delay = settings.get("delay", 0)
-        
+
     @property
     def trigger(self):
         return self._trigger
@@ -116,11 +113,13 @@ class MFLIBuffer(Buffer):
     @num_points.setter
     def num_points(self, num_points) -> None:
         if num_points > 8388608:
-            raise BufferException("Buffer is to small for this measurement. \
-                                  Please reduce the number of data points")
+            raise BufferException(
+                "Buffer is to small for this measurement. \
+                                  Please reduce the number of data points"
+            )
         self._num_points = int(num_points)
 
-    #TODO: Define setter for other settings (e.g. burst_duration, num_bursts etc)    
+    # TODO: Define setter for other settings (e.g. burst_duration, num_bursts etc)
 
     def _set_num_points(self) -> None:
         """
@@ -134,52 +133,44 @@ class MFLIBuffer(Buffer):
         -------
         None
         """
-        #TODO: Include ._daq.repetitions (averages over multiple bursts)
-        
-        if all(k in self.settings for k in ("sampling_rate", "burst_duration", 
-                                            "num_points")):
-            raise BufferException("You cannot define sampling_rate, \
-                                  burst_duration and num_points at the same time")
-                                  
-        if all(k in self.settings for k in ("sampling_rate", "duration", 
-                                            "num_bursts", "num_points")):
-            raise BufferException("You cannot define sampling rate, duration \
-                                  and num_burst and num_points at the same time")
-                                  
-        if all(k in self.settings for k in ("num_bursts", "duration",
-                                              "burst_duration")):
-            raise BufferException("You cannnot define duration, burst_duration \
-                                  and num_bursts at the same time")
-        
+        # TODO: Include ._daq.repetitions (averages over multiple bursts)
+
+        if all(k in self.settings for k in ("sampling_rate", "burst_duration", "num_points")):
+            raise BufferException("You cannot define sampling_rate, burst_duration and num_points at the same time")
+
+        if all(k in self.settings for k in ("sampling_rate", "duration", "num_bursts", "num_points")):
+            raise BufferException(
+                "You cannot define sampling rate, duration and num_burst and num_points at the same time"
+            )
+
+        if all(k in self.settings for k in ("num_bursts", "duration", "burst_duration")):
+            raise BufferException("You cannnot define duration, burst_duration and num_bursts at the same time")
+
         if "burst_duration" in self.settings:
             self._burst_duration = self.settings["burst_duration"]
-            
+
         if "duration" in self.settings:
             if "burst_duration" in self.settings:
-                self._num_bursts = np.ceil(
-                    self.settings["duration"]/self._burst_duration)
+                self._num_bursts = np.ceil(self.settings["duration"] / self._burst_duration)
             elif "num_bursts" in self.settings:
                 self._num_bursts = int(self.settings["num_bursts"])
-                self._burst_duration = self.settings["duration"]/self._num_bursts
-                
+                self._burst_duration = self.settings["duration"] / self._num_bursts
+
         if "num_points" in self.settings:
             self.num_points = int(self.settings["num_points"])
             if "sampling_rate" in self.settings:
-                self._burst_duration = float(
-                    self.num_points/self.settings["sampling_rate"])
-            
+                self._burst_duration = float(self.num_points / self.settings["sampling_rate"])
+
         elif "sampling_rate" in self.settings:
             self._sampling_rate = float(self.settings["sampling_rate"])
             if self._burst_duration is not None:
-                self.num_points = int(np.ceil(
-                    self._sampling_rate*self._burst_duration))
+                self.num_points = int(np.ceil(self._sampling_rate * self._burst_duration))
             elif all(k in self.settings for k in ("duration", "num_bursts")):
-                self._burst_duration = float(
-                    self.settings["duration"]/self.settings["num_bursts"])
-                
+                self._burst_duration = float(self.settings["duration"] / self.settings["num_bursts"])
+
         self._daq.count(self._num_bursts)
         self._daq.duration(self._burst_duration)
-        self._daq.grid.cols(self.num_points)       
+        self._daq.grid.cols(self.num_points)
 
     def read(self) -> dict:
         data = self.read_raw()
@@ -227,5 +218,4 @@ class MFLIBuffer(Buffer):
         return self._daq.raw_module.finished()
 
     def _get_node_from_parameter(self, parameter: Parameter):
-        return self._device.demods[self._channel].sample.__getattr__(
-            parameter.signal_name[1])
+        return self._device.demods[self._channel].sample.__getattr__(parameter.signal_name[1])
