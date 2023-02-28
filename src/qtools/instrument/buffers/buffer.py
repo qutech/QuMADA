@@ -15,6 +15,16 @@ def is_bufferable(object: Instrument | Parameter):
         object = object.root_instrument
     return hasattr(object, "_qtools_buffer") and isinstance(object._qtools_buffer, Buffer)
     # TODO: check, if parameter can really be buffered
+    
+def is_triggerable(object: Instrument | Parameter):
+    """
+    Checks if the instrument or parameter can be triggered by checking the corresponding flag in
+    the mapping
+    """
+    if isinstance(object, Parameter):
+        object = object.root_instrument
+    return object._is_triggerable
+        
 
 
 class BufferException(Exception):
@@ -67,6 +77,45 @@ def map_buffers(
             trigger = buffer.AVAILABLE_TRIGGERS[chosen - 1]
         buffer.trigger = trigger
         print(f"{buffer.trigger=}")
+        
+def map_triggers(
+        components: Mapping[Any, Metadatable],
+        properties: dict,
+        gate_parameters: Mapping[Any, Mapping[Any, Parameter] | Parameter],
+        overwrite_trigger=None,
+        skip_mapped = True,
+    ) -> None:
+        """
+        Maps the bufferable instruments of gate parameters.
+
+        Args:
+            components (Mapping[Any, Metadatable]): Instruments/Components in QCoDeS
+            gate_parameters (Mapping[Any, Union[Mapping[Any, Parameter], Parameter]]): Gates, as defined in the measurement script
+        """
+        triggered_instruments = filter(is_triggerable, components.values())
+        for instrument in triggered_instruments:
+            if skip_mapped:
+                if instrument._qtools_mapping.trigger_in in \
+                    instrument._qtools_mapping.AVAILABLE_TRIGGERS:
+                    return
+            print("Available trigger inputs:")
+            print("[0]: None")
+            for idx, trigger in enumerate(instrument._qtools_mapping.AVAILABLE_TRIGGERS, 1):
+                print(f"[{idx}]: {trigger}")
+            #TODO: Just a workaround, fix this!
+            if overwrite_trigger is not None:
+                try:
+                    chosen = int(overwrite_trigger)
+                except:
+                    chosen = int(input(f"Choose the trigger input for {instrument.name}: "))
+            else:        
+                chosen = int(input(f"Choose the trigger input for {instrument.name}: "))
+            if chosen == 0:
+                trigger = None
+            else:
+                trigger = instrument._qtools_mapping.AVAILABLE_TRIGGERS[chosen - 1]
+            instrument._qtools_mapping.trigger_in = trigger
+            print(f"trigger input = {instrument._qtools_trigger_in}")
 
 
 class Buffer(ABC):
