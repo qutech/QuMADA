@@ -78,7 +78,7 @@ def map_buffers(
         buffer.trigger = trigger
         print(f"{buffer.trigger=}")
         
-def map_triggers(
+def _map_triggers(
         components: Mapping[Any, Metadatable],
         properties: dict,
         gate_parameters: Mapping[Any, Mapping[Any, Parameter] | Parameter],
@@ -115,7 +115,29 @@ def map_triggers(
             else:
                 trigger = instrument._qtools_mapping.AVAILABLE_TRIGGERS[chosen - 1]
             instrument._qtools_mapping.trigger_in = trigger
-            print(f"trigger input = {instrument._qtools_trigger_in}")
+            print(f"trigger input = {instrument._qtools_mapping.trigger_in}")
+    
+def map_triggers(
+        components: Mapping[Any, Metadatable],
+        properties: dict,
+        gate_parameters: Mapping[Any, Mapping[Any, Parameter] | Parameter],
+        overwrite_trigger=None,
+        skip_mapped = True,
+    ) -> None:
+    map_buffers(
+        components, 
+        properties, 
+        gate_parameters,
+        overwrite_trigger,
+        skip_mapped,
+        )
+    _map_triggers(
+        components, 
+        properties, 
+        gate_parameters,
+        overwrite_trigger,
+        skip_mapped,
+        )
 
 
 class Buffer(ABC):

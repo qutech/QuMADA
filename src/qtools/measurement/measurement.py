@@ -21,7 +21,7 @@ from qtools_metadata.measurement import MeasurementScript as DomainMeasurementSc
 from qtools_metadata.measurement import MeasurementSettings
 from qtools_metadata.metadata import Metadata
 
-from qtools.instrument.buffers.buffer import is_bufferable
+from qtools.instrument.buffers.buffer import is_bufferable, is_triggerable
 from qtools.utils.ramp_parameter import ramp_or_set_parameter
 from qtools.utils.utils import flatten_array
 
@@ -250,27 +250,21 @@ class MeasurementScript(ABC):
         self.dynamic_channels: list[str] = []
         self.dynamic_sweeps: list[str] = []
         self.buffers: set = set()  # All buffers of gettable parameters
-
+        self.trigger_ins: set = set() #All trigger inputs that do not belong to buffers
+        
         ramp_rate = self.settings.get("ramp_rate", 0.3)
         ramp_time = self.settings.get("ramp_time", 5)
         setpoint_intervall = self.settings.get("setpoint_intervall", 0.1)
         for gate, parameters in self.gate_parameters.items():
             for parameter, channel in parameters.items():
-                if self.properties[gate][parameter]["type"].find("static") >= 0:  # TODO: Handle strings
+                if self.properties[gate][parameter]["type"].find("static") >= 0:
                     ramp_or_set_parameter(
                         channel,
                         self.properties[gate][parameter]["value"],
                         ramp_rate=ramp_rate,
                         ramp_time=ramp_time,
                         setpoint_intervall=setpoint_intervall,
-                    )
-                    ramp_or_set_parameter(
-                        channel,
-                        self.properties[gate][parameter]["value"],
-                        ramp_rate=ramp_rate,
-                        ramp_time=ramp_time,
-                        setpoint_intervall=setpoint_intervall,
-                    )
+                        )
                     self.static_parameters.append({"gate": gate, "parameter": parameter})
 
                 if self.properties[gate][parameter]["type"].find("gettable") >= 0:
@@ -358,6 +352,11 @@ class MeasurementScript(ABC):
                     gettable_param.root_instrument._qtools_buffer.subscribe([gettable_param])
                 else:
                     raise Exception(f"{gettable_param} is not bufferable.")
+            self.trigger_ins = {param.root_instrument._qtools_mapping \
+                                for param in self.dynamic_channels \
+                                if is_triggerable(param)}
+
+                    
         self._relabel_instruments()
 
     @abstractmethod
@@ -422,6 +421,8 @@ class MeasurementScript(ABC):
         for buffer in self.buffers:
             buffer.setup_buffer(settings=self.buffer_settings)
             buffer.start()
+        for trigger in self.trigger_ins:
+            trigger.setup_trigger_in(trigger_settings=self.buffer_settings)
 
     def readout_buffers(self, **kwargs) -> dict:
         """
