@@ -26,6 +26,7 @@ def map_buffers(
     properties: dict,
     gate_parameters: Mapping[Any, Mapping[Any, Parameter] | Parameter],
     overwrite_trigger=None,
+    skip_mapped = True,
 ) -> None:
     """
     Maps the bufferable instruments of gate parameters.
@@ -45,6 +46,9 @@ def map_buffers(
     buffered_instruments = filter(is_bufferable, components.values())
     for instrument in buffered_instruments:
         buffer = instrument._qtools_buffer
+        if skip_mapped:
+            if buffer.trigger in buffer.AVAILABLE_TRIGGERS:
+                return 
         print("Available trigger inputs:")
         print("[0]: None")
         for idx, trigger in enumerate(buffer.AVAILABLE_TRIGGERS, 1):
