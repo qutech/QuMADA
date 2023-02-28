@@ -5,16 +5,21 @@ Created on Tue Dec  6 17:16:04 2022
 """
 
 import numpy as np
-from qcodes.parameters import Parameter
-
+from qcodes.instrument.parameter import Parameter
 from qtools.instrument.custom_drivers.Harvard.Decadac import Decadac
 from qtools.instrument.mapping import DECADAC_MAPPING
 from qtools.instrument.mapping.base import InstrumentMapping
+import time
 
 
 class DecadacMapping(InstrumentMapping):
     def __init__(self):
-        super().__init__(DECADAC_MAPPING)
+        super().__init__(DECADAC_MAPPING, is_triggerable = True)
+        self._trigger_in: str | None = None
+        self.AVAILABLE_TRIGGERS: list = [
+            "trigger_in_1",
+            "trigger_in_2"
+            ]
 
     def ramp(
         self,
@@ -62,3 +67,75 @@ class DecadacMapping(InstrumentMapping):
         assert isinstance(instrument, Decadac)
         parameter._instrument.enable_ramp(False)
         parameter.volt.set(level)
+        
+        
+    def setup_trigger_in(self, trigger_settings: dict):
+        trigger_dict = {
+            'always': 0,
+            'trig1_low': 2,
+            'trig2_low': 3,
+            'until_trig1_rising': 4,
+            'until_trig2_rising': 5,
+            'until_trig1_falling': 6,
+            'until_trig2_falling': 7,
+            'never': 8,
+            'trig1_high': 10,
+            'trig2_high': 11,
+            'after_trig1_rising': 12,
+            'after_trig2_rising': 13,
+            'after_trig1_falling': 14,
+            'after_trig2_falling': 15,
+            }
+        TRIGGER_MODE_MAPPING: dict = {
+            "continuous": 0,
+            "edge": 1,
+            "pulse": 3,
+            "tracking_edge": 4,
+            "tracking_pulse": 7,
+            "digital": 6,
+        }
+        print("Warning: The Decadacs trigger level is fixed at roughly 1.69 V and cannot be changed. \
+              Please make sure that your triggers are setup accordingly")
+        trigger_mode = trigger_settings.get("trigger_mode", "continuous")
+        polarity = trigger_settings.get("trigger_mode_polarity", "positive")
+        
+        match (trigger_mode, polarity):
+            case ("edge", "positive"): 
+                mode = 4
+            case ("edge", "negative"):
+                mode = 6
+            case ("digital", "positive"):
+                mode = 10
+            case("digital", "negative"):
+                mode = 2
+            # TODO: CHeck other cases
+            case("continuous", "positive"):
+                mode = 0
+            case("continuous", "negative"):
+                mode = 0
+            case _:
+                raise Exception("Selected trigger mode is not supported by DecaDac")
+                
+        if self.trigger_in is None:
+            mode = 0
+            print("No trigger input selected. Using continuous acquisition")
+        if self.trigger_in == "trigger_in_2":
+            mode+=1
+            
+        self.trigger_mode = mode
+    
+    @property
+    def trigger_in(self):
+        return self._trigger_in
+
+    @trigger_in.setter
+    def trigger_in(self, trigger: str | None) -> None:
+        # TODO: Inform user about automatic changes of settings
+        # TODO: This is done BEFORE the setup_buffer, so changes to trigger type will be overriden anyway?
+        # print(f"Running trigger setter with: {trigger}")
+        if trigger in self.AVAILABLE_TRIGGERS:
+            self._trigger_in = trigger
+        else:
+            raise Exception(f"Trigger input {trigger} not available")
+        if trigger is None:
+            print("No Trigger provided!")
