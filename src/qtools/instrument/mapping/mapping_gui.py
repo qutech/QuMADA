@@ -1,9 +1,17 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
+from threading import Event, Thread
 from typing import Any
 
-from PyQt5.QtCore import QItemSelectionModel, QMimeData, QModelIndex, Qt
+from PyQt5.QtCore import (
+    QItemSelectionModel,
+    QMimeData,
+    QModelIndex,
+    Qt,
+    pyqtSignal,
+    pyqtSlot,
+)
 from PyQt5.QtGui import (
     QBrush,
     QColor,
@@ -19,6 +27,7 @@ from PyQt5.QtGui import (
 )
 from PyQt5.QtWidgets import (
     QApplication,
+    QDesktopWidget,
     QGridLayout,
     QHBoxLayout,
     QMainWindow,
@@ -45,9 +54,6 @@ from qtools.instrument.mapping.Dummies.DummyDac import DummyDacMapping
 from qtools.measurement.scripts.generic_measurement import Generic_1D_Sweep
 
 TerminalParameters = Mapping[Any, Mapping[Any, Parameter] | Parameter]
-
-# TODO:
-# should it be allowed to map multiple terminal (parameters) to the same instrument (parameters)
 
 
 class TerminalTreeView(QTreeView):
@@ -97,40 +103,67 @@ class TerminalTreeView(QTreeView):
     def mouseDoubleClickEvent(self, event: QMouseEvent) -> None:
         pass
 
-    def map_parameter(self, parameter: Parameter, traverse: tuple[str, str]):
+    def update_tree(self):
         """
-        Maps a instrument parameter to a specific terminal parameter accessed by the given traversal info.
-        Updates the instrument field next to the mapped terminal parameter
+        Set labels and coloring based on state (terminal_parameters)
         """
-        self.terminal_parameters[traverse[0]][traverse[1]] = parameter
-        root = self.model().invisibleRootItem()
-        terminal_param = traverse_tree(root, list(traverse).copy())
-        self.model().setData(terminal_param.index().siblingAtColumn(1), parameter.full_name)
-        self.model().setData(terminal_param.index().siblingAtColumn(1), QBrush(QColor(0, 255, 0)), Qt.BackgroundRole)
+        # Set mapped instrument labels and colors, set colors for duplicates
+        tree = self.model()
+        parameter_duplicates = {}
+        for terminal in get_children(tree.invisibleRootItem()):
+            tree.setData(terminal.index(), QBrush(QColor(255, 255, 255)), Qt.BackgroundRole)
+            tree.setData(terminal.index().siblingAtColumn(1), QBrush(QColor(255, 0, 0)), Qt.BackgroundRole)
+            tree.setData(terminal.index().siblingAtColumn(1), "")
+            all_mapped = True
+            any_mapped = False
+            channels = set()
+            for terminal_param in get_children(terminal):
+                tree.setData(terminal_param.index(), QBrush(QColor(255, 255, 255)), Qt.BackgroundRole)
+                tree.setData(terminal_param.index().siblingAtColumn(1), QBrush(QColor(255, 0, 0)), Qt.BackgroundRole)
+                tree.setData(terminal_param.index().siblingAtColumn(1), "")
+                param = self.terminal_parameters[terminal_param.source[0]][terminal_param.source[1]]
+                if not param is None:
+                    if isinstance(param, Parameter):
+                        param_hash = hash(param)
+                        if param_hash in parameter_duplicates:
+                            parameter_duplicates[param_hash].append(terminal_param)
+                        else:
+                            parameter_duplicates[param_hash] = [terminal_param]
 
-        # check if all siblings are mapped and change color coding based on that (also give terminal a label of the channel if all its parameters are mapped to it)
-        all_mapped = True
-        channels = set()
-        for sibling in get_children(terminal_param.parent()):
-            if self.model().data(sibling.index().siblingAtColumn(1)) == "":
-                all_mapped = False
+                        param_bound_instr_full_name = param.instrument.full_name
+                        channels.add(param_bound_instr_full_name)
+                        tree.setData(terminal_param.index().siblingAtColumn(1), param_bound_instr_full_name)
+                        tree.setData(
+                            terminal_param.index().siblingAtColumn(1), QBrush(QColor(0, 255, 0)), Qt.BackgroundRole
+                        )
+                        any_mapped = True
+                    else:
+                        raise TypeError("Gate parameters has to be either None or of type Parameter.")
+                else:
+                    all_mapped = False
 
-            full_name = self.model().data(sibling.index().siblingAtColumn(1))
-            channels.add(full_name.rsplit("_", 1)[0])  # full_name without parameter name
+            # color and label terminals
+            if all_mapped:
+                tree.setData(terminal.index().siblingAtColumn(1), QBrush(QColor(0, 255, 0)), Qt.BackgroundRole)
+                if len(channels) == 1:
+                    tree.setData(terminal.index().siblingAtColumn(1), channels.pop())
+                else:
+                    tree.setData(terminal.index().siblingAtColumn(1), "")
+            elif any_mapped:
+                tree.setData(terminal.index().siblingAtColumn(1), QBrush(QColor(255, 255, 0)), Qt.BackgroundRole)
 
-        if all_mapped:
-            self.model().setData(
-                terminal_param.parent().index().siblingAtColumn(1), QBrush(QColor(0, 255, 0)), Qt.BackgroundRole
-            )
-            if len(channels) == 1:
-                self.model().setData(terminal_param.parent().index().siblingAtColumn(1), channels.pop())
-                self.collapse(terminal_param.parent().index())
-            else:
-                self.model().setData(terminal_param.parent().index().siblingAtColumn(1), "")
-        else:
-            self.model().setData(
-                terminal_param.parent().index().siblingAtColumn(1), QBrush(QColor(255, 255, 0)), Qt.BackgroundRole
-            )
+        # color duplicates
+        for items_with_param in parameter_duplicates.values():
+            if len(items_with_param) != 1:
+                for duplicate in items_with_param:
+                    tree.setData(duplicate.index(), QBrush(QColor(255, 192, 203)), Qt.BackgroundRole)
+                    tree.setData(duplicate.parent().index(), QBrush(QColor(255, 192, 203)), Qt.BackgroundRole)
+
+        # any item selected?
+        if not self.selected_terminal_tree_elem is None:
+            tree.setData(self.selected_terminal_tree_elem, QBrush(QColor(0, 0, 255)), Qt.BackgroundRole)
+
+        self.resizeColumnToContents(1)
 
     def import_data(self, terminal_parameters: TerminalParameters) -> None:
         """Build up tree with provided terminal parameters."""
@@ -218,6 +251,8 @@ def traverse_tree(root: QStandardItem, traversal_names: list(str)) -> QStandardI
 class InstrumentTreeView(QTreeView):
     """QTreeView, that displays qcodes instruments."""
 
+    drag_terminal_drop_instr = pyqtSignal(QStandardItem, QStandardItem)
+
     def __init__(self):
         super().__init__()
 
@@ -233,17 +268,15 @@ class InstrumentTreeView(QTreeView):
         pass
 
     def focusOutEvent(self, a0: QFocusEvent) -> None:
-        mainwindow = self.previousInFocusChain()
-        children = mainwindow.children()
-        for child in children:
+        mainwindow = self.parentWidget()
+        for child in mainwindow.children():
             if isinstance(child, TerminalTreeView):
                 terminal_tree = child
+                break
 
         if not terminal_tree.selected_terminal_tree_elem is None:
-            terminal_tree.model().setData(
-                terminal_tree.selected_terminal_tree_elem, QBrush(QColor(255, 255, 255)), Qt.BackgroundRole
-            )
             terminal_tree.selected_terminal_tree_elem = None
+            terminal_tree.update_tree()
 
         return super().focusOutEvent(a0)
 
@@ -389,7 +422,8 @@ class InstrumentTreeView(QTreeView):
         assert isinstance(tree, TerminalTreeView)
         terminal_elem = tree.model().itemFromIndex(terminal_tree_idx)
 
-        mapped = self.map_given_terminal_instrument_elem_selection(tree, terminal_elem.source, instr_elem.source)
+        # communicate selected instrument/terminal to main window. drag_terminal_drop_instr_slot catches this signal and does mapping
+        self.drag_terminal_drop_instr.emit(instr_elem, terminal_elem)
 
     def add_terminal_to_view(self, parent, row, terminal_name):
         model = self.model()
@@ -477,11 +511,29 @@ class InstrumentTreeView(QTreeView):
         recurse(components, parent)
 
 
+class AppInstanceException(Exception):
+    """
+    Throw this when the user tries to open multiple instances of app
+    """
+
+    pass
+
+
 class MainWindow(QMainWindow):
-    def __init__(self, components, terminal_parameters, existing_terminal_parameters: TerminalParameters | None = None):
+    def __init__(
+        self,
+        components,
+        terminal_parameters,
+        existing_terminal_parameters: TerminalParameters | None = None,
+        unlock_main_thread: Event | None = None,
+        auto_run: bool = False,
+    ):
         super().__init__()
         self.components = components
         self.terminal_parameters = terminal_parameters
+        self.auto_run = auto_run
+        if not unlock_main_thread is None:
+            self.unlock_main_thread = unlock_main_thread
 
         container = QWidget()
         layout = QGridLayout()
@@ -490,11 +542,17 @@ class MainWindow(QMainWindow):
         self.instrument_tree = InstrumentTreeView()
         self.instrument_tree.import_data(components)
         self.instrument_tree.setSelectionMode(self.instrument_tree.SelectionMode(1))
+        self.instrument_tree.drag_terminal_drop_instr.connect(self.drag_terminal_drop_instr_slot)
 
         self.terminal_tree = TerminalTreeView()
         self.terminal_tree.import_data(terminal_parameters)
         self.terminal_tree.instrument_model = self.instrument_tree.model()
         self.terminal_tree.setSelectionMode(self.terminal_tree.SelectionMode(1))
+        self.terminal_tree.selected_terminal_tree_elem = None
+        self.terminal_tree.expandAll()
+        self.terminal_tree.resizeColumnToContents(0)
+        self.terminal_tree.collapseAll()
+        self.terminal_tree.resizeColumnToContents(1)
 
         # Buttons
         button_container = QWidget()
@@ -521,8 +579,8 @@ class MainWindow(QMainWindow):
         button_container.setLayout(button_layout)
 
         # Main layout
-        layout.addWidget(self.instrument_tree, 0, 1)
         layout.addWidget(self.terminal_tree, 0, 0)
+        layout.addWidget(self.instrument_tree, 0, 1)
         layout.addWidget(button_container, 1, 0, 1, 2)
 
         container.setLayout(layout)
@@ -531,15 +589,52 @@ class MainWindow(QMainWindow):
         idx = self.terminal_tree.model().invisibleRootItem().child(0, 0).index()
         self.terminal_tree.selectionModel().select(idx, QItemSelectionModel.SelectionFlag.ClearAndSelect)
         self.terminal_tree.setCurrentIndex(idx)
+        self.resize(QDesktopWidget().availableGeometry(self).size() * 0.6)
 
         if not existing_terminal_parameters is None:
             for terminal_name, parameter_mapping in existing_terminal_parameters.items():
                 for terminal_parameter, instr_parameter in parameter_mapping.items():
                     if not instr_parameter is None:
-                        self.terminal_tree.map_parameter(instr_parameter, (terminal_name, terminal_parameter))
+                        self.map_parameter(instr_parameter, (terminal_name, terminal_parameter))
+
+            self.terminal_tree.update_tree()
+
+    @pyqtSlot(QStandardItem, QStandardItem)
+    def drag_terminal_drop_instr_slot(self, instr_elem, terminal_elem):
+        """
+        This receives signal from InstrumentTree if two elements were paired via drag and drop.
+        Mapping is carried out from here (mainwindow)
+        """
+        self.map_given_terminal_instrument_elem_selection(terminal_elem.source, instr_elem.source)
+        self.terminal_tree.update_tree()
+
+    def map_parameter(self, parameter: Parameter, traverse: tuple[str, str]):
+        """
+        Maps a instrument parameter to a specific terminal parameter accessed by the given traversal info.
+        Updates the instrument field next to the mapped terminal parameter
+        """
+        self.terminal_parameters[traverse[0]][traverse[1]] = parameter
+        # self.terminal_tree.update_tree()
+
+        if hasattr(self, "unlock_main_thread") and self.auto_run:
+            all_mapped = True
+            for terminal in self.terminal_parameters.values():
+                for terminal_param in terminal.values():
+                    if terminal_param is None:
+                        all_mapped = False
+                        break
+
+            if all_mapped:
+                self.unlock_main_thread.set()
+                self.terminal_tree.setDragEnabled(False)  # Read only
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
         if event.key() == Qt.Key_Enter or event.key() == Qt.Key_Return:
+            # read-only mode after thread was released
+            if hasattr(self, "unlock_main_thread"):
+                if self.unlock_main_thread.is_set():
+                    return
+
             sel_idx = []
             for idx in self.terminal_tree.selectedIndexes():
                 if idx.column() == 0:
@@ -551,9 +646,6 @@ class MainWindow(QMainWindow):
                 # select element and switch focus to instruments
                 self.terminal_tree.selected_terminal_tree_elem = sel_idx[0]
                 selected_item = self.terminal_tree.model().itemFromIndex(self.terminal_tree.selected_terminal_tree_elem)
-                self.terminal_tree.model().setData(
-                    self.terminal_tree.selected_terminal_tree_elem, QBrush(QColor(0, 0, 255)), Qt.BackgroundRole
-                )
                 self.instrument_tree.setFocus()
 
                 # select instrument element based on predicted mapping
@@ -572,16 +664,11 @@ class MainWindow(QMainWindow):
                 for perfect_mapping in perfect_mappings:
                     instr_mapped = False
                     for terminal in get_children(self.terminal_tree.model().invisibleRootItem()):
-                        # print(self.terminal_tree.model().data(terminal.index().siblingAtColumn(1)), perfect_mapping.source.full_name)
                         if (
                             self.terminal_tree.model().data(terminal.index().siblingAtColumn(1))
                             == perfect_mapping.source.full_name
                         ):
                             instr_mapped = True
-                            print(
-                                self.terminal_tree.model().data(terminal.index().siblingAtColumn(1)),
-                                perfect_mapping.source.full_name,
-                            )
                             break
 
                     if not instr_mapped:
@@ -601,36 +688,28 @@ class MainWindow(QMainWindow):
                 idx_instr = self.instrument_tree.selectedIndexes()[0]
                 instr_elem = self.instrument_tree.model().itemFromIndex(idx_instr)
 
-                # print(f"map {self.terminal_tree.model().data(sel_idx[0])} to {self.instrument_tree.model().data(idx_instr)}")
-                mapped = self.instrument_tree.map_given_terminal_instrument_elem_selection(
-                    self.terminal_tree, terminal_elem.source, instr_elem.source
-                )
-                if not mapped:
-                    print("Not mapped.")
+                mapped = self.map_given_terminal_instrument_elem_selection(terminal_elem.source, instr_elem.source)
                 if mapped:
-                    self.terminal_tree.model().setData(
-                        self.terminal_tree.selected_terminal_tree_elem, QBrush(QColor(255, 255, 255)), Qt.BackgroundRole
-                    )
                     self.terminal_tree.selected_terminal_tree_elem = None
 
                     # select next not fully mapped terminal (quick navigation)
-                    root = self.terminal_tree.model().invisibleRootItem()
-                    for terminal in get_children(root):
-                        _all_mapped = True
-                        for terminal_param in get_children(terminal):
-                            if self.terminal_tree.model().data(terminal_param.index().siblingAtColumn(1)) == "":
-                                _all_mapped = False
+                    self.terminal_tree.setFocus()
+                    for terminal_name, terminal in self.terminal_tree.terminal_parameters.items():
+                        all_mapped = True
+                        for terminal_param_name, terminal_param in terminal.items():
+                            if terminal_param is None:
+                                all_mapped = False
                                 break
 
-                        if not _all_mapped:
-                            # select this terminal
-                            self.terminal_tree.setFocus()
-                            self.terminal_tree.selectionModel().select(
-                                terminal.index(), QItemSelectionModel.SelectionFlag.ClearAndSelect
-                            )
-                            self.terminal_tree.setCurrentIndex(terminal.index())
+                        if not all_mapped:
+                            terminal_elem = get_child(self.terminal_tree.model().invisibleRootItem(), terminal_name)
 
+                            self.terminal_tree.selectionModel().select(
+                                terminal_elem.index(), QItemSelectionModel.SelectionFlag.ClearAndSelect
+                            )
+                            self.terminal_tree.setCurrentIndex(terminal_elem.index())
                             break
+            # self.terminal_tree.update_tree()
         elif event.key() == Qt.Key_A:
             self.map_automatically()
         elif event.key() == Qt.Key_R:
@@ -640,7 +719,72 @@ class MainWindow(QMainWindow):
         elif event.key() == Qt.Key_U:
             self.unfold_terminals()
 
+        self.terminal_tree.update_tree()
+
         return super().keyPressEvent(event)
+
+    def map_given_terminal_instrument_elem_selection(
+        self,
+        terminal_tree_traversal: tuple[str, tuple[str]] | tuple[str, str],
+        instr_elem: Metadatable | Parameter,
+    ) -> bool:
+        """
+        For a selected item in terminal_tree (given via terminal_tree_traversal) and selected item in instrument_tree (instr_elem)
+        do the mapping process. Behaviour based on combinations like: direct mapping between parameters, automap to all children etc.
+        """
+        tree = self.terminal_tree
+        mapped = False
+        if isinstance(terminal_tree_traversal[1], str) and isinstance(instr_elem, Parameter):
+            # map directly - should mapping be forbidden if _mapping attribute of Parameter does not fit?
+            self.map_parameter(instr_elem, terminal_tree_traversal)
+            mapped = True
+        elif isinstance(terminal_tree_traversal[1], tuple) and isinstance(instr_elem, InstrumentModule | Instrument):
+            # map automatically as much as possible
+            all_params = filter_flatten_parameters(instr_elem)
+            child_params_all = {
+                param_name: param
+                for param_name, param in all_params.items()
+                if instr_elem in param.instrument.ancestors
+            }
+
+            # try to map chosen terminal_parameters with child parameters of instr_elem if uniquely possible
+            possible_mappings = get_possible_mapping_candidates(terminal_tree_traversal[1], child_params_all)
+            for terminal_param_name, parameter_candidates in possible_mappings.items():
+                if len(parameter_candidates) == 1:
+                    # unique mapping - iterate over terminal_parameters of terminal
+
+                    terminal = get_child(tree.model().invisibleRootItem(), terminal_tree_traversal[0])
+                    terminal_param = get_child(terminal, terminal_param_name)
+                    self.map_parameter(parameter_candidates[0], terminal_param.source)
+                    mapped = True
+
+        elif isinstance(terminal_tree_traversal[1], str) and isinstance(instr_elem, InstrumentModule | Instrument):
+            # map automatically to one parameter
+            all_params = filter_flatten_parameters(instr_elem)
+            child_params_all = {
+                param_name: param
+                for param_name, param in all_params.items()
+                if instr_elem in param.instrument.ancestors
+            }
+            possible_mappings = get_possible_mapping_candidates((terminal_tree_traversal[1],), child_params_all)
+
+            # dict is always of size 1 (only one terminal_parameter)
+            terminal_param_name = terminal_tree_traversal[1]
+            possible_instrument_parameters = possible_mappings[terminal_param_name]
+            if len(possible_instrument_parameters) == 1:
+                if terminal_param_name == terminal_tree_traversal[1]:
+                    self.map_parameter(possible_instrument_parameters[0], terminal_tree_traversal)
+                    mapped = True
+        elif isinstance(terminal_tree_traversal[1], tuple) and isinstance(instr_elem, Parameter):
+            # map parameter of chosen terminal to chosen instrument parameter
+            parameter = instr_elem
+            terminal_parameters = terminal_tree_traversal[1]
+            if hasattr(parameter, "_mapping"):
+                if parameter._mapping in terminal_parameters:
+                    self.map_parameter(parameter, (terminal_tree_traversal[0], parameter._mapping))
+                    mapped = True
+
+        return mapped
 
     def unfold_terminals(self):
         all_expanded = True
@@ -659,6 +803,11 @@ class MainWindow(QMainWindow):
         Automatically map all unique terminal_parameter instrument_parameter pairs. If there are multiple terminal_parameters
         with the same name their unique mapping is impossible.
         """
+        # read-only mode after thread was released
+        if hasattr(self, "unlock_main_thread"):
+            if self.unlock_main_thread.is_set():
+                return
+
         # call get_possible_mapping_candidates for each terminal
         terminal_mapping_candidates = {}
         terminal_parameters_occurances = {}
@@ -687,35 +836,32 @@ class MainWindow(QMainWindow):
                     all_mapped = False
                     continue
 
-                self.terminal_tree.map_parameter(
-                    terminal_mapping_candidates[terminal][terminal_param][0], (terminal, terminal_param)
-                )
+                self.map_parameter(terminal_mapping_candidates[terminal][terminal_param][0], (terminal, terminal_param))
 
             if all_mapped:
                 self.terminal_tree.collapse(get_child(self.terminal_tree.model().invisibleRootItem(), terminal).index())
             else:
                 self.terminal_tree.expand(get_child(self.terminal_tree.model().invisibleRootItem(), terminal).index())
 
+        self.terminal_tree.update_tree()
+
     def reset_mapping(self):
         """
         Reset all mappings. Reset dictionary which actually holds the mapping. Reset Tree representation.
         """
+        # read-only mode after thread was released
+        if hasattr(self, "unlock_main_thread"):
+            if self.unlock_main_thread.is_set():
+                return
+
         for terminal_name, terminal_params in self.terminal_parameters.items():
             self.terminal_parameters[terminal_name] = {
                 terminal_param_name: None for terminal_param_name in terminal_params.keys()
             }
 
-        root = self.terminal_tree.model().invisibleRootItem()
-        for terminal in get_children(root):
-            self.terminal_tree.model().setData(terminal.index().siblingAtColumn(1), "")
-            self.terminal_tree.model().setData(
-                terminal.index().siblingAtColumn(1), QBrush(QColor(255, 0, 0)), Qt.BackgroundRole
-            )
-            for terminal_param in get_children(terminal):
-                self.terminal_tree.model().setData(terminal_param.index().siblingAtColumn(1), "")
-                self.terminal_tree.model().setData(
-                    terminal_param.index().siblingAtColumn(1), QBrush(QColor(255, 0, 0)), Qt.BackgroundRole
-                )
+        self.terminal_tree.selected_terminal_tree_elem = None
+        self.terminal_tree.update_tree()
+        self.terminal_tree.setFocus()
 
 
 def map_terminals_gui(
@@ -724,6 +870,8 @@ def map_terminals_gui(
     existing_terminal_parameters: TerminalParameters | None = None,
     *,
     metadata: Metadata | None = None,
+    keep_open: bool = False,
+    auto_run: bool = False,
 ) -> None:
     """
     Maps the terminals, that were defined in the MeasurementScript to the instruments, that are initialized in QCoDeS.
@@ -734,13 +882,38 @@ def map_terminals_gui(
         existing_terminal_parameters (Mapping[Any, Union[Mapping[Any, Parameter], Parameter]] | None): Already existing mapping
                 that is used to automatically create the mapping for already known terminals without user input.
         metadata (Metadata | None): If provided, add mapping to the metadata object.
+        keep_open: application is run in different thread. The main thread is halted and can be released from the gui.
+                   when released everything is read-only
+        auto_run: if all terminals are fully mapped (and keep_open = True) the main thread is released
     """
 
-    app = QApplication([])
-    w = MainWindow(components, terminal_parameters, existing_terminal_parameters)
+    if not QApplication.instance() is None:
+        raise AppInstanceException("There can be only a single instance of the application.")
 
-    w.show()
-    app.exec_()
+    def fun(ev):
+        app = QApplication([])
+        w = MainWindow(
+            components, terminal_parameters, existing_terminal_parameters, unlock_main_thread=ev, auto_run=auto_run
+        )
+        w.show()
+        # w1 = MainWindow(components, terminal_parameters, existing_terminal_parameters, unlock_main_thread=ev, auto_run=auto_run)
+        # w1.show()
+        app.exec_()
+
+        ev.set()
+
+    if keep_open:
+        ev = Event()
+        gui_thread = Thread(target=fun, args=(ev,))
+        gui_thread.start()
+        ev.wait()
+    else:
+        ev = None
+        auto_run = False
+        app = QApplication([])
+        w = MainWindow(components, terminal_parameters, existing_terminal_parameters)
+        w.show()
+        app.exec_()
 
 
 if __name__ == "__main__":
@@ -787,6 +960,5 @@ if __name__ == "__main__":
         add_parameters_to_metadata=False,
     )
 
-    map_terminals_gui(station.components, script.gate_parameters)
-
-    # map_terminals_gui(station.components, script.gate_parameters, script.gate_parameters)
+    map_terminals_gui(station.components, script.gate_parameters, keep_open=False, auto_run=False)
+    print("finished")
