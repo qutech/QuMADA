@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
 from threading import Event, Thread
+from time import sleep  # TODO: remove later
 from typing import Any
 
 from PyQt5.QtCore import (
@@ -9,6 +10,7 @@ from PyQt5.QtCore import (
     QMimeData,
     QModelIndex,
     Qt,
+    QTimer,
     pyqtSignal,
     pyqtSlot,
 )
@@ -26,13 +28,17 @@ from PyQt5.QtGui import (
     QStandardItemModel,
 )
 from PyQt5.QtWidgets import (
+    QAction,
     QApplication,
     QDesktopWidget,
-    QGridLayout,
     QHBoxLayout,
+    QInputDialog,
     QMainWindow,
     QPushButton,
+    QSizePolicy,
+    QSplitter,
     QTreeView,
+    QVBoxLayout,
     QWidget,
 )
 from qcodes.instrument.channel import InstrumentModule
@@ -56,6 +62,7 @@ from qtools.measurement.scripts.generic_measurement import Generic_1D_Sweep
 TerminalParameters = Mapping[Any, Mapping[Any, Parameter] | Parameter]
 
 
+# TODO: terminal_parameter attributes
 class TerminalTreeView(QTreeView):
     """
     QTreeView, that displays qtools `TerminalParameters` (`Mapping[Any, Mapping[Any, Parameter] | Parameter]`) datastructure.
@@ -78,16 +85,20 @@ class TerminalTreeView(QTreeView):
 
     #             drag.exec_(Qt.MoveAction)
 
-    def __init__(self):
+    def __init__(self, monitoring=False):
         super().__init__()
 
         model = QStandardItemModel()
-        model.setHorizontalHeaderLabels(["Terminal", "Mapped Instrument"])
+        model.setHorizontalHeaderLabels(["Terminal", "Mapped Instrument", "Monitoring"])
         self.setModel(model)
-
         self.terminal_parameters = None
 
         self.selected_terminal_tree_elem = None
+
+        # Parameter Monitoring Functionality
+        self.monitoring_enable = monitoring
+        self.monitoring_timer = QTimer()
+        self.monitoring_timer.timeout.connect(self.update_monitoring)
 
         # self.setAcceptDrops(True)
         self.setDragEnabled(True)
@@ -95,13 +106,35 @@ class TerminalTreeView(QTreeView):
     # forward keypressevents "hack". keyPressEvent of QMainWindow doesnt fire for letter keys
     def keyPressEvent(self, event: QKeyEvent) -> None:
         if event.key() == Qt.Key_A or event.key() == Qt.Key_R or event.key() == Qt.Key_E or event.key() == Qt.Key_U:
-            self.nextInFocusChain().keyPressEvent(event)
+            self.parentWidget().keyPressEvent(event)
         else:
             return super().keyPressEvent(event)
 
     # overwrite default double click event behaviour
     def mouseDoubleClickEvent(self, event: QMouseEvent) -> None:
         pass
+
+    def update_monitoring(self):
+        # TODO: maybe format cells based on settable
+        # if(param.settable):
+        #     pass # maybe do coloring based on settable
+
+        root = self.model().invisibleRootItem()
+        for terminal in get_children(root):
+            for terminal_param in get_children(terminal):
+                param = self.terminal_parameters[terminal_param.source[0]][terminal_param.source[1]]
+                if not param is None:
+                    val = param.cache.get(get_if_invalid=False)
+                    if not val is None:
+                        if not param.unit is None:
+                            self.model().setData(terminal_param.index().siblingAtColumn(2), f"{val:.2f} {param.unit}")
+                        else:
+                            self.model().setData(terminal_param.index().siblingAtColumn(2), f"{val:.2f}")
+                    # terminal_param.index().siblingAtColumn(2),setText()
+                else:
+                    self.model().setData(terminal_param.index().siblingAtColumn(2), "")
+
+        self.resizeColumnToContents(2)
 
     def update_tree(self):
         """
@@ -130,9 +163,8 @@ class TerminalTreeView(QTreeView):
                         else:
                             parameter_duplicates[param_hash] = [terminal_param]
 
-                        param_bound_instr_full_name = param.instrument.full_name
-                        channels.add(param_bound_instr_full_name)
-                        tree.setData(terminal_param.index().siblingAtColumn(1), param_bound_instr_full_name)
+                        channels.add(param.instrument.full_name)
+                        tree.setData(terminal_param.index().siblingAtColumn(1), param.full_name)
                         tree.setData(
                             terminal_param.index().siblingAtColumn(1), QBrush(QColor(0, 255, 0)), Qt.BackgroundRole
                         )
@@ -164,6 +196,7 @@ class TerminalTreeView(QTreeView):
             tree.setData(self.selected_terminal_tree_elem, QBrush(QColor(0, 0, 255)), Qt.BackgroundRole)
 
         self.resizeColumnToContents(1)
+        self.update_monitoring()
 
     def import_data(self, terminal_parameters: TerminalParameters) -> None:
         """Build up tree with provided terminal parameters."""
@@ -185,9 +218,13 @@ class TerminalTreeView(QTreeView):
             qidx = item.index()
             self.model().setData(qidx.siblingAtColumn(1), QBrush(QColor(255, 0, 0)), Qt.BackgroundRole)
             self.model().insertColumn(1, qidx)
+            self.model().insertColumn(2, qidx)
             for i in range(len(terminal_params.keys())):
                 self.model().setData(qidx.child(i, 1), "")
                 self.model().setData(qidx.child(i, 1), QBrush(QColor(255, 0, 0)), Qt.BackgroundRole)
+                self.model().setData(qidx.child(i, 2), "")
+
+            self.setColumnHidden(2, not self.monitoring_enable)
 
 
 def get_possible_mapping_candidates(
@@ -283,9 +320,7 @@ class InstrumentTreeView(QTreeView):
     # forward keypressevents "hack". keyPressEvent of QMainWindow doesnt fire for letter keys
     def keyPressEvent(self, event: QKeyEvent) -> None:
         if event.key() == Qt.Key_A or event.key() == Qt.Key_R or event.key() == Qt.Key_E or event.key() == Qt.Key_U:
-            ret_val = super().keyPressEvent(event)
-            self.previousInFocusChain().keyPressEvent(event)
-            return ret_val
+            self.parentWidget().keyPressEvent(event)
         else:
             return super().keyPressEvent(event)
 
@@ -527,6 +562,7 @@ class MainWindow(QMainWindow):
         existing_terminal_parameters: TerminalParameters | None = None,
         unlock_main_thread: Event | None = None,
         auto_run: bool = False,
+        monitoring: bool = False,
     ):
         super().__init__()
         self.components = components
@@ -536,15 +572,16 @@ class MainWindow(QMainWindow):
             self.unlock_main_thread = unlock_main_thread
 
         container = QWidget()
-        layout = QGridLayout()
+        layout = QVBoxLayout()
 
         # Tree views
         self.instrument_tree = InstrumentTreeView()
         self.instrument_tree.import_data(components)
         self.instrument_tree.setSelectionMode(self.instrument_tree.SelectionMode(1))
         self.instrument_tree.drag_terminal_drop_instr.connect(self.drag_terminal_drop_instr_slot)
+        self.instrument_tree.setSizePolicy(QSizePolicy.Policy(3), QSizePolicy.Policy(3))
 
-        self.terminal_tree = TerminalTreeView()
+        self.terminal_tree = TerminalTreeView(monitoring)
         self.terminal_tree.import_data(terminal_parameters)
         self.terminal_tree.instrument_model = self.instrument_tree.model()
         self.terminal_tree.setSelectionMode(self.terminal_tree.SelectionMode(1))
@@ -553,6 +590,12 @@ class MainWindow(QMainWindow):
         self.terminal_tree.resizeColumnToContents(0)
         self.terminal_tree.collapseAll()
         self.terminal_tree.resizeColumnToContents(1)
+        self.terminal_tree.setSizePolicy(QSizePolicy.Policy(3), QSizePolicy.Policy(3))
+
+        upper_widget = QSplitter(Qt.Horizontal)
+        upper_widget.addWidget(self.terminal_tree)
+        upper_widget.addWidget(self.instrument_tree)
+        upper_widget.setChildrenCollapsible(False)
 
         # Buttons
         button_container = QWidget()
@@ -577,11 +620,44 @@ class MainWindow(QMainWindow):
         button_layout.addStretch()
         button_layout.addWidget(button_exit)
         button_container.setLayout(button_layout)
+        button_container.setSizePolicy(QSizePolicy.Policy(3), QSizePolicy.Policy(0))
+
+        # Menu
+        menu = self.menuBar()
+
+        # Monitoring
+        Monitoring_menu = menu.addMenu("Monitoring")
+        self.monitoring_enable = monitoring
+        if monitoring:
+            self.terminal_tree.monitoring_timer.start(1000)
+
+        # Monitoring - Refresh delay
+        monitoring_refresh_delay = QAction("Refresh Delay", self)
+        monitoring_refresh_delay.triggered.connect(self.set_refresh_rate)
+        Monitoring_menu.addAction(monitoring_refresh_delay)
+
+        # Monitoring - Enable/Disable
+        if monitoring:
+            self.toggle_monitoring_action = QAction("Disable", self)
+        else:
+            self.toggle_monitoring_action = QAction("Enable", self)
+
+        self.toggle_monitoring_action.triggered.connect(self.toggle_monitoring)
+        Monitoring_menu.addAction(self.toggle_monitoring_action)
+
+        # Monitoring - Get type (from cache or by get() command)
+        get_type_menu = Monitoring_menu.addMenu("Get type (TODO)")
+        use_cache_action = QAction("Cache", self)
+        use_get_action = QAction("Get command", self)
+        use_cache_action.setCheckable(True)
+        use_get_action.setCheckable(True)
+        use_cache_action.setChecked(True)
+        get_type_menu.addAction(use_cache_action)
+        get_type_menu.addAction(use_get_action)
 
         # Main layout
-        layout.addWidget(self.terminal_tree, 0, 0)
-        layout.addWidget(self.instrument_tree, 0, 1)
-        layout.addWidget(button_container, 1, 0, 1, 2)
+        layout.addWidget(upper_widget)
+        layout.addWidget(button_container)
 
         container.setLayout(layout)
         self.setCentralWidget(container)
@@ -589,7 +665,7 @@ class MainWindow(QMainWindow):
         idx = self.terminal_tree.model().invisibleRootItem().child(0, 0).index()
         self.terminal_tree.selectionModel().select(idx, QItemSelectionModel.SelectionFlag.ClearAndSelect)
         self.terminal_tree.setCurrentIndex(idx)
-        self.resize(QDesktopWidget().availableGeometry(self).size() * 0.6)
+        self.resize(QDesktopWidget().availableGeometry(self).size() * 0.45)
 
         if not existing_terminal_parameters is None:
             for terminal_name, parameter_mapping in existing_terminal_parameters.items():
@@ -608,14 +684,34 @@ class MainWindow(QMainWindow):
         self.map_given_terminal_instrument_elem_selection(terminal_elem.source, instr_elem.source)
         self.terminal_tree.update_tree()
 
+    def toggle_monitoring(self):
+        if self.monitoring_enable:
+            self.terminal_tree.monitoring_timer.stop()
+            self.monitoring_enable = False
+            self.toggle_monitoring_action.setText("Enable")
+        else:
+            self.terminal_tree.monitoring_timer.start(1000)  # TODO: maybe safe delay as member
+            self.monitoring_enable = True
+            self.toggle_monitoring_action.setText("Disable")
+
+        self.terminal_tree.setColumnHidden(2, not self.monitoring_enable)
+
+    def set_refresh_rate(self):
+        val, ok = QInputDialog.getDouble(self, "Refresh delay [s]", "Refresh delay [s]", value=1, min=0.01, decimals=2)
+        if ok:
+            self.terminal_tree.monitoring_timer.stop()
+            self.terminal_tree.showColumn(2)
+            self.toggle_monitoring_action.setText("Disable")
+            self.terminal_tree.monitoring_timer.start(int(val * 1000))
+            self.monitoring_enable = True
+
+    # TODO: doesnt really do much anymore (one line basically). Unlocking main thread could also be done somewhere else
     def map_parameter(self, parameter: Parameter, traverse: tuple[str, str]):
         """
         Maps a instrument parameter to a specific terminal parameter accessed by the given traversal info.
         Updates the instrument field next to the mapped terminal parameter
         """
         self.terminal_parameters[traverse[0]][traverse[1]] = parameter
-        # self.terminal_tree.update_tree()
-
         if hasattr(self, "unlock_main_thread") and self.auto_run:
             all_mapped = True
             for terminal in self.terminal_parameters.values():
@@ -872,6 +968,7 @@ def map_terminals_gui(
     metadata: Metadata | None = None,
     keep_open: bool = False,
     auto_run: bool = False,
+    monitoring: bool = False,
 ) -> None:
     """
     Maps the terminals, that were defined in the MeasurementScript to the instruments, that are initialized in QCoDeS.
@@ -893,7 +990,12 @@ def map_terminals_gui(
     def fun(ev):
         app = QApplication([])
         w = MainWindow(
-            components, terminal_parameters, existing_terminal_parameters, unlock_main_thread=ev, auto_run=auto_run
+            components,
+            terminal_parameters,
+            existing_terminal_parameters,
+            unlock_main_thread=ev,
+            auto_run=auto_run,
+            monitoring=monitoring,
         )
         w.show()
         # w1 = MainWindow(components, terminal_parameters, existing_terminal_parameters, unlock_main_thread=ev, auto_run=auto_run)
@@ -911,7 +1013,7 @@ def map_terminals_gui(
         ev = None
         auto_run = False
         app = QApplication([])
-        w = MainWindow(components, terminal_parameters, existing_terminal_parameters)
+        w = MainWindow(components, terminal_parameters, existing_terminal_parameters, monitoring=monitoring)
         w.show()
         app.exec_()
 
@@ -960,5 +1062,26 @@ if __name__ == "__main__":
         add_parameters_to_metadata=False,
     )
 
-    map_terminals_gui(station.components, script.gate_parameters, keep_open=False, auto_run=False)
+    map_terminals_gui(station.components, script.gate_parameters, keep_open=False, auto_run=True, monitoring=True)
     print("finished")
+
+    # Testing monitoring (keep_open=True, auto_run=True, monitoring=True)
+    # k = 0
+    # backwards = False
+    # while(True):
+    #     sleep(0.01)
+    #     #print("update params")
+    #     dac.set("voltage", k)
+
+    #     if(not backwards):
+    #         if(k < 5):
+    #             k = k + 0.1
+    #         else:
+    #             backwards = True
+    #             k = k - 0.1
+    #     else:
+    #         if(k > 0):
+    #             k = k - 0.1
+    #         else:
+    #             backwards = False
+    #             k = k + 0.1
