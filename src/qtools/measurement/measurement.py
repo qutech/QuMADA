@@ -185,6 +185,7 @@ class MeasurementScript(ABC):
         self.metadata = metadata
         # TODO: Better place to put this?
         self.buffered = False
+        self._lists_created = False
         cls = type(self)
         try:
             self.buffer_settings.update(buffer_settings)
@@ -226,6 +227,84 @@ class MeasurementScript(ABC):
             self.properties[gate] = vals
             for parameter, properties in vals.items():
                 self.add_gate_parameter(parameter, gate)
+                
+    def generate_lists(self) -> None:
+        
+        self.gettable_parameters: list[str] = []
+        self.gettable_channels: list[str] = []
+        self.break_conditions: list[str] = []
+        self.static_parameters: list[str] = []
+        self.dynamic_parameters: list[str] = []
+        self.dynamic_channels: list[str] = []
+        self.dynamic_sweeps: list[str] = []
+        self.buffers: set = set()  # All buffers of gettable parameters
+
+        
+        for gate, parameters in self.gate_parameters.items():
+            for parameter, channel in parameters.items():
+                if self.properties[gate][parameter]["type"].find("static")>=0:
+                    self.static_parameters.append({"gate": gate, "parameter": parameter})
+                if self.properties[gate][parameter]["type"].find("gettable") >= 0:
+                    self.gettable_parameters.append({"gate": gate, "parameter": parameter})
+                    self.gettable_channels.append(channel)
+                    with suppress(KeyError):
+                        for condition in self.properties[gate][parameter]["break_conditions"]:
+                            self.break_conditions.append({"channel": channel, "break_condition": condition})
+                elif self.properties[gate][parameter]["type"].find("dynamic") >= 0:
+                    self.dynamic_parameters.append({"gate": gate, "parameter": parameter})
+                    self.dynamic_channels.append(channel)
+                    if self.properties[gate][parameter].get("_is_triggered", False):
+                        if "num_points" in self.properties[gate][parameter].keys():
+                            assert self.properties[gate][parameter]["num_points"] == self.buffered_num_points
+                        elif "setpoints" in self.properties[gate][parameter].keys():
+                            assert len(self.properties[gate][parameter]["setpoints"]) == self.buffered_num_points
+                        else:
+                            pass
+                        try:
+                            self.dynamic_sweeps.append(
+                                LinSweep(
+                                    channel,
+                                    self.properties[gate][parameter]["start"],
+                                    self.properties[gate][parameter]["stop"],
+                                    self.buffered_num_points,
+                                    delay=self.properties[gate][parameter].setdefault("delay", 0),
+                                )
+                            )
+                        except KeyError:
+                            self.dynamic_sweeps.append(
+                                LinSweep(
+                                    channel,
+                                    self.properties[gate][parameter]["setpoints"][0],
+                                    self.properties[gate][parameter]["setpoints"][-1],
+                                    self.buffered_num_points,
+                                    delay=self.properties[gate][parameter].setdefault("delay", 0),
+                                )
+                            )
+                    else:
+                        try:
+                            self.dynamic_sweeps.append(
+                                LinSweep(
+                                    channel,
+                                    self.properties[gate][parameter]["start"],
+                                    self.properties[gate][parameter]["stop"],
+                                    self.properties[gate][parameter]["num_points"],
+                                    delay=self.properties[gate][parameter].setdefault("delay", 0),
+                                )
+                            )
+                        except KeyError:
+                            self.dynamic_sweeps.append(
+                                CustomSweep(
+                                    channel,
+                                    self.properties[gate][parameter]["setpoints"],
+                                    delay=self.properties[gate][parameter].setdefault("delay", 0),
+                                )
+                            )
+        if self.buffered:
+            self.buffers = {
+                channel.root_instrument._qtools_buffer for channel in self.gettable_channels if is_bufferable(channel)
+            } 
+        self._lists_created = True
+        
 
     def initialize(self) -> None:
         """
@@ -242,18 +321,12 @@ class MeasurementScript(ABC):
         TODO: Put Sweep-Generation somewhere else?
         TODO: Allow setting ramp rate for setting the parameters manually
         """
-        self.gettable_parameters: list[str] = []
-        self.gettable_channels: list[str] = []
-        self.break_conditions: list[str] = []
-        self.static_parameters: list[str] = []
-        self.dynamic_parameters: list[str] = []
-        self.dynamic_channels: list[str] = []
-        self.dynamic_sweeps: list[str] = []
-        self.buffers: set = set()  # All buffers of gettable parameters
-
+        
         ramp_rate = self.settings.get("ramp_rate", 0.3)
         ramp_time = self.settings.get("ramp_time", 5)
         setpoint_intervall = self.settings.get("setpoint_intervall", 0.1)
+        if not self._lists_created:
+            self.generate_lists()
         for gate, parameters in self.gate_parameters.items():
             for parameter, channel in parameters.items():
                 if self.properties[gate][parameter]["type"].find("static") >= 0:  # TODO: Handle strings
@@ -264,21 +337,6 @@ class MeasurementScript(ABC):
                         ramp_time=ramp_time,
                         setpoint_intervall=setpoint_intervall,
                     )
-                    ramp_or_set_parameter(
-                        channel,
-                        self.properties[gate][parameter]["value"],
-                        ramp_rate=ramp_rate,
-                        ramp_time=ramp_time,
-                        setpoint_intervall=setpoint_intervall,
-                    )
-                    self.static_parameters.append({"gate": gate, "parameter": parameter})
-
-                if self.properties[gate][parameter]["type"].find("gettable") >= 0:
-                    self.gettable_parameters.append({"gate": gate, "parameter": parameter})
-                    self.gettable_channels.append(channel)
-                    with suppress(KeyError):
-                        for condition in self.properties[gate][parameter]["break_conditions"]:
-                            self.break_conditions.append({"channel": channel, "break_condition": condition})
                 elif self.properties[gate][parameter]["type"].find("dynamic") >= 0:
                     # Handle different possibilities for starting points
                     try:
@@ -306,10 +364,14 @@ class MeasurementScript(ABC):
                                 ramp_time=ramp_time,
                                 setpoint_intervall=setpoint_intervall,
                             )
-                    self.dynamic_parameters.append({"gate": gate, "parameter": parameter})
-                    self.dynamic_channels.append(channel)
                     # Generate sweeps from parameters
-                    if self.buffered:
+                    if self.properties[gate][parameter].get("_is_triggered", False):
+                        if "num_points" in self.properties[gate][parameter].keys():
+                            assert self.properties[gate][parameter]["num_points"] == self.buffered_num_points
+                        elif "setpoints" in self.properties[gate][parameter].keys():
+                            assert len(self.properties[gate][parameter]["setpoints"]) == self.buffered_num_points
+                        else:
+                            pass
                         try:
                             self.dynamic_sweeps.append(
                                 LinSweep(
