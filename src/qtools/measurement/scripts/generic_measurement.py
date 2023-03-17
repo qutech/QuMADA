@@ -340,6 +340,7 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                     try:
                         dynamic_param.root_instrument._qtools_ramp(
                             [dynamic_param],
+                            start_values = None,
                             end_values=[dynamic_sweep.get_setpoints()[-1]],
                             ramp_time=self.buffer_settings["duration"],
                             sync_trigger=sync_trigger,
@@ -357,6 +358,7 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                     # Set trigger to high here
                     dynamic_param.root_instrument._qtools_ramp(
                         [dynamic_param],
+                        start_values = None,
                         end_values=[dynamic_sweep.get_setpoints()[-1]],
                         ramp_time=self.buffer_settings["duration"],
                     )
@@ -369,6 +371,7 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                 elif trigger_type == "software":
                     dynamic_param.root_instrument._qtools_ramp(
                         [dynamic_param],
+                        start_values = None,
                         end_values=[dynamic_sweep.get_setpoints()[-1]],
                         ramp_time=self.buffer_settings["duration"],
                     )

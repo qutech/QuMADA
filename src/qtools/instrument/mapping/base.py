@@ -18,9 +18,10 @@ class MappingError(Exception):
 
 
 class InstrumentMapping(ABC):
-    def __init__(self, mapping_path: str | None):
+    def __init__(self, mapping_path: str | None, is_triggerable: bool = False):
         if mapping_path:
             self._mapping = _load_instrument_mapping(mapping_path)
+        self._is_triggerable = is_triggerable
 
     @property
     def mapping(self) -> dict:
@@ -36,6 +37,13 @@ class InstrumentMapping(ABC):
         ramp_time: float,
     ) -> None:
         """Wrapper to ramp the provided parameters"""
+        
+    @abstractmethod
+    def setup_trigger_in(
+            self,
+            trigger_settings: dict
+            ) -> None:
+        """Setup the trigger based on the buffer_settings"""
 
 
 def filter_flatten_parameters(node) -> dict[Any, Parameter]:
@@ -134,6 +142,8 @@ def add_mapping_to_instrument(
     if path is None and mapping is not None:
         helper_mapping = mapping.mapping
         instrument._qtools_ramp = mapping.ramp
+        instrument._is_triggerable = mapping._is_triggerable
+        instrument._qtools_mapping = mapping
         try:
             instrument._qtools_trigger = mapping.trigger
         except:
@@ -141,6 +151,7 @@ def add_mapping_to_instrument(
         # TODO: Better name??
     elif path is not None and mapping is None:
         helper_mapping = _load_instrument_mapping(path)
+        instrument._is_triggerable = False
     else:
         raise ValueError("Arguments 'path' and 'mapping' are exclusive.")
 

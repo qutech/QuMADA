@@ -49,3 +49,6 @@ class QDacMapping(InstrumentMapping):
         )
         parameters[0]._instrument.sync(0)
         
+    def setup_trigger_in():
+        raise Exception("QDac does not have a trigger input!")
+        
