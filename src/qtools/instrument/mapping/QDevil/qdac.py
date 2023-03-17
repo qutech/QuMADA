@@ -13,9 +13,10 @@ class QDacMapping(InstrumentMapping):
         self,
         parameters: list[Parameter],
         *,
-        start_values: list[float] | None = None,
+        start_values: list[float]|None = None,
         end_values: list[float],
         ramp_time: float,
+        sync_trigger = None,
         **kwargs
     ) -> None:
         assert len(parameters) == len(end_values)
@@ -37,10 +38,14 @@ class QDacMapping(InstrumentMapping):
 
         if not start_values:
             start_values = []
-
+        if sync_trigger is not None:
+            parameters[0]._instrument.sync(sync_trigger)
+            
         instrument.ramp_voltages(
             channellist=channellist,
             v_startlist=start_values,
             v_endlist=end_values,
             ramptime=ramp_time,
         )
+        parameters[0]._instrument.sync(0)
+        

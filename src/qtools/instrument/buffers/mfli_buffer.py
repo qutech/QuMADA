@@ -155,6 +155,10 @@ class MFLIBuffer(Buffer):
             elif "num_bursts" in self.settings:
                 self._num_bursts = int(self.settings["num_bursts"])
                 self._burst_duration = self.settings["duration"] / self._num_bursts
+            else:
+                print("You have specified neither burst_duration nor num_bursts. \
+                      Using duration as burst_duration!")                    
+                self._burst_duration = self.settings["duration"]
 
         if "num_points" in self.settings:
             self.num_points = int(self.settings["num_points"])
