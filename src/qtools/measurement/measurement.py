@@ -67,6 +67,8 @@ class MeasurementScript(ABC):
     # TODO: Put list elsewhere! Remove names that were added as workarounds (e.g. aux_voltage) as soon as possible
     PARAMETER_NAMES: set[str] = {
         "voltage",
+        "voltage_x_component",
+        "voltage_y_component",
         "current",
         "current_x_component",
         "current_y_component",
@@ -331,6 +333,7 @@ class MeasurementScript(ABC):
         setpoint_intervall = self.settings.get("setpoint_intervall", 0.1)
         if not self._lists_created:
             self.generate_lists()
+        self.dynamic_sweeps = []
         for gate, parameters in self.gate_parameters.items():
             for parameter, channel in parameters.items():
                 if self.properties[gate][parameter]["type"].find("static") >= 0:
@@ -340,14 +343,7 @@ class MeasurementScript(ABC):
                         ramp_rate=ramp_rate,
                         ramp_time=ramp_time,
                         setpoint_intervall=setpoint_intervall,
-                    )
-                if self.properties[gate][parameter]["type"].find("gettable") >= 0:
-                    self.gettable_parameters.append({"gate": gate, "parameter": parameter})
-                    self.gettable_channels.append(channel)
-                    with suppress(KeyError):
-                        for condition in self.properties[gate][parameter]["break_conditions"]:
-                            self.break_conditions.append({"channel": channel, "break_condition": condition})
-                            
+                    )                            
                 elif self.properties[gate][parameter]["type"].find("dynamic") >= 0:
                     # Handle different possibilities for starting points
                     try:
@@ -376,6 +372,7 @@ class MeasurementScript(ABC):
                                 setpoint_intervall=setpoint_intervall,
                             )
                     # Generate sweeps from parameters
+
                     if self.properties[gate][parameter].get("_is_triggered", False):
                         if "num_points" in self.properties[gate][parameter].keys():
                             assert self.properties[gate][parameter]["num_points"] == self.buffered_num_points
