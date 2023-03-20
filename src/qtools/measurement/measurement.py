@@ -488,7 +488,7 @@ class MeasurementScript(ABC):
                 # Thus, ignore data.measurement for the comparison
                 try:
                     data.measurement = datalist[0].measurement
-                except ValueError:
+                except IndexError:
                     pass
                 if not data in datalist:
                     datalist.append(data)
