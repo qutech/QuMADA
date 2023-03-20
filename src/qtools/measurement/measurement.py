@@ -81,14 +81,13 @@ class MeasurementScript(ABC):
         "aux_voltage_2",
     }
 
-    def __new__(cls, *args, **kwargs):
-        # reverse order, so insert metadata is run second
-        cls.run = create_hook(cls.run, cls._insert_metadata_into_db)
-        cls.run = create_hook(cls.run, cls._add_data_to_metadata)
-        cls.run = create_hook(cls.run, cls._add_datetime_to_metadata_if_empty)
-        return super().__new__(cls, *args, **kwargs)
-
     def __init__(self):
+        # Create function hooks for metadata
+        # reverse order, so insert metadata is run second
+        self.run = create_hook(self.run, self._insert_metadata_into_db)
+        self.run = create_hook(self.run, self._add_data_to_metadata)
+        self.run = create_hook(self.run, self._add_datetime_to_metadata_if_empty)
+
         self.properties: dict[Any, Any] = {}
         self.gate_parameters: dict[Any, Union[dict[Any, Union[Parameter, None]], Parameter, None]] = {}
         self._buffered_num_points: int | None = None
