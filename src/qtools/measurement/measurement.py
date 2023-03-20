@@ -482,7 +482,14 @@ class MeasurementScript(ABC):
                 datalist = metadata.measurement.data
                 db_location = qc.config.core.db_location
                 data = MeasurementData.create(f"{cls.__name__}Data", "sqlite3", db_location)
+
                 # Add only if not already in list
+                # When we compare the data objects, the newly created one does not yet have the measurement referenced.
+                # Thus, ignore data.measurement for the comparison
+                try:
+                    data.measurement = datalist[0].measurement
+                except ValueError:
+                    pass
                 if not data in datalist:
                     datalist.append(data)
             except Exception as e:
