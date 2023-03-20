@@ -484,13 +484,11 @@ class MeasurementScript(ABC):
                 data = MeasurementData.create(f"{cls.__name__}Data", "sqlite3", db_location)
 
                 # Add only if not already in list
-                # When we compare the data objects, the newly created one does not yet have the measurement referenced.
-                # Thus, ignore data.measurement for the comparison
-                try:
-                    data.measurement = datalist[0].measurement
-                except IndexError:
-                    pass
-                if not data in datalist:
+                # When we compare the data objects, the newly created one does not yet have the measurement referenced or a pid.
+                # Thus, ignore data.measurement and data.pid for the comparison
+                def _compare_data(d1, d2):
+                    return d1.name == d2.name and d1.dataType == d2.dataType and d1.pathToData == d2.pathToData
+                if not any(_compare_data(data, d2) for d2 in datalist):
                     datalist.append(data)
             except Exception as e:
                 print(f"Data could not be added to metadata: {e}")
