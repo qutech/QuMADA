@@ -85,14 +85,13 @@ class MeasurementScript(ABC):
         "temperature",
     }
 
-    def __new__(cls, *args, **kwargs):
-        # reverse order, so insert metadata is run second
-        cls.run = create_hook(cls.run, cls._insert_metadata_into_db)
-        cls.run = create_hook(cls.run, cls._add_data_to_metadata)
-        cls.run = create_hook(cls.run, cls._add_datetime_to_metadata_if_empty)
-        return super().__new__(cls, *args, **kwargs)
-
     def __init__(self):
+        # Create function hooks for metadata
+        # reverse order, so insert metadata is run second
+        self.run = create_hook(self.run, self._insert_metadata_into_db)
+        self.run = create_hook(self.run, self._add_data_to_metadata)
+        self.run = create_hook(self.run, self._add_datetime_to_metadata_if_empty)
+
         self.properties: dict[Any, Any] = {}
         self.gate_parameters: dict[Any, Union[dict[Any, Union[Parameter, None]], Parameter, None]] = {}
         self._buffered_num_points: int | None = None
@@ -558,8 +557,13 @@ class MeasurementScript(ABC):
                 datalist = metadata.measurement.data
                 db_location = qc.config.core.db_location
                 data = MeasurementData.create(f"{cls.__name__}Data", "sqlite3", db_location)
+
                 # Add only if not already in list
-                if not data in datalist:
+                # When we compare the data objects, the newly created one does not yet have the measurement referenced or a pid.
+                # Thus, ignore data.measurement and data.pid for the comparison
+                def _compare_data(d1, d2):
+                    return d1.name == d2.name and d1.dataType == d2.dataType and d1.pathToData == d2.pathToData
+                if not any(_compare_data(data, d2) for d2 in datalist):
                     datalist.append(data)
             except Exception as e:
                 print(f"Data could not be added to metadata: {e}")
