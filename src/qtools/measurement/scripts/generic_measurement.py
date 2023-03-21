@@ -403,7 +403,7 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                     for buffer in self.buffers:
                         buffer.force_trigger()
 
-                while not list(self.buffers)[0].is_finished():
+                while not all(buffer.is_finished() for buffer in list(self.buffers)):
                     sleep(0.1)
                 try:
                     trigger_reset()
@@ -539,8 +539,8 @@ class Generic_1D_Hysteresis_buffered(MeasurementScript):
                         for buffer in self.buffers:
                             buffer.force_trigger()
 
-                    while not list(self.buffers)[0].is_finished():
-                        sleep(0.1)
+                while not all(buffer.is_finished() for buffer in list(self.buffers)):
+                    sleep(0.1)
                     try:
                         trigger_reset()
                     except:
@@ -735,7 +735,7 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
                     for buffer in self.buffers:
                         buffer.force_trigger()
     
-                while not list(self.buffers)[0].is_finished():
+                while not all(buffer.is_finished() for buffer in list(self.buffers)):
                     sleep(0.1)
                 try:
                     trigger_reset()
