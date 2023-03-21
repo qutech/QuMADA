@@ -15,6 +15,7 @@
         "filter_order": "demod0_order",
         "output_range": "output_range",
         "demod0_aux_in_1": "aux_voltage_1",
-        "demod0_aux_in_2": "aux_voltage_2"
+        "demod0_aux_in_2": "aux_voltage_2",
+        "voltage_offset": "voltage_offset"
     }
 }

@@ -45,24 +45,35 @@ class MFLI(Instrument):
             docstring="Absolute voltage as measured by demod0",
         )
         
-        
         self.voltage.signal_name = ("demod0", "r")
+        
+        self.add_parameter(
+            "voltage_offset",
+            label="Voltage Offset",
+            unit="V",
+            get_cmd=lambda: self.instr.sigouts[0].offset(),
+            get_parser=float,
+            set_cmd=lambda x: self.instr.sigouts[0].offset(x),
+            docstring="Offset to voltage output in V",
+        )
+
         
         self.add_parameter(
             "voltage_y_component",
             label="Y",
-            unit="A",
+            unit="V",
             get_cmd=lambda: demod0.sample()["y"],
             get_parser=float,
             set_cmd=None,
             docstring="X component of sample measured by demod1",
         )
         self.voltage_y_component.signal_name = ("demod0", "y")
+
         
         self.add_parameter(
             "voltage_x_component",
             label="X",
-            unit="A",
+            unit="V",
             get_cmd=lambda: demod0.sample()["y"],
             get_parser=float,
             set_cmd=None,
@@ -132,6 +143,7 @@ class MFLI(Instrument):
             set_cmd=lambda a: self.instr.sigouts[0].amplitudes[1](a),
             docstring="Amplitude of the voltage output",
         )
+        #self.amplitude.signal_name = ("demod0", "y")
 
         # self.add_parameter(
         #     name = "output_enabled",
