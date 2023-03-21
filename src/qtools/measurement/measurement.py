@@ -86,7 +86,7 @@ class MeasurementScript(ABC):
         # reverse order, so insert metadata is run second
         self.run = create_hook(self.run, self._insert_metadata_into_db)
         self.run = create_hook(self.run, self._add_data_to_metadata)
-        self.run = create_hook(self.run, self._add_datetime_to_metadata_if_empty)
+        self.run = create_hook(self.run, self._add_current_datetime_to_metadata)
 
         self.properties: dict[Any, Any] = {}
         self.gate_parameters: dict[Any, Union[dict[Any, Union[Parameter, None]], Parameter, None]] = {}
@@ -462,12 +462,11 @@ class MeasurementScript(ABC):
             for key, parameter in parameters.items():
                 parameter.label = f"{gate} {key}"
 
-    def _add_datetime_to_metadata_if_empty(self, *args, add_datetime_to_metadata: bool = True, **kwargs):
+    def _add_current_datetime_to_metadata(self, *args, add_datetime_to_metadata: bool = True, **kwargs):
         if add_datetime_to_metadata:
             try:
                 metadata = self.metadata
-                if not metadata.measurement.datetime:
-                    metadata.measurement.datetime = datetime.now()
+                metadata.measurement.datetime = datetime.now()
             except Exception as ex:
                 print(f"Datetime could not be added to metadata: {ex}")
 
@@ -488,6 +487,7 @@ class MeasurementScript(ABC):
                 # Thus, ignore data.measurement and data.pid for the comparison
                 def _compare_data(d1, d2):
                     return d1.name == d2.name and d1.dataType == d2.dataType and d1.pathToData == d2.pathToData
+
                 if not any(_compare_data(data, d2) for d2 in datalist):
                     datalist.append(data)
             except Exception as e:
