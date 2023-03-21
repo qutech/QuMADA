@@ -13,6 +13,7 @@ from qtools.measurement.doNd_enhanced.doNd_enhanced import (
 from qtools.measurement.measurement import MeasurementScript
 from qtools.utils.ramp_parameter import ramp_or_set_parameter
 from qtools.utils.utils import _validate_mapping
+from qtools.instrument.buffers.buffer import is_bufferable
 
 
 class Generic_1D_Sweep(MeasurementScript):
@@ -319,14 +320,38 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
             dynamic_param = dynamic_sweep.param
             meas = Measurement(name=measurement_name)
             meas.register_parameter(dynamic_param)
+            static_gettables = []
+            del_channels = []
+            del_params = []
+            for parameter, channel in zip(self.gettable_parameters, self.gettable_channels):
+                if is_bufferable(channel):
+                    meas.register_parameter(
+                        channel,
+                        setpoints=[
+                            dynamic_param,
+                        ],
+                    )
+                elif channel in self.static_channels:
+                    del_channels.append(channel)
+                    del_params.append(parameter)
+                    meas.register_parameter(
+                        channel,
+                        setpoints=[
+                            dynamic_param,
+                            ]
+                        )
+                    parameter_value = self.properties[
+                        parameter["gate"]][parameter["parameter"]]["value"]
+                    static_gettables.append(
+                        (channel, 
+                         [parameter_value for _ in range(self.buffered_num_points)]
+                         )
+                        )
+            for channel in del_channels:
+                self.gettable_channels.remove(channel)
+            for param in del_params:
+                self.gettable_parameters.remove(param)
 
-            for parameter in self.gettable_channels:
-                meas.register_parameter(
-                    parameter,
-                    setpoints=[
-                        dynamic_param,
-                    ],
-                )
                 # Set trigger to low here
             with meas.run() as datasaver:
                 self.initialize()
@@ -387,7 +412,10 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
 
                 results = self.readout_buffers()
                 # TODO: Append values from other dynamic parameters
-                datasaver.add_result((dynamic_param, dynamic_sweep.get_setpoints()), *results)
+                datasaver.add_result((dynamic_param, dynamic_sweep.get_setpoints()),
+                                     *results,
+                                     *static_gettables,
+                                     )
                 datasets.append(datasaver.dataset)
                 self.properties[
                     dynamic_parameter["gate"]][dynamic_parameter["parameter"]
@@ -571,6 +599,7 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
         datasets = []
         
         self.generate_lists()
+
         
         if len(self.dynamic_sweeps)!=2:
             raise Exception("The 2D workflow takes exactly two dynamic parameters! ")
@@ -585,6 +614,7 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
             measurement_name += str(gate_names)
         
         meas = Measurement(name=measurement_name)
+
             
         if reverse_param_order:
             slow_param = self.dynamic_channels[1]
@@ -592,7 +622,7 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
             fast_param = self.dynamic_channels[0]
             fast_sweep = self.dynamic_sweeps[0]
             self.properties[
-                self.dynamic_parameters[1]["gate"]][self.dynamic_parameters[1]["parameter"]
+                self.dynamic_parameters[0]["gate"]][self.dynamic_parameters[0]["parameter"]
                                            ]["_is_triggered"] = True
         else:
             slow_param = self.dynamic_channels[0]
@@ -600,21 +630,59 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
             fast_param = self.dynamic_channels[1]
             fast_sweep = self.dynamic_sweeps[1]
             self.properties[
-                self.dynamic_parameters[0]["gate"]][self.dynamic_parameters[0]["parameter"]
+                self.dynamic_parameters[1]["gate"]][self.dynamic_parameters[1]["parameter"]
                                            ]["_is_triggered"] = True
+                                                    
+        for dynamic_param in self.dynamic_channels:
+            meas.register_parameter(dynamic_param)                            
+        #-------------------
+        static_gettables = []
+        del_channels = []
+        del_params = []
+        for parameter, channel in zip(self.gettable_parameters, self.gettable_channels):
+            if is_bufferable(channel):
+                meas.register_parameter(
+                    channel,
+                    setpoints=[
+                        slow_param, fast_param,
+                    ],
+                )
+            elif channel in self.static_channels:
+                del_channels.append(channel)
+                del_params.append(parameter)
+                meas.register_parameter(
+                    channel,
+                    setpoints=[slow_param, fast_param,]
+                    )
+                parameter_value = self.properties[
+                    parameter["gate"]][parameter["parameter"]]["value"]
+                static_gettables.append(
+                    (channel, 
+                      [parameter_value for _ in range(self.buffered_num_points)]
+                      )
+                    )
+        for channel in del_channels:
+            self.gettable_channels.remove(channel)
+        for param in del_params:
+            self.gettable_parameters.remove(param)
+        #--------------------------
         
         self.initialize()            
 
-        for dynamic_param in self.dynamic_channels:
-            meas.register_parameter(dynamic_param)
-
-        for parameter in self.gettable_channels:
-            meas.register_parameter(
-                parameter,
-                setpoints=[slow_param, fast_param,],
-            )
+  
+        
+        # for parameter in self.gettable_channels:
+        #     meas.register_parameter(
+        #         parameter,
+        #         setpoints=[slow_param, fast_param,],
+        #     )
+            
+                   
+                
+        
                 # Set trigger to low here
         with meas.run() as datasaver:
+            #print(fast_param())
             data = {}
             results = []
             # start = timer.reset_clock()
@@ -680,6 +748,7 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
                 # TODO: Append values from other dynamic parameters
                 datasaver.add_result((slow_param, setpoint),
                                      (fast_param, fast_sweep.get_setpoints()),
-                                     *results)
+                                     *results,
+                                     *static_gettables,)
                 datasets.append(datasaver.dataset)
         return datasets
