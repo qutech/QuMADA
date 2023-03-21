@@ -30,7 +30,7 @@ class DecadacMapping(InstrumentMapping):
         ramp_time: float,
         block: bool = False,
         sync_trigger=None,
-        sync_trigger_level=1,
+        sync_trigger_level=2,
     ) -> None:
         assert len(parameters) == len(end_values)
         if start_values is not None:
@@ -51,16 +51,19 @@ class DecadacMapping(InstrumentMapping):
         if not start_values:
             start_values = [param.get() for param in parameters]
         ramp_rates = np.abs((np.array(end_values) - np.array(start_values)) / np.array(ramp_time))
-        if sync_trigger:
-            if sync_trigger in parameters:
-                raise Exception("Synchronized trigger cannot be part of parameters")
-            assert isinstance(sync_trigger.root_instrument, Decadac)
-            sync_trigger._instrument.enable_ramp(False)
-            sync_trigger.set(sync_trigger_level)
-        for param, end_value, ramp_rate in zip(parameters, end_values, ramp_rates):
-            param._instrument._ramp(end_value, ramp_rate, block=block)
-        if sync_trigger:
-            sync_trigger.set(0)
+        # if sync_trigger:
+        #     if sync_trigger in parameters:
+        #         raise Exception("Synchronized trigger cannot be part of parameters")
+        #     assert isinstance(sync_trigger.root_instrument, Decadac)
+        #     sync_trigger._instrument.enable_ramp(False)
+        #     sync_trigger.set(sync_trigger_level)
+        for param, start_value, end_value, ramp_time in zip(parameters,
+                                                            start_values, 
+                                                            end_values, 
+                                                            [ramp_time for _ in parameters]):
+            param._instrument._script_ramp(start_value, end_value, ramp_time, trigger=self.trigger_mode)
+        # if sync_trigger:
+        #     sync_trigger.set(0)
 
     def trigger(self, parameter, level=1) -> None:
         instrument: Decadac = parameter.root_instrument
@@ -101,9 +104,9 @@ class DecadacMapping(InstrumentMapping):
         
         match (trigger_mode, polarity):
             case ("edge", "positive"): 
-                mode = 4
+                mode = 12
             case ("edge", "negative"):
-                mode = 6
+                mode = 14
             case ("digital", "positive"):
                 mode = 10
             case("digital", "negative"):
