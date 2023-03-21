@@ -782,25 +782,13 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
         #--------------------------
         
         self.initialize()            
-
-  
-        
-        # for parameter in self.gettable_channels:
-        #     meas.register_parameter(
-        #         parameter,
-        #         setpoints=[slow_param, fast_param,],
-        #     )
-            
-                   
-                
-        
-                # Set trigger to low here
+        try:
+            trigger_reset()
+        except:
+            pass
         with meas.run() as datasaver:
-            #print(fast_param())
             data = {}
             results = []
-            # start = timer.reset_clock()
-            # Add check if all gettable parameters have buffer?
             slow_setpoints = slow_sweep.get_setpoints()
             for setpoint in slow_setpoints:
                 slow_param.set(setpoint)
@@ -833,8 +821,13 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
                             sleep(fast_sweep._delay)
     
                 if trigger_type == "hardware":
-                    # Set trigger to high here
                     try:
+                        fast_param.root_instrument._qtools_ramp(
+                            [fast_param],
+                            end_values=[fast_sweep.get_setpoints()[-1]],
+                            ramp_time=self.buffer_settings["duration"],
+                            sync_trigger=sync_trigger,
+                        )
                         trigger_start()
                     except:
                         print("Please set a trigger or define a trigger_start method")
@@ -859,7 +852,6 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
                               consequences!")
     
                 results = self.readout_buffers()
-                # TODO: Append values from other dynamic parameters
                 datasaver.add_result((slow_param, setpoint),
                                      (fast_param, fast_sweep.get_setpoints()),
                                      *results,
