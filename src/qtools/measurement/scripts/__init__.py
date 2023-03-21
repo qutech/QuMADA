@@ -7,6 +7,7 @@ from .generic_measurement import (
     Generic_2D_Sweep_buffered,
     Timetrace,
     Timetrace_with_sweeps,
+    Timetrace_buffered,
 )
 
 __all__ = [
@@ -18,4 +19,5 @@ __all__ = [
     Generic_2D_Sweep_buffered,
     Timetrace,
     Timetrace_with_sweeps,
+    Timetrace_buffered,
 ]

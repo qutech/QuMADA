@@ -220,6 +220,120 @@ class Timetrace(MeasurementScript):
                 sleep(timestep)
         dataset = datasaver.dataset
         return dataset
+    
+class Timetrace_buffered(MeasurementScript):
+    """
+    Timetrace measurement, duration and timestep can be set as keyword-arguments,
+    both in seconds.
+    Be aware that the timesteps can vary as the time it takes to record a
+    datapoint is not constant, the argument only sets the wait time. However,
+    the recorded "elapsed time" is accurate.
+    kwargs:
+        auto_naming: Renames measurement automatically to Timetrace if True.
+
+    """
+
+    def run(self):
+        self.initialize()
+        #duration = self.settings.get("duration", 300)
+        #timestep = self.settings.get("timestep", 1)
+        timer = ElapsedTimeParameter("time")
+        auto_naming = self.settings.get("auto_naming", False)
+        self.buffered = True
+        TRIGGER_TYPES = ["software", "hardware"]
+        trigger_start = self.settings.get("trigger_start", "software")  # TODO: this should be set elsewhere
+        trigger_reset = self.settings.get("trigger_reset", None)
+        trigger_type = _validate_mapping(
+            self.settings.get("trigger_type"),
+            TRIGGER_TYPES,
+            default="software",
+            default_key_error="software",
+        )
+        datasets = []
+        
+        self.generate_lists()
+        
+        if auto_naming:
+            measurement_name = "Timetrace"
+            if self.metadata is not None:
+                self.metadata.measurement.name = "Timetrace"
+        else:
+            if self.metadata is not None:
+                measurement_name = self.metadata.measurement.name
+            else:
+                measurement_name = "Timetrace"
+        meas = Measurement(name=measurement_name)
+        
+        meas.register_parameter(timer)
+        for parameter in [*self.gettable_channels, *self.dynamic_channels]:
+            meas.register_parameter(
+                parameter,
+                setpoints=[
+                    timer,
+                ],
+            )
+        # Block required to log gettable and static parameters that are not
+        # buffarable (e.g. Dac Channels)
+        static_gettables = []
+        del_channels = []
+        del_params = []
+        for parameter, channel in zip(self.gettable_parameters, self.gettable_channels):
+            if is_bufferable(channel):
+                meas.register_parameter(
+                    channel,
+                    setpoints=[timer,]
+                )
+            elif channel in self.static_channels:
+                del_channels.append(channel)
+                del_params.append(parameter)
+                meas.register_parameter(
+                    channel,
+                    setpoints=[timer,]
+                    )
+                parameter_value = self.properties[
+                    parameter["gate"]][parameter["parameter"]]["value"]
+                static_gettables.append(
+                    (channel, 
+                      [parameter_value for _ in range(self.buffered_num_points)]
+                      )
+                    )
+        for channel in del_channels:
+            self.gettable_channels.remove(channel)
+        for param in del_params:
+            self.gettable_parameters.remove(param)
+            
+        with meas.run() as datasaver:
+            #start = timer.reset_clock()
+            self.ready_buffers()
+
+            if trigger_type == "manual":
+                raise Exception("Manual triggering not supported by Timetrace.")
+            if trigger_type == "hardware":
+                # Set trigger to high here
+                try:
+                    trigger_start()
+                except:
+                    print("Please set a trigger or define a trigger_start method")
+                pass
+
+            elif trigger_type == "software":
+                for buffer in self.buffers:
+                    buffer.force_trigger()
+
+            while not all(buffer.is_finished() for buffer in list(self.buffers)):
+                sleep(0.1)
+            try:
+                trigger_reset()
+            except:
+                print("No method to reset the trigger defined.")
+
+            results = self.readout_buffers(timestamps=True)
+            # TODO: Append values from other dynamic parameters
+            datasaver.add_result((timer, results.pop(-1)),
+                                 *results,
+                                 *static_gettables,)
+            datasets.append(datasaver.dataset)
+        return datasets
 
 
 class Timetrace_with_sweeps(MeasurementScript):

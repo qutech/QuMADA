@@ -522,9 +522,8 @@ class MeasurementScript(ABC):
             data[buffer] = buffer.read()
             for param in buffer._subscribed_parameters:
                 results.append((param, flatten_array(data[buffer][param.name])))
-                if kwargs.get("timestamps", False):
-                    # TODO: Add option to include timestamps here.
-                    pass
+        if kwargs.get("timestamps", False):
+            results.append(flatten_array(data[list(data.keys())[0]]["timestamps"]))
         return results
 
     def _relabel_instruments(self) -> None:
