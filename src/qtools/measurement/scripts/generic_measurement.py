@@ -12,7 +12,7 @@ from qtools.measurement.doNd_enhanced.doNd_enhanced import (
 )
 from qtools.measurement.measurement import MeasurementScript
 from qtools.utils.ramp_parameter import ramp_or_set_parameter
-from qtools.utils.utils import _validate_mapping
+from qtools.utils.utils import _validate_mapping, naming_helper
 from qtools.instrument.buffers.buffer import is_bufferable
 
 
@@ -49,13 +49,12 @@ class Generic_1D_Sweep(MeasurementScript):
         self.initialize()
         wait_time = self.settings.get("wait_time", 5)
         include_gate_name = self.settings.get("include_gate_name", True)
+        naming_helper(self, default_name="1D Sweep")
         data = list()
         sleep(wait_time)
         for sweep, dynamic_parameter in zip(self.dynamic_sweeps, self.dynamic_parameters):
             if include_gate_name:
-                measurement_name = f"{self.metadata.measurement.name} {dynamic_parameter['gate']}"
-            else:
-                measurement_name = self.metadata.measurement.name or "measurement"
+               self.measurement_name = f"{self.measurement_name} {dynamic_parameter['gate']}"
             if self.settings.get("log_idle_params", True):
                 idle_channels = [entry for entry in self.dynamic_channels if entry != sweep.param]
                 measured_channels = {*self.gettable_channels, *idle_channels}
@@ -67,7 +66,7 @@ class Generic_1D_Sweep(MeasurementScript):
                 dond(
                     sweep,
                     *measured_channels,
-                    measurement_name=measurement_name,
+                    measurement_name=self.measurement_name,
                     break_condition=_interpret_breaks(self.break_conditions),
                     **dond_kwargs,
                 )
@@ -133,6 +132,7 @@ class Generic_1D_parallel_asymm_Sweep(MeasurementScript):
     """
 
     def run(self, **do1d_kwargs):
+        naming_helper(self, default_name="Parallel 1D Sweep")
         self.initialize()
         backsweep_after_break = self.settings.get("backsweep_after_break", False)
         wait_time = self.settings.get("wait_time", 5)
@@ -146,7 +146,7 @@ class Generic_1D_parallel_asymm_Sweep(MeasurementScript):
             param_set=dynamic_params,
             setpoints=[sweep.get_setpoints() for sweep in self.dynamic_sweeps],
             delay=self.dynamic_sweeps[0]._delay,
-            measurement_name=self.metadata.measurement.name or "measurement",
+            measurement_name=self.measurement_name,
             break_condition=_interpret_breaks(self.break_conditions),
             backsweep_after_break=backsweep_after_break,
             **do1d_kwargs,
@@ -162,6 +162,7 @@ class Generic_1D_parallel_Sweep(MeasurementScript):
 
     def run(self, **do1d_kwargs):
         self.initialize()
+        naming_helper(self, default_name="Parallel 1D Sweep")
         backsweep_after_break = self.settings.get("backsweep_after_break", False)
         wait_time = self.settings.get("wait_time", 5)
         dynamic_params = list()
@@ -174,7 +175,7 @@ class Generic_1D_parallel_Sweep(MeasurementScript):
             param_set=dynamic_params,
             setpoints=self.dynamic_sweeps[0].get_setpoints(),
             delay=self.dynamic_sweeps[0]._delay,
-            measurement_name=self.metadata.measurement.name or "measurement",
+            measurement_name=self.measurement_name,
             break_condition=lambda x: _dev_interpret_breaks(self.break_conditions, x),
             backsweep_after_break=backsweep_after_break,
             **do1d_kwargs,
@@ -199,10 +200,8 @@ class Timetrace(MeasurementScript):
         duration = self.settings.get("duration", 300)
         timestep = self.settings.get("timestep", 1)
         timer = ElapsedTimeParameter("time")
-        auto_naming = self.settings.get("auto_naming", False)
-        if auto_naming:
-            self.metadata.measurement.name = "Timetrace"
-        meas = Measurement(name=self.metadata.measurement.name or "Timetrace")
+        naming_helper(self, default_name="Timetrace")
+        meas = Measurement(self.measurement_name)
         meas.register_parameter(timer)
         for parameter in [*self.gettable_channels, *self.dynamic_channels]:
             meas.register_parameter(
@@ -223,11 +222,12 @@ class Timetrace(MeasurementScript):
     
 class Timetrace_buffered(MeasurementScript):
     """
-    Timetrace measurement, duration and timestep can be set as keyword-arguments,
-    both in seconds.
-    Be aware that the timesteps can vary as the time it takes to record a
-    datapoint is not constant, the argument only sets the wait time. However,
-    the recorded "elapsed time" is accurate.
+    Timetrace measurement, duration and timestep are set via the buffer settings.
+    Does currently not work with dynamic parameters. 
+    Furthermore, you cannot use "manual" triggering mode as now ramp is started.
+    It is fine to use software triggering here, as long as only one buffered 
+    instrument is used, else you should use "hardware".
+    
     kwargs:
         auto_naming: Renames measurement automatically to Timetrace if True.
 
@@ -238,8 +238,6 @@ class Timetrace_buffered(MeasurementScript):
         #duration = self.settings.get("duration", 300)
         #timestep = self.settings.get("timestep", 1)
         timer = ElapsedTimeParameter("time")
-        auto_naming = self.settings.get("auto_naming", False)
-        self.buffered = True
         TRIGGER_TYPES = ["software", "hardware"]
         trigger_start = self.settings.get("trigger_start", "software")  # TODO: this should be set elsewhere
         trigger_reset = self.settings.get("trigger_reset", None)
@@ -249,20 +247,12 @@ class Timetrace_buffered(MeasurementScript):
             default="software",
             default_key_error="software",
         )
+        self.buffered = True
         datasets = []
         
         self.generate_lists()
-        
-        if auto_naming:
-            measurement_name = "Timetrace"
-            if self.metadata is not None:
-                self.metadata.measurement.name = "Timetrace"
-        else:
-            if self.metadata is not None:
-                measurement_name = self.metadata.measurement.name
-            else:
-                measurement_name = "Timetrace"
-        meas = Measurement(name=measurement_name)
+        naming_helper(self, default_name = "Timetrace")
+        meas = Measurement(name=self.measurement_name)
         
         meas.register_parameter(timer)
         for parameter in [*self.gettable_channels, *self.dynamic_channels]:
@@ -718,16 +708,12 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
         if len(self.dynamic_sweeps)!=2:
             raise Exception("The 2D workflow takes exactly two dynamic parameters! ")
         # meas.register_parameter(timer)
-        if self.metadata is None:
-            measurement_name = "2D Sweep"
-        else: 
-            measurement_name = f"{self.metadata.measurement.name}"
-
+        self.measurement_name = naming_helper(self, default_name= "2D Sweep")
         if include_gate_name:
             gate_names=[gate["gate"] for gate in self.dynamic_parameters]
-            measurement_name += str(gate_names)
+            self.measurement_name += str(gate_names)
         
-        meas = Measurement(name=measurement_name)
+        meas = Measurement(name=self.measurement_name)
 
             
         if reverse_param_order:
