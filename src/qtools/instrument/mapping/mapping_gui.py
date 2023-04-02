@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
 from threading import Event, Thread
-from time import sleep  # TODO: remove later
 from typing import Any
 
 from PyQt5.QtCore import (
@@ -45,19 +44,12 @@ from qcodes.instrument.channel import InstrumentModule
 from qcodes.instrument.instrument import Instrument
 from qcodes.instrument.parameter import Parameter
 from qcodes.station import Station
-from qcodes.tests.instrument_mocks import DummyChannelInstrument
 from qcodes.utils.metadata import Metadatable
-from qtools_metadata.metadata import Metadata
 
-from qtools.instrument.custom_drivers.Dummies.dummy_dac import DummyDac
-from qtools.instrument.custom_drivers.Dummies.dummy_dmm import DummyDmm
-from qtools.instrument.mapping import DUMMY_CHANNEL_MAPPING, DUMMY_DMM_MAPPING
 from qtools.instrument.mapping.base import (
     add_mapping_to_instrument,
     filter_flatten_parameters,
 )
-from qtools.instrument.mapping.Dummies.DummyDac import DummyDacMapping
-from qtools.measurement.scripts.generic_measurement import Generic_1D_Sweep
 
 TerminalParameters = Mapping[Any, Mapping[Any, Parameter] | Parameter]
 
@@ -124,8 +116,17 @@ class TerminalTreeView(QTreeView):
             for terminal_param in get_children(terminal):
                 param = self.terminal_parameters[terminal_param.source[0]][terminal_param.source[1]]
                 if not param is None:
-                    val = param.cache.get(get_if_invalid=False)
-                    if not val is None:
+                    if self.monitoring_get_type == "get" and param.gettable:
+                        # Use get command
+                        try:
+                            val = param.get()
+                        except:
+                            val = param.cache.get(get_if_invalid=False)
+                    else:
+                        # Use cached value (also applicable to non-gettable parameters (last set value))
+                        val = param.cache.get(get_if_invalid=False)
+
+                    if not val is None and (type(val) is int or type(val) is float):
                         if not param.unit is None:
                             self.model().setData(terminal_param.index().siblingAtColumn(2), f"{val:.2f} {param.unit}")
                         else:
@@ -560,16 +561,10 @@ class MainWindow(QMainWindow):
         components,
         terminal_parameters,
         existing_terminal_parameters: TerminalParameters | None = None,
-        unlock_main_thread: Event | None = None,
-        auto_run: bool = False,
         monitoring: bool = False,
     ):
         super().__init__()
         self.components = components
-        self.terminal_parameters = terminal_parameters
-        self.auto_run = auto_run
-        if not unlock_main_thread is None:
-            self.unlock_main_thread = unlock_main_thread
 
         container = QWidget()
         layout = QVBoxLayout()
@@ -611,7 +606,7 @@ class MainWindow(QMainWindow):
         button_unfold_terminals.clicked.connect(self.unfold_terminals)
 
         button_exit = QPushButton("Exit (e)")
-        button_exit.clicked.connect(self.close)
+        button_exit.clicked.connect(self.exit_program)
 
         # Button layout
         button_layout.addWidget(button_map_auto)
@@ -628,6 +623,7 @@ class MainWindow(QMainWindow):
         # Monitoring
         Monitoring_menu = menu.addMenu("Monitoring")
         self.monitoring_enable = monitoring
+        self.terminal_tree.monitoring_get_type = "get"
         if monitoring:
             self.terminal_tree.monitoring_timer.start(1000)
 
@@ -647,13 +643,15 @@ class MainWindow(QMainWindow):
 
         # Monitoring - Get type (from cache or by get() command)
         get_type_menu = Monitoring_menu.addMenu("Get type (TODO)")
-        use_cache_action = QAction("Cache", self)
-        use_get_action = QAction("Get command", self)
-        use_cache_action.setCheckable(True)
-        use_get_action.setCheckable(True)
-        use_cache_action.setChecked(True)
-        get_type_menu.addAction(use_cache_action)
-        get_type_menu.addAction(use_get_action)
+        self.use_cache_action = QAction("Only Cached values", self)
+        self.use_get_action = QAction("Get command", self)
+        self.use_cache_action.setCheckable(True)
+        self.use_get_action.setCheckable(True)
+        self.use_get_action.setChecked(True)
+        get_type_menu.addAction(self.use_cache_action)
+        get_type_menu.addAction(self.use_get_action)
+        self.use_get_action.triggered.connect(self.monitoring_set_get_type)
+        self.use_cache_action.triggered.connect(self.monitoring_set_cache_type)
 
         # Main layout
         layout.addWidget(upper_widget)
@@ -667,13 +665,36 @@ class MainWindow(QMainWindow):
         self.terminal_tree.setCurrentIndex(idx)
         self.resize(QDesktopWidget().availableGeometry(self).size() * 0.45)
 
-        if not existing_terminal_parameters is None:
+        self.terminal_parameters = terminal_parameters
+        if existing_terminal_parameters is None:
+            for terminal_name, parameter_mapping in terminal_parameters.items():
+                for terminal_parameter, instr_parameter in parameter_mapping.items():
+                    self.terminal_parameters[terminal_name][terminal_parameter] = None
+        else:
             for terminal_name, parameter_mapping in existing_terminal_parameters.items():
                 for terminal_parameter, instr_parameter in parameter_mapping.items():
                     if not instr_parameter is None:
                         self.map_parameter(instr_parameter, (terminal_name, terminal_parameter))
 
             self.terminal_tree.update_tree()
+
+    def closeEvent(self, ev) -> None:
+        """
+        This seems to close the application when exiting window more reliably
+        """
+        self.terminal_tree.monitoring_timer.stop()
+        QApplication.exit()
+        return super().closeEvent(ev)
+
+    def monitoring_set_get_type(self):
+        self.use_get_action.setChecked(True)
+        self.use_cache_action.setChecked(False)
+        self.terminal_tree.monitoring_get_type = "get"
+
+    def monitoring_set_cache_type(self):
+        self.use_cache_action.setChecked(True)
+        self.use_get_action.setChecked(False)
+        self.terminal_tree.monitoring_get_type = "cache"
 
     @pyqtSlot(QStandardItem, QStandardItem)
     def drag_terminal_drop_instr_slot(self, instr_elem, terminal_elem):
@@ -697,7 +718,12 @@ class MainWindow(QMainWindow):
         self.terminal_tree.setColumnHidden(2, not self.monitoring_enable)
 
     def set_refresh_rate(self):
-        val, ok = QInputDialog.getDouble(self, "Refresh delay [s]", "Refresh delay [s]", value=1, min=0.01, decimals=2)
+        """
+        Set refresh rate of monitoring via input dialog.
+        """
+        val, ok = QInputDialog.getDouble(
+            self, "Refresh delay [s]", "Refresh delay [s]", 1, 0.01, 100, 2, Qt.WindowFlags(), 0.1
+        )
         if ok:
             self.terminal_tree.monitoring_timer.stop()
             self.terminal_tree.showColumn(2)
@@ -705,32 +731,20 @@ class MainWindow(QMainWindow):
             self.terminal_tree.monitoring_timer.start(int(val * 1000))
             self.monitoring_enable = True
 
-    # TODO: doesnt really do much anymore (one line basically). Unlocking main thread could also be done somewhere else
     def map_parameter(self, parameter: Parameter, traverse: tuple[str, str]):
         """
         Maps a instrument parameter to a specific terminal parameter accessed by the given traversal info.
-        Updates the instrument field next to the mapped terminal parameter
+        Doesn't do much anymore, but I kept this around for slightly better readability (and easier refactoring if necessary)
         """
         self.terminal_parameters[traverse[0]][traverse[1]] = parameter
-        if hasattr(self, "unlock_main_thread") and self.auto_run:
-            all_mapped = True
-            for terminal in self.terminal_parameters.values():
-                for terminal_param in terminal.values():
-                    if terminal_param is None:
-                        all_mapped = False
-                        break
-
-            if all_mapped:
-                self.unlock_main_thread.set()
-                self.terminal_tree.setDragEnabled(False)  # Read only
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
+        """
+        Handles keyboard shortcuts and mapping using enter key. Selecting an instrument in the terminal_tree and pressing enter will switch focus to the
+        instrument_tree and select a suitable mapping candidate. The user can change the selection and press enter again to do the mapping. The focus switches
+        back to the terminal_tree and a new terminal is selected.
+        """
         if event.key() == Qt.Key_Enter or event.key() == Qt.Key_Return:
-            # read-only mode after thread was released
-            if hasattr(self, "unlock_main_thread"):
-                if self.unlock_main_thread.is_set():
-                    return
-
             sel_idx = []
             for idx in self.terminal_tree.selectedIndexes():
                 if idx.column() == 0:
@@ -811,7 +825,7 @@ class MainWindow(QMainWindow):
         elif event.key() == Qt.Key_R:
             self.reset_mapping()
         elif event.key() == Qt.Key_E:
-            self.close()
+            self.exit_program()
         elif event.key() == Qt.Key_U:
             self.unfold_terminals()
 
@@ -831,7 +845,7 @@ class MainWindow(QMainWindow):
         tree = self.terminal_tree
         mapped = False
         if isinstance(terminal_tree_traversal[1], str) and isinstance(instr_elem, Parameter):
-            # map directly - should mapping be forbidden if _mapping attribute of Parameter does not fit?
+            # map directly
             self.map_parameter(instr_elem, terminal_tree_traversal)
             mapped = True
         elif isinstance(terminal_tree_traversal[1], tuple) and isinstance(instr_elem, InstrumentModule | Instrument):
@@ -883,6 +897,9 @@ class MainWindow(QMainWindow):
         return mapped
 
     def unfold_terminals(self):
+        """
+        Unfolds all terminals in the terminal_tree (quickly make everything visible). Collapse all if already unfolded
+        """
         all_expanded = True
         for terminal in get_children(self.terminal_tree.model().invisibleRootItem()):
             if not self.terminal_tree.isExpanded(terminal.index()):
@@ -894,16 +911,13 @@ class MainWindow(QMainWindow):
         else:
             self.terminal_tree.expandAll()
 
+        self.terminal_tree.update_tree()
+
     def map_automatically(self):
         """
         Automatically map all unique terminal_parameter instrument_parameter pairs. If there are multiple terminal_parameters
         with the same name their unique mapping is impossible.
         """
-        # read-only mode after thread was released
-        if hasattr(self, "unlock_main_thread"):
-            if self.unlock_main_thread.is_set():
-                return
-
         # call get_possible_mapping_candidates for each terminal
         terminal_mapping_candidates = {}
         terminal_parameters_occurances = {}
@@ -941,15 +955,17 @@ class MainWindow(QMainWindow):
 
         self.terminal_tree.update_tree()
 
+    def exit_program(self):
+        """
+        Stop timer thread and then close application
+        """
+        self.terminal_tree.monitoring_timer.stop()
+        QApplication.exit()
+
     def reset_mapping(self):
         """
         Reset all mappings. Reset dictionary which actually holds the mapping. Reset Tree representation.
         """
-        # read-only mode after thread was released
-        if hasattr(self, "unlock_main_thread"):
-            if self.unlock_main_thread.is_set():
-                return
-
         for terminal_name, terminal_params in self.terminal_parameters.items():
             self.terminal_parameters[terminal_name] = {
                 terminal_param_name: None for terminal_param_name in terminal_params.keys()
@@ -964,10 +980,7 @@ def map_terminals_gui(
     components: Mapping[Any, Metadatable],
     terminal_parameters: TerminalParameters,
     existing_terminal_parameters: TerminalParameters | None = None,
-    *,
     metadata: Metadata | None = None,
-    keep_open: bool = False,
-    auto_run: bool = False,
     monitoring: bool = False,
 ) -> None:
     """
@@ -979,109 +992,20 @@ def map_terminals_gui(
         existing_terminal_parameters (Mapping[Any, Union[Mapping[Any, Parameter], Parameter]] | None): Already existing mapping
                 that is used to automatically create the mapping for already known terminals without user input.
         metadata (Metadata | None): If provided, add mapping to the metadata object.
-        keep_open: application is run in different thread. The main thread is halted and can be released from the gui.
-                   when released everything is read-only
-        auto_run: if all terminals are fully mapped (and keep_open = True) the main thread is released
+        monitoring: if True the mapped parameters are periodically read out (either by get command (default) or cached value)
     """
 
-    if not QApplication.instance() is None:
-        raise AppInstanceException("There can be only a single instance of the application.")
-
-    def fun(ev):
+    if QApplication.instance() is None:
         app = QApplication([])
-        w = MainWindow(
-            components,
-            terminal_parameters,
-            existing_terminal_parameters,
-            unlock_main_thread=ev,
-            auto_run=auto_run,
-            monitoring=monitoring,
-        )
-        w.show()
-        # w1 = MainWindow(components, terminal_parameters, existing_terminal_parameters, unlock_main_thread=ev, auto_run=auto_run)
-        # w1.show()
-        app.exec_()
-
-        ev.set()
-
-    if keep_open:
-        ev = Event()
-        gui_thread = Thread(target=fun, args=(ev,))
-        gui_thread.start()
-        ev.wait()
     else:
-        ev = None
-        auto_run = False
-        app = QApplication([])
-        w = MainWindow(components, terminal_parameters, existing_terminal_parameters, monitoring=monitoring)
-        w.show()
-        app.exec_()
+        app = QApplication.instance()
 
-
-if __name__ == "__main__":
-    # Setup qcodes station
-    station = Station()
-
-    # The dummy instruments have a trigger_event attribute as replacement for
-    # the trigger inputs of real instruments.
-
-    dmm = DummyDmm("dmm")
-    add_mapping_to_instrument(dmm, path=DUMMY_DMM_MAPPING)
-    print(f"dmm.voltage._mapping: {dmm.voltage._mapping}")
-    station.add_component(dmm)
-
-    dac = DummyDac("dac")
-    add_mapping_to_instrument(dac, mapping=DummyDacMapping())
-    print(f"dac.voltage._mapping: {dac.voltage._mapping}")
-    station.add_component(dac)
-
-    # dci = DummyChannelInstrument("dci",channel_names=("ChanA",))
-    dci = DummyChannelInstrument("dci")
-    add_mapping_to_instrument(dci, path=DUMMY_CHANNEL_MAPPING)
-    station.add_component(dci)
-
-    parameters: TerminalParameters = {
-        "dmm": {"voltage": {"type": "gettable"}, "current": {"type": "gettable"}},
-        "dac": {
-            "voltage": {
-                "type": "dynamic",
-                "setpoints": [0, 5],
-            }
-        },
-        "T1": {"temperature": {"type": "gettable"}},
-        "T2": {"temperature": {"type": "gettable"}},
-    }
-    # parameters: TerminalParameters = {
-    #     "dmm": {"voltage": {"type": "gettable"}, "current": {"type": "gettable"}},
-    # }
-    script = Generic_1D_Sweep()
-    script.setup(
-        parameters,
-        None,
-        add_script_to_metadata=False,
-        add_parameters_to_metadata=False,
+    w = MainWindow(
+        components,
+        terminal_parameters,
+        existing_terminal_parameters=existing_terminal_parameters,
+        monitoring=monitoring,
     )
 
-    map_terminals_gui(station.components, script.gate_parameters, keep_open=False, auto_run=True, monitoring=True)
-    print("finished")
-
-    # Testing monitoring (keep_open=True, auto_run=True, monitoring=True)
-    # k = 0
-    # backwards = False
-    # while(True):
-    #     sleep(0.01)
-    #     #print("update params")
-    #     dac.set("voltage", k)
-
-    #     if(not backwards):
-    #         if(k < 5):
-    #             k = k + 0.1
-    #         else:
-    #             backwards = True
-    #             k = k - 0.1
-    #     else:
-    #         if(k > 0):
-    #             k = k - 0.1
-    #         else:
-    #             backwards = False
-    #             k = k + 0.1
+    w.show()
+    app.exec_()

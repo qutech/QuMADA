@@ -4,6 +4,7 @@ from .base import (
     filter_flatten_parameters,
     map_gates_to_instruments,
 )
+from .mapping_gui import map_terminals_gui
 
 
 def _build_path(subpath: str) -> str:
@@ -34,6 +35,7 @@ __all__ = [
     add_mapping_to_instrument,
     map_gates_to_instruments,
     filter_flatten_parameters,
+    map_terminals_gui,
     DECADAC_MAPPING,
     SR830_MAPPING,
     KEITHLEY_2400_MAPPING,
