@@ -163,6 +163,7 @@ class MeasurementScript(ABC):
         add_script_to_metadata: bool = True,
         add_parameters_to_metadata: bool = True,
         buffer_settings: dict = {},
+        measurement_name: str|None = None,
         **settings: dict,
     ) -> None:
         """
@@ -186,9 +187,9 @@ class MeasurementScript(ABC):
         """
         # TODO: Add settings to metadata
         self.metadata = metadata
-        # TODO: Better place to put this?
         self.buffered = False
         self._lists_created = False
+        self.measurement_name = measurement_name
         cls = type(self)
         try:
             self.buffer_settings.update(buffer_settings)
