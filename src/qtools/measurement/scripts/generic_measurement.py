@@ -146,7 +146,7 @@ class Generic_1D_parallel_asymm_Sweep(MeasurementScript):
             param_set=dynamic_params,
             setpoints=[sweep.get_setpoints() for sweep in self.dynamic_sweeps],
             delay=self.dynamic_sweeps[0]._delay,
-            measurement_name=self.metadata.measurement.name or "measurement",
+            measurement_name="1D Asym. Parallel Sweep",
             break_condition=_interpret_breaks(self.break_conditions),
             backsweep_after_break=backsweep_after_break,
             **do1d_kwargs,
@@ -829,7 +829,7 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
                             sync_trigger=sync_trigger,
                         )
                         trigger_start()
-                    except:
+                    except NameError:
                         print("Please set a trigger or define a trigger_start method")
                     pass
     
