@@ -146,7 +146,6 @@ class Generic_1D_parallel_asymm_Sweep(MeasurementScript):
             param_set=dynamic_params,
             setpoints=[sweep.get_setpoints() for sweep in self.dynamic_sweeps],
             delay=self.dynamic_sweeps[0]._delay,
-            measurement_name="1D Asym. Parallel Sweep",
             measurement_name=self.measurement_name,
             break_condition=_interpret_breaks(self.break_conditions),
             backsweep_after_break=backsweep_after_break,
@@ -405,14 +404,17 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
         self.generate_lists()
         
         # meas.register_parameter(timer)
-        for dynamic_sweep, dynamic_parameter in zip(self.dynamic_sweeps, self.dynamic_parameters):
+        for dynamic_sweep, dynamic_parameter in zip(self.dynamic_sweeps.copy(), self.dynamic_parameters.copy()):
             if include_gate_name:
                 if self.metadata is None:
                     measurement_name = f"1D Sweep {dynamic_parameter['gate']}"
                 else: 
                     measurement_name = f"{self.metadata.measurement.name} {dynamic_parameter['gate']}"
             else:
-                measurement_name = self.metadata.measurment.name or "Buffered 1D Sweep"
+                if self.metadata is None:
+                    measurement_name = "Buffered 1D Sweep"
+                else:
+                    measurement_name = self.metadata.measurement.name
             # if self.settings.get("log_idle_params", True):
             #     idle_channels = [entry for entry  in self.dynamic_channels if entry!=sweep.param]
             #     measured_channels = set((*self.gettable_channels, *idle_channels))
@@ -460,7 +462,6 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                 # Set trigger to low here
             with meas.run() as datasaver:
                 self.initialize()
-                data = {}
                 results = []
                 # start = timer.reset_clock()
                 # Add check if all gettable parameters have buffer?
@@ -526,7 +527,6 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                     dynamic_parameter["gate"]][dynamic_parameter["parameter"]
                                                ]["_is_triggered"] = False
         return datasets
-
 
 class Generic_1D_Hysteresis_buffered(MeasurementScript):
     """

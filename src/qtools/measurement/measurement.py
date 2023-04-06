@@ -212,7 +212,7 @@ class MeasurementScript(ABC):
                 script.language = "python"
                 script.script = inspect.getsource(cls)
             except OSError as err:
-                print(f"Source of MeasurementScript coud not be acquired: {err}")
+                print(f"Source of MeasurementScript could not be acquired: {err}")
             except Exception as e:
                 print(f"Script could not be added to metadata: {e}")
 
@@ -233,7 +233,9 @@ class MeasurementScript(ABC):
                 self.add_gate_parameter(parameter, gate)
                 
     def generate_lists(self) -> None:
-        # TODO: Explain objects!
+        """
+        TODO: Add docstring
+        """
         self.gettable_parameters: list[str] = []
         self.gettable_channels: list[str] = []
         self.break_conditions: list[str] = []
