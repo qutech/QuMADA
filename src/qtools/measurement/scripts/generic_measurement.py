@@ -415,6 +415,8 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
             dynamic_param = dynamic_sweep.param
             meas = Measurement(name=self.measurement_name)
             meas.register_parameter(dynamic_param)
+            # This next block is required to log static and idle dynamic
+            # parameters that cannot be buffered.
             static_gettables = []
             del_channels = []
             del_params = []
@@ -429,12 +431,6 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                 elif channel in self.static_channels:
                     del_channels.append(channel)
                     del_params.append(parameter)
-                    meas.register_parameter(
-                        channel,
-                        setpoints=[
-                            dynamic_param,
-                            ]
-                        )
                     parameter_value = self.properties[
                         parameter["gate"]][parameter["parameter"]]["value"]
                     static_gettables.append(
@@ -442,17 +438,39 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                          [parameter_value for _ in range(self.buffered_num_points)]
                          )
                         )
+            for parameter, channel in zip(self.dynamic_parameters, self.dynamic_channels):
+                if channel != dynamic_param:
+                    try:
+                        parameter_value = self.properties[
+                            parameter["gate"]][parameter["parameter"]]["value"]
+                    except KeyError:
+                        logging.error("An idle dynamic parameter has no value assigned\
+                              and cannot be logged!")
+                        break
+                    static_gettables.append(
+                        (channel, 
+                         [parameter_value for _ in range(self.buffered_num_points)]
+                         )
+                        )
+            for param in static_gettables:
+                meas.register_parameter(param[0],
+                                        setpoints=[
+                                            dynamic_param,
+                                            ]
+                                        )
             for channel in del_channels:
                 self.gettable_channels.remove(channel)
             for param in del_params:
                 self.gettable_parameters.remove(param)
-
-                # Set trigger to low here
+                
+            try:
+                trigger_reset()
+            except TypeError:
+                logging.info("No method to reset the trigger defined.")
+                
             with meas.run() as datasaver:
                 self.initialize()
                 results = []
-                # start = timer.reset_clock()
-                # Add check if all gettable parameters have buffer?
                 self.ready_buffers()
                 try:
                     dynamic_param.root_instrument._qtools_ramp(
@@ -489,11 +507,10 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                     sleep(0.1)
                 try:
                     trigger_reset()
-                except:
+                except TypeError:
                     logging.info("No method to reset the trigger defined.")
 
                 results = self.readout_buffers()
-                # TODO: Append values from other dynamic parameters
                 datasaver.add_result((dynamic_param, dynamic_sweep.get_setpoints()),
                                      *results,
                                      *static_gettables,
@@ -809,3 +826,5 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
                                      *static_gettables,)
         datasets.append(datasaver.dataset)
         return datasets
+
+    
