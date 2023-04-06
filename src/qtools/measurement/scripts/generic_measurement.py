@@ -1,4 +1,5 @@
 from time import sleep
+import logging
 
 from qcodes.dataset import dond
 from qcodes.dataset.measurements import Measurement
@@ -402,30 +403,17 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
         sync_trigger = self.settings.get("sync_trigger", None)
         datasets = []
         self.generate_lists()
-        
+        measurement_name = naming_helper(self, default_name= "1D Sweep")
         # meas.register_parameter(timer)
         for dynamic_sweep, dynamic_parameter in zip(self.dynamic_sweeps.copy(), self.dynamic_parameters.copy()):
+            self.measurement_name=measurement_name
             if include_gate_name:
-                if self.metadata is None:
-                    measurement_name = f"1D Sweep {dynamic_parameter['gate']}"
-                else: 
-                    measurement_name = f"{self.metadata.measurement.name} {dynamic_parameter['gate']}"
-            else:
-                if self.metadata is None:
-                    measurement_name = "Buffered 1D Sweep"
-                else:
-                    measurement_name = self.metadata.measurement.name
-            # if self.settings.get("log_idle_params", True):
-            #     idle_channels = [entry for entry  in self.dynamic_channels if entry!=sweep.param]
-            #     measured_channels = set((*self.gettable_channels, *idle_channels))
-            # else:
-            #     measured_channels = set(self.gettable_channels)
-            #TODO: Find more elegant solution, maybe refactor initialize and lists?
+                self.measurement_name += f" {dynamic_parameter['gate']}"
             self.properties[
                 dynamic_parameter["gate"]][dynamic_parameter["parameter"]
                                            ]["_is_triggered"] = True
             dynamic_param = dynamic_sweep.param
-            meas = Measurement(name=measurement_name)
+            meas = Measurement(name=self.measurement_name)
             meas.register_parameter(dynamic_param)
             static_gettables = []
             del_channels = []
@@ -466,55 +454,43 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                 # start = timer.reset_clock()
                 # Add check if all gettable parameters have buffer?
                 self.ready_buffers()
-
-                if trigger_type == "manual":
-                    try:
-                        dynamic_param.root_instrument._qtools_ramp(
-                            [dynamic_param],
-                            start_values = None,
-                            end_values=[dynamic_sweep.get_setpoints()[-1]],
-                            ramp_time=self.buffer_settings["duration"],
-                            sync_trigger=sync_trigger,
-                        )
-                    except AttributeError:
-                        print("No ramp method found. Setting setpoints manually")
-                        print(
-                            "It is strongly advised to use unbuffered measurements, when no ramp method is available!"
-                        )
-                        for v in dynamic_sweep.get_setpoints():
-                            dynamic_param.set(v)
-                            sleep(dynamic_sweep._delay)
-
-                if trigger_type == "hardware":
-                    # Set trigger to high here
+                try:
                     dynamic_param.root_instrument._qtools_ramp(
                         [dynamic_param],
                         start_values = None,
                         end_values=[dynamic_sweep.get_setpoints()[-1]],
                         ramp_time=self.buffer_settings["duration"],
+                        sync_trigger=sync_trigger,
                     )
+                except AttributeError() as e:
+                    print("Exception: This instrument probably does not have a \
+                          a qtools_ramp method. Buffered measurements without \
+                          ramp method are no longer supported. \
+                          Use the unbuffered script!")
+                    raise e
+                
+                if trigger_type == "manual":
+                    pass
+                if trigger_type == "hardware":
                     try:
                         trigger_start()
-                    except AttributeError:
+                    except AttributeError as e:
                         print("Please set a trigger or define a trigger_start method")
-                    pass
+                        raise e
 
                 elif trigger_type == "software":
-                    dynamic_param.root_instrument._qtools_ramp(
-                        [dynamic_param],
-                        start_values = None,
-                        end_values=[dynamic_sweep.get_setpoints()[-1]],
-                        ramp_time=self.buffer_settings["duration"],
-                    )
                     for buffer in self.buffers:
                         buffer.force_trigger()
-
+                    logging.info("You are using software trigger, which \
+                                    can lead to significant delays between \
+                                    measurement instruments! Only recommended\
+                                    for debugging.")
                 while not all(buffer.is_finished() for buffer in list(self.buffers)):
                     sleep(0.1)
                 try:
                     trigger_reset()
                 except:
-                    print("No method to reset the trigger defined.")
+                    logging.info("No method to reset the trigger defined.")
 
                 results = self.readout_buffers()
                 # TODO: Append values from other dynamic parameters
@@ -704,19 +680,16 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
         datasets = []
         
         self.generate_lists()
-
         
         if len(self.dynamic_sweeps)!=2:
             raise Exception("The 2D workflow takes exactly two dynamic parameters! ")
-        # meas.register_parameter(timer)
         self.measurement_name = naming_helper(self, default_name= "2D Sweep")
         if include_gate_name:
             gate_names=[gate["gate"] for gate in self.dynamic_parameters]
-            self.measurement_name += str(gate_names)
+            self.measurement_name += f" {gate_names}"
         
         meas = Measurement(name=self.measurement_name)
 
-            
         if reverse_param_order:
             slow_param = self.dynamic_channels[1]
             slow_sweep = self.dynamic_sweeps[1]
@@ -774,7 +747,6 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
         except:
             pass
         with meas.run() as datasaver:
-            data = {}
             results = []
             slow_setpoints = slow_sweep.get_setpoints()
             for setpoint in slow_setpoints:
@@ -789,59 +761,51 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
                 if reset_time<slow_sweep._delay:
                     sleep(slow_sweep._delay-reset_time)
                 self.ready_buffers()
-
-                if trigger_type == "manual":
-                    try:
-                        fast_param.root_instrument._qtools_ramp(
-                            [fast_param],
-                            end_values=[fast_sweep.get_setpoints()[-1]],
-                            ramp_time=self.buffer_settings["duration"],
-                            sync_trigger=sync_trigger,
-                        )
-                    except:
-                        print("No ramp method found. Setting setpoints manually")
-                        print(
-                            "It is strongly advised to use unbuffered \measurements, when no ramp method is available!"
-                        )
-                        for v in fast_sweep.get_setpoints():
-                            fast_param.set(v)
-                            sleep(fast_sweep._delay)
-    
-                if trigger_type == "hardware":
-                    try:
-                        fast_param.root_instrument._qtools_ramp(
-                            [fast_param],
-                            end_values=[fast_sweep.get_setpoints()[-1]],
-                            ramp_time=self.buffer_settings["duration"],
-                            sync_trigger=sync_trigger,
-                        )
-                        trigger_start()
-                    except NameError:
-                        print("Please set a trigger or define a trigger_start method")
-                    pass
-    
-                elif trigger_type == "software":
+                try:
                     fast_param.root_instrument._qtools_ramp(
                         [fast_param],
                         end_values=[fast_sweep.get_setpoints()[-1]],
                         ramp_time=self.buffer_settings["duration"],
+                        sync_trigger=sync_trigger,
                     )
+                except AttributeError() as e:
+                    print("Exception: This instrument probably does not have a \
+                          a qtools_ramp method. Buffered measurements without \
+                          ramp method are no longer supported. \
+                          Use the unbuffered script!")
+                    raise e
+                    
+                if trigger_type == "manual":
+                    pass
+    
+                if trigger_type == "hardware":
+                    try:
+                        trigger_start()
+                    except NameError as e:
+                        print("Please set a trigger or define a trigger_start method")
+                        raise e
+    
+                elif trigger_type == "software":
                     for buffer in self.buffers:
                         buffer.force_trigger()
-    
+                    logging.info("You are using software trigger, which \
+                                    can lead to significant delays between \
+                                    measurement instruments! Only recommended\
+                                    for debugging.")
+                        
                 while not all(buffer.is_finished() for buffer in list(self.buffers)):
                     sleep(0.1)
                 try:
                     trigger_reset()
                 except:
-                    print("No method to reset the trigger defined. \
-                          As you are doing a 2D Sweep, this can have undesired \
-                              consequences!")
+                    logging.info("No method to reset the trigger defined. \
+                        As you are doing a 2D Sweep, this can have undesired \
+                        consequences!")
     
                 results = self.readout_buffers()
                 datasaver.add_result((slow_param, setpoint),
                                      (fast_param, fast_sweep.get_setpoints()),
                                      *results,
                                      *static_gettables,)
-                datasets.append(datasaver.dataset)
+        datasets.append(datasaver.dataset)
         return datasets

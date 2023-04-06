@@ -3,6 +3,7 @@ Measurement
 """
 import inspect
 import json
+import logging
 from abc import ABC, abstractmethod
 from collections.abc import MutableSequence
 from contextlib import suppress
