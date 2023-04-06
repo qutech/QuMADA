@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
 from threading import Event, Thread
-from typing import Any
+from typing import Any, Union
 
 from PyQt5.QtCore import (
     QItemSelectionModel,
@@ -51,7 +51,7 @@ from qtools.instrument.mapping.base import (
     filter_flatten_parameters,
 )
 
-TerminalParameters = Mapping[Any, Mapping[Any, Parameter] | Parameter]
+TerminalParameters = Mapping[Any, Union[Mapping[Any, Parameter], Parameter]]
 
 
 # TODO: terminal_parameter attributes
