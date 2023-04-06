@@ -6,6 +6,7 @@ stages:
   - deploy
 
 before_script:
+  - apt-get update && apt-get install libgl1 -y
   - python -V  # Print out python version for debugging
   - pip install virtualenv
   - virtualenv venv
