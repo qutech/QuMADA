@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+import json
 from collections.abc import Iterable, Mapping
-from threading import Event, Thread
 from typing import Any, Union
 
 from PyQt5.QtCore import (
@@ -32,8 +32,11 @@ from PyQt5.QtWidgets import (
     QDesktopWidget,
     QHBoxLayout,
     QInputDialog,
+    QLabel,
     QMainWindow,
+    QMessageBox,
     QPushButton,
+    QScrollArea,
     QSizePolicy,
     QSplitter,
     QTreeView,
@@ -45,6 +48,8 @@ from qcodes.instrument.instrument import Instrument
 from qcodes.instrument.parameter import Parameter
 from qcodes.station import Station
 from qcodes.utils.metadata import Metadatable
+from qtools_metadata.measurement import MeasurementMapping
+from qtools_metadata.metadata import Metadata
 
 from qtools.instrument.mapping.base import (
     add_mapping_to_instrument,
@@ -171,7 +176,7 @@ class TerminalTreeView(QTreeView):
                         )
                         any_mapped = True
                     else:
-                        raise TypeError("Gate parameters has to be either None or of type Parameter.")
+                        raise TypeError("Gate parameters have to be either None or of type Parameter.")
                 else:
                     all_mapped = False
 
@@ -555,16 +560,34 @@ class AppInstanceException(Exception):
     pass
 
 
+class ScrollLabel(QScrollArea):
+    def __init__(self, text: str):
+        QScrollArea.__init__(self)
+
+        self.setWidgetResizable(True)
+
+        self.label = QLabel(self)
+        self.setWidget(self.label)
+        self.label.setIndent(10)
+        self.label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+        self.label.setWordWrap(True)
+
+        self.label.setText(text)
+
+    def setText(self, text):
+        self.label.setText(text)
+
+
 class MainWindow(QMainWindow):
     def __init__(
         self,
         components,
         terminal_parameters,
-        existing_terminal_parameters: TerminalParameters | None = None,
         monitoring: bool = False,
     ):
         super().__init__()
         self.components = components
+        self.setWindowTitle("Mapping GUI")
 
         container = QWidget()
         layout = QVBoxLayout()
@@ -606,7 +629,7 @@ class MainWindow(QMainWindow):
         button_unfold_terminals.clicked.connect(self.unfold_terminals)
 
         button_exit = QPushButton("Exit (e)")
-        button_exit.clicked.connect(self.exit_program)
+        button_exit.clicked.connect(self.close)
 
         # Button layout
         button_layout.addWidget(button_map_auto)
@@ -642,7 +665,7 @@ class MainWindow(QMainWindow):
         Monitoring_menu.addAction(self.toggle_monitoring_action)
 
         # Monitoring - Get type (from cache or by get() command)
-        get_type_menu = Monitoring_menu.addMenu("Get type (TODO)")
+        get_type_menu = Monitoring_menu.addMenu("Get type")
         self.use_cache_action = QAction("Only Cached values", self)
         self.use_get_action = QAction("Get command", self)
         self.use_cache_action.setCheckable(True)
@@ -652,6 +675,10 @@ class MainWindow(QMainWindow):
         get_type_menu.addAction(self.use_get_action)
         self.use_get_action.triggered.connect(self.monitoring_set_get_type)
         self.use_cache_action.triggered.connect(self.monitoring_set_cache_type)
+
+        # Help button
+        help_action = menu.addAction("Help")
+        help_action.triggered.connect(self.show_help)
 
         # Main layout
         layout.addWidget(upper_widget)
@@ -666,25 +693,70 @@ class MainWindow(QMainWindow):
         self.resize(QDesktopWidget().availableGeometry(self).size() * 0.45)
 
         self.terminal_parameters = terminal_parameters
-        if existing_terminal_parameters is None:
-            for terminal_name, parameter_mapping in terminal_parameters.items():
-                for terminal_parameter, instr_parameter in parameter_mapping.items():
-                    self.terminal_parameters[terminal_name][terminal_parameter] = None
-        else:
-            for terminal_name, parameter_mapping in existing_terminal_parameters.items():
-                for terminal_parameter, instr_parameter in parameter_mapping.items():
-                    if not instr_parameter is None:
-                        self.map_parameter(instr_parameter, (terminal_name, terminal_parameter))
 
-            self.terminal_tree.update_tree()
+        self.terminal_tree.update_tree()
 
     def closeEvent(self, ev) -> None:
         """
         This seems to close the application when exiting window more reliably
         """
+        all_mapped = True
+        parameter_duplicates = {}
+        for terminal_params in self.terminal_parameters.values():
+            for param in terminal_params.values():
+                if param is None:
+                    all_mapped = False
+                elif isinstance(param, Parameter):
+                    param_hash = hash(param)
+                    if param_hash in parameter_duplicates:
+                        parameter_duplicates[param_hash].append(param)
+                    else:
+                        parameter_duplicates[param_hash] = [param]
+                else:
+                    raise TypeError("Gate parameters have to be either None or of type Parameter.")
+
+        # Not every terminal parameter is mapped
+        if not all_mapped:
+            dialog = QMessageBox()
+            dialog.setWindowTitle("Warning! Not all parameters mapped!")
+            dialog.setIcon(QMessageBox.Warning)
+            dialog.setText("Do you really want to stop the mapping process? Not all parameters are mapped!")
+            dialog.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+            answer = dialog.exec()
+            # answer = dialog.question(self, "", "Do you really want to stop the mapping process? Not all parameters are mapped!",  QMessageBox.Yes | QMessageBox.No)
+            if not answer == QMessageBox.Yes:
+                ev.ignore()
+                return
+
+        # Give warning if there are duplicates
+        for items_with_param in parameter_duplicates.values():
+            if len(items_with_param) != 1:
+                dialog = QMessageBox()
+                dialog.setWindowTitle("Warning! Duplicate mapping!")
+                dialog.setIcon(QMessageBox.Warning)
+                dialog.setText(
+                    "Do you really want to stop the mapping process? Multiple terminal parameters are mapped to the same parameter!"
+                )
+                dialog.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+                answer = dialog.exec()
+                # answer = dialog.question(self, "", "Do you really want to stop the mapping process? Multiple terminal parameters are mapped to the same parameter!",  QMessageBox.Yes | QMessageBox.No)
+                if not answer == QMessageBox.Yes:
+                    ev.ignore()
+                    return
+
+        # properly close application
         self.terminal_tree.monitoring_timer.stop()
         QApplication.exit()
         return super().closeEvent(ev)
+
+    def show_help(self):
+        gui_help_txt_path = __file__.replace("mapping_gui.py", "GUI_help.txt")
+        with open(gui_help_txt_path) as f:
+            help_txt = f.read()
+
+        self.help_window = ScrollLabel(help_txt)
+
+        self.help_window.show()
 
     def monitoring_set_get_type(self):
         self.use_get_action.setChecked(True)
@@ -769,7 +841,7 @@ class MainWindow(QMainWindow):
 
                 perfect_mappings = self.instrument_tree.get_perfect_mappings(terminal_params)
 
-                # set idx to first perfect_mapping that not has not yet been fully mapped to a terminal
+                # set idx to first perfect_mapping that has not yet been fully mapped to a terminal
                 idx = self.instrument_tree.model().invisibleRootItem().child(0, 0).index()  # default
                 for perfect_mapping in perfect_mappings:
                     instr_mapped = False
@@ -798,34 +870,65 @@ class MainWindow(QMainWindow):
                 idx_instr = self.instrument_tree.selectedIndexes()[0]
                 instr_elem = self.instrument_tree.model().itemFromIndex(idx_instr)
 
-                mapped = self.map_given_terminal_instrument_elem_selection(terminal_elem.source, instr_elem.source)
-                if mapped:
-                    self.terminal_tree.selected_terminal_tree_elem = None
+                # Check if it is already mapped to display dialog
+                any_mapped = False
+                if type(terminal_elem.source[1]) is str:
+                    terminal_params = (terminal_elem.source[1],)
+                else:
+                    terminal_params = terminal_elem.source[1]
 
-                    # select next not fully mapped terminal (quick navigation)
-                    self.terminal_tree.setFocus()
-                    for terminal_name, terminal in self.terminal_tree.terminal_parameters.items():
-                        all_mapped = True
-                        for terminal_param_name, terminal_param in terminal.items():
-                            if terminal_param is None:
-                                all_mapped = False
+                for terminal_param in terminal_params:
+                    if not self.terminal_parameters[terminal_elem.source[0]][terminal_param] is None:
+                        any_mapped = True
+                        break
+
+                    if any_mapped:
+                        break
+
+                if any_mapped:
+                    dialog = QMessageBox()
+                    btn = dialog.question(
+                        self,
+                        "",
+                        "Do you really want to change/overwrite the existing mapping?",
+                        QMessageBox.Yes | QMessageBox.No,
+                    )
+                    if btn == QMessageBox.Yes:
+                        do_mapping = True
+                    else:
+                        do_mapping = False
+                else:
+                    do_mapping = True
+
+                if do_mapping:
+                    mapped = self.map_given_terminal_instrument_elem_selection(terminal_elem.source, instr_elem.source)
+                    if mapped:
+                        self.terminal_tree.selected_terminal_tree_elem = None
+
+                        # select next not fully mapped terminal (quick navigation)
+                        self.terminal_tree.setFocus()
+                        for terminal_name, terminal in self.terminal_tree.terminal_parameters.items():
+                            all_mapped = True
+                            for terminal_param_name, terminal_param in terminal.items():
+                                if terminal_param is None:
+                                    all_mapped = False
+                                    break
+
+                            if not all_mapped:
+                                terminal_elem = get_child(self.terminal_tree.model().invisibleRootItem(), terminal_name)
+
+                                self.terminal_tree.selectionModel().select(
+                                    terminal_elem.index(), QItemSelectionModel.SelectionFlag.ClearAndSelect
+                                )
+                                self.terminal_tree.setCurrentIndex(terminal_elem.index())
                                 break
-
-                        if not all_mapped:
-                            terminal_elem = get_child(self.terminal_tree.model().invisibleRootItem(), terminal_name)
-
-                            self.terminal_tree.selectionModel().select(
-                                terminal_elem.index(), QItemSelectionModel.SelectionFlag.ClearAndSelect
-                            )
-                            self.terminal_tree.setCurrentIndex(terminal_elem.index())
-                            break
             # self.terminal_tree.update_tree()
         elif event.key() == Qt.Key_A:
             self.map_automatically()
         elif event.key() == Qt.Key_R:
             self.reset_mapping()
         elif event.key() == Qt.Key_E:
-            self.exit_program()
+            self.close()
         elif event.key() == Qt.Key_U:
             self.unfold_terminals()
 
@@ -915,6 +1018,16 @@ class MainWindow(QMainWindow):
 
     def map_automatically(self):
         """
+        Map all terminals automatically. The algorithm used is equivalent to selecting the first terminal and repeatedly
+        pressing the enter key until the last terminal (in the tree) is mapped. This works best if the terminals are in
+        the same order as the instruments that they should be mapped to. Additionally the terminals mapping to channels of
+        an instrument should be ordered the same as the channels (up to the driver but usually something like 0,1,2,...)
+        """
+        # TODO
+        print("Map automatically feature will be changed.")
+
+    def map_automatically_unique(self):
+        """
         Automatically map all unique terminal_parameter instrument_parameter pairs. If there are multiple terminal_parameters
         with the same name their unique mapping is impossible.
         """
@@ -955,13 +1068,6 @@ class MainWindow(QMainWindow):
 
         self.terminal_tree.update_tree()
 
-    def exit_program(self):
-        """
-        Stop timer thread and then close application
-        """
-        self.terminal_tree.monitoring_timer.stop()
-        QApplication.exit()
-
     def reset_mapping(self):
         """
         Reset all mappings. Reset dictionary which actually holds the mapping. Reset Tree representation.
@@ -981,7 +1087,8 @@ def map_terminals_gui(
     terminal_parameters: TerminalParameters,
     existing_terminal_parameters: TerminalParameters | None = None,
     metadata: Metadata | None = None,
-    monitoring: bool = False,
+    monitoring: bool = True,
+    skip_gui_if_mapped: bool = True,
 ) -> None:
     """
     Maps the terminals, that were defined in the MeasurementScript to the instruments, that are initialized in QCoDeS.
@@ -993,19 +1100,58 @@ def map_terminals_gui(
                 that is used to automatically create the mapping for already known terminals without user input.
         metadata (Metadata | None): If provided, add mapping to the metadata object.
         monitoring: if True the mapped parameters are periodically read out (either by get command (default) or cached value)
+        skip_gui_if_mapped: if True and existing_terminal_parameters completely covers all terminal_parameters, dont open gui and continue
     """
+    if existing_terminal_parameters is None:
+        # reset in case there is already some mapping
+        for terminal_name, parameter_mapping in terminal_parameters.items():
+            for terminal_parameter, instr_parameter in parameter_mapping.items():
+                terminal_parameters[terminal_name][terminal_parameter] = None
 
-    if QApplication.instance() is None:
-        app = QApplication([])
+        run_gui = True
     else:
-        app = QApplication.instance()
+        # try to get the mapping from an existing mapping (if the respective terminal name exists)
+        for terminal_name, terminal_params in terminal_parameters.items():
+            if terminal_name in existing_terminal_parameters:
+                for terminal_param_name, mapped_param in terminal_params.items():
+                    if terminal_param_name in existing_terminal_parameters[terminal_name]:
+                        terminal_parameters[terminal_name][terminal_param_name] = existing_terminal_parameters[
+                            terminal_name
+                        ][terminal_param_name]
 
-    w = MainWindow(
-        components,
-        terminal_parameters,
-        existing_terminal_parameters=existing_terminal_parameters,
-        monitoring=monitoring,
-    )
+        all_mapped = True
+        for terminal_params in terminal_parameters.values():
+            for param in terminal_params.values():
+                if param is None:
+                    all_mapped = False
+                    break
 
-    w.show()
-    app.exec_()
+            if not all_mapped:
+                break
+
+        run_gui = not all_mapped
+        # # do not open GUI if everything is already mapped
+        # if(all_mapped):
+        #     return
+
+    if run_gui or not skip_gui_if_mapped:
+        if QApplication.instance() is None:
+            app = QApplication([])
+        else:
+            app = QApplication.instance()
+
+        w = MainWindow(
+            components,
+            terminal_parameters,
+            monitoring=monitoring,
+        )
+
+        w.show()
+        app.exec_()
+
+    # if metadata is provided, add mapping to metadata object
+    if not metadata is None:
+        j = json.dumps(terminal_parameters, default=lambda o: str(o))
+        if not metadata.measurement.mapping:
+            metadata.measurement.mapping = MeasurementMapping.create("custom-mapping")
+        metadata.measurement.mapping.mapping = json.dumps(j)
