@@ -79,7 +79,7 @@ class MeasurementScript(ABC):
         "count",
         "aux_voltage_1",
         "aux_voltage_2",
-        "temperature",
+        "test_parameter",
     }
 
     def __new__(cls, *args, **kwargs):

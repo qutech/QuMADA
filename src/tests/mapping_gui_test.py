@@ -53,8 +53,8 @@ parameters: TerminalParameters = {
             "setpoints": [0, 5],
         }
     },
-    "T1": {"temperature": {"type": "gettable"}},
-    "T2": {"temperature": {"type": "gettable"}},
+    "T1": {"test_parameter": {"type": "gettable"}},
+    "T2": {"test_parameter": {"type": "gettable"}},
 }
 # parameters: TerminalParameters = {
 #     "dmm": {"voltage": {"type": "gettable"}, "current": {"type": "gettable"}},
@@ -75,37 +75,9 @@ from PyQt5.QtWidgets import QApplication
 print(QApplication.instance())
 
 # %%
-map_terminals_gui(station.components, script.gate_parameters, monitoring=True)
+map_terminals_gui(station.components, script.gate_parameters, monitoring=False)
 print("finished")
 
 # %%
 map_terminals_gui(station.components, script.gate_parameters, script.gate_parameters, monitoring=True)
 print("finished")
-
-# %%
-# Testing monitoring (keep_open=True, auto_run=True, monitoring=True)
-k = 0
-backwards = False
-while True:
-    sleep(0.01)
-    # print("update params")
-    dac.set("voltage", k)
-
-    if not backwards:
-        if k < 5:
-            k = k + 0.1
-        else:
-            backwards = True
-            k = k - 0.1
-    else:
-        if k > 0:
-            k = k - 0.1
-        else:
-            backwards = False
-            k = k + 0.1
-
-# %%
-for gate_name, gate in script.gate_parameters.items():
-    for param_name, param in gate.items():
-        print(gate_name, param_name)
-        script.gate_parameters[gate_name][param_name] = None
