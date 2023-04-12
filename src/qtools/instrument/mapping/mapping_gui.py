@@ -1018,14 +1018,59 @@ class MainWindow(QMainWindow):
 
     def map_automatically(self):
         """
-        Map all terminals automatically. The algorithm used is equivalent to selecting the first terminal and repeatedly
+        Map all terminals automatically. The algorithm used is (almost) equivalent to selecting the first terminal and repeatedly
         pressing the enter key until the last terminal (in the tree) is mapped. This works best if the terminals are in
         the same order as the instruments that they should be mapped to. Additionally the terminals mapping to channels of
         an instrument should be ordered the same as the channels (up to the driver but usually something like 0,1,2,...)
         """
-        # TODO
-        print("Map automatically feature will be changed.")
+        self.reset_mapping()
 
+        for terminal_name, terminal in self.terminal_parameters.items():
+            _perfect_mappings = self.instrument_tree.get_perfect_mappings(terminal.keys())
+
+            # filtering out parent channels (instrument) that would also lead to unique mapping
+            # This is an edge case for instruments that have a single channel of some type (then both the channel and the instrument are uniquely mappable)
+            perfect_mappings = []
+            for _perfect_mapping1 in _perfect_mappings:
+                # check if there is a mapping which has _perfect_mapping1 as parent
+                child_in_perfect_mappings = False
+                for _perfect_mapping2 in _perfect_mappings:
+                    if _perfect_mapping1.source is _perfect_mapping2.source.parent:
+                        child_in_perfect_mappings = True
+                        break
+
+                if not child_in_perfect_mappings:
+                    perfect_mappings.append(_perfect_mapping1)
+
+            # map to first perfect_mapping that has not yet been fully mapped to a terminal
+            for perfect_mapping in perfect_mappings:
+                perfect_mapping_channel_name = perfect_mapping.source.full_name
+                instr_mapped = False
+                # find out if perfect mapping candidate has been already perfectly mapped to another terminal
+                for _terminal_name, _terminal in self.terminal_parameters.items():
+                    all_mapped_to_same_channel = True
+                    for terminal_param_name, param in _terminal.items():
+                        if not param is None:
+                            if param.instrument.full_name != perfect_mapping_channel_name:
+                                all_mapped_to_same_channel = False
+                                break
+                        else:
+                            all_mapped_to_same_channel = False
+                            break
+
+                    if all_mapped_to_same_channel:
+                        instr_mapped = True
+                        break
+
+                if not instr_mapped:
+                    # map to channel
+                    terminal_element = (terminal_name, tuple(terminal.keys()))
+                    mapped = self.map_given_terminal_instrument_elem_selection(terminal_element, perfect_mapping.source)
+                    break
+
+        self.terminal_tree.update_tree()
+
+    # Not used anymore. Unique, but algorithm to weak to be useful in practise
     def map_automatically_unique(self):
         """
         Automatically map all unique terminal_parameter instrument_parameter pairs. If there are multiple terminal_parameters
