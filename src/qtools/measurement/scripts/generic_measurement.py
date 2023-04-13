@@ -99,7 +99,7 @@ class Generic_nD_Sweep(MeasurementScript):
         -------
         data : QCoDeS dataset with measurement data
         """
-
+        self.buffered = False
         self.initialize()
         wait_time = self.settings.get("wait_time", 5)
         include_gate_name = self.settings.get("include_gate_name", True)

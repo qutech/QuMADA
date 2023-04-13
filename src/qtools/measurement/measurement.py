@@ -82,14 +82,13 @@ class MeasurementScript(ABC):
         "test_parameter",
     }
 
-    def __new__(cls, *args, **kwargs):
-        # reverse order, so insert metadata is run second
-        cls.run = create_hook(cls.run, cls._insert_metadata_into_db)
-        cls.run = create_hook(cls.run, cls._add_data_to_metadata)
-        cls.run = create_hook(cls.run, cls._add_datetime_to_metadata_if_empty)
-        return super().__new__(cls, *args, **kwargs)
-
     def __init__(self):
+        # Create function hooks for metadata
+        # reverse order, so insert metadata is run second
+        self.run = create_hook(self.run, self._insert_metadata_into_db)
+        self.run = create_hook(self.run, self._add_data_to_metadata)
+        self.run = create_hook(self.run, self._add_current_datetime_to_metadata)
+
         self.properties: dict[Any, Any] = {}
         self.gate_parameters: dict[Any, Union[dict[Any, Union[Parameter, None]], Parameter, None]] = {}
         self._buffered_num_points: int | None = None
@@ -124,21 +123,34 @@ class MeasurementScript(ABC):
 
         Raises
         ------
-        Exception
-           Exception if number of points is overdefined.
+        None
 
         Returns
         -------
         None
         """
-        if all(k in self.buffer_settings for k in ("sampling_rate", "burst_duration", "num_points")):
-            raise Exception("You cannot define sampling_rate, burst_duration and num_points at the same time")
-        elif self.buffer_settings.get("num_points", False):
-            self.buffered_num_points = self.buffer_settings["num_points"]
-        elif all(k in self.buffer_settings for k in ("sampling_rate", "burst_duration")):
-            self.buffered_num_points = int(
-                np.ceil(self.buffer_settings["sampling_rate"] * self.buffer_settings["burst_duration"])
-            )
+
+        if "burst_duration" in self.buffer_settings:
+            self._burst_duration = self.buffer_settings["burst_duration"]
+
+        if "duration" in self.buffer_settings:
+            if "burst_duration" in self.buffer_settings:
+                self._num_bursts = np.ceil(self.buffer_settings["duration"] / self._burst_duration)
+            elif "num_bursts" in self.buffer_settings:
+                self._num_bursts = int(self.buffer_settings["num_bursts"])
+                self._burst_duration = self.buffer_settings["duration"] / self._num_bursts
+
+        if "num_points" in self.buffer_settings:
+            self.buffered_num_points = int(self.buffer_settings["num_points"])
+            if "sampling_rate" in self.buffer_settings:
+                self._burst_duration = float(self.buffered_num_points / self.buffer_settings["sampling_rate"])
+
+        elif "sampling_rate" in self.buffer_settings:
+            self._sampling_rate = float(self.buffer_settings["sampling_rate"])
+            if self._burst_duration is not None:
+                self.buffered_num_points = int(np.ceil(self._sampling_rate * self._burst_duration))
+            elif all(k in self.buffer_settings for k in ("duration", "num_bursts")):
+                self._burst_duration = float(self.buffer_settings["duration"] / self.buffer_settings["num_bursts"])
 
     def setup(
         self,
@@ -305,7 +317,7 @@ class MeasurementScript(ABC):
                                     self.properties[gate][parameter]["start"],
                                     self.properties[gate][parameter]["stop"],
                                     self.buffered_num_points,
-                                    self.properties[gate][parameter]["delay"],
+                                    delay=self.properties[gate][parameter].setdefault("delay", 0),
                                 )
                             )
                         except KeyError:
@@ -326,7 +338,7 @@ class MeasurementScript(ABC):
                                     self.properties[gate][parameter]["start"],
                                     self.properties[gate][parameter]["stop"],
                                     self.properties[gate][parameter]["num_points"],
-                                    self.properties[gate][parameter]["delay"],
+                                    delay=self.properties[gate][parameter].setdefault("delay", 0),
                                 )
                             )
                         except KeyError:
@@ -451,12 +463,11 @@ class MeasurementScript(ABC):
             for key, parameter in parameters.items():
                 parameter.label = f"{gate} {key}"
 
-    def _add_datetime_to_metadata_if_empty(self, *args, add_datetime_to_metadata: bool = True, **kwargs):
+    def _add_current_datetime_to_metadata(self, *args, add_datetime_to_metadata: bool = True, **kwargs):
         if add_datetime_to_metadata:
             try:
                 metadata = self.metadata
-                if not metadata.measurement.datetime:
-                    metadata.measurement.datetime = datetime.now()
+                metadata.measurement.datetime = datetime.now()
             except Exception as ex:
                 print(f"Datetime could not be added to metadata: {ex}")
 
@@ -471,8 +482,14 @@ class MeasurementScript(ABC):
                 datalist = metadata.measurement.data
                 db_location = qc.config.core.db_location
                 data = MeasurementData.create(f"{cls.__name__}Data", "sqlite3", db_location)
+
                 # Add only if not already in list
-                if not data in datalist:
+                # When we compare the data objects, the newly created one does not yet have the measurement referenced or a pid.
+                # Thus, ignore data.measurement and data.pid for the comparison
+                def _compare_data(d1, d2):
+                    return d1.name == d2.name and d1.dataType == d2.dataType and d1.pathToData == d2.pathToData
+
+                if not any(_compare_data(data, d2) for d2 in datalist):
                     datalist.append(data)
             except Exception as e:
                 print(f"Data could not be added to metadata: {e}")

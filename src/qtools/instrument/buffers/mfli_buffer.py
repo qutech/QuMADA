@@ -41,6 +41,8 @@ class MFLIBuffer(Buffer):
         self._trigger: str | None = None
         self._channel = 0
         self._num_points: int | None = None
+        self._num_bursts: int = 1
+        self._burst_duration: float | None = None
 
     def setup_buffer(self, settings: dict) -> None:
         # validate settings
@@ -66,18 +68,8 @@ class MFLIBuffer(Buffer):
             self._device.triggers.in_[1].level(settings["trigger_threshold"])
         else:
             print("Warning: No trigger threshold specified!")
-
         self._set_num_points()
-        # TODO: This won't work when num_points is passed with settings!
-        if all(k in settings for k in ("sampling_rate", "burst_duration", "duration")):
-            num_cols = self.num_points
-            num_bursts = int(np.ceil(settings["duration"] / settings["burst_duration"]))
-            self._daq.count(num_bursts)
-            self._daq.duration(settings["burst_duration"])
-            self._daq.grid.cols(num_cols)
-
-        if "delay" in settings:
-            self._daq.delay(settings["delay"])
+        self._daq.delay = settings.get("delay", 0)
 
     @property
     def trigger(self):
@@ -89,6 +81,7 @@ class MFLIBuffer(Buffer):
         # TODO: This is done BEFORE the setup_buffer, so changes to trigger type will be overriden anyway?
         # print(f"Running trigger setter with: {trigger}")
         if trigger is None:
+            print("No Trigger provided! Setting trigger to continuous.")
             self._daq.type(0)
         elif trigger in self.AVAILABLE_TRIGGERS:
             samplenode = self._device.demods[self._channel].sample
@@ -120,33 +113,68 @@ class MFLIBuffer(Buffer):
     @num_points.setter
     def num_points(self, num_points) -> None:
         if num_points > 8388608:
-            raise BufferException("Buffer is to small for this measurement. Please reduce the number of data points")
+            raise BufferException(
+                "Buffer is to small for this measurement. \
+                                  Please reduce the number of data points"
+            )
         self._num_points = int(num_points)
+
+    # TODO: Define setter for other settings (e.g. burst_duration, num_bursts etc)
 
     def _set_num_points(self) -> None:
         """
-        Calculates number of datapoints and sets
-        the num_points accordingly.
-        Raises
+        Calculates all required settings for the MFLI and sets the values
+        accordingly
         ------
         Exception
-           Exception if number of points is overdefined.
+           Exception if number of points or number of burst is overdefined.
 
         Returns
         -------
         None
         """
+        # TODO: Include ._daq.repetitions (averages over multiple bursts)
+
         if all(k in self.settings for k in ("sampling_rate", "burst_duration", "num_points")):
             raise BufferException("You cannot define sampling_rate, burst_duration and num_points at the same time")
-        elif self.settings.get("num_points", False):
-            self.num_points = self.settings["num_points"]
-        elif all(k in self.settings for k in ("sampling_rate", "burst_duration")):
-            self.num_points = int(np.ceil(self.settings["sampling_rate"] * self.settings["burst_duration"]))
+
+        if all(k in self.settings for k in ("sampling_rate", "duration", "num_bursts", "num_points")):
+            raise BufferException(
+                "You cannot define sampling rate, duration and num_burst and num_points at the same time"
+            )
+
+        if all(k in self.settings for k in ("num_bursts", "duration", "burst_duration")):
+            raise BufferException("You cannnot define duration, burst_duration and num_bursts at the same time")
+
+        if "burst_duration" in self.settings:
+            self._burst_duration = self.settings["burst_duration"]
+
+        if "duration" in self.settings:
+            if "burst_duration" in self.settings:
+                self._num_bursts = np.ceil(self.settings["duration"] / self._burst_duration)
+            elif "num_bursts" in self.settings:
+                self._num_bursts = int(self.settings["num_bursts"])
+                self._burst_duration = self.settings["duration"] / self._num_bursts
+
+        if "num_points" in self.settings:
+            self.num_points = int(self.settings["num_points"])
+            if "sampling_rate" in self.settings:
+                self._burst_duration = float(self.num_points / self.settings["sampling_rate"])
+
+        elif "sampling_rate" in self.settings:
+            self._sampling_rate = float(self.settings["sampling_rate"])
+            if self._burst_duration is not None:
+                self.num_points = int(np.ceil(self._sampling_rate * self._burst_duration))
+            elif all(k in self.settings for k in ("duration", "num_bursts")):
+                self._burst_duration = float(self.settings["duration"] / self.settings["num_bursts"])
+
+        self._daq.count(self._num_bursts)
+        self._daq.duration(self._burst_duration)
+        self._daq.grid.cols(self.num_points)
 
     def read(self) -> dict:
         data = self.read_raw()
         result_dict = {}
-        # print(f"data = {data}")
         for parameter in self._subscribed_parameters:
             node = self._get_node_from_parameter(parameter)
             key = next(key for key in data.keys() if str(key) == str(node))

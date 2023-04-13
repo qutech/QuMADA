@@ -170,3 +170,20 @@ Metadata or any domain object can be saved to the database manually by :py:meth:
     # Save specific domain object
     measurement: Measurement = create_metadata_object(Measurement)
     measurement.save()
+
+
+Override and copy behavior
+--------------------------
+
+During a save, qtools_metadata checks the local domain object differs from the DB.
+If so, the user is asked if the entry should be overwritten or if a new copy should be created.
+
+This behavior is not desirable, when measurements are performed without user interaction.
+To set a standard behavior, one can set the flag :py:attr:`qtools_metadata.domain.db_overwrite_default`:
+
+.. code-block:: python
+
+    import qtools_metadata.domain
+
+    # Set to "ask" (default), "overwrite" or "copy"
+    qtools_metadata.domain.db_overwrite_default = "copy"
