@@ -202,7 +202,7 @@ class Timetrace(MeasurementScript):
         timestep = self.settings.get("timestep", 1)
         timer = ElapsedTimeParameter("time")
         naming_helper(self, default_name="Timetrace")
-        meas = Measurement(self.measurement_name)
+        meas = Measurement(name=self.measurement_name)
         meas.register_parameter(timer)
         for parameter in [*self.gettable_channels, *self.dynamic_channels]:
             meas.register_parameter(

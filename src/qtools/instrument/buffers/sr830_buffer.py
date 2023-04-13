@@ -143,7 +143,7 @@ class SR830Buffer(Buffer):
                 raise BufferException(f"Parameter {parameter.name} can not be buffered.")
 
     def unsubscribe(self, parameters: list[Parameter]) -> None:
-        for parameter in parameters:
+        for parameter in parameters.copy():
             name = parameter.name
             if name in ["X", "R", "X Noise", "aux_in1", "aux_in2"]:
                 self._subscribed_parameters.remove(parameter)
