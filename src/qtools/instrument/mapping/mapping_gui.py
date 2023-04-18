@@ -619,24 +619,24 @@ class MainWindow(QMainWindow):
         button_container = QWidget()
         button_layout = QHBoxLayout()
 
-        button_map_auto = QPushButton("Map automatically (a)")
-        button_map_auto.clicked.connect(self.map_automatically)
+        self.button_map_auto = QPushButton("Map automatically (a)")
+        self.button_map_auto.clicked.connect(self.map_automatically)
 
-        button_reset_mapping = QPushButton("Reset mapping (r)")
-        button_reset_mapping.clicked.connect(self.reset_mapping)
+        self.button_reset_mapping = QPushButton("Reset mapping (r)")
+        self.button_reset_mapping.clicked.connect(self.reset_mapping)
 
-        button_unfold_terminals = QPushButton("Unfold (u)")
-        button_unfold_terminals.clicked.connect(self.unfold_terminals)
+        self.button_unfold_terminals = QPushButton("Unfold (u)")
+        self.button_unfold_terminals.clicked.connect(self.unfold_terminals)
 
-        button_exit = QPushButton("Exit (e)")
-        button_exit.clicked.connect(self.close)
+        self.button_exit = QPushButton("Exit (e)")
+        self.button_exit.clicked.connect(self.close)
 
         # Button layout
-        button_layout.addWidget(button_map_auto)
-        button_layout.addWidget(button_reset_mapping)
-        button_layout.addWidget(button_unfold_terminals)
+        button_layout.addWidget(self.button_map_auto)
+        button_layout.addWidget(self.button_reset_mapping)
+        button_layout.addWidget(self.button_unfold_terminals)
         button_layout.addStretch()
-        button_layout.addWidget(button_exit)
+        button_layout.addWidget(self.button_exit)
         button_container.setLayout(button_layout)
         button_container.setSizePolicy(QSizePolicy.Policy(3), QSizePolicy.Policy(0))
 

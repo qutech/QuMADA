@@ -30,7 +30,7 @@ pylint:
 unit_test:
   stage: test
   script:
-  - pip install pytest pytest-cov pytest-mock pytest-cases
+  - pip install pytest pytest-cov pytest-mock pytest-cases pytest-qt
   - pytest --junitxml=report.xml --cov=src --cov-report=xml --cov-report=term src/tests
   coverage: /^TOTAL.+?(\d+%)$/
   artifacts:
