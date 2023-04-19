@@ -11,7 +11,7 @@ stages:
   - deploy
 
 
-base:
+.base:
   image: python:3.11
   before_script:
     - pip install -U virtualenv
