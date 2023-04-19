@@ -53,9 +53,7 @@ pylint:
   stage: test
   allow_failure: true
   script:
-    - pip install pylint pylint-gitlab
-    - pip install -e .
-    - pylint --exit-zero --output-format=pylint_gitlab.GitlabCodeClimateReporter src > codeclimate.json
+    - tox -e lint -- --exit-zero --load-plugins=pylint_gitlab --output-format=gitlab-codeclimate:codeclimate.json
   artifacts:
     when: always
     reports:
