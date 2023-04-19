@@ -49,7 +49,7 @@ stages:
 
 pylint:
   extends:
-    - .base
+    - .tox
   stage: test
   allow_failure: true
   script:
