@@ -6,7 +6,7 @@ stages:
   - deploy
 
 before_script:
-  - apt-get update && apt-get install libgl1 -y
+  - apt-get update && apt-get install -y xvfb libegl1 libdbus-1-3 libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xinput0 libxcb-xfixes0 x11-utils libxcb-cursor0
   - python -V  # Print out python version for debugging
   - pip install virtualenv
   - virtualenv venv
@@ -30,7 +30,7 @@ pylint:
 unit_test:
   stage: test
   script:
-  - pip install pytest pytest-cov pytest-mock pytest-cases pytest-qt
+  - pip install pytest pytest-cov pytest-mock pytest-cases pytest-qt pytest-xvfb
   - pytest --junitxml=report.xml --cov=src --cov-report=xml --cov-report=term src/tests
   coverage: /^TOTAL.+?(\d+%)$/
   artifacts:
