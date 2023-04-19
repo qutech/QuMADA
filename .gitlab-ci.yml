@@ -17,9 +17,9 @@ stages:
     - pip install -U virtualenv
     - virtualenv venv
     - source venv/bin/activate
-    - regex='.*@ git+\(ssh\|https\):\/\/\(git@\)\?\(git-ce\.rwth-aachen\.de\/\)'
-    - sed -n "s/$regex/git+https:\/\/gitlab-ci-token:\${CI_JOB_TOKEN}@\3/p" setup.cfg >> ci_requirements.txt
-    - sed -i "/$regex/d" setup.cfg
+    - echo "machine git-ce.rwth-aachen.de" > ~/.netrc
+    - echo "login gitlab-ci-token" >> ~/.netrc
+    - echo "password ${CI_JOB_TOKEN}" >> ~/.netrc
 
 
 .tox:
