@@ -26,6 +26,7 @@ stages:
   extends:
     - .base
   before_script:
+    - !reference [.base, before_script]
     - pip install tox
 
 
@@ -35,6 +36,7 @@ stages:
   stage: test
   before_script:
     - apt-get update && apt-get install -y xvfb libegl1 libdbus-1-3 libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xinput0 libxcb-xfixes0 x11-utils libxcb-cursor0
+    - !reference [.tox, before_script]
   after_script:
     - coverage report
     - coverage xml
