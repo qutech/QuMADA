@@ -11,6 +11,7 @@ docs/_build/
 docs/_autosummary/
 
 htmlcov/
+.tox/
 .coverage
 coverage.xml
 
