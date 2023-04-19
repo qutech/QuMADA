@@ -79,6 +79,7 @@ class MeasurementScript(ABC):
         "count",
         "aux_voltage_1",
         "aux_voltage_2",
+        "test_parameter",
     }
 
     def __init__(self):
