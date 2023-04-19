@@ -67,8 +67,7 @@ py39:
     - .test
   image: python:3.9
   script:
-    - tox -e py39 -- --junitxml=report.xml
-    - coverage xml
+    - tox -e py39 -- --junitxml=report.xml --cov-report xml
 
 
 py310:
@@ -76,8 +75,7 @@ py310:
     - .test
   image: python:3.10
   script:
-    - tox -e py310 -- --junitxml=report.xml
-    - coverage xml
+    - tox -e py310 -- --junitxml=report.xml --cov-report xml
 
 
 py311:
@@ -85,8 +83,7 @@ py311:
     - .test
   image: python:3.11
   script:
-    - tox -e py311 -- --junitxml=report.xml
-    - coverage xml
+    - tox -e py311 -- --junitxml=report.xml --cov-report xml
 
 
 pages:
