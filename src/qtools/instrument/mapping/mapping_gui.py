@@ -396,7 +396,7 @@ class InstrumentTreeView(QTreeView):
             tree.map_parameter(instr_elem, terminal_tree_traversal)
             mapped = True
             # self.add_terminal_to_view(parent, row, f"{terminal[0]}.{terminal[1]}")  # maybe later - if used this should be done somewhere else (map_parameter)
-        elif isinstance(terminal_tree_traversal[1], tuple) and isinstance(instr_elem, InstrumentModule | Instrument):
+        elif isinstance(terminal_tree_traversal[1], tuple) and isinstance(instr_elem, (InstrumentModule, Instrument)):
             # map automatically as much as possible
             all_params = filter_flatten_parameters(instr_elem)
             child_params_all = {
@@ -416,7 +416,7 @@ class InstrumentTreeView(QTreeView):
                     tree.map_parameter(parameter_candidates[0], terminal_param.source)
                     mapped = True
 
-        elif isinstance(terminal_tree_traversal[1], str) and isinstance(instr_elem, InstrumentModule | Instrument):
+        elif isinstance(terminal_tree_traversal[1], str) and isinstance(instr_elem, (InstrumentModule, Instrument)):
             # map automatically to one parameter
             all_params = filter_flatten_parameters(instr_elem)
             child_params_all = {
@@ -951,7 +951,7 @@ class MainWindow(QMainWindow):
             # map directly
             self.map_parameter(instr_elem, terminal_tree_traversal)
             mapped = True
-        elif isinstance(terminal_tree_traversal[1], tuple) and isinstance(instr_elem, InstrumentModule | Instrument):
+        elif isinstance(terminal_tree_traversal[1], tuple) and isinstance(instr_elem, (InstrumentModule, Instrument)):
             # map automatically as much as possible
             all_params = filter_flatten_parameters(instr_elem)
             child_params_all = {
@@ -971,7 +971,7 @@ class MainWindow(QMainWindow):
                     self.map_parameter(parameter_candidates[0], terminal_param.source)
                     mapped = True
 
-        elif isinstance(terminal_tree_traversal[1], str) and isinstance(instr_elem, InstrumentModule | Instrument):
+        elif isinstance(terminal_tree_traversal[1], str) and isinstance(instr_elem, (InstrumentModule, Instrument)):
             # map automatically to one parameter
             all_params = filter_flatten_parameters(instr_elem)
             child_params_all = {
