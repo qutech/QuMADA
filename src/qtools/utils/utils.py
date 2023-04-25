@@ -78,7 +78,7 @@ def naming_helper(measurement_script, default_name="Measurement"):
     If metadata object is available the name in the metadata object is also 
     changed!
     """
-    if getattr(measurement_script.settings, "auto_naming", False): 
+    if measurement_script.settings.get("auto_naming", False): 
         if measurement_script.metadata is not None:
             measurement_script.metadata.measurement.name = default_name
         measurement_script.measurement_name = default_name
