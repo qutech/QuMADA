@@ -45,6 +45,7 @@ dci = DummyChannelInstrument("dci")
 add_mapping_to_instrument(dci, path=DUMMY_CHANNEL_MAPPING)
 station.add_component(dci)
 
+# "good" ordering (for mapping suggestions / auto mapping) (for station with order dmm/dac/dci)
 parameters: TerminalParameters = {
     "dmm": {"voltage": {"type": "gettable"}, "current": {"type": "gettable"}},
     "dac": {
@@ -56,6 +57,20 @@ parameters: TerminalParameters = {
     "T1": {"test_parameter": {"type": "gettable"}},
     "T2": {"test_parameter": {"type": "gettable"}},
 }
+
+# "bad" ordering (for mapping suggestions / auto mapping)
+# parameters: TerminalParameters = {
+#     "dac": {
+#         "voltage": {
+#             "type": "dynamic",
+#             "setpoints": [0, 5],
+#         }
+#     },
+#     "dmm": {"voltage": {"type": "gettable"}, "current": {"type": "gettable"}},
+#     "T1": {"test_parameter": {"type": "gettable"}},
+#     "T2": {"test_parameter": {"type": "gettable"}},
+# }
+
 # parameters: TerminalParameters = {
 #     "dmm": {"voltage": {"type": "gettable"}, "current": {"type": "gettable"}},
 # }

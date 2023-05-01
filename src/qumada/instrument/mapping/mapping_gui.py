@@ -310,6 +310,38 @@ def traverse_tree(root: QStandardItem, traversal_names: list(str)) -> QStandardI
     return traverse(root, traversal_names)
 
 
+class MessageBox_notallmapped(QMessageBox):
+    def __init__(self, parent):
+        super().__init__(parent)
+
+        self.setWindowTitle("Warning! Not all parameters mapped!")
+        self.setIcon(QMessageBox.Warning)
+        self.setText("Do you really want to stop the mapping process? Not all parameters are mapped!")
+        self.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+
+
+class MessageBox_duplicates(QMessageBox):
+    def __init__(self, parent):
+        super().__init__(parent)
+
+        self.setWindowTitle("Warning! Duplicate mapping!")
+        self.setIcon(QMessageBox.Warning)
+        self.setText(
+            "Do you really want to stop the mapping process? Multiple terminal parameters are mapped to the same parameter!"
+        )
+        self.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+
+
+class MessageBox_overwrite(QMessageBox):
+    def __init__(self, parent):
+        super().__init__(parent)
+
+        self.setWindowTitle("Warning! Duplicate mapping!")
+        self.setIcon(QMessageBox.Warning)
+        self.setText("Do you really want to change/overwrite the existing mapping?")
+        self.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+
+
 class InstrumentTreeView(QTreeView):
     """QTreeView, that displays qcodes instruments."""
 
@@ -670,9 +702,9 @@ class MainWindow(QMainWindow):
             self.terminal_tree.monitoring_timer.start(1000)
 
         # Monitoring - Refresh delay
-        monitoring_refresh_delay = QAction("Refresh Delay", self)
-        monitoring_refresh_delay.triggered.connect(self.set_refresh_rate)
-        Monitoring_menu.addAction(monitoring_refresh_delay)
+        self.monitoring_refresh_delay = QAction("Refresh Delay", self)
+        self.monitoring_refresh_delay.triggered.connect(self.set_refresh_rate)
+        Monitoring_menu.addAction(self.monitoring_refresh_delay)
 
         # Monitoring - Enable/Disable
         if monitoring:
@@ -736,13 +768,8 @@ class MainWindow(QMainWindow):
 
         # Not every terminal parameter is mapped
         if not all_mapped:
-            dialog = QMessageBox()
-            dialog.setWindowTitle("Warning! Not all parameters mapped!")
-            dialog.setIcon(QMessageBox.Warning)
-            dialog.setText("Do you really want to stop the mapping process? Not all parameters are mapped!")
-            dialog.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+            dialog = MessageBox_notallmapped(self)
             answer = dialog.exec()
-            # answer = dialog.question(self, "", "Do you really want to stop the mapping process? Not all parameters are mapped!",  QMessageBox.Yes | QMessageBox.No)
             if not answer == QMessageBox.Yes:
                 ev.ignore()
                 return
@@ -750,13 +777,7 @@ class MainWindow(QMainWindow):
         # Give warning if there are duplicates
         for items_with_param in parameter_duplicates.values():
             if len(items_with_param) != 1:
-                dialog = QMessageBox()
-                dialog.setWindowTitle("Warning! Duplicate mapping!")
-                dialog.setIcon(QMessageBox.Warning)
-                dialog.setText(
-                    "Do you really want to stop the mapping process? Multiple terminal parameters are mapped to the same parameter!"
-                )
-                dialog.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+                dialog = MessageBox_duplicates(self)
                 answer = dialog.exec()
                 # answer = dialog.question(self, "", "Do you really want to stop the mapping process? Multiple terminal parameters are mapped to the same parameter!",  QMessageBox.Yes | QMessageBox.No)
                 if not answer == QMessageBox.Yes:
@@ -905,14 +926,9 @@ class MainWindow(QMainWindow):
                         break
 
                 if any_mapped:
-                    dialog = QMessageBox()
-                    btn = dialog.question(
-                        self,
-                        "",
-                        "Do you really want to change/overwrite the existing mapping?",
-                        QMessageBox.Yes | QMessageBox.No,
-                    )
-                    if btn == QMessageBox.Yes:
+                    dialog = MessageBox_overwrite(self)
+                    answer = dialog.exec()
+                    if answer == QMessageBox.Yes:
                         do_mapping = True
                     else:
                         do_mapping = False
