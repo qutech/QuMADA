@@ -13,7 +13,10 @@ Monitoring is a feature, which repeatedly calls the **get** command (or optional
 
 The **Reset mapping** button resets all mappings. The **Unfold** button folds all terminals in the tree representation (toggling if pressed repeatedly).
 
-The **Map automatically** button maps all uniquely mappable parameters.
+The **Map automatically** button applies a heuristic for mapping the available terminals.
+The algorithm used is (almost) equivalent to selecting the first terminal and repeatedly pressing the enter key until the last terminal (in the tree) is mapped.
+This works best if the terminals are in the same order as the instruments that they should be mapped to.
+Additionally the terminals mapping to channels of an instrument should be ordered the same as the channels (up to the driver but usually something like 0,1,2,...)
 
 
 .. image:: images/mapping_gui.png
