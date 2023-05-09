@@ -17,3 +17,5 @@ pytest-cov
 pytest-cases
 pytest-mock
 pytest-qt
+
+tox
