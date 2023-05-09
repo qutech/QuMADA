@@ -1,6 +1,8 @@
 """
 Measurement
 """
+from __future__ import annotations
+
 import inspect
 import json
 import logging
@@ -95,7 +97,7 @@ class MeasurementScript(ABC):
         self.run = create_hook(self.run, self._add_current_datetime_to_metadata)
 
         self.properties: dict[Any, Any] = {}
-        self.gate_parameters: dict[Any, Union[dict[Any, Union[Parameter, None]], Parameter, None]] = {}
+        self.gate_parameters: dict[Any, dict[Any, Parameter | None] | Parameter | None] = {}
         self._buffered_num_points: int | None = None
 
     def add_gate_parameter(self, parameter_name: str, gate_name: str = None, parameter: Parameter = None) -> None:
