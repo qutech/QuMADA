@@ -4,6 +4,7 @@ from .base import (
     filter_flatten_parameters,
     map_gates_to_instruments,
 )
+from .mapping_gui import map_terminals_gui
 
 
 def _build_path(subpath: str) -> str:
@@ -30,16 +31,17 @@ DUMMY_DAC_MAPPING = _build_path("Dummies/DummyDac.json")
 DUMMY_CHANNEL_MAPPING = _build_path("Dummies/DummyChannel.json")
 
 __all__ = [
-    MappingError,
-    add_mapping_to_instrument,
-    map_gates_to_instruments,
-    filter_flatten_parameters,
-    DECADAC_MAPPING,
-    SR830_MAPPING,
-    KEITHLEY_2400_MAPPING,
-    KEITHLEY_2450_MAPPING,
-    MFLI_MAPPING,
-    QDAC_MAPPING,
-    DUMMY_DMM_MAPPING,
-    DUMMY_DAC_MAPPING,
+    "MappingError",
+    "add_mapping_to_instrument",
+    "map_gates_to_instruments",
+    "filter_flatten_parameters",
+    "map_terminals_gui",
+    "DECADAC_MAPPING",
+    "SR830_MAPPING",
+    "KEITHLEY_2400_MAPPING",
+    "KEITHLEY_2450_MAPPING",
+    "MFLI_MAPPING",
+    "QDAC_MAPPING",
+    "DUMMY_DMM_MAPPING",
+    "DUMMY_DAC_MAPPING",
 ]

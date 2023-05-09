@@ -84,6 +84,7 @@ class MeasurementScript(ABC):
         "aux_voltage_1",
         "aux_voltage_2",
         "temperature",
+        "test_parameter",
     }
 
     def __init__(self):
@@ -91,7 +92,7 @@ class MeasurementScript(ABC):
         # reverse order, so insert metadata is run second
         self.run = create_hook(self.run, self._insert_metadata_into_db)
         self.run = create_hook(self.run, self._add_data_to_metadata)
-        self.run = create_hook(self.run, self._add_datetime_to_metadata_if_empty)
+        self.run = create_hook(self.run, self._add_current_datetime_to_metadata)
 
         self.properties: dict[Any, Any] = {}
         self.gate_parameters: dict[Any, Union[dict[Any, Union[Parameter, None]], Parameter, None]] = {}
@@ -164,7 +165,7 @@ class MeasurementScript(ABC):
         add_script_to_metadata: bool = True,
         add_parameters_to_metadata: bool = True,
         buffer_settings: dict = {},
-        measurement_name: str|None = None,
+        measurement_name: str | None = None,
         **settings: dict,
     ) -> None:
         """
@@ -232,7 +233,7 @@ class MeasurementScript(ABC):
             self.properties[gate] = vals
             for parameter, properties in vals.items():
                 self.add_gate_parameter(parameter, gate)
-                
+
     def generate_lists(self) -> None:
         """
         TODO: Add docstring
@@ -246,12 +247,11 @@ class MeasurementScript(ABC):
         self.dynamic_channels: list[str] = []
         self.dynamic_sweeps: list[str] = []
         self.buffers: set = set()  # All buffers of gettable parameters
-        self.trigger_ins: set = set() #All trigger inputs that do not belong to buffers
+        self.trigger_ins: set = set()  # All trigger inputs that do not belong to buffers
 
-        
         for gate, parameters in self.gate_parameters.items():
             for parameter, channel in parameters.items():
-                if self.properties[gate][parameter]["type"].find("static")>=0:
+                if self.properties[gate][parameter]["type"].find("static") >= 0:
                     self.static_parameters.append({"gate": gate, "parameter": parameter})
                     self.static_channels.append(channel)
                 if self.properties[gate][parameter]["type"].find("gettable") >= 0:
@@ -312,13 +312,12 @@ class MeasurementScript(ABC):
         if self.buffered:
             self.buffers = {
                 channel.root_instrument._qtools_buffer for channel in self.gettable_channels if is_bufferable(channel)
-            } 
-            self.trigger_ins = {param.root_instrument._qtools_mapping \
-                                for param in self.dynamic_channels \
-                                if is_triggerable(param)}
+            }
+            self.trigger_ins = {
+                param.root_instrument._qtools_mapping for param in self.dynamic_channels if is_triggerable(param)
+            }
         self._lists_created = True
         self._relabel_instruments()
-        
 
     def initialize(self) -> None:
         """
@@ -334,7 +333,7 @@ class MeasurementScript(ABC):
         TODO: Is there a more elegant way?
         TODO: Put Sweep-Generation somewhere else?
         """
-        
+
         ramp_rate = self.settings.get("ramp_rate", 0.3)
         ramp_time = self.settings.get("ramp_time", 5)
         setpoint_intervall = self.settings.get("setpoint_intervall", 0.1)
@@ -350,10 +349,8 @@ class MeasurementScript(ABC):
                         ramp_rate=ramp_rate,
                         ramp_time=ramp_time,
                         setpoint_intervall=setpoint_intervall,
-                    )                            
+                    )
                 elif self.properties[gate][parameter]["type"].find("dynamic") >= 0:
-                    
-                    
                     if self.properties[gate][parameter].get("_is_triggered", False) and self.buffered:
                         if "num_points" in self.properties[gate][parameter].keys():
                             assert self.properties[gate][parameter]["num_points"] == self.buffered_num_points
@@ -434,7 +431,6 @@ class MeasurementScript(ABC):
                     gettable_param.root_instrument._qtools_buffer.subscribe([gettable_param])
                 else:
                     raise Exception(f"{gettable_param} is not bufferable.")
-                                       
 
     @abstractmethod
     def run(self) -> list:
@@ -540,12 +536,11 @@ class MeasurementScript(ABC):
             for key, parameter in parameters.items():
                 parameter.label = f"{gate} {key}"
 
-    def _add_datetime_to_metadata_if_empty(self, *args, add_datetime_to_metadata: bool = True, **kwargs):
+    def _add_current_datetime_to_metadata(self, *args, add_datetime_to_metadata: bool = True, **kwargs):
         if add_datetime_to_metadata:
             try:
                 metadata = self.metadata
-                if not metadata.measurement.datetime:
-                    metadata.measurement.datetime = datetime.now()
+                metadata.measurement.datetime = datetime.now()
             except Exception as ex:
                 print(f"Datetime could not be added to metadata: {ex}")
 
@@ -566,6 +561,7 @@ class MeasurementScript(ABC):
                 # Thus, ignore data.measurement and data.pid for the comparison
                 def _compare_data(d1, d2):
                     return d1.name == d2.name and d1.dataType == d2.dataType and d1.pathToData == d2.pathToData
+
                 if not any(_compare_data(data, d2) for d2 in datalist):
                     datalist.append(data)
             except Exception as e:

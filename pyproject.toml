@@ -1,0 +1,2 @@
+[tool.pytest.ini_options]
+qt_api = "pyqt5"
