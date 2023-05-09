@@ -15,7 +15,7 @@ class SR830Buffer(Buffer):
     ch1_names = ["X", "R", "X Noise", "aux_in1", "aux_in2"]
     ch2_names = ["Y", "Phase", "Y Noise", "aux_in3", "aux_in4"]
 
-    AVAILABLE_TRIGGERS: list[str] = ["external"]
+    AVAILABLE_TRIGGERS: list[str] = ["external", "trig_in_1"]
 
     def __init__(self, device: SR830):
         self._device = device
@@ -85,7 +85,7 @@ class SR830Buffer(Buffer):
 
     @trigger.setter
     def trigger(self, trigger: str | None) -> None:
-        if trigger is None:
+        if trigger == "trig_in_1":
             # TODO: standard value for Sample Rate
             self._device.buffer_SR(512)
             self._device.buffer_trig_mode("OFF")
@@ -143,7 +143,7 @@ class SR830Buffer(Buffer):
                 raise BufferException(f"Parameter {parameter.name} can not be buffered.")
 
     def unsubscribe(self, parameters: list[Parameter]) -> None:
-        for parameter in parameters:
+        for parameter in parameters.copy():
             name = parameter.name
             if name in ["X", "R", "X Noise", "aux_in1", "aux_in2"]:
                 self._subscribed_parameters.remove(parameter)

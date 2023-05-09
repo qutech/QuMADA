@@ -4,6 +4,8 @@
         "amplitude": "amplitude",
         "current": "current",
         "voltage": "voltage",
+        "voltage_x_component": "voltage_x_component",
+        "voltage_y_component": "voltage_y_component",        
         "current_x_component" : "current_x_component",
         "current_y_component" : "current_y_component",
         "frequency": "frequency",
@@ -13,6 +15,7 @@
         "filter_order": "demod0_order",
         "output_range": "output_range",
         "demod0_aux_in_1": "aux_voltage_1",
-        "demod0_aux_in_2": "aux_voltage_2"
+        "demod0_aux_in_2": "aux_voltage_2",
+        "voltage_offset": "voltage_offset"
     }
 }

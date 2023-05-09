@@ -1,16 +1,17 @@
 from functools import partial
-from time import time
+from time import time, sleep
 from typing import Union, cast
+from math import ceil
 
-import qcodes.validators as vals
+import qcodes.utils.validators as vals
 from qcodes.instrument import ChannelList, InstrumentChannel, VisaInstrument
 
-
-Number = Union[float, int]
+number = Union[float, int]
 
 
 class DACException(Exception):
     pass
+
 
 
 class DacReader:
@@ -66,6 +67,12 @@ class DacReader:
             raise DACException("Unexpected return from DAC when setting slot: "
                                f"{resp}. DAC slot may not have been set.")
 
+    def _script_set_slot(self):
+        """
+        Set the active DAC slot within a script
+        """
+        self.ask_raw(f"B{self._slot};")
+
     def _set_channel(self):
         """
         Set the active DAC channel
@@ -75,6 +82,13 @@ class DacReader:
             raise DACException(f"Unexpected return from DAC when setting "
                                f"channel: {resp}. DAC channel may not have "
                                f"been set.")
+            
+    def _script_set_channel(self):
+        """
+        Set the active DAC channel within a script
+        """
+        resp = self.ask_raw(f"B{self._slot};C{self._channel};")
+        return resp
 
     def _query_address(self, addr: int, count: int=1,
                        versa_eeprom: bool=False):
@@ -212,6 +226,14 @@ class DacChannel(InstrumentChannel, DacReader):
             label=f"channel {channel+self._slot*4}",
             unit="V",
         )
+        self.add_parameter(
+            "script_volt",
+            set_cmd=self._script_set_dac,
+            set_parser=self._dac_v_to_code,
+            vals=self._volt_val,
+            label=f"channel {channel+self._slot*4}",
+            unit="V",
+        )
         # The limit commands are used to sweep dac voltages. They are not
         # safety features.
         self.add_parameter("lower_ramp_limit",
@@ -243,6 +265,7 @@ class DacChannel(InstrumentChannel, DacReader):
         # Manual parameters to control whether DAC channels should ramp to
         # voltages or jump
         self._ramp_val = vals.Numbers(0, 10)
+        self._dur_val = vals.Numbers(0)
         self.add_parameter("enable_ramp", get_cmd=None, set_cmd=None,
                            initial_value=False,
                            vals=vals.Bool())
@@ -253,6 +276,10 @@ class DacChannel(InstrumentChannel, DacReader):
         # Add ramp function to the list of functions
         self.add_function("ramp", call_cmd=self._ramp, args=(self._volt_val,
                                                              self._ramp_val))
+        self.add_function("script_ramp", call_cmd=self._script_ramp, args=(
+                                                             self._volt_val,
+                                                             self._volt_val,
+                                                             self._dur_val))
 
         # If we have access to the VERSADAC (slot) EEPROM, we can set the
         # initial value of the channel.
@@ -310,6 +337,67 @@ class DacChannel(InstrumentChannel, DacReader):
         if block:
             while self.slope.get() != 0:
                 pass
+            
+    def _script_ramp(self, start, end, duration, trigger = 0):
+        """
+        Ramp the DAC to a given voltage.
+
+        Params:
+            val (float): The voltage to ramp to in volts
+
+            rate (float): The ramp rate in units of volts/s
+
+            timestep (bool): Should the call block until the ramp is complete?
+        """
+        _control_str = ''
+        trigger_mapping ={
+            "continous": 0,
+             "edge": 12,}
+        #trigger = 'after_trig1_rising'
+        trigger_dict = {
+            'always': 0,
+            'trig1_low': 2,
+            'trig2_low': 3,
+            'until_trig1_rising': 4,
+            'until_trig2_rising': 5,
+            'until_trig1_falling': 6,
+            'until_trig2_falling': 7,
+            'never': 8,
+            'trig1_high': 10,
+            'trig2_high': 11,
+            'after_trig1_rising': 12,
+            'after_trig2_rising': 13,
+            'after_trig1_falling': 14,
+            'after_trig2_falling': 15,
+            }
+        
+        #_control_str = f'G{trigger_mapping[trigger]};'
+        _control_str = f'G{trigger};'
+        timestep = 1000
+        _npoints = duration*10**6 / timestep
+
+        #dac_values_per_volt = 3276.8
+        '''if rate*dac_values_per_volt*timestep<10**6:
+            timestep = ceil(10**6/(dac_values_per_volt*rate))
+        if timestep > 32767:
+            timestep = 32767''' #in case I want to add adaptive time bases
+        _sign = (end - start)
+        start_val = self._dac_v_to_code(start)
+        end_val = self._dac_v_to_code(end)
+
+        slope = (end_val - start_val)/(_npoints)*65536
+        self._script_set_channel()
+        #self.ask_raw(f'T{timebase};')
+        if _sign > 0:
+            _control_str += f'U{end_val};'
+            #self.ask_raw(f'U{end_val};')
+        else:
+            _control_str += f'L{end_val};'
+            #self.ask_raw(f'L{end_val};')
+        _control_str += f'S{int(slope)};'
+        _control_str += f'T{timestep};'
+        self.ask_raw(_control_str)
+
 
     def _set_dac(self, code):
         """
@@ -325,6 +413,18 @@ class DacChannel(InstrumentChannel, DacReader):
             code = int(code)
             self._set_channel()
             self.ask_raw(f"U65535;L0;D{code};")
+            
+    def _script_set_dac(self, code):
+        """
+        Set the voltage on the dac channel, without varification
+
+        Params:
+            code (int): the DAC code to set the voltage to
+        """
+        
+        code = int(code)
+        self._script_set_channel()
+        self.ask_raw(f"U65535;L0;D{code};")
 
     def write(self, cmd):
         """
@@ -432,7 +532,7 @@ class Decadac(VisaInstrument, DacReader):
     DAC_SLOT_CLASS = DacSlot
 
     def __init__(self, name: str, address: str,
-                 min_val: Number = -5, max_val: Number = 5,
+                 min_val: number=-10, max_val: number=10,
                  **kwargs) -> None:
         """
 
@@ -475,16 +575,18 @@ class Decadac(VisaInstrument, DacReader):
         self.connect_message()
         
     def start_script(self):
-        self.ask_raw('{')
+        self.ask_raw('{*1:')
         
     def end_script(self):
         self.ask_raw('}')
     
     def run_script(self):
-        self.ask_raw('};')
-        #self.ask_raw('X1;')
-        
+        self.write_raw('X0;}X1;')
+        sleep(1)
+        self.device_clear()
+
     def trigger(self, trigger_setting: str):
+        '''The trigger threshold is around 1.687 volts, but you shouldn't be near the values'''
         trigger_dict = {
             'always': 0,
             'trig1_low': 2,
@@ -501,10 +603,9 @@ class Decadac(VisaInstrument, DacReader):
             'after_trig1_falling': 14,
             'after_trig2_falling': 15,
             }
-        
         command = '{*1:B4;C3;D32768;G'
         command += str(trigger_dict[trigger_setting])
-        command += ';D0;A1849;X1281;*2:'
+        command += ';D1;S-2147483647;*2:A1849;X1281;'
         self.ask_raw(command)
 
     def set_all(self, volt: float) -> None:

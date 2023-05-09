@@ -78,7 +78,7 @@ def ramp_parameter(
                 ramp_rate = abs(current_value-float(target))/ramp_time
         
         num_points = int(abs(current_value-float(target))/(ramp_rate*setpoint_intervall))+2
-        if ramp_time and ramp_time < abs(current_value-float(target))/ramp_rate:
+        if ramp_time is not None and ramp_time < abs(current_value-float(target))/ramp_rate:
             print("Ramp rate is to low to reach target value in specified"\
                   "max ramp time. Adapting ramp rate to match ramp time")
             return ramp_parameter(parameter=parameter,
