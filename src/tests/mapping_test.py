@@ -282,11 +282,10 @@ def test_mapping_gui_map_with_enter(mocker, qtbot, station_with_instruments, scr
     )
     w.show()
     qtbot.addWidget(w)
-
+    sleep(0.1)
     for _ in range(9):  # 9 is exactly enough to map all terminals
         qtbot.keyPress(w, Qt.Key_Return)
         QApplication.processEvents()
-        sleep(0.2)
 
     # qtbot.keyPress(w, Qt.Key_E)
 
@@ -324,9 +323,12 @@ def test_mapping_gui_map_automatically(mocker, qtbot, station_with_instruments, 
     }
 
     # check if auto mapping yields wanted result
-    qtbot.mouseClick(w.button_map_auto, Qt.MouseButton.LeftButton)
+    # qtbot.mouseClick(w.button_map_auto, Qt.MouseButton.LeftButton)
+    qtbot.keyPress(w, Qt.Key_A)
     assert w.terminal_parameters == terminal_params
 
     # check if exiting works
-    qtbot.mouseClick(w.button_exit, Qt.MouseButton.LeftButton)
+    # qtbot.mouseClick(w.button_exit, Qt.MouseButton.LeftButton)
+    assert w.isVisible()
+    qtbot.keyPress(w, Qt.Key_E)
     assert not w.isVisible()
