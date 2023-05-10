@@ -286,7 +286,7 @@ def test_mapping_gui_map_with_enter(mocker, qtbot, station_with_instruments, scr
     for _ in range(9):  # 9 is exactly enough to map all terminals
         qtbot.keyPress(w, Qt.Key_Return)
         QApplication.processEvents()
-        # sleep(0.05)
+        sleep(0.2)
 
     # qtbot.keyPress(w, Qt.Key_E)
 
