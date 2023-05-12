@@ -857,6 +857,7 @@ class MainWindow(QMainWindow):
         back to the terminal_tree and a new terminal is selected.
         """
         if event.key() == Qt.Key_Enter or event.key() == Qt.Key_Return:
+            print("I am inside the enter pressed Key press event!")
             sel_idx = []
             for idx in self.terminal_tree.selectedIndexes():
                 if idx.column() == 0:
@@ -1059,7 +1060,7 @@ class MainWindow(QMainWindow):
         an instrument should be ordered the same as the channels (up to the driver but usually something like 0,1,2,...)
         """
         self.reset_mapping()
-
+        print("Map automatically")
         for terminal_name, terminal in self.terminal_parameters.items():
             _perfect_mappings = self.instrument_tree.get_perfect_mappings(terminal.keys())
 
