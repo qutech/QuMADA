@@ -224,7 +224,6 @@ def test_mapping_gui_monitoring(monitoring: bool, qtbot, station_with_instrument
     # This block is a bit convoluted because I am actually measuring the value of the monitored param over time in order to test the monitoring
     #   > this is much nicer if I mock the get command (this somehow didnt work for me...)
     if monitoring:
-        # mock_get = mocker.patch("qtools.instrument.mapping.mapping_gui.Parameter.get", return_value=None)#, autospec=True) # TODO: mocking get doesnt work
         w.toggle_monitoring_action.trigger()
 
         # minimal example (dmm.current get command is random number generator)
@@ -245,17 +244,17 @@ def test_mapping_gui_monitoring(monitoring: bool, qtbot, station_with_instrument
         # careful with setting delay_seconds and the actual waiting times. There might be additional delay in process_events function call
         #   and cache.get() making this not completely exact. So dont make the window (time margin) to tight
         before = station_with_instruments.dmm.current.cache.get()
-        # wait 0.95*delay_seconds
+        # wait 0.5*delay_seconds
         n = 5  # num_steps
         time_now = datetime.now()
-        while (datetime.now() - time_now).microseconds < 1e6 * delay_seconds * 0.95:
+        while (datetime.now() - time_now).microseconds < 1e6 * delay_seconds * 0.5:
             pass
         QApplication.processEvents()
         tmp = station_with_instruments.dmm.current.cache.get()
 
-        # wait another 0.2*delay_seconds
+        # wait another 1 delay_seconds
         time_now = datetime.now()
-        while (datetime.now() - time_now).microseconds < 1e6 * delay_seconds * 0.2:
+        while (datetime.now() - time_now).microseconds < 1e6 * delay_seconds:
             pass
         QApplication.processEvents()
 
