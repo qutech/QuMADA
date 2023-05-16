@@ -18,7 +18,6 @@
 # - Daniel Grothe
 # - Till Huckeman
 
-
 from .generic_measurement import (
     Generic_1D_Hysteresis_buffered,
     Generic_1D_parallel_asymm_Sweep,
@@ -31,6 +30,8 @@ from .generic_measurement import (
     Timetrace_buffered,
     Timetrace_with_sweeps,
 )
+from .spectrometer import(
+    Measure_Spectrum)
 
 __all__ = [
     "Generic_1D_Sweep",
@@ -43,4 +44,5 @@ __all__ = [
     "Timetrace",
     "Timetrace_with_sweeps",
     "Timetrace_buffered",
+    "Measure_Spectrum",
 ]
