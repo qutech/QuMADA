@@ -1,7 +1,27 @@
+# Copyright (c) 2023 JARA Institute for Quantum Information
+#
+# This file is part of qtools.
+#
+# qtools is free software: you can redistribute it and/or modify it under the
+# terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
+#
+# qtools is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+# A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# qtools. If not, see <https://www.gnu.org/licenses/>.
+#
+# Contributors:
+# - Daniel Grothe
+# - Sionludi Lab
+# - Till Huckeman
+
+
 """
-Created on Fri Sep  3 13:34:00 2021
 Loading data from Database
-@author: Till Huckemann
 """
 from __future__ import annotations
 
@@ -265,4 +285,3 @@ def separate_up_down(x_data, y_data):
     if len(direction) == 0: 
         direction.append(1)
     return data_list_x, data_list_y, direction
-

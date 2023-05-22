@@ -1,8 +1,24 @@
-"""
-Created on Thu Dec 17 18:38:47 2020
+# Copyright (c) 2023 JARA Institute for Quantum Information
+#
+# This file is part of qtools.
+#
+# qtools is free software: you can redistribute it and/or modify it under the
+# terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
+#
+# qtools is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+# A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# qtools. If not, see <https://www.gnu.org/licenses/>.
+#
+# Contributors:
+# - Daniel Grothe
+# - Till Huckeman
 
-@author: Huckemann
-"""
+
 import json     # Used to store mappings until DB is functional
 import re
 
@@ -29,7 +45,8 @@ def create_or_load_mapping(mapping):
             User input to decide whether a mapping should be loaded from file
             or a new one should be created. DB support to be added
             """
-            method = input("Do you want to load an existing mapping? (y/n)\n")
+            method = input("Do you want to load an existing mapping? (y/n)
+")
             if method.lower() == "y":
                 return self.load_mapping(station)
             elif method.lower() == "n":
@@ -44,7 +61,8 @@ def create_or_load_mapping(mapping):
             """
             self.wrap = mapping(station)
             try:
-                gate_number = int(input("Please enter number of gates: \n"))
+                gate_number = int(input("Please enter number of gates: 
+"))
             except ValueError:
                 print("Please enter an integer number")
                 self.create_mapping()
@@ -118,7 +136,8 @@ class GateMapping():
 
         for line in f:
             if line[0] != "#":
-                types.add(line.rstrip('\n'))
+                types.add(line.rstrip('
+'))
         f.close()
         return types
 
@@ -128,7 +147,8 @@ class GateMapping():
         ToDo: Show list of available entries
         '''
         if gate is None:
-            gate = input("Enter name of gate you want to delete: \n")
+            gate = input("Enter name of gate you want to delete: 
+")
         try:
             del self.gates[gate]
         except KeyError:
@@ -153,7 +173,8 @@ class GateMapping():
         '''
         Add current channel to gate entry
         '''
-        string = "Please select a channel to apply and measure currents for this gate.\n"
+        string = "Please select a channel to apply and measure currents for this gate.
+"
         string += 'You can skip this by typing "exit"'
         current_channel = gfs.select_channel(self.station, information=string)
         return current_channel
@@ -162,7 +183,8 @@ class GateMapping():
         '''
         Add volt channel to gate entry
         '''
-        string = "Please select a channel to apply and measure voltages for this gate.\n"
+        string = "Please select a channel to apply and measure voltages for this gate.
+"
         volt_channel = gfs.select_channel(self.station, information=string)
         return volt_channel
 
@@ -171,14 +193,17 @@ class GateMapping():
         Checks whether chosen gate type is valid. Necessary to rely on gate_type
         variable in the measurement script.
         '''
-        print("Valid gate types are: \n %s" %gate_types)
+        print("Valid gate types are: 
+ %s" %gate_types)
         if gate_type in gate_types:
             return gate_type
         elif gate_type is None:
-            gate_type = input("Please enter gate type: \n")
+            gate_type = input("Please enter gate type: 
+")
             return self._gate_type_validator(gate_types, gate_type)
         else:
-            print("Invalid gate type. Known gate types are \n %s" %gate_types)
+            print("Invalid gate type. Known gate types are 
+ %s" %gate_types)
             print("You can use 'other' for unspecified gates. Support for adding new types will be added later")
             return self._gate_type_validator(gate_types)
 

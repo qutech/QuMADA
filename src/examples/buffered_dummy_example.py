@@ -1,10 +1,24 @@
-"""
-Created on Thu Dec  8 14:36:00 2022
+# Copyright (c) 2023 JARA Institute for Quantum Information
+#
+# This file is part of qtools.
+#
+# qtools is free software: you can redistribute it and/or modify it under the
+# terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
+#
+# qtools is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+# A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# qtools. If not, see <https://www.gnu.org/licenses/>.
+#
+# Contributors:
+# - Daniel Grothe
+# - Till Huckeman
 
-@author: lab2
-"""
-
-#%% Experiment Setup
+# %% Experiment Setup
 # As we have only dummy instruments that are not connected, we have to use a global
 # trigger event for triggering.
 import threading
@@ -57,15 +71,15 @@ add_mapping_to_instrument(dac, mapping=DummyDacMapping())
 station.add_component(dac)
 
 
-#%% Metadata Setup
+# %% Metadata Setup
 from qtools_metadata.metadata import create_metadata, save_metadata_object_to_db
 
 db.api_url = "http://134.61.7.48:9124"
 metadata = create_metadata()
 
-#%% Load database for data storage
+# %% Load database for data storage
 load_db()
-#%% Setup measurement
+# %% Setup measurement
 buffer_settings = {
     # "trigger_threshold": 0.005,
     # "trigger_mode": "digital",
@@ -75,8 +89,8 @@ buffer_settings = {
     "delay": 0,
 }
 
-#%% Measurement Setup
-# with open(r"C:\Users\till3\Documents\PythonScripts\Test Measurements\testsettings.yaml") as file:
+# %% Measurement Setup
+# with open(r"C:\Users	ill3\Documents\PythonScripts\Test Measurements	estsettings.yaml") as file:
 #     parameters = yaml.safe_load(file)
 parameters = {
     "dmm": {"voltage": {"type": "gettable"}},
@@ -87,7 +101,7 @@ parameters = {
         }
     },
 }
-#%%
+# %%
 script = Generic_1D_Sweep_buffered()
 script.setup(
     parameters,
@@ -101,7 +115,7 @@ script.setup(
 map_gates_to_instruments(station.components, script.gate_parameters)
 map_buffers(station.components, script.properties, script.gate_parameters)
 
-#%% Run measurement
+# %% Run measurement
 script.run(insert_metadata_into_db=False)
 
 # %%

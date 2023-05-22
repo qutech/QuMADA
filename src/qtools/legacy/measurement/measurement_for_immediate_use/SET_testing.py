@@ -1,3 +1,25 @@
+# Copyright (c) 2023 JARA Institute for Quantum Information
+#
+# This file is part of qtools.
+#
+# qtools is free software: you can redistribute it and/or modify it under the
+# terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
+#
+# qtools is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+# A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# qtools. If not, see <https://www.gnu.org/licenses/>.
+#
+# Contributors:
+# - 4K User
+# - Daniel Grothe
+# - Till Huckeman
+
+
 # type: ignore
 """
 Due to problems with the "old" qcodes I decided to get the most basic
@@ -59,7 +81,8 @@ station = qc.Station(dac, dmm)
 qc.Instrument.close_all()
 
 # dac = Decadac('dac', 'ASRL6::INSTR', default_switch_pos=1) #-1=left, 0=middle, 1=right
-dac = Decadac("dac", "ASRL6::INSTR", min_val=-10, max_val=10, terminator="\n")
+dac = Decadac("dac", "ASRL6::INSTR", min_val=-10, max_val=10, terminator="
+")
 lockin = SR830("lockin", "GPIB1::12::INSTR")
 keithley = Keithley_2400("keithley", "GPIB1::27::INSTR")
 
@@ -95,14 +118,16 @@ def set_db_location():
                                                        created succesfully)
         - Move to utils?
     """
-    load = input("Do you want to load an existing database? [y/n].\n If you choose no, a new one will be created\n")
+    load = input("Do you want to load an existing database? [y/n].
+ If you choose no, a new one will be created
+")
     if load.lower() == "y":
         initialise_or_create_database_at(bf.browsefiles())  # filetypes = (("DB files", "*.db*"))))
         return True
     elif load.lower() == "n":
         path = input("Please enter the directory, where you want to create the DB")
         file = input("Please enter a name for the DB (without suffix)") + ".db"
-        initialise_or_create_database_at(path + "\\" + file)
+        initialise_or_create_database_at(path + "\" + file)
         return True
 
     else:

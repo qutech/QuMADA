@@ -1,8 +1,23 @@
-"""
-Created on Thu Dec 17 18:38:50 2020
+# Copyright (c) 2023 JARA Institute for Quantum Information
+#
+# This file is part of qtools.
+#
+# qtools is free software: you can redistribute it and/or modify it under the
+# terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
+#
+# qtools is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+# A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# qtools. If not, see <https://www.gnu.org/licenses/>.
+#
+# Contributors:
+# - Daniel Grothe
 
-@author: Huckemann
-"""
+
 from typing import Mapping
 
 from tabulate import tabulate
@@ -182,7 +197,8 @@ def select_channel(station, **kwargs):
     if not silent:
         print(information)
     info_text = 'Please select index to proceed, enter "again" to start a new search or "exit" to abort. '
-    key = kwargs.get('key', input('Please enter key to seach for or exit to skip: \n'))
+    key = kwargs.get('key', input('Please enter key to seach for or exit to skip: 
+'))
     if key.lower() == "exit":
         return None
     results = find_instr_channels(station=station, key=key, **kwargs)
