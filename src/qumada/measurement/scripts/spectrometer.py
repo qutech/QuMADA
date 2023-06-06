@@ -63,37 +63,10 @@ class Measure_Spectrum(MeasurementScript):
             self.dependent_param = self.gettable_channels[0]
             instrument = self.dependent_param.root_instrument
         
-
-        # static_gettables = []
-        # del_channels = []
-        # del_params = []
-        # for parameter, channel in zip(self.gettable_parameters, self.gettable_channels):
-        #     if channel in self.static_channels:
-        #         del_channels.append(channel)
-        #         del_params.append(parameter)
-
-        #         parameter_value = self.properties[
-        #             parameter["gate"]][parameter["parameter"]]["value"]
-        #         static_gettables.append(
-        #             (channel, 
-        #               [parameter_value for _ in range(self.getnumberofpointshere)]
-        #               )
-        #             )
-        # for channel in del_channels:
-        #     self.gettable_channels.remove(channel)
-        # for param in del_params:
-        #     self.gettable_parameters.remove(param)
-        # for parameter in self.static_channels:
-        #     if parameter in self.gettable_channels:
-        #         self.gettable_channels.remove(parameter)                
-        #         static_gettables.append(parameter, parameter.)
-        
-
         if settings.get("module", "scope") == "scope":
             setup, acquire = daq.zhinst.MFLI_scope(instrument.instr.session, instrument.instr)
         else:
             setup, acquire = daq.zhinst.MFLI_daq(instrument.instr.session, instrument.instr)
-        
         try: 
             self.spectrometer = settings.pop("spectrometer")
         except KeyError:
