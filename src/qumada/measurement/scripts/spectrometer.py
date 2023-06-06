@@ -49,11 +49,21 @@ class Measure_Spectrum(MeasurementScript):
 
         #TODO: Check if instrument is supported
         #TODO: Cases for different instruments/modes
-
-        if len(self.gettable_channels) != 1:
-            raise AssertionError("For this type of measurement exactly 1 gettable channel is required!")
-        instrument = self.gettable_channels[0].root_instrument
         
+        if len(self.gettable_channels) != 1:
+            if self.priorities == {}:
+                raise AssertionError("For this type of measurement exactly 1 gettable channel is required!")
+            else:
+                candidates = self.priorities[min(self.priorities.keys())]["channels"]
+                intersect  = [ch for ch in self.gettable_channels if ch in candidates]
+                assert len(intersect) == 1 
+                self.dependent_param = intersect[0]
+                instrument = self.dependent_param.root_instrument
+        else:    
+            self.dependent_param = self.gettable_channels[0]
+            instrument = self.dependent_param.root_instrument
+        
+
         # static_gettables = []
         # del_channels = []
         # del_params = []
@@ -61,10 +71,7 @@ class Measure_Spectrum(MeasurementScript):
         #     if channel in self.static_channels:
         #         del_channels.append(channel)
         #         del_params.append(parameter)
-        #         meas.register_parameter(
-        #             channel,
-        #             setpoints=[timer,]
-        #             )
+
         #         parameter_value = self.properties[
         #             parameter["gate"]][parameter["parameter"]]["value"]
         #         static_gettables.append(
@@ -82,7 +89,7 @@ class Measure_Spectrum(MeasurementScript):
         #         static_gettables.append(parameter, parameter.)
         
 
-        if settings.get("module", "scope"):
+        if settings.get("module", "scope") == "scope":
             setup, acquire = daq.zhinst.MFLI_scope(instrument.instr.session, instrument.instr)
         else:
             setup, acquire = daq.zhinst.MFLI_daq(instrument.instr.session, instrument.instr)
@@ -99,6 +106,7 @@ class Measure_Spectrum(MeasurementScript):
         if store_spectrum:
             self._save_data_to_db(results=results,
                              data_type="spectrum")
+        self.settings["spectrometer"] = self.spectrometer
         return self.spectrometer
     
     def _save_data_to_db(self, 
@@ -106,7 +114,7 @@ class Measure_Spectrum(MeasurementScript):
                          data_type: str,
                          ):
         measurement = Measurement(name=f"{self.measurement_name} {data_type}")
-
+        
         match data_type:    
             case "spectrum":
                 frequency = Parameter("frequency",
@@ -124,27 +132,47 @@ class Measure_Spectrum(MeasurementScript):
             case "timetrace":
                 timer = ElapsedTimeParameter("time")
                 independent_param = timer
-                dependent_param = self.gettable_channels[0]
+                dependent_param = self.dependent_param
                 #TODO: n_pts is not correct?
                 x = np.arange(len(results["timetrace_raw"][0])) / results['settings'].fs
                 y = results["timetrace_raw"][0]
             case _:
                 raise NameError(f"{data_type} is no valid data_type!")
-            
-        # for parameter in [*self.gettable_channels]:#, *self.dynamic_channels]:
-        #     measurement.register_parameter(
-        #         parameter,
-        #         setpoints=[
-        #             independent_param,
-        #         ],
-        #     )
+                
         measurement.register_parameter(independent_param)
         measurement.register_parameter(dependent_param,
                                        setpoints=[
                                            independent_param])
+        static_gettables = []
+        for parameter, channel in zip(self.static_gettable_parameters, self.static_gettable_channels):
+                measurement.register_parameter(
+                    channel,
+                    setpoints=[independent_param,]
+                    )
+                parameter_value = self.properties[
+                    parameter["gate"]][parameter["parameter"]]["value"]
+                static_gettables.append(
+                    (channel, 
+                      [parameter_value for _ in range(len(x))]
+                      )
+                    )
+
+
         with measurement.run() as datasaver:
             datasaver.add_result((independent_param, x),
-                                 (dependent_param, y))
+                                 (dependent_param, abs(y)),
+                                 *static_gettables,)
+        #TODO: Check if absolut is ok
+            
+    # def save_data_to_db(self,
+    #                     results,
+    #                     indices: int|list,
+    #                     data_type: str = "both"):
+    #     if type(indices)==int:
+    #         self._save_data_to_db(
+    #             results=results[indices]):
+    #             data_type="spectrum")
+    
             
                     
             

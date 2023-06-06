@@ -281,7 +281,7 @@ class MeasurementScript(ABC):
         self.groups: dict[dict] = {}
         self.buffers: set = set()  # All buffers of gettable parameters
         self.trigger_ins: set = set()  # All trigger inputs that do not belong to buffers
-        self.priorities: list[int] = []
+        self.priorities: dict = {}
 
         for gate, parameters in self.gate_parameters.items():
             for parameter, channel in parameters.items():
@@ -292,7 +292,7 @@ class MeasurementScript(ABC):
                     if self.properties[gate][parameter]["type"].find("gettable") >=0:
                         self.static_gettable_parameters.append(
                             {"gate": gate, "parameter": parameter})
-                        self.static__gettable_channels.append(channel)
+                        self.static_gettable_channels.append(channel)
                 if self.properties[gate][parameter]["type"].find("gettable") >= 0:
                     self.gettable_parameters.append(
                         {"gate": gate, "parameter": parameter})
@@ -360,17 +360,17 @@ class MeasurementScript(ABC):
                         {"gate": gate, "parameter": parameter})
                     if self.groups[group]["priority"] is None:
                         if "priority" in self.properties[gate][parameter].keys():
-                            if self.groups[group]["priority"] in self.priorities:
+                            if self.groups[group]["priority"] in self.priorities.keys():
                                 raise Exception("Assigned the same priority to multiple groups")
                             elif self.groups[group]["priority"] is None: 
                                 self.groups[group]["priority"] = int(self.properties[gate][parameter]["priority"])
-                                self.priorities.append(int(self.groups[group]["priority"]))
+                                self.priorities[int(self.groups[group]["priority"])] = self.groups[group]
                         else:
                             try:
                                 prio = int(group)
-                                if prio not in self.priorities:
+                                if prio not in self.priorities.keys():
                                     self.groups[group]["priority"] = prio
-                                    self.priorities.append(prio)
+                                    self.priorities[prio] = self.groups[group]
                             except:
                                 pass
                         
