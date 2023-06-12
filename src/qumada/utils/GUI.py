@@ -24,15 +24,15 @@ import sys
 from subprocess import Popen
 
 from qcodes.monitor.monitor import  Monitor
-from qtools.instrument.mapping.base import filter_flatten_parameters
-from qtools.measurement.measurement import MeasurementScript
+from qumada.instrument.mapping.base import filter_flatten_parameters
+from qumada.measurement.measurement import MeasurementScript
 from qcodes.station import Station        
 
 def open_web_gui(parameters):
     """
     Opens Gui from qcodes.monitor.monitor
     parameters: Provides the parameters to display. Has to be Station object, 
-    Qtools MeasurementScript object or list of qcodes parameters.
+    QuMADA MeasurementScript object or list of qcodes parameters.
     When a station object is used, all parameters of all components are shown.
     """
     if isinstance(parameters, Station):

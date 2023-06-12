@@ -17,15 +17,15 @@
 # Contributors:
 # - Daniel Grothe
 
-from qtools.instrument.buffers.buffer import (
+from qumada.instrument.buffers.buffer import (
     Buffer,
     BufferException,
     is_bufferable,
     map_buffers,
 )
-from qtools.instrument.buffers.dummy_dmm_buffer import DummyDMMBuffer
-from qtools.instrument.buffers.mfli_buffer import MFLIBuffer
-from qtools.instrument.buffers.sr830_buffer import SR830Buffer
+from qumada.instrument.buffers.dummy_dmm_buffer import DummyDMMBuffer
+from qumada.instrument.buffers.mfli_buffer import MFLIBuffer
+from qumada.instrument.buffers.sr830_buffer import SR830Buffer
 
 __all__ = [
     "Buffer",

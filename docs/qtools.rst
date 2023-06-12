@@ -1,6 +1,6 @@
-qtools API Documentation
+QuMADA API Documentation
 =========================
 
-.. autopackagesummary:: qtools
+.. autopackagesummary:: qumada
   :toctree: _autosummary
   :template: autosummary/package.rst

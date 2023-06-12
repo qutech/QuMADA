@@ -29,7 +29,7 @@ MFLI driver for zhinst-toolkit version 0.3.3 (and above)
 import numpy as np
 from qcodes.instrument import Instrument
 
-# import qtools as qt
+# import QuMADA as qt
 from zhinst.toolkit import Session
 
 
@@ -37,7 +37,7 @@ class MFLI(Instrument):
     """
     Driver for the Zurich-Instruments lockin based on the zhinst.toolkit driver.
     Adds proper parameters with get and set commands to make the MFLI usable
-    with QTools.
+    with QuMADA.
     Not finished, most parameters are still missing.
     """
 

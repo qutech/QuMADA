@@ -1,7 +1,7 @@
 Mapping GUI
 ===========
 
-This GUI helps you to map the QTools Terminals (shown on left side) to the respective instrument parameters (shown on right side).
+This GUI helps you to map the QuMADA Terminals (shown on left side) to the respective instrument parameters (shown on right side).
 
 You can drag a terminal or one of its parameters (children in tree) to an instrument/channel/parameter. You can also select a terminal/terminal parameter and press the enter key to start a mapping process. The selection switches to the instrument tree where you can select a respective instrument/channel/parameter. Press enter again to map the respective terminal/terminal parameter to the instrument/channel/parameter.
 

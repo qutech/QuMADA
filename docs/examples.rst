@@ -4,7 +4,7 @@ Examples
 Measurement Scripts
 --------------------
 
-Qtools comes with a couple of "generic" measurement scripts suitable for most basic applications.
+QuMADA comes with a couple of "generic" measurement scripts suitable for most basic applications.
 
 #####################
 Generic_1D_Sweep()
@@ -210,7 +210,7 @@ The setpoint arrays, delays etc. can be chosen individually for each parameter. 
 
 will create a 3-dimensional sweep ramping the Accumulation gate from 0 to 2 V and then creating a 2D sweep of the Barrier Gates at each setpoint.
 Keep in mind that sweeps with more than two dynamic parameters can take a lot of time. Furthermore, the built-in QCoDeS plotting script (plot_dataset from qcodes.dataset.plotting) cannot handle
-more than two independent parameters. You can still use the plottr-inspectr or the QTools plot functions to plot the data.
+more than two independent parameters. You can still use the plottr-inspectr or the QuMADA plot functions to plot the data.
 
 ##################
 Timetrace
@@ -232,11 +232,11 @@ All gettable (and static gettable) parameters will be recorded, static and dynam
 Writing your own measurement scripts (WIP)
 #####################################
 
-Although the generic measurement scripts coming with QTools can handle a lot of different measurements there are certainly cases where you want to define your own measurements.
-In general Qtools supports all the freedom the QCoDeS Measurement Context Manager provides. However, in order to make it work with QTools features like the gate mapping you have
+Although the generic measurement scripts coming with QuMADA can handle a lot of different measurements there are certainly cases where you want to define your own measurements.
+In general QuMADA supports all the freedom the QCoDeS Measurement Context Manager provides. However, in order to make it work with QuMADA features like the gate mapping you have
 to pay attention to a few things.
 
-All Qtools measurement scripts should be a child class of the Qtools MeasurementScript class. Thus, the script inherits helpful or required methods like initialization() (not to be confused with the __init__) and setup().
+All QuMADA measurement scripts should be a child class of the QuMADA MeasurementScript class. Thus, the script inherits helpful or required methods like initialization() (not to be confused with the __init__) and setup().
 Arguments are passed when calling the setup() method of the measurement script.
 
 .. code-block:: python
@@ -261,11 +261,11 @@ available in the gate_parameters attribute of the script. You can access them us
 	A more precise documentation of the initialize method all inherent attributes is yet to be done. For details we recommend to use the generic measurements script as examples
 
 Another helpful method is the reset() method which works similar to the initialization() method but does no create lists of different parameters types. It just ramps all parameters to their starting values.
-Everything that works with QCoDes will work with Qtools as long as you provide the parameters and the metadata object.
+Everything that works with QCoDes will work with QuMADA as long as you provide the parameters and the metadata object.
 
 Let us create a custom script that repeatedly sweeps a couple of parameters for a specified amount of time as an example.
 If you know all parameters and what to with them in advance you can simply hardcode all the parameters in your measurement script and maybe add a few arguments to adjust the duration of the measurement and the sweeps of the parameters,
-as you would do it when using QCoDeS. However, this is not the QTools way. Using Qtools, you can create a flexible and reusable measurement script in the same amount of time.
+as you would do it when using QCoDeS. However, this is not the QuMADA way. Using QuMADA, you can create a flexible and reusable measurement script in the same amount of time.
 
 .. code-block:: python
 
@@ -335,34 +335,34 @@ Working with gate_parameters
 
 In many cases changing a lot of entries in the gate_parameters.yaml file is tideous. However, as you the gate_parameters are basically
 a dictionary once loaded into python, you can use keywords to modify the parameters easily.
-Therefore, we included some useful method in the "utils" section of QTools.
+Therefore, we included some useful method in the "utils" section of QuMADA.
 
 
 
 Buffered Measurements
 ----------------------
 
-Currently, QTools supports only basic buffered measurements with simple 1D Sweeps and data acquisition with either the SR 830 or the Zurich Instruments MFLI lockins.
+Currently, QuMADA supports only basic buffered measurements with simple 1D Sweeps and data acquisition with either the SR 830 or the Zurich Instruments MFLI lockins.
 
 #############################
 Buffered 1D Measurements
 #############################
 
-Buffered measurements are required, as the communication between the measurement PC and the measurement hardware can slow down measurement significantly. For unbuffered measurements QTools has to send get and set commands to the measurement hardware for every datapoint,
+Buffered measurements are required, as the communication between the measurement PC and the measurement hardware can slow down measurement significantly. For unbuffered measurements QuMADA has to send get and set commands to the measurement hardware for every datapoint,
 whereas buffered measurements just require communication for starting the measurement and for reading the data afterwards.
-In Qtools buffered measurements are setup similarily to unbuffered ones. As for the gate mapping to get rid of driver specific commands for normal measurements, Qtools comes with a generic buffer class that maps the buffer and trigger settings
+In QuMADA buffered measurements are setup similarily to unbuffered ones. As for the gate mapping to get rid of driver specific commands for normal measurements, QuMADA comes with a generic buffer class that maps the buffer and trigger settings
 to the used instruments. This requires a few changes to the way the measurement station is setup:
 
 .. code-block:: python
 
-	from qtools.instrument.buffered_instruments import BufferedMFLI as MFLI
+	from qumada.instrument.buffered_instruments import BufferedMFLI as MFLI
 	from qcodes.instrument_drivers.Harvard.Decadac import Decadac
-	from qtools.instrument.mapping import (
+	from qumada.instrument.mapping import (
 		add_mapping_to_instrument,
 		MFLI_MAPPING
 		)
-	from qtools.instrument.mapping.Harvard.Decadac import DecadacMapping
-	from qtools.instrument.mapping.base import map_gates_to_instruments
+	from qumada.instrument.mapping.Harvard.Decadac import DecadacMapping
+	from qumada.instrument.mapping.base import map_gates_to_instruments
 
 	station = qc.Station
 
@@ -379,13 +379,13 @@ to the used instruments. This requires a few changes to the way the measurement 
 	add_mapping_to_instrument(mfli, path = MFLI_MAPPING)
 	station.add_component(mfli)
 
-(This tutorial expects you to do the basic qcodes and qtools imports on your own)
+(This tutorial expects you to do the basic qcodes and QuMADA imports on your own)
 
 For the MFLI the BufferedMFLI class is used instead of the normal driver. It inherits from the normal MFLI class but adds the _qtools_buffer property, which incorporates the Qtools buffer, to the MFLI.
-The Qtools buffer has methods to setup the buffer and triggers as well as to start, stop and readout measurements. Using a instrument for buffered measurements requires a wrapper mapping the instruments driver specific commands
-to the Qtools ones. Currently, QTools supports the MFLI and the SR830 (more to come), how to add additional instruments by yourself will be covered in a different section.
+The QuMADA buffer has methods to setup the buffer and triggers as well as to start, stop and readout measurements. Using a instrument for buffered measurements requires a wrapper mapping the instruments driver specific commands
+to the QuMADA ones. Currently, QuMADA supports the MFLI and the SR830 (more to come), how to add additional instruments by yourself will be covered in a different section.
 
-The DecaDac's is required to do a smooth ramp, which requires usage of the built in ramp method. As this cannot be mapped by using the normal Qtools mapping.json file, we use the DecadacMapping class and pass it as the mapping-kwarg
+The DecaDac's is required to do a smooth ramp, which requires usage of the built in ramp method. As this cannot be mapped by using the normal QuMADA mapping.json file, we use the DecadacMapping class and pass it as the mapping-kwarg
 (instead of "path") to "add_mapping_to_instrument". This does not only add the normal mapping but includes the _qtools_ramp() method which is used in Qtools' buffered measurement scripts for ramping channels. This method makes use of the
 built-in ramp method, but standardizes the input parameters so that different instruments can be used with the same measurement script. Note that instruments without built-in ramps can be used for the buffered measurements as well, but then require communication at
 each setpoint, which slows down the measurement and can lead to asynchronicity. It is strongly adviced to use this feature only for debugging.
@@ -394,7 +394,7 @@ each setpoint, which slows down the measurement and can lead to asynchronicity. 
 
 	In some cases it is possible to add trigger channels to the _qtools_ramp method. Those are triggered as soon as the ramp starts. However, this feature is still WIP and can lead to significat offsets due to time delays.
 
-Setting up the buffer in Qtools is done via a settings dict (which can also be serialized into a yaml or json file). The parameters are:
+Setting up the buffer in QuMADA is done via a settings dict (which can also be serialized into a yaml or json file). The parameters are:
 
 trigger_mode [str]:
 		continuous, edge, tracking_edge, pulse, tracking_pulse, digital.
@@ -432,7 +432,7 @@ burst_duration [float]:
 		Duration of each measurement burst. Right now, only one burst per measurement is possible, should be the same as duration. You can only define two of num_points, burst_duration and sampling_rate, the third one is calculated from the other two.
 
 For buffered measurements, the number of setpoints is defined by the num_points of the buffer settings instead of the number of points defined by the dynamic parameters in the gate_parameters. As only smooth ramps for dynamic parameters are supported at the moment,
-the num_points and the delay set in the gate_params is ignored. Only "start" and "stop" or the first and last entry of the "setpoints" is used to define the sweep. Qtools will automatically configure the sweeps of the dynamic parameters to match the settings of the buffers.
+the num_points and the delay set in the gate_params is ignored. Only "start" and "stop" or the first and last entry of the "setpoints" is used to define the sweep. QuMADA will automatically configure the sweeps of the dynamic parameters to match the settings of the buffers.
 
 .. code-block:: python
 

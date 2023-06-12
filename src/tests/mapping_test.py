@@ -30,14 +30,14 @@ from pytest_mock import MockerFixture
 from qcodes.station import Station
 from qcodes.tests.instrument_mocks import DummyChannelInstrument, DummyInstrument
 
-import qtools.instrument.mapping as mapping
-from qtools.instrument.custom_drivers.Dummies.dummy_dac import DummyDac
-from qtools.instrument.custom_drivers.Dummies.dummy_dmm import DummyDmm
-from qtools.instrument.mapping import add_mapping_to_instrument, map_terminals_gui
-from qtools.instrument.mapping.base import _load_instrument_mapping
-from qtools.instrument.mapping.Dummies.DummyDac import DummyDacMapping
-from qtools.instrument.mapping.mapping_gui import MainWindow
-from qtools.measurement.scripts.generic_measurement import Generic_1D_Sweep
+import qumada.instrument.mapping as mapping
+from qumada.instrument.custom_drivers.Dummies.dummy_dac import DummyDac
+from qumada.instrument.custom_drivers.Dummies.dummy_dmm import DummyDmm
+from qumada.instrument.mapping import add_mapping_to_instrument, map_terminals_gui
+from qumada.instrument.mapping.base import _load_instrument_mapping
+from qumada.instrument.mapping.Dummies.DummyDac import DummyDacMapping
+from qumada.instrument.mapping.mapping_gui import MainWindow
+from qumada.measurement.scripts.generic_measurement import Generic_1D_Sweep
 
 
 @pytest.fixture(name="dmm", scope="session")
@@ -146,7 +146,7 @@ def test_validate_mapping_file(path):
 def test_instrument_mapping(mocker: MockerFixture, valid_mapping_data):
     instr = DummyInstrument("instrument", ["v1", "v2"])
     mocker_load = mocker.patch(
-        "qtools.instrument.mapping.base._load_instrument_mapping",
+        "qumada.instrument.mapping.base._load_instrument_mapping",
         return_value=valid_mapping_data,
     )
     path = "pathtomapping.json"
@@ -161,8 +161,8 @@ def test_instrument_mapping(mocker: MockerFixture, valid_mapping_data):
 
 
 def test_map_terminals_gui(mocker: MockerFixture, station_with_instruments, script):
-    mocker.patch("qtools.instrument.mapping.mapping_gui.QApplication", autospec=True)
-    mock_main_window = mocker.patch("qtools.instrument.mapping.mapping_gui.MainWindow", autospec=True)
+    mocker.patch("qumada.instrument.mapping.mapping_gui.QApplication", autospec=True)
+    mock_main_window = mocker.patch("qumada.instrument.mapping.mapping_gui.MainWindow", autospec=True)
 
     kwargs = {
         "components": station_with_instruments.components,

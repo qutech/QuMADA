@@ -4,12 +4,12 @@ Tutorials
 First steps: Example Measurements
 ---------------------------------
 
-QTools is a QCoDeS based measurement framework that helps you performing measurements easily as well as dumping all required metadata in a database.
+QuMADA is a QCoDeS based measurement framework that helps you performing measurements easily as well as dumping all required metadata in a database.
 Before you start with this basic tutorial make sure to get familiar with QCoDeS, we recommend to work through the 15-Minute-To-QCoDeS tutorial to learn about setting up
 a database for the measurement data, Experiment containers, the measurement context manager and the station object.
 In this tutorial we assume that you already set up a QCoDeS database and created an experiment.
 
-This tutorial will show you how to setup basic sweeps in QTools. In most cases you will start your measurements by using the main.ipy found in Qtools/src.
+This tutorial will show you how to setup basic sweeps in QuMADA. In most cases you will start your measurements by using the main.ipy found in QuMADA/src.
 It contains a couple of blocks for the steps you have to do in order to set up the measurement and run it. We start by importing required submodules:
 
 .. code-block:: python
@@ -34,25 +34,25 @@ It contains a couple of blocks for the steps you have to do in order to set up t
 		load_or_create_experiment,
 	)
 
-	#QTools imports
+	#QuMADA imports
 	import qtools_metadata.db as db
 	from qtools_metadata.metadata import Metadata
-	from qtools.instrument.mapping import (
+	from qumada.instrument.mapping import (
 		add_mapping_to_instrument,
 		DECADAC_MAPPING,
 		SR830_MAPPING,
 		KEITHLEY_2400_MAPPING,
 		QDAC_MAPPING)
-	from qtools.instrument.mapping.base import map_gates_to_instruments
-	from qtools.measurement.scripts import (
+	from qumada.instrument.mapping.base import map_gates_to_instruments
+	from qumada.measurement.scripts import (
 		Generic_1D_Sweep,
 		Generic_nD_Sweep,
 		Generic_1D_parallel_Sweep,
 		Timetrace)
 	#Some methods helping you to do things faster
-	from qtools.utils.load_from_sqlite_db import load_db
-	from qtools.utils.generate_sweeps import generate_sweep, replace_parameter_settings
-	from qtools.utils.ramp_parameter import *
+	from qumada.utils.load_from_sqlite_db import load_db
+	from qumada.utils.generate_sweeps import generate_sweep, replace_parameter_settings
+	from qumada.utils.ramp_parameter import *
 
 #################
 Station and Instruments
@@ -60,18 +60,18 @@ Station and Instruments
 
 
 After importing everything necessary we can start with setting up the QCoDeS station object and the measurement instruments.
-In difference to QCoDeS measurements, QTools measurements scripts are largely independend from the instruments used. Nonetheless, it is still required to create a QCoDeS station
+In difference to QCoDeS measurements, QuMADA measurements scripts are largely independend from the instruments used. Nonetheless, it is still required to create a QCoDeS station
 object and specify the instruments used, which is done by providing name and the address of the instrument using the corresponding QCoDeS methods.
 In addition to this, we want to add an instrument mapping to each instrument. As QCoDeS drivers are supplied by many different people, the parameters of instruments are named
 inconsistently. The voltage parameter of a Keithley 2400 DMM is addressed via Keithley.volt, the parameter of a Keithley 2450 via Keithley.source.voltage and the
-voltage of a QDevil QDac channel via QDac.Ch01.v. When using QCoDeS, it is necessary to alter the measurement script accordingly whenever a different instrument is used. QTools deals with this issue
-by introducing an additional abstraction layer, the gate_mapping. QTools uses predefined names for similar parameters making sure you can reuse your measurement scripts and do not have to browse through instrument
+voltage of a QDevil QDac channel via QDac.Ch01.v. When using QCoDeS, it is necessary to alter the measurement script accordingly whenever a different instrument is used. QuMADA deals with this issue
+by introducing an additional abstraction layer, the gate_mapping. QuMADA uses predefined names for similar parameters making sure you can reuse your measurement scripts and do not have to browse through instrument
 drivers in order to look up the right command.
 
 .. note::
 
 	Right now these names are specified in the measurement_scipt class. It will be moved to a separate file later on.
-	When using an instrument not yet implemented into QTools you might have to specify new names for the parameters there.
+	When using an instrument not yet implemented into QuMADA you might have to specify new names for the parameters there.
 	For more information look into the section about creating gate_mappings for new instruments
 
 Adding the mapping is easily done by using the "add_mapping_to_instrument" command:
@@ -81,7 +81,7 @@ Adding the mapping is easily done by using the "add_mapping_to_instrument" comma
 	Applies the mapping specified to the instrument
 
    :instrument: Instrument
-   :mapping: Mapping, has to be imported from qtools.instrument.mapping and be listed in the corresponding __init__ file
+   :mapping: Mapping, has to be imported from qumada.instrument.mapping and be listed in the corresponding __init__ file
    :return: None
 
 .. code-block:: python
@@ -90,7 +90,7 @@ Adding the mapping is easily done by using the "add_mapping_to_instrument" comma
 	station = Station()
 
 	# Setup instruments
-	# Call add_mapping_to_instrument(instrument, mapping) to map the instrument's parameters to qtools-specific names.
+	# Call add_mapping_to_instrument(instrument, mapping) to map the instrument's parameters to QuMADA-specific names.
 	dac = Decadac(
 		"dac",
 		"ASRL3::INSTR",
@@ -130,7 +130,7 @@ In the next step, we want to create a metadata object. The object contains all t
 the metadata for the measurement script and the QCoDeS-database. Thus, you have to provide sample name and measurement name even if you do not intend to use
 the metadatabase.
 
-The easiest way to create the metadata-object is by entering the data into the metadata.yaml found in the QTools directory and create the object from this file.
+The easiest way to create the metadata-object is by entering the data into the metadata.yaml found in the QuMADA directory and create the object from this file.
 
 .. code-block:: python
 
@@ -156,7 +156,7 @@ At this point we have taken care of all preliminary steps required before defini
 Except for changing the measurement name in the metadata object, you will have to do those steps only when exchanging the sample or altering the setup.
 
 From now on, we will go through a typical workflow for characterizing a gate-defined Single Electron Transistor (SET) in a semiconductor heterostructure such as Si/SiGe or Si MOS.
-Measurements in QTools are mainly defined by two things: The gate_parameters and the measurement script used.
+Measurements in QuMADA are mainly defined by two things: The gate_parameters and the measurement script used.
 
 
 ###############################
@@ -224,7 +224,7 @@ A typical parameters.yaml could look like this:
 In our example the SET consists source and drain contact, a global accumulation gate, two barriers and a plunger gate for finetuning the dot potential.
 In a first step we want to ramp all the gates in parallel to check whether we can accumulate charges and open a current path through the quantum well.
 Furthermore, we want to apply a bias voltage between the source and drain contact and measure the current flowing through them using a lockin amplifier.
-Each terminal or gate in QTools can have one or more parameters corresponding to physical properties such as voltage or current. In some cases it is still
+Each terminal or gate in QuMADA can have one or more parameters corresponding to physical properties such as voltage or current. In some cases it is still
 necessary to think about instrument properties (in this case the lockin has an "output_enabled" parameter) and settings that have to be set. You can either change them
 manually before the measurement or include them into the parameters. In the latter case they will be set automatically before the measurement start.
 
@@ -258,7 +258,7 @@ Measurement Scripts
 ###################
 
 Obviously, the measurement is not yet completely defined. We still have to a create measurement script or -more precisely- a measurement_script object.
-In QTools all information relevant for the measurement are stored in this object, including the gate_parameters and their mapping to the used instruments,
+In QuMADA all information relevant for the measurement are stored in this object, including the gate_parameters and their mapping to the used instruments,
 the details about how the measurement has to be performed and some metadata such as sample and measurement name.
 
 .. code-block:: python
@@ -277,7 +277,7 @@ For our first measurement we use the Generic_1D_parallel_Sweep method, which ram
 Note that we do not directly pass the arguments when creating the object but use the built-in "setup" method. It is required to pass the parameters and a metadata object.
 All measurement_script objects have an initialize and a reset method, which take care of ramping/setting all parameters to the correct values and furthermore create a couple of attributes,
 like lists of all sweeps, different parameters and so on. Furthermore, they will automatically relabel the parameters in the QCoDeS datasets to match the gate names you specified.
-When using the predefined measurement scripts that come with QTools those steps are automatically performed whenever you run the measurement. In case you define your own measurement scripts, you are free to use those built-in methods as you need them.
+When using the predefined measurement scripts that come with QuMADA those steps are automatically performed whenever you run the measurement. In case you define your own measurement scripts, you are free to use those built-in methods as you need them.
 Furthermore, measurement scripts can have keyword arguments specifying details of how the measurement is performed. In this case we set the ramp_rate, which is again built-in into all measurement script objects and defines the ramp_speed used to ramp all parameters
 to their starting value as well as the back_after_break parameter, which automatically adds a backsweep to the measurement once a break condition is fulfilled. This is particulary handy for accumulation curves including hysteresis investigations.
 
@@ -301,7 +301,7 @@ capable of handling existing mappings with different parameters than the current
 	map_gates_to_instruments(station.components, measurement_script.gate_parameter)
 
 You are now asked for each registered gate/terminal to specify an instrument (or instrument channel) to map to. All available instruments are listed, you simply have to type in the number corresponding to the correct instrument.
-As Qtools' :ref:`gate mapping<Station and Instruments>` has well defined parameter names the parameters are mapped automatically once the correct measurement instrument is specified.
+As QuMADA' :ref:`gate mapping<Station and Instruments>` has well defined parameter names the parameters are mapped automatically once the correct measurement instrument is specified.
 
 .. note::
 
@@ -319,20 +319,20 @@ to start the measurement.
 Accessing Measurent Data and Plotting the Measurement
 #####################################################
 
-Qtools does not have separate live-plotting tool so far, instead you have to use the plottr-inspectr as described in the `QCoDeS documentation <https://qcodes.github.io/Qcodes/examples/plotting/How-to-use-Plottr-with-QCoDeS-for-live-plotting.html>`_.
+QuMADA does not have separate live-plotting tool so far, instead you have to use the plottr-inspectr as described in the `QCoDeS documentation <https://qcodes.github.io/Qcodes/examples/plotting/How-to-use-Plottr-with-QCoDeS-for-live-plotting.html>`_.
 However, the "utils section" has a couple of tools that make working with the QCoDeS database, in which the data is stored, easier.
 
 
 
 
-Adding the Qtools Buffer Class to Instruments (WIP)
+Adding the QuMADA Buffer Class to Instruments (WIP)
 -----------------------------------------------
 
-Using Qtools for doing buffered measurements requires the measurement instruments to have a Qtools "Buffered" Class.
-In analogy to the gate mapping it will map the instrument's buffer's properties and functions to a common Qtools interface.
+Using QuMADA for doing buffered measurements requires the measurement instruments to have a QuMADA "Buffered" Class.
+In analogy to the gate mapping it will map the instrument's buffer's properties and functions to a common QuMADA interface.
 
 In this tutorial we will go through the most important steps for writing such a class using a Dummy DMM.
-The Dummy DMMs Driver can be found in qtools/instrument/custom_drivers/Dummies/dummy_dmm.py.
+The Dummy DMMs Driver can be found in qumada/instrument/custom_drivers/Dummies/dummy_dmm.py.
 
 Our custom buffer inherits from
 
@@ -340,7 +340,7 @@ Our custom buffer inherits from
 
 Buffer() contains list of allowed setting names, trigger modes, triggers, etc. required to validate the input parameters.
 Furthermore, a couple of required properties and (abstract)methods are defined. This is required to ensure compatibility of custom buffer classes
-with QTools measurements.
+with QuMADA measurements.
 
 .. code-block:: python
 
@@ -394,7 +394,7 @@ In some cases it is required to calculate the num_points from the other two. A p
 
 .. py:function:: subscribe(self, parameters: list[Parameter]) -> None
 
-We have to tell the Qtools Buffer as well as the instruments which parameters shall be measured. Therefore, we need a subscribe method.
+We have to tell the QuMADA Buffer as well as the instruments which parameters shall be measured. Therefore, we need a subscribe method.
 It requires a list of parameters to add. The subscribe method has to make sure that the chosen parameters are valid (part of the instrument and
 usable in combination with the buffer and each other), tell the measurement instrument to write the parameters' measurement values into its buffer and
 add the parameters to the _subscribed_parameters property of the buffer class.

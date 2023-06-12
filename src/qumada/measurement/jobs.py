@@ -21,7 +21,7 @@
 from __future__ import annotations
 
 from qtools_metadata.metadata import Metadata
-from qtools.measurement.measurement import MeasurementScript
+from qumada.measurement.measurement import MeasurementScript
 
 
 class Job:

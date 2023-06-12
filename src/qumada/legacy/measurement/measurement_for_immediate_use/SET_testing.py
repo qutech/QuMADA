@@ -24,8 +24,8 @@
 """
 Due to problems with the "old" qcodes I decided to get the most basic
 measurements running with the latest version, to perform measurements until
-the qtools scripts are working. The measurements routines are not
-yet compatible with the planned qtools-structure (e.g. functions still need
+the QuMADA scripts are working. The measurements routines are not
+yet compatible with the planned QuMADA-structure (e.g. functions still need
  instrument parameters rather than gate_mapping object) but can be adapted
 later on.
 """
@@ -60,8 +60,8 @@ from qcodes.tests.instrument_mocks import (
     DummyInstrumentWithMeasurement,
 )
 
-# import src.qtools.utils.browsefiles as bf
-# import src.qtools.measurement.gate_mapping as gm
+# import src.qumada.utils.browsefiles as bf
+# import src.qumada.measurement.gate_mapping as gm
 
 #%%
 start_all_logging()

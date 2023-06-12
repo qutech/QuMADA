@@ -26,7 +26,7 @@ from pyvisa import VisaIOError
 from qcodes.instrument_drivers.stanford_research.SR830 import SR830
 from qcodes.parameters import Parameter
 
-from qtools.instrument.buffers.buffer import Buffer, BufferException
+from qumada.instrument.buffers.buffer import Buffer, BufferException
 
 
 class SR830Buffer(Buffer):

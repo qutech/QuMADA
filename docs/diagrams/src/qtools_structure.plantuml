@@ -9,8 +9,8 @@ node "other Framework" as other
 node "QCoDeS" as qc
 
 
-package "Qtools packages" {
-    [qtools]
+package "QuMADA packages" {
+    [qumada]
     [qtools-metadata]
 }
 
@@ -25,8 +25,8 @@ cloud {
 qc .up.> instruments
 other .up.> instruments
 
-qc -- [qtools]
-[qtools] - [qtools-metadata]
+qc -- [qumada]
+[qumada] - [qtools-metadata]
 other -- [qtools-metadata]
 
 [qtools-metadata] --> api

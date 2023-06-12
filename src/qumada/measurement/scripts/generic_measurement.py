@@ -29,16 +29,16 @@ from qcodes.dataset import dond
 from qcodes.dataset.measurements import Measurement
 from qcodes.parameters.specialized_parameters import ElapsedTimeParameter
 
-from qtools.measurement.doNd_enhanced.doNd_enhanced import (
+from qumada.measurement.doNd_enhanced.doNd_enhanced import (
     _dev_interpret_breaks,
     _interpret_breaks,
     do1d_parallel,
     do1d_parallel_asym,
 )
-from qtools.measurement.measurement import MeasurementScript
-from qtools.utils.ramp_parameter import ramp_or_set_parameter
-from qtools.utils.utils import _validate_mapping, naming_helper
-from qtools.instrument.buffers.buffer import is_bufferable
+from qumada.measurement.measurement import MeasurementScript
+from qumada.utils.ramp_parameter import ramp_or_set_parameter
+from qumada.utils.utils import _validate_mapping, naming_helper
+from qumada.instrument.buffers.buffer import is_bufferable
 
 
 class Generic_1D_Sweep(MeasurementScript):

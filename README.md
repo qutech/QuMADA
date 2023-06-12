@@ -1,18 +1,18 @@
-# qtools
+# QuMADA
 Interfaces and measurement scripts for usage with QCoDeS.
 
 ## Installation
 
-First, clone the current version of qtools from gitlab
+First, clone the current version of QuMADA from gitlab
 
 ```
-git clone git@git-ce.rwth-aachen.de:qutech/lab_software/qtools.git qtools
-cd qtools
+git clone git@git-ce.rwth-aachen.de:qutech/lab_software/qumada.git qumada
+cd qumada
 ```
 
 ### Setup virtual environment
 
-Installation of qtools should be done in a virtual environment.
+Installation of QuMADA should be done in a virtual environment.
 There are several methods of creating a virtual environment, python's native being *venv*:
 
 On *windows*, run
@@ -31,7 +31,7 @@ source .venv/bin/activate
 
 ### Setup for general use
 
-Install qtools through pip
+Install QuMADA through pip
 
 ```
 pip install -e .
@@ -59,7 +59,7 @@ pre-commit install
 
 ### Documentation
 
-You can access the current documentation [here](https://qutech.pages.git-ce.rwth-aachen.de/lab_software/qtools/qtools)
+You can access the current documentation [here](https://qutech.pages.git-ce.rwth-aachen.de/lab_software/qtools/qumada)
 or build your own:
 
 Run

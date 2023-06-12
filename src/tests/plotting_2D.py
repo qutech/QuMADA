@@ -20,12 +20,12 @@
 
 
 import qcodes as qc
-import qtools as qt
-from qtools.utils.load_from_sqlite_db import *
-from qtools.utils.browsefiles import browsefiles
+import qumada as qt
+from qumada.utils.load_from_sqlite_db import *
+from qumada.utils.browsefiles import browsefiles
 from qcodes.dataset.plotting import plot_dataset
 from qcodes.dataset.data_export import reshape_2D_data
-#from qtools.instrument.mapping.base import flatten_list
+#from qumada.instrument.mapping.base import flatten_list
 import numpy as np
 from matplotlib import pyplot as plt
 import matplotlib
@@ -76,7 +76,7 @@ def plot_2D(x_data, y_data, z_data, *args, **kwargs):
     """
     Plots 2D derivatives. Requires tuples of name and 1D arrays corresponding 
     to x, y and z data as input. 
-    Works well with Qtools "get_parameter_data" method found in
+    Works well with QuMADA "get_parameter_data" method found in
     load_from_sqlite.
 
     TODO: Add get_parameter_data method as default to call when no data is provided
@@ -100,7 +100,7 @@ def plot_2D_grad(x_data, y_data, z_data, *args, direction = "both"):
     """
     Plots 2D derivatives. Requires tuples of name and 1D arrays corresponding 
     to x, y and z data as input. 
-    Works well with Qtools "get_parameter_data" method found in load_from_sqlite.
+    Works well with QuMADA "get_parameter_data" method found in load_from_sqlite.
     direction argument can be x, y or z corresponding to the direction of the 
     gradient used. "both" adds the gradients quadratically.
 
@@ -132,7 +132,7 @@ def plot_2D_sec_derivative(x_data, y_data, z_data, *args):
     Plots second derivative of data.
     Requires tuples of name and 1D arrays corresponding 
     to x, y and z data as input. 
-    Works well with Qtools "get_parameter_data" method found in load_from_sqlite.
+    Works well with QuMADA "get_parameter_data" method found in load_from_sqlite.
     direction argument can be x, y or z corresponding to the direction of the 
     gradient used. "both" adds the gradients quadratically.
 
@@ -227,8 +227,8 @@ def plot_multiple_datasets(datasets : list = None,
     Parameters
     ----------
     datasets : list, optional
-        List of Qtools datasets. If set to None, you can pick measurements from
-        the currently loaded Qtools database. Default is None.
+        List of QuMADA datasets. If set to None, you can pick measurements from
+        the currently loaded QuMADA database. Default is None.
     x_axis_parameters_name : str, optional
         Pass the namestring of the parameter you want to plot on the x-axis. 
         If none, you will be asked to set it individually for every chosen

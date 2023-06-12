@@ -47,9 +47,9 @@ from qtools_metadata.measurement import MeasurementScript as DomainMeasurementSc
 from qtools_metadata.measurement import MeasurementSettings
 from qtools_metadata.metadata import Metadata
 
-from qtools.instrument.buffers.buffer import is_bufferable, is_triggerable
-from qtools.utils.ramp_parameter import ramp_or_set_parameter
-from qtools.utils.utils import flatten_array
+from qumada.instrument.buffers.buffer import is_bufferable, is_triggerable
+from qumada.utils.ramp_parameter import ramp_or_set_parameter
+from qumada.utils.utils import flatten_array
 
 
 def is_measurement_script(o):

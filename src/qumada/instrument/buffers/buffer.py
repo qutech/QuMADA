@@ -30,7 +30,7 @@ from qcodes.parameters import Parameter
 
 
 def is_bufferable(object: Instrument | Parameter):
-    """Checks if the instrument or parameter is bufferable using the qtools Buffer definition."""
+    """Checks if the instrument or parameter is bufferable using the qumada Buffer definition."""
     if isinstance(object, Parameter):
         object = object.root_instrument
     return hasattr(object, "_qtools_buffer") and isinstance(object._qtools_buffer, Buffer)

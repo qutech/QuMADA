@@ -22,24 +22,24 @@ from qcodes.monitor import monitor as qcmon
 
 import qtools_metadata.db as db
 from qtools_metadata.metadata import Metadata
-from qtools.instrument.mapping import (
+from qumada.instrument.mapping import (
     add_mapping_to_instrument,
     DECADAC_MAPPING,
     SR830_MAPPING,
     KEITHLEY_2400_MAPPING,
     QDAC_MAPPING,
     MFLI_MAPPING)
-from qtools.instrument.mapping.base import map_gates_to_instruments
-from qtools.instrument.custom_drivers.ZI.MFLI import MFLI
-from qtools.measurement.scripts import (
+from qumada.instrument.mapping.base import map_gates_to_instruments
+from qumada.instrument.custom_drivers.ZI.MFLI import MFLI
+from qumada.measurement.scripts import (
     Generic_1D_Sweep,
     Generic_nD_Sweep,
     Generic_1D_parallel_Sweep,
     Timetrace)
-from qtools.utils import parameter_file_helpers as param_helpers
-from qtools.utils.load_from_sqlite_db import load_db
-from qtools.utils.generate_sweeps import generate_sweep, replace_parameter_settings
-from qtools.utils.ramp_parameter import *
+from qumada.utils import parameter_file_helpers as param_helpers
+from qumada.utils.load_from_sqlite_db import load_db
+from qumada.utils.generate_sweeps import generate_sweep, replace_parameter_settings
+from qumada.utils.ramp_parameter import *
 
 #%% Experiment Setup
 
@@ -47,7 +47,7 @@ from qtools.utils.ramp_parameter import *
 station = Station()
 
 # Setup instruments
-# Call add_mapping_to_instrument(instrument, mapping) to map the instrument's parameters to qtools-specific names.
+# Call add_mapping_to_instrument(instrument, mapping) to map the instrument's parameters to QuMADA-specific names.
 dac = Decadac(
     "dac",
     "ASRL3::INSTR",
@@ -70,7 +70,7 @@ station.add_component(keithley)
 
 
 #%% Metadata Setup
-base_path = pathlib.Path('C:/Users/Flash/Documents/qtools_scripts')
+base_path = pathlib.Path('C:/Users/Flash/Documents/qumada_scripts')
 
 # Set Metadata-DB URL
 db.api_url = "http://134.61.7.48:9123"

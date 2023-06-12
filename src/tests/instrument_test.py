@@ -24,7 +24,7 @@ from qcodes.instrument import Instrument, VisaInstrument
 from qcodes.parameters import Parameter
 from qcodes.tests.instrument_mocks import DummyInstrument
 
-from qtools.instrument.instrument import is_instrument_class
+from qumada.instrument.instrument import is_instrument_class
 
 
 @pytest.mark.parametrize(
@@ -41,5 +41,5 @@ def test_is_instrument(cls, expected: bool):
 
 
 def test_mfli_driver():
-    MFLI = pytest.importorskip("qtools.instrument.custom_drivers.ZI.MFLI")
+    MFLI = pytest.importorskip("qumada.instrument.custom_drivers.ZI.MFLI")
     assert is_instrument_class(MFLI.MFLI)

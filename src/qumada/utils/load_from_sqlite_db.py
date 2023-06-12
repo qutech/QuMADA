@@ -33,8 +33,8 @@ from qcodes.dataset.data_export import reshape_2D_data
 from qcodes.dataset.plotting import plot_dataset
 from qcodes.dataset.data_set import DataSet
 
-import qtools as qt
-from qtools.utils.browsefiles import browsefiles
+import qumada as qt
+from qumada.utils.browsefiles import browsefiles
 
 
 #%%

@@ -23,9 +23,9 @@
 
 import numpy as np
 from qcodes.instrument.parameter import Parameter
-from qtools.instrument.custom_drivers.Harvard.Decadac import Decadac
-from qtools.instrument.mapping import DECADAC_MAPPING
-from qtools.instrument.mapping.base import InstrumentMapping
+from qumada.instrument.custom_drivers.Harvard.Decadac import Decadac
+from qumada.instrument.mapping import DECADAC_MAPPING
+from qumada.instrument.mapping.base import InstrumentMapping
 import time
 
 

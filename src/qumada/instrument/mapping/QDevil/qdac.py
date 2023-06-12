@@ -23,8 +23,8 @@
 from qcodes.parameters import Parameter
 from qcodes_contrib_drivers.drivers.QDevil.QDAC1 import QDac
 
-from qtools.instrument.mapping import QDAC_MAPPING
-from qtools.instrument.mapping.base import InstrumentMapping
+from qumada.instrument.mapping import QDAC_MAPPING
+from qumada.instrument.mapping.base import InstrumentMapping
 
 
 class QDacMapping(InstrumentMapping):

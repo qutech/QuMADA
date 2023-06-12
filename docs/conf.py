@@ -17,7 +17,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = "qtools"
+project = "QuMADA"
 copyright = "2023, JARA Institute for Quantum Information"
 author = "JARA Institute for Quantum Information"
 

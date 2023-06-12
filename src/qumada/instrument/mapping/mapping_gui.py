@@ -71,7 +71,7 @@ from qcodes.utils.metadata import Metadatable
 from qtools_metadata.measurement import MeasurementMapping
 from qtools_metadata.metadata import Metadata
 
-from qtools.instrument.mapping.base import (
+from qumada.instrument.mapping.base import (
     add_mapping_to_instrument,
     filter_flatten_parameters,
 )
@@ -82,7 +82,7 @@ TerminalParameters = Mapping[Any, Union[Mapping[Any, Parameter], Parameter]]
 # TODO: terminal_parameter attributes
 class TerminalTreeView(QTreeView):
     """
-    QTreeView, that displays qtools `TerminalParameters` (`Mapping[Any, Mapping[Any, Parameter] | Parameter]`) datastructure.
+    QTreeView, that displays QuMADA `TerminalParameters` (`Mapping[Any, Mapping[Any, Parameter] | Parameter]`) datastructure.
     Items are draggable to map them to instruments.
     """
 

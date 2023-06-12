@@ -21,7 +21,7 @@
 
 
 from __future__ import annotations
-from qtools.utils.generate_sweeps import generate_sweep
+from qumada.utils.generate_sweeps import generate_sweep
 import time
 import logging
 

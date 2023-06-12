@@ -35,13 +35,13 @@ from qcodes.dataset import (
 from qcodes.station import Station
 from qtools_metadata.metadata import Metadata
 
-from qtools.instrument.buffered_instruments import BufferedDummyDMM as DummyDmm
-from qtools.instrument.buffers.buffer import map_buffers
-from qtools.instrument.custom_drivers.Dummies.dummy_dac import DummyDac
-from qtools.instrument.mapping import DUMMY_DMM_MAPPING, add_mapping_to_instrument
-from qtools.instrument.mapping.base import map_gates_to_instruments
-from qtools.instrument.mapping.Dummies.DummyDac import DummyDacMapping
-from qtools.measurement.scripts import (
+from qumada.instrument.buffered_instruments import BufferedDummyDMM as DummyDmm
+from qumada.instrument.buffers.buffer import map_buffers
+from qumada.instrument.custom_drivers.Dummies.dummy_dac import DummyDac
+from qumada.instrument.mapping import DUMMY_DMM_MAPPING, add_mapping_to_instrument
+from qumada.instrument.mapping.base import map_gates_to_instruments
+from qumada.instrument.mapping.Dummies.DummyDac import DummyDacMapping
+from qumada.measurement.scripts import (
     Generic_1D_parallel_asymm_Sweep,
     Generic_1D_parallel_Sweep,
     Generic_1D_Sweep,
@@ -49,10 +49,10 @@ from qtools.measurement.scripts import (
     Generic_nD_Sweep,
     Timetrace,
 )
-from qtools.utils.generate_sweeps import generate_sweep, replace_parameter_settings
-from qtools.utils.GUI import open_web_gui
-from qtools.utils.load_from_sqlite_db import load_db, pick_measurement
-from qtools.utils.ramp_parameter import *
+from qumada.utils.generate_sweeps import generate_sweep, replace_parameter_settings
+from qumada.utils.GUI import open_web_gui
+from qumada.utils.load_from_sqlite_db import load_db, pick_measurement
+from qumada.utils.ramp_parameter import *
 
 trigger = threading.Event()
 

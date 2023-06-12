@@ -1,4 +1,4 @@
-Welcome to qtools's documentation!
+Welcome to QuMADA's documentation!
 ==================================
 
 .. toctree::
@@ -11,7 +11,7 @@ Welcome to qtools's documentation!
    examples
    mapping_gui
    collecting
-   qtools
+   qumada
 
 
 

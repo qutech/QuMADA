@@ -20,9 +20,9 @@
 
 from qcodes.instrument_drivers.stanford_research.SR830 import SR830
 
-from qtools.instrument.buffers import DummyDMMBuffer, MFLIBuffer, SR830Buffer
-from qtools.instrument.custom_drivers.Dummies.dummy_dmm import DummyDmm
-from qtools.instrument.custom_drivers.ZI.MFLI import MFLI, Session
+from qumada.instrument.buffers import DummyDMMBuffer, MFLIBuffer, SR830Buffer
+from qumada.instrument.custom_drivers.Dummies.dummy_dmm import DummyDmm
+from qumada.instrument.custom_drivers.ZI.MFLI import MFLI, Session
 
 
 class BufferedMFLI(MFLI):

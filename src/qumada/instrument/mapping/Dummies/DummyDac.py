@@ -23,9 +23,9 @@ from __future__ import annotations
 
 from qcodes.parameters import Parameter
 
-from qtools.instrument.custom_drivers.Dummies.dummy_dac import DummyDac
-from qtools.instrument.mapping import DUMMY_DAC_MAPPING
-from qtools.instrument.mapping.base import InstrumentMapping
+from qumada.instrument.custom_drivers.Dummies.dummy_dac import DummyDac
+from qumada.instrument.mapping import DUMMY_DAC_MAPPING
+from qumada.instrument.mapping.base import InstrumentMapping
 
 
 class DummyDacMapping(InstrumentMapping):
