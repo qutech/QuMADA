@@ -381,18 +381,18 @@ to the used instruments. This requires a few changes to the way the measurement 
 
 (This tutorial expects you to do the basic qcodes and QuMADA imports on your own)
 
-For the MFLI the BufferedMFLI class is used instead of the normal driver. It inherits from the normal MFLI class but adds the _qtools_buffer property, which incorporates the Qtools buffer, to the MFLI.
+For the MFLI the BufferedMFLI class is used instead of the normal driver. It inherits from the normal MFLI class but adds the _qumada_buffer property, which incorporates the QuMADA buffer, to the MFLI.
 The QuMADA buffer has methods to setup the buffer and triggers as well as to start, stop and readout measurements. Using a instrument for buffered measurements requires a wrapper mapping the instruments driver specific commands
 to the QuMADA ones. Currently, QuMADA supports the MFLI and the SR830 (more to come), how to add additional instruments by yourself will be covered in a different section.
 
 The DecaDac's is required to do a smooth ramp, which requires usage of the built in ramp method. As this cannot be mapped by using the normal QuMADA mapping.json file, we use the DecadacMapping class and pass it as the mapping-kwarg
-(instead of "path") to "add_mapping_to_instrument". This does not only add the normal mapping but includes the _qtools_ramp() method which is used in Qtools' buffered measurement scripts for ramping channels. This method makes use of the
+(instead of "path") to "add_mapping_to_instrument". This does not only add the normal mapping but includes the _qumada_ramp() method which is used in QuMADA' buffered measurement scripts for ramping channels. This method makes use of the
 built-in ramp method, but standardizes the input parameters so that different instruments can be used with the same measurement script. Note that instruments without built-in ramps can be used for the buffered measurements as well, but then require communication at
 each setpoint, which slows down the measurement and can lead to asynchronicity. It is strongly adviced to use this feature only for debugging.
 
 .. note::
 
-	In some cases it is possible to add trigger channels to the _qtools_ramp method. Those are triggered as soon as the ramp starts. However, this feature is still WIP and can lead to significat offsets due to time delays.
+	In some cases it is possible to add trigger channels to the _qumada_ramp method. Those are triggered as soon as the ramp starts. However, this feature is still WIP and can lead to significat offsets due to time delays.
 
 Setting up the buffer in QuMADA is done via a settings dict (which can also be serialized into a yaml or json file). The parameters are:
 

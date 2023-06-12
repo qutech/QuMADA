@@ -60,12 +60,9 @@ class InstrumentMapping(ABC):
         ramp_time: float,
     ) -> None:
         """Wrapper to ramp the provided parameters"""
-        
+
     @abstractmethod
-    def setup_trigger_in(
-            self,
-            trigger_settings: dict
-            ) -> None:
+    def setup_trigger_in(self, trigger_settings: dict) -> None:
         """Setup the trigger based on the buffer_settings"""
 
 
@@ -164,11 +161,11 @@ def add_mapping_to_instrument(
     """
     if path is None and mapping is not None:
         helper_mapping = mapping.mapping
-        instrument._qtools_ramp = mapping.ramp
+        instrument._qumada_ramp = mapping.ramp
         instrument._is_triggerable = mapping._is_triggerable
-        instrument._qtools_mapping = mapping
+        instrument._qumada_mapping = mapping
         try:
-            instrument._qtools_trigger = mapping.trigger
+            instrument._qumada_trigger = mapping.trigger
         except:
             pass
         # TODO: Better name??

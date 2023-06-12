@@ -336,10 +336,10 @@ class MeasurementScript(ABC):
                             )
         if self.buffered:
             self.buffers = {
-                channel.root_instrument._qtools_buffer for channel in self.gettable_channels if is_bufferable(channel)
+                channel.root_instrument._qumada_buffer for channel in self.gettable_channels if is_bufferable(channel)
             }
             self.trigger_ins = {
-                param.root_instrument._qtools_mapping for param in self.dynamic_channels if is_triggerable(param)
+                param.root_instrument._qumada_mapping for param in self.dynamic_channels if is_triggerable(param)
             }
         self._lists_created = True
         self._relabel_instruments()
@@ -453,7 +453,7 @@ class MeasurementScript(ABC):
         if self.buffered:
             for gettable_param in self.gettable_channels:
                 if is_bufferable(gettable_param):
-                    gettable_param.root_instrument._qtools_buffer.subscribe([gettable_param])
+                    gettable_param.root_instrument._qumada_buffer.subscribe([gettable_param])
                 else:
                     raise Exception(f"{gettable_param} is not bufferable.")
 
