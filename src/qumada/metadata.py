@@ -43,6 +43,16 @@ class Metadata(Protocol):
         """Adds metadata related to the measurement data to metadata."""
 
 
+class Savable(Protocol):
+    """Protocol for a savable / updatable (metadata) object."""
+
+    def save(self):
+        """Saves metadata to new objects."""
+
+    def update(self):
+        """Updates the already saved metadata."""
+
+
 class BasicMetadata:
     """Example implementation of a MetadataHandler."""
 

@@ -44,9 +44,9 @@ from qcodes.dataset.dond.do_nd_utils import ActionsT
 from qcodes.parameters import Parameter, ParameterBase
 
 from qumada.instrument.buffers.buffer import is_bufferable, is_triggerable
+from qumada.metadata import Metadata
 from qumada.utils.ramp_parameter import ramp_or_set_parameter
 from qumada.utils.utils import flatten_array
-from qumada.metadata import Metadata
 
 
 def is_measurement_script(o):
@@ -583,7 +583,7 @@ class MeasurementScript(ABC):
         if insert_metadata_into_db:
             try:
                 metadata = self.metadata
-                metadata.save_to_db()
+                metadata.save()
             except Exception as ex:
                 print(f"Metadata could not inserted into database: {ex}")
 
