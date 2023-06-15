@@ -20,17 +20,17 @@
 
 from __future__ import annotations
 
-from qtools_metadata.metadata import Metadata
 from qumada.measurement.measurement import MeasurementScript
+from qumada.metadata import BasicMetadata, Metadata
 
 
 class Job:
     def __init__(
         self,
+        script: MeasurementScript,
         metadata: Metadata | None = None,
-        script: MeasurementScript | None = None,
         parameters: dict | None = None,
     ):
-        self._metadata: Metadata = metadata or Metadata()
         self._script: MeasurementScript = script
+        self._metadata: Metadata = metadata or BasicMetadata()
         self._parameters: dict = parameters or {}

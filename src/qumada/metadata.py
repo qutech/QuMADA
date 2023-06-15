@@ -18,46 +18,48 @@
 # - Daniel Grothe
 
 
+from __future__ import annotations
+
 from datetime import datetime
 from typing import Protocol
 
 
-class MetadataHandler(Protocol):
-    """Protocol for a Metadata handler object. Defines the methods to handle specific metadata portions collected with qtools."""
+class Metadata(Protocol):
+    """Protocol for a Metadata object. Defines the methods to handle specific metadata portions collected with QuMADA."""
 
-    def add_terminal_mapping(self, metadata, mapping: str, name: str):
+    def add_terminal_mapping(self, mapping: str, name: str):
         """Adds metadata of the mapping between terminals and instrument parameters as a (JSON) string."""
 
-    def add_script_to_metadata(self, metadata, script: str, name: str):
+    def add_script_to_metadata(self, script: str, language: str, name: str):
         """Adds metadata of the used measurement script."""
 
-    def add_parameters_to_metadata(self, metadata, parameters: str, name: str):
+    def add_parameters_to_metadata(self, parameters: str, name: str):
         """Adds parameters and their settings to metadata."""
 
-    def add_datetime_to_metadata(self, metadata, dt: datetime):
+    def add_datetime_to_metadata(self, dt: datetime):
         """Adds datetime to metadata."""
 
-    def add_data_to_metadata(self, metadata, data: list):
+    def add_data_to_metadata(self, location: str, datatype: str, name: str):
         """Adds metadata related to the measurement data to metadata."""
 
 
-class BasicMetadataHandler:
+class BasicMetadata:
     """Example implementation of a MetadataHandler."""
 
     def __init__(self):
         self.metadata = {}
 
-    def add_terminal_mapping(self, metadata, mapping: str, name: str = "mapping"):
+    def add_terminal_mapping(self, mapping: str, name: str = "mapping"):
         self.metadata[name] = mapping
 
-    def add_script_to_metadata(self, metadata, script: str, name: str = "script"):
-        self.metadata[name] = script
+    def add_script_to_metadata(self, script: str, language: str, name: str = "script"):
+        self.metadata[name] = (language, script)
 
-    def add_parameters_to_metadata(self, metadata, parameters: str, name: str = "parameters"):
+    def add_parameters_to_metadata(self, parameters: str, name: str = "parameters"):
         self.metadata[name] = parameters
 
-    def add_datetime_to_metadata(self, metadata, dt: datetime):
+    def add_datetime_to_metadata(self, dt: datetime):
         self.metadata["datetime"] = dt
 
-    def add_data_to_metadata(self, metadata, data: list, name: str = "data"):
-        self.metadata[name] = data
+    def add_data_to_metadata(self, location: str, datatype: str, name: str = "data"):
+        self.metadata[name] = (datatype, location)

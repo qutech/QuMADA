@@ -22,10 +22,10 @@ from typing import runtime_checkable
 
 import pytest
 
-from qtools.metadata import BasicMetadataHandler, MetadataHandler
+from qumada.metadata import BasicMetadata, Metadata
 
 
 def test_basic_metadata_handler():
     # Test that the basic metadata handler conforms to the MetadataHandler protocol.
-    handler = BasicMetadataHandler()
-    assert isinstance(handler, runtime_checkable(MetadataHandler))
+    handler = BasicMetadata()
+    assert isinstance(handler, runtime_checkable(Metadata))

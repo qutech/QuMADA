@@ -68,13 +68,12 @@ from qcodes.instrument.instrument import Instrument
 from qcodes.instrument.parameter import Parameter
 from qcodes.station import Station
 from qcodes.utils.metadata import Metadatable
-from qtools_metadata.measurement import MeasurementMapping
-from qtools_metadata.metadata import Metadata
 
 from qumada.instrument.mapping.base import (
     add_mapping_to_instrument,
     filter_flatten_parameters,
 )
+from qumada.metadata import Metadata
 
 TerminalParameters = Mapping[Any, Union[Mapping[Any, Parameter], Parameter]]
 
@@ -1215,8 +1214,6 @@ def map_terminals_gui(
         app.exec_()
 
     # if metadata is provided, add mapping to metadata object
-    if not metadata is None:
+    if metadata is not None:
         j = json.dumps(terminal_parameters, default=lambda o: str(o))
-        if not metadata.measurement.mapping:
-            metadata.measurement.mapping = MeasurementMapping.create("custom-mapping")
-        metadata.measurement.mapping.mapping = json.dumps(j)
+        metadata.add_terminal_mapping(j, "custom-mapping")

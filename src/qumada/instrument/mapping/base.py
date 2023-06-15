@@ -32,8 +32,8 @@ import jsonschema
 from qcodes.instrument import Instrument
 from qcodes.metadatable import Metadatable
 from qcodes.parameters import Parameter
-from qtools_metadata.measurement import MeasurementMapping
-from qtools_metadata.metadata import Metadata
+
+from qumada.metadata import Metadata
 
 
 class MappingError(Exception):
@@ -319,9 +319,7 @@ def map_gates_to_instruments(
     j = json.dumps(gate_parameters, default=lambda o: str(o))
     # Add mapping to metadata, if provided
     if metadata is not None:
-        if not metadata.measurement.mapping:
-            metadata.measurement.mapping = MeasurementMapping.create("automatic-mapping")
-        metadata.measurement.mapping.mapping = json.dumps(j)
+        metadata.add_terminal_mapping(json.dumps(j), name="automatic-mapping")
 
 
 def _map_gate_to_instrument(gate: Mapping[Any, Parameter], instrument_parameters: Mapping[Any, Parameter]) -> None:
