@@ -1,17 +1,17 @@
 Installation
 ============
 
-First, clone the current version of qtools from gitlab
+First, clone the current version of QuMADA from gitlab
 
 .. code-block:: console
 
-    git clone git@git-ce.rwth-aachen.de:qutech/lab_software/qtools.git qtools
-    cd qtools
+    git clone git@git-ce.rwth-aachen.de:qutech/lab_software/qumada.git qumada
+    cd qumada
 
 Setup virtual environment
 -------------------------
 
-Installation of qtools should be done in a virtual environment.
+Installation of QuMADA should be done in a virtual environment.
 There are several methods of creating a virtual environment, python's native being *venv*:
 
 On *windows*, run
@@ -31,7 +31,7 @@ On *linux*, run
 Setup for general use
 ---------------------
 
-Install qtools through pip
+Install QuMADA through pip
 
 .. code-block:: console
 

@@ -100,7 +100,7 @@ You can load a yaml representation of the metadata using :py:meth:`qtools_metada
 Automatically collecting metadata
 #################################
 
-When doing measurements, qtools automatically collects metadata during setup and run of the measurement.
+When doing measurements, QuMADA automatically collects metadata during setup and run of the measurement.
 
 Here is an overview of collected metadata and where it is collected:
 
@@ -108,7 +108,7 @@ Here is an overview of collected metadata and where it is collected:
 
 .. autoattribute:: qtools_metadata.measurement.Measurement.data
 
-The measurements datetime and a reference to the measured data is collected after calling :py:meth:`qtools.measurement.measurement.MeasurementScript.run`.
+The measurements datetime and a reference to the measured data is collected after calling :py:meth:`qumada.measurement.measurement.MeasurementScript.run`.
 To turn off the collection, use arguments ``add_datetime_to_metadata`` and ``add_data_to_metadata``.
 
 .. autoattribute:: qtools_metadata.measurement.Measurement.mapping
@@ -117,8 +117,8 @@ To turn off the collection, use arguments ``add_datetime_to_metadata`` and ``add
 
 .. autoattribute:: qtools_metadata.measurement.Measurement.script
 
-The instrument mapping is added during :py:func:`qtools.instrument.mapping.base.map_gates_to_instruments`.
-Script and settings are added during :py:meth:`qtools.measurement.measurement.MeasurementScript.setup`.
+The instrument mapping is added during :py:func:`qumada.instrument.mapping.base.map_gates_to_instruments`.
+Script and settings are added during :py:meth:`qumada.measurement.measurement.MeasurementScript.setup`.
 Use arguments ``add_script_to_metadata`` and ``add_parameters_to_metadata`` respectively to turn this off.
 
 .. code-block:: python
@@ -142,7 +142,7 @@ Save to database
 ################
 
 Before measurement, the created metadata is automatically saved to the database, if the measurement was setup with it.
-This happens after calling :py:meth:`qtools.measurement.measurement.MeasurementScript.run`.
+This happens after calling :py:meth:`qumada.measurement.measurement.MeasurementScript.run`.
 To deactivate this feature, use the argument ``insert_metadata_into_db``.
 
 .. code-block:: python

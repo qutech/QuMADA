@@ -1,8 +1,23 @@
-"""
-Created on Thu Dec  8 14:36:00 2022
+# Copyright (c) 2023 JARA Institute for Quantum Information
+#
+# This file is part of QuMADA.
+#
+# QuMADA is free software: you can redistribute it and/or modify it under the
+# terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
+#
+# QuMADA is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+# A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# QuMADA. If not, see <https://www.gnu.org/licenses/>.
+#
+# Contributors:
+# - Till Huckemann
+# - Daniel Grothe
 
-@author: lab2
-"""
 
 import qtools_metadata.db as db
 import yaml
@@ -19,18 +34,18 @@ from qcodes.station import Station
 from qcodes_contrib_drivers.drivers.QDevil.QDAC1 import QDac
 from qtools_metadata.metadata import Metadata
 
-from qtools.instrument.buffered_instruments import BufferedMFLI as MFLI
-from qtools.instrument.buffered_instruments import BufferedSR830 as SR830
-from qtools.instrument.buffers.buffer import map_buffers
-from qtools.instrument.mapping import (
+from qumada.instrument.buffered_instruments import BufferedMFLI as MFLI
+from qumada.instrument.buffered_instruments import BufferedSR830 as SR830
+from qumada.instrument.buffers.buffer import map_buffers
+from qumada.instrument.mapping import (
     KEITHLEY_2400_MAPPING,
     MFLI_MAPPING,
     SR830_MAPPING,
     add_mapping_to_instrument,
 )
-from qtools.instrument.mapping.base import map_gates_to_instruments
-from qtools.instrument.mapping.Harvard.Decadac import DecadacMapping
-from qtools.measurement.scripts import (
+from qumada.instrument.mapping.base import map_gates_to_instruments
+from qumada.instrument.mapping.Harvard.Decadac import DecadacMapping
+from qumada.measurement.scripts import (
     Generic_1D_parallel_asymm_Sweep,
     Generic_1D_parallel_Sweep,
     Generic_1D_Sweep,
@@ -38,9 +53,9 @@ from qtools.measurement.scripts import (
     Generic_nD_Sweep,
     Timetrace,
 )
-from qtools.utils.generate_sweeps import generate_sweep, replace_parameter_settings
-from qtools.utils.load_from_sqlite_db import load_db, pick_measurement
-from qtools.utils.ramp_parameter import *
+from qumada.utils.generate_sweeps import generate_sweep, replace_parameter_settings
+from qumada.utils.load_from_sqlite_db import load_db, pick_measurement
+from qumada.utils.ramp_parameter import *
 
 #%% Experiment Setup
 
@@ -50,9 +65,10 @@ station = Station()
 # Setup instruments
 # Call add_mapping_to_instrument(instrument, mapping) for instruments with built in
 # ramp methods or add_mapping_to_instrument(instrument, path) for instruments without
-# to map the instrument's parameters to qtools-specific names.
+# to map the instrument's parameters to QuMADA-specific names.
 
-dac = Decadac("dac", "ASRL6::INSTR", min_val=-10, max_val=10, terminator="\n")
+dac = Decadac("dac", "ASRL6::INSTR", min_val=-10, max_val=10, terminator="
+")
 add_mapping_to_instrument(dac, mapping=DecadacMapping())
 station.add_component(dac)
 

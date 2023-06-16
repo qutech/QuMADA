@@ -1,18 +1,11 @@
-# qtools
+# QuMADA
 Interfaces and measurement scripts for usage with QCoDeS.
 
 ## Installation
 
-First, clone the current version of qtools from gitlab
-
-```
-git clone git@git-ce.rwth-aachen.de:qutech/lab_software/qtools.git qtools
-cd qtools
-```
-
 ### Setup virtual environment
 
-Installation of qtools should be done in a virtual environment.
+Installation of QuMADA should be done in a virtual environment.
 There are several methods of creating a virtual environment, python's native being *venv*:
 
 On *windows*, run
@@ -29,40 +22,52 @@ python -m venv .venv
 source .venv/bin/activate
 ```
 
-### Setup for general use
+### Install QuMADA
 
-Install qtools through pip
-
-```
-pip install -e .
-```
-
-You can also install optional dependencies, like *Spyder* or the *ZurichInstruments MFLI instrument driver*:
+Install QuMADA directly from PyPI:
 
 ```
-pip install -e .[spyder,mfli]
+python -m pip install qumada
+```
+
+Alternatively, install the latest development version of QuMADA from github:
+
+```
+git clone https://github.com/qutech/qumada.git qumada
+cd qumada
+python -m pip install -e .
+```
+
+You can also install optional dependencies, like *Spyder* or QCoDeS' *plottr-inspectr*:
+
+```
+python -m pip install -e .[spyder,gui]
 ```
 
 ### Setup for development
 
-For development, the requirements are stored in *dev_requirements.txt*.
+For development, first clone the latest development version of QuMADA from github:
 
 ```
-pip install -r dev_requirements.txt
+git clone https://github.com/qutech/qumada.git qumada
+cd qumada
+```
+
+The requirements are stored in *dev_requirements.txt*.
+
+```
+python -m pip install -r dev_requirements.txt
 ```
 
 Set up pre-commit hooks
 
 ```
-pre-commit install
+python -m pre-commit install
 ```
 
 ### Documentation
 
-You can access the current documentation [here](https://qutech.pages.git-ce.rwth-aachen.de/lab_software/qtools/qtools)
-or build your own:
-
-Run
+To build the documentation, run:
 
 ```
 cd docs

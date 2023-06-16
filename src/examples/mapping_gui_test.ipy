@@ -10,17 +10,17 @@ from qcodes.station import Station
 from qcodes.tests.instrument_mocks import DummyChannelInstrument
 from qtools_metadata.metadata import Metadata
 
-from qtools.instrument.custom_drivers.Dummies.dummy_dac import DummyDac
-from qtools.instrument.custom_drivers.Dummies.dummy_dmm import DummyDmm
-from qtools.instrument.mapping import (
+from qumada.instrument.custom_drivers.Dummies.dummy_dac import DummyDac
+from qumada.instrument.custom_drivers.Dummies.dummy_dmm import DummyDmm
+from qumada.instrument.mapping import (
     DUMMY_CHANNEL_MAPPING,
     DUMMY_DMM_MAPPING,
     add_mapping_to_instrument,
     filter_flatten_parameters,
     map_terminals_gui,
 )
-from qtools.instrument.mapping.Dummies.DummyDac import DummyDacMapping
-from qtools.measurement.scripts.generic_measurement import Generic_1D_Sweep
+from qumada.instrument.mapping.Dummies.DummyDac import DummyDacMapping
+from qumada.measurement.scripts.generic_measurement import Generic_1D_Sweep
 
 TerminalParameters = Mapping[Any, Mapping[Any, Parameter] | Parameter]
 

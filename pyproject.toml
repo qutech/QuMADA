@@ -1,2 +1,41 @@
+[project]
+name = "QuMADA"
+version = "0.4.1"
+description = "Measurement Abstraction and Database Access layer for QCoDeS"
+readme = "README.md"
+authors = [
+    {name = "JARA Institute for Quantum Information"},
+]
+license = {text = "GPLv3+"}
+keywords = ["quantum", "physics", "abstraction", "metadata", "data management"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering",
+    "Intended Audience :: Science/Research",
+]
+
+requires-python = ">=3.9"
+dependencies = [
+    "qcodes >= 0.37.0",
+    "qcodes_contrib_drivers >= 0.18.0",
+    "matplotlib",
+    "jsonschema",
+    "zhinst-toolkit >= 0.3.3",
+    "pyqt5",
+]
+
+[project.optional-dependencies]
+gui = ["plottr"]
+spyder = ["spyder"]
+
+[project.urls]
+Repository = "https://github.com/qutech/qumada"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
 [tool.pytest.ini_options]
 qt_api = "pyqt5"
