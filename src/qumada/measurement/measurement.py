@@ -567,15 +567,6 @@ class MeasurementScript(ABC):
                     metadata.measurement.data = []
                 db_location = qc.config.core.db_location
                 metadata.add_data_to_metadata(db_location, "sqlite3", f"{cls.__name__}Data")
-
-                # # Add only if not already in list
-                # # When we compare the data objects, the newly created one does not yet have the measurement referenced or a pid.
-                # # Thus, ignore data.measurement and data.pid for the comparison
-                # def _compare_data(d1, d2):
-                #     return d1.name == d2.name and d1.dataType == d2.dataType and d1.pathToData == d2.pathToData
-
-                # if not any(_compare_data(data, d2) for d2 in datalist):
-                #     datalist.append(data)
             except Exception as ex:
                 print(f"Data could not be added to metadata: {ex}")
 
