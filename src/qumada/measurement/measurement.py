@@ -42,12 +42,9 @@ from qcodes import Station
 from qcodes.dataset import AbstractSweep, LinSweep
 from qcodes.dataset.dond.do_nd_utils import ActionsT
 from qcodes.parameters import Parameter, ParameterBase
-from qtools_metadata.measurement import MeasurementData
-from qtools_metadata.measurement import MeasurementScript as DomainMeasurementScript
-from qtools_metadata.measurement import MeasurementSettings
-from qtools_metadata.metadata import Metadata
 
 from qumada.instrument.buffers.buffer import is_bufferable, is_triggerable
+from qumada.metadata import Metadata
 from qumada.utils.ramp_parameter import ramp_or_set_parameter
 from qumada.utils.utils import flatten_array
 
@@ -200,12 +197,12 @@ class MeasurementScript(ABC):
 
         Args:
             parameters (dict): Dictionary containing parameters and their settings
-            metadata (dict): Dictionary containing metadata that should be
-                            available for the measurement.
+            metadata (Metadata): Object containing/handling metadata that should be
+                                        available for the measurement.
             add_script_to_metadata (bool): If True (default), adds this object's content
-                                           to the metadata's measurement.script.
+                                           to the metadata.
             add_parameters_to_metadata (bool): If True (default), add the parameters to
-                                               the metadata's measurement.settings.
+                                               the metadata.
             settings (dict): Settings regarding the measurement script. Kwargs:
                 ramp_rate: Defines how fast parameters are ramped during
                 initialization and reset.
@@ -232,26 +229,17 @@ class MeasurementScript(ABC):
         # Add script and parameters to metadata
         if add_script_to_metadata:
             try:
-                if not metadata.measurement.script:
-                    metadata.measurement.script = DomainMeasurementScript.create(cls.__name__)
-                script = metadata.measurement.script
-
-                script.language = "python"
-                script.script = inspect.getsource(cls)
+                metadata.add_script_to_metadata(inspect.getsource(cls), language="python", name=cls.__name__)
             except OSError as err:
                 print(f"Source of MeasurementScript could not be acquired: {err}")
-            except Exception as e:
-                print(f"Script could not be added to metadata: {e}")
+            except Exception as ex:
+                print(f"Script could not be added to metadata: {ex}")
 
         if add_parameters_to_metadata:
             try:
-                if not metadata.measurement.settings:
-                    metadata.measurement.settings = MeasurementSettings.create(f"{cls.__name__}Settings")
-                settings = metadata.measurement.settings
-
-                settings.settings = json.dumps(parameters)
-            except Exception as e:
-                print(f"Parameters could not be added to metadata: {e}")
+                metadata.add_parameters_to_metadata(json.dumps(parameters), name=f"{cls.__name__}Settings")
+            except Exception as ex:
+                print(f"Parameters could not be added to metadata: {ex}")
 
         # Add gate parameters
         for gate, vals in parameters.items():
@@ -565,7 +553,7 @@ class MeasurementScript(ABC):
         if add_datetime_to_metadata:
             try:
                 metadata = self.metadata
-                metadata.measurement.datetime = datetime.now()
+                metadata.add_datetime_to_metadata(datetime.now())
             except Exception as ex:
                 print(f"Datetime could not be added to metadata: {ex}")
 
@@ -577,28 +565,18 @@ class MeasurementScript(ABC):
                 cls = type(self)
                 if not metadata.measurement.data:
                     metadata.measurement.data = []
-                datalist = metadata.measurement.data
                 db_location = qc.config.core.db_location
-                data = MeasurementData.create(f"{cls.__name__}Data", "sqlite3", db_location)
-
-                # Add only if not already in list
-                # When we compare the data objects, the newly created one does not yet have the measurement referenced or a pid.
-                # Thus, ignore data.measurement and data.pid for the comparison
-                def _compare_data(d1, d2):
-                    return d1.name == d2.name and d1.dataType == d2.dataType and d1.pathToData == d2.pathToData
-
-                if not any(_compare_data(data, d2) for d2 in datalist):
-                    datalist.append(data)
-            except Exception as e:
-                print(f"Data could not be added to metadata: {e}")
+                metadata.add_data_to_metadata(db_location, "sqlite3", f"{cls.__name__}Data")
+            except Exception as ex:
+                print(f"Data could not be added to metadata: {ex}")
 
     def _insert_metadata_into_db(self, *args, insert_metadata_into_db: bool = True, **kwargs):
         if insert_metadata_into_db:
             try:
                 metadata = self.metadata
-                metadata.save_to_db()
-            except Exception as e:
-                print(f"Metadata could not inserted into database: {e}")
+                metadata.save()
+            except Exception as ex:
+                print(f"Metadata could not inserted into database: {ex}")
 
 
 class VirtualGate:

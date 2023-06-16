@@ -18,19 +18,15 @@
 # - Daniel Grothe
 
 
-from __future__ import annotations
+from typing import runtime_checkable
 
-from qumada.measurement.measurement import MeasurementScript
-from qumada.metadata import BasicMetadata, Metadata
+import pytest
+
+from qumada.metadata import BasicMetadata, Metadata, Savable
 
 
-class Job:
-    def __init__(
-        self,
-        script: MeasurementScript,
-        metadata: Metadata | None = None,
-        parameters: dict | None = None,
-    ):
-        self._script: MeasurementScript = script
-        self._metadata: Metadata = metadata or BasicMetadata()
-        self._parameters: dict = parameters or {}
+def test_basic_metadata_handler():
+    # Test that the basic metadata handler conforms to the MetadataHandler protocol.
+    handler = BasicMetadata()
+    assert isinstance(handler, runtime_checkable(Metadata))
+    assert not isinstance(handler, runtime_checkable(Savable))
