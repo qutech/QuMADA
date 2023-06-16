@@ -1,6 +1,6 @@
 [project]
 name = "QuMADA"
-version = "0.4.0c"
+version = "0.4.1"
 description = "Measurement Abstraction and Database Access layer for QCoDeS"
 readme = "README.md"
 authors = [
