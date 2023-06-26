@@ -31,3 +31,4 @@ jobs:
         with:
           name: pytest-results-${{ matrix.python-version }}
           path: report.xml
+        if: ${{ always() }}
