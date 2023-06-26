@@ -1,12 +1,14 @@
-name: Python
+name: Unit Tests
 
 on:
   pull_request:
   push:
     branches: ["main"]
 
+permissions: {}
+
 jobs:
-  test:
+  build-and-pytest:
     strategy:
       matrix:
         python-version: ["3.9", "3.10", "3.11"]
@@ -35,4 +37,23 @@ jobs:
         with:
           name: pytest-results-${{ matrix.python-version }}
           path: test-results.xml
-        if: ${{ always() }}
+        if: always()
+
+  publish-test-results:
+    name: "Publish test results"
+    needs: build-and-pytest
+    runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      pull-requests: write
+    if: always()
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: artifacts
+      - name: Publish test results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: "artifacts/**/*.xml"
