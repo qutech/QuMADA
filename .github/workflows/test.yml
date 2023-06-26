@@ -40,7 +40,7 @@ jobs:
           path: test-results.xml
         if: always()
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-actions@v3
+        uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: coverage.xml
