@@ -14,6 +14,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - uses: tlambert03/setup-qt-libs@v1
       - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
