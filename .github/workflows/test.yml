@@ -32,12 +32,19 @@ jobs:
       - name: Test with pytest
         run: |
           coverage run -m pytest --junit-xml=test-results.xml src/tests
+          coverage xml
       - name: Upload test results
         uses: actions/upload-artifact@v3
         with:
           name: pytest-results-${{ matrix.python-version }}
           path: test-results.xml
         if: always()
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-actions@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage.xml
+          env_vars: OS,PYTHON
 
   publish-test-results:
     name: "Publish test results"
