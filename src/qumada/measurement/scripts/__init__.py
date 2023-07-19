@@ -30,8 +30,12 @@ from .generic_measurement import (
     Timetrace_buffered,
     Timetrace_with_sweeps,
 )
-from .spectrometer import(
-    Measure_Spectrum)
+try:
+    from .spectrometer import Measure_Spectrum
+except ModuleNotFoundError as ex:
+    # Only relevant if you want to use spectrometer.
+    # Requires access to Bluhm Group GitLab
+    pass
 
 __all__ = [
     "Generic_1D_Sweep",
