@@ -21,10 +21,14 @@
 # pylint: disable=missing-function-docstring
 import json
 from contextlib import nullcontext as does_not_raise
+from datetime import datetime
+from random import random
+from time import sleep
 
 import pytest
 from jsonschema import ValidationError
 from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QApplication, QMessageBox
 from pytest_cases import fixture_ref, parametrize
 from pytest_mock import MockerFixture
 from qcodes.station import Station
@@ -91,6 +95,19 @@ def fixture_script():
         add_parameters_to_metadata=False,
     )
     return script
+
+
+# # TODO: valid_terminal_parameters_mapping, fixture_script, fixture_station_with_instruments is only valid TOGETHER. They must exist within some kind of group
+# @pytest.fixture
+# def valid_terminal_parameters_mapping(station_with_instruments): # valid for given fixture_script and fixture_station_with_instruments
+#     terminal_params = {
+#         "dmm" : {"voltage" : station_with_instruments.dmm.voltage,
+#                  "current" : station_with_instruments.dmm.current},
+#         "dac" : {"voltage" : station_with_instruments.dac.voltage},
+#         "T1" : {"test_parameter" : station_with_instruments.dci.A.temperature},
+#         "T2" : {"test_parameter" : station_with_instruments.dci.B.temperature},
+#     }
+#     return terminal_params
 
 
 @pytest.fixture
@@ -176,13 +193,138 @@ def test_map_terminals_gui(mocker: MockerFixture, station_with_instruments, scri
 
 
 @pytest.mark.parametrize("monitoring", [True, False])
-def test_mapping_gui(monitoring: bool, qtbot, station_with_instruments, script):
+def test_mapping_gui_monitoring(monitoring: bool, qtbot, station_with_instruments, script, mocker):
     w = MainWindow(
         station_with_instruments.components,
         script.gate_parameters,
         monitoring=monitoring,
     )
     w.show()
+
+    assert w.monitoring_enable == monitoring
+    assert w.terminal_tree.isColumnHidden(2) != monitoring
+    # check menu button label
+    if not monitoring:
+        assert w.toggle_monitoring_action.text() == "Enable"
+    else:
+        assert w.toggle_monitoring_action.text() == "Disable"
+
+    # trigger toggle_monitoring_action (this is in the menubar)
+    w.toggle_monitoring_action.trigger()
+
+    assert w.monitoring_enable != monitoring
+    assert w.terminal_tree.isColumnHidden(2) == monitoring
+    if monitoring:
+        assert w.toggle_monitoring_action.text() == "Enable"
+    else:
+        assert w.toggle_monitoring_action.text() == "Disable"
+
+    # test monitoring in action (switch back to enabling monitoring first)
+    # This block is a bit convoluted because I am actually measuring the value of the monitored param over time in order to test the monitoring
+    #   > this is much nicer if I mock the get command (this somehow didnt work for me...)
+    if monitoring:
+        w.toggle_monitoring_action.trigger()
+
+        # minimal example (dmm.current get command is random number generator)
+        w.terminal_parameters["dmm"]["current"] = station_with_instruments.dmm.current
+
+        # update tree to update visuals with manually set mapping
+        w.terminal_tree.update_tree()
+
+        QApplication.processEvents()
+
+        # Test setting the monitoring delay
+        # mock QInputDialog.getDouble() dialog (for setting a new rate), set a shorter (but random rate)
+        delay_seconds = 0.2 + 0.1 * random()
+        mocker.patch("qumada.instrument.mapping.mapping_gui.QInputDialog.getDouble", return_value=(delay_seconds, True))
+        w.monitoring_refresh_delay.trigger()
+
+        # sample the last get value, wait, sample, wait, sample (catching the change due to get command in monitoring)
+        # careful with setting delay_seconds and the actual waiting times. There might be additional delay in process_events function call
+        #   and cache.get() making this not completely exact. So dont make the window (time margin) to tight
+        before = station_with_instruments.dmm.current.cache.get()
+        # wait 0.5*delay_seconds
+        n = 5  # num_steps
+        time_now = datetime.now()
+        while (datetime.now() - time_now).microseconds < 1e6 * delay_seconds * 0.5:
+            pass
+        QApplication.processEvents()
+        tmp = station_with_instruments.dmm.current.cache.get()
+
+        # wait another 1 delay_seconds
+        time_now = datetime.now()
+        while (datetime.now() - time_now).microseconds < 1e6 * delay_seconds:
+            pass
+        QApplication.processEvents()
+
+        after = station_with_instruments.dmm.current.cache.get()
+
+        # this should not have changed yet
+        assert before == tmp
+
+        # this makes sure (with high probability) that monitoring called the get function within the second time window
+        assert (
+            after != before
+        )  # TODO: maybe test this differently. this can fail with some probability... (new random value is equal to old value)
+
+
+# This somehow doesnt work with the CI/CD pipeline (inside docker container)
+# def test_mapping_gui_map_with_enter(mocker, qtbot, station_with_instruments, script):
+#     # mock dialogs (specify behaviour in return_value and skip)
+#     mocker.patch("qumada.instrument.mapping.mapping_gui.MessageBox_notallmapped.exec", return_value=QMessageBox.No)
+#     mocker.patch("qumada.instrument.mapping.mapping_gui.MessageBox_duplicates.exec", return_value=QMessageBox.No)
+#     mocker.patch("qumada.instrument.mapping.mapping_gui.MessageBox_overwrite.exec", return_value=QMessageBox.No)
+
+#     w = MainWindow(
+#         station_with_instruments.components,
+#         script.gate_parameters,
+#     )
+#     w.show()
+#     qtbot.addWidget(w)
+#     for _ in range(8):  # 9 is exactly enough to map all terminals
+#         qtbot.keyPress(w, Qt.Key_Return)
+#         QApplication.processEvents()
+
+#     # wanted mapping (TODO: better as fixture? Problem is that this has to be manually set and fit to the specific station fixture (ORDER) and script fixture)
+#     terminal_params = {
+#         "dmm": {"voltage": station_with_instruments.dmm.voltage, "current": station_with_instruments.dmm.current},
+#         "dac": {"voltage": station_with_instruments.dac.voltage},
+#         "T1": {"test_parameter": station_with_instruments.dci.A.temperature},
+#         "T2": {"test_parameter": station_with_instruments.dci.B.temperature},
+#     }
+
+#     # TODO: assert exact mapping that is expected (create fixture for that and assert equality)
+#     assert w.terminal_parameters == terminal_params
+
+
+def test_mapping_gui_map_automatically(mocker, qtbot, station_with_instruments, script):
+    # mock dialogs (specify behaviour in return_value and skip)
+    mocker.patch("qumada.instrument.mapping.mapping_gui.MessageBox_notallmapped.exec", return_value=QMessageBox.No)
+    mocker.patch("qumada.instrument.mapping.mapping_gui.MessageBox_duplicates.exec", return_value=QMessageBox.No)
+    mocker.patch("qumada.instrument.mapping.mapping_gui.MessageBox_overwrite.exec", return_value=QMessageBox.No)
+
+    w = MainWindow(
+        station_with_instruments.components,
+        script.gate_parameters,
+    )
+    w.show()
     qtbot.addWidget(w)
-    qtbot.mouseClick(w.button_map_auto, Qt.MouseButton.LeftButton)
-    qtbot.mouseClick(w.button_exit, Qt.MouseButton.LeftButton)
+
+    # wanted mapping
+    terminal_params = {
+        "dmm": {"voltage": station_with_instruments.dmm.voltage, "current": station_with_instruments.dmm.current},
+        "dac": {"voltage": station_with_instruments.dac.voltage},
+        "T1": {"test_parameter": station_with_instruments.dci.A.temperature},
+        "T2": {"test_parameter": station_with_instruments.dci.B.temperature},
+    }
+
+    # check if auto mapping yields wanted result
+    # qtbot.mouseClick(w.button_map_auto, Qt.MouseButton.LeftButton)
+    qtbot.keyPress(w, Qt.Key_A)
+    assert w.terminal_parameters == terminal_params
+
+    # check if exiting works
+    # qtbot.mouseClick(w.button_exit, Qt.MouseButton.LeftButton)
+    assert w.isVisible()
+    qtbot.keyPress(w, Qt.Key_E)
+    assert not w.isVisible()
