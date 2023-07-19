@@ -25,6 +25,7 @@ from qcodes_contrib_drivers.drivers.QDevil.QDAC1 import QDac
 
 from qumada.instrument.mapping import QDAC_MAPPING
 from qumada.instrument.mapping.base import InstrumentMapping
+from time import sleep
 
 
 class QDacMapping(InstrumentMapping):
