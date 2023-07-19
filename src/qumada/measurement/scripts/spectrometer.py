@@ -88,29 +88,28 @@ class Measure_Spectrum(MeasurementScript):
                          ):
         measurement = Measurement(name=f"{self.measurement_name} {data_type}")
         
-        match data_type:    
-            case "spectrum":
-                frequency = Parameter("frequency",
-                                      label = "f",
-                                      unit = "Hz")
-                independent_param = frequency
-                #TODO: Adjust unit/Name to settings
-                signal = Parameter("signal",
-                                   label = "$\sqrt{S}$",
-                                   unit = "$V/\sqrt{Hz}$")
-                dependent_param = signal
-                
-                x = results["f_processed"]
-                y = results["S_processed"][0]
-            case "timetrace":
-                timer = ElapsedTimeParameter("time")
-                independent_param = timer
-                dependent_param = self.dependent_param
-                #TODO: n_pts is not correct?
-                x = np.arange(len(results["timetrace_raw"][0])) / results['settings'].fs
-                y = results["timetrace_raw"][0]
-            case _:
-                raise NameError(f"{data_type} is no valid data_type!")
+        if data_type == "spectrum":    
+            frequency = Parameter("frequency",
+                                  label = "f",
+                                  unit = "Hz")
+            independent_param = frequency
+            #TODO: Adjust unit/Name to settings
+            signal = Parameter("signal",
+                               label = "$\sqrt{S}$",
+                               unit = "$V/\sqrt{Hz}$")
+            dependent_param = signal
+            
+            x = results["f_processed"]
+            y = results["S_processed"][0]
+        elif data_type == "timetrace":
+            timer = ElapsedTimeParameter("time")
+            independent_param = timer
+            dependent_param = self.dependent_param
+            #TODO: n_pts is not correct?
+            x = np.arange(len(results["timetrace_raw"][0])) / results['settings'].fs
+            y = results["timetrace_raw"][0]
+        else:
+            raise NameError(f"{data_type} is no valid data_type!")
                 
         measurement.register_parameter(independent_param)
         measurement.register_parameter(dependent_param,
