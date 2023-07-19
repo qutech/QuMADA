@@ -25,9 +25,7 @@ from pathlib import Path
 from types import ModuleType
 
 
-def import_resources(
-    package: res.Package, ext: str = "*", recursive: bool = True
-) -> list[res.Resource]:
+def import_resources(package: res.Package, ext: str = "*", recursive: bool = True) -> list[res.Resource]:
     """
     Loads resource files from a given package and returns them as list of Path-objects.
 
@@ -40,7 +38,4 @@ def import_resources(
         List of the resources' paths.
     """
     path: Path = res.files(package)
-    if recursive:
-        return list(path.rglob(ext))
-    else:
-        return list(path.glob(ext))
+    return list(path.rglob(ext)) if recursive else list(path.glob(ext))

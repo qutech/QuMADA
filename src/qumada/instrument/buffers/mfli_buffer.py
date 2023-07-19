@@ -21,6 +21,7 @@
 from __future__ import annotations
 
 import logging
+
 import numpy as np
 from jsonschema import validate
 from qcodes.parameters import Parameter
@@ -177,8 +178,10 @@ class MFLIBuffer(Buffer):
                 self._num_bursts = int(self.settings["num_bursts"])
                 self._burst_duration = self.settings["duration"] / self._num_bursts
             else:
-                logging.info("You have specified neither burst_duration nor num_bursts. \
-                      Using duration as burst_duration!")                    
+                logging.info(
+                    "You have specified neither burst_duration nor num_bursts. \
+                      Using duration as burst_duration!"
+                )
                 self._burst_duration = self.settings["duration"]
 
         if "num_points" in self.settings:

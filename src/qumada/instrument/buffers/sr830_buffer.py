@@ -58,10 +58,9 @@ class SR830Buffer(Buffer):
         self.delay = settings.get("delay", 0)
         if self.delay < 0:
             raise BufferException("The SR830'S Trigger Input does not support negative delays.")
-        else:
-            self.delay_data_points = int(self.delay * self._device.buffer_SR())
-            self.num_points = self.delay_data_points + self.num_points
-            # TODO: There has to be a more elegant way for the setter.
+        self.delay_data_points = int(self.delay * self._device.buffer_SR())
+        self.num_points = self.delay_data_points + self.num_points
+        # TODO: There has to be a more elegant way for the setter.
 
     @property
     def num_points(self) -> int | None:
@@ -183,11 +182,11 @@ class SR830Buffer(Buffer):
         self._device.buffer_pause()
 
     def is_ready(self) -> bool:
+        # TODO: Check if buffer is ready
         ...
 
     def is_finished(self) -> bool:
-        if self._device.buffer_npts() >= self.num_points:
-            self.stop()
-            return True
-        else:
+        if self._device.buffer_npts() < self.num_points:
             return False
+        self.stop()
+        return True

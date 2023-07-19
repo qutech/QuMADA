@@ -19,12 +19,12 @@
 # - Till Huckeman
 
 
-import json     # Used to store mappings until DB is functional
+import json  # Used to store mappings until DB is functional
 import re
 
-from qumada.utils import browsefiles
-from qumada.measurement import get_from_station as gfs
 import qumada.utils.load_save_config as lsc
+from qumada.measurement import get_from_station as gfs
+from qumada.utils import browsefiles
 
 
 def create_or_load_mapping(mapping):
@@ -61,7 +61,7 @@ def create_or_load_mapping(mapping):
             """
             self.wrap = mapping(station)
             try:
-                gate_number = int(input("Please enter number of gates: 
+                gate_number = int(input("Please enter number of gates:
 "))
             except ValueError:
                 print("Please enter an integer number")
@@ -147,7 +147,7 @@ class GateMapping():
         ToDo: Show list of available entries
         '''
         if gate is None:
-            gate = input("Enter name of gate you want to delete: 
+            gate = input("Enter name of gate you want to delete:
 ")
         try:
             del self.gates[gate]
@@ -193,16 +193,16 @@ class GateMapping():
         Checks whether chosen gate type is valid. Necessary to rely on gate_type
         variable in the measurement script.
         '''
-        print("Valid gate types are: 
+        print("Valid gate types are:
  %s" %gate_types)
         if gate_type in gate_types:
             return gate_type
         elif gate_type is None:
-            gate_type = input("Please enter gate type: 
+            gate_type = input("Please enter gate type:
 ")
             return self._gate_type_validator(gate_types, gate_type)
         else:
-            print("Invalid gate type. Known gate types are 
+            print("Invalid gate type. Known gate types are
  %s" %gate_types)
             print("You can use 'other' for unspecified gates. Support for adding new types will be added later")
             return self._gate_type_validator(gate_types)

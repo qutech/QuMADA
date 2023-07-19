@@ -97,8 +97,8 @@ def do1d_parallel(
     show_progress: None | None = None,
     log_info: str | None = None,
     break_condition: BreakConditionT | None = None,
-    backsweep_after_break: Optional = False,
-    wait_after_break: Optional = 0,
+    backsweep_after_break: bool | None = False,
+    wait_after_break: int | None = 0,
 ) -> AxesTupleListWithDataSet:
     """
     Performs a 1D scan of all ``param_set`` according to "setpoints" in parallel,
@@ -153,7 +153,7 @@ def do1d_parallel(
     else:
         meas._extra_log_info = "Using 'qcodes.utils.dataset.doNd.do1d'"
 
-    all_setpoint_params = (param_set[0],) + tuple(s for s in additional_setpoints)
+    all_setpoint_params = (param_set[0],) + tuple(additional_setpoints)
 
     measured_parameters = tuple(param for param in param_meas if isinstance(param, ParameterBase))
     measured_params = (*param_set[1:], *param_meas)
@@ -180,7 +180,7 @@ def do1d_parallel(
         use_threads = config.dataset.use_threads
 
     param_meas_caller = ThreadPoolParamsCaller(*param_meas) if use_threads else SequentialParamsCaller(*param_meas)
-    tracked_setpoints = list()
+    tracked_setpoints = []
     # do1D enforces a simple relationship between measured parameters
     # and set parameters. For anything more complicated this should be
     # reimplemented from scratch
@@ -193,10 +193,7 @@ def do1d_parallel(
         sys.stdout.flush()
         sys.stderr.flush()
 
-        sweep_data = {}
-        for channel in measured_params:
-            sweep_data[channel]: list[float] = []
-
+        sweep_data = {channel: [] for channel in measured_params}
         for set_point in tqdm(setpoints, disable=not show_progress):
             for param in param_set:
                 param.set(set_point)
@@ -210,24 +207,21 @@ def do1d_parallel(
 
             for channel in measured_params:
                 sweep_data[channel].append(channel.get())
-            if callable(break_condition):
-                if break_condition(sweep_data):
-                    if backsweep_after_break:
-                        tracked_setpoints.reverse()
-                        time.sleep(wait_after_break)
-                        for set_point in tqdm(tracked_setpoints, disable=not show_progress):
-                            for param in param_set:
-                                param.set(set_point)
-                            datasaver.add_result(
-                                (param_set[0], set_point),
-                                *process_params_meas(measured_params, use_threads=use_threads),
-                                *additional_setpoints_data,
-                            )
-                        break
-                    else:
-                        warnings.warn("Break condition was met.")
-                        break
-
+            if callable(break_condition) and break_condition(sweep_data):
+                if backsweep_after_break:
+                    tracked_setpoints.reverse()
+                    time.sleep(wait_after_break)
+                    for set_point in tqdm(tracked_setpoints, disable=not show_progress):
+                        for param in param_set:
+                            param.set(set_point)
+                        datasaver.add_result(
+                            (param_set[0], set_point),
+                            *process_params_meas(measured_params, use_threads=use_threads),
+                            *additional_setpoints_data,
+                        )
+                else:
+                    warnings.warn("Break condition was met.")
+                break
     param_set[0].post_delay = original_delay
 
     return _handle_plotting(dataset, do_plot, interrupted())
@@ -245,12 +239,12 @@ def do1d_parallel_asym(
     exp: Experiment | None = None,
     do_plot: bool | None = None,
     use_threads: bool | None = None,
-    additional_setpoints: Sequence[ParamMeasT] = tuple(),
+    additional_setpoints: Sequence[ParamMeasT] = (),
     show_progress: None | None = None,
     log_info: str | None = None,
     break_condition: BreakConditionT | None = None,
-    backsweep_after_break: Optional = False,
-    wait_after_break: Optional = 0,
+    backsweep_after_break: bool | None = False,
+    wait_after_break: int | None = 0,
 ) -> AxesTupleListWithDataSet:
     """
     Performs a 1D scan of all ``param_set`` according to "setpoints" in parallel,
@@ -305,10 +299,11 @@ def do1d_parallel_asym(
     else:
         meas._extra_log_info = "Using 'qcodes.utils.dataset.doNd.do1d'"
 
-    all_setpoint_params = (*param_set,) + tuple(s for s in additional_setpoints)
+    # TODO: why do we need this?
+    all_setpoint_params = (*param_set,) + tuple(additional_setpoints)
     all_setpoint_params = [
         *param_set,
-    ] + [s for s in additional_setpoints]
+    ] + list(additional_setpoints)
     if len(all_setpoint_params) != len(setpoints):
         raise NotImplementedError("Setpoints list length does not match number of dynamic parameters")
 
@@ -344,7 +339,7 @@ def do1d_parallel_asym(
         use_threads = config.dataset.use_threads
 
     param_meas_caller = ThreadPoolParamsCaller(*param_meas) if use_threads else SequentialParamsCaller(*param_meas)
-    tracked_setpoints = list([] for _ in param_set)
+    tracked_setpoints = [[] for _ in param_set]
     # do1D enforces a simple relationship between measured parameters
     # and set parameters. For anything more complicated this should be
     # reimplemented from scratch
@@ -369,30 +364,27 @@ def do1d_parallel_asym(
                 *process_params_meas(measured_params, use_threads=use_threads),
                 *additional_setpoints_data,
             )
-            if callable(break_condition):
-                if break_condition():
-                    if backsweep_after_break:
-                        # tracked_setpoints.reverse()
-                        # need nested reverse?
-                        tracked_setpoints = [setpoints[::-1] for setpoints in tracked_setpoints]
-                        time.sleep(wait_after_break)
-                        for j in range(len(tracked_setpoints[0])):
-                            datasaver_backward_list = []
-                            for i, param in enumerate(param_set):
-                                # tqdm might not work anymore as intended; need j instead of object?
-                                # for set_point in tqdm(tracked_setpoints, disable=not show_progress):
-                                param.set(tracked_setpoints[i][j])
-                                datasaver_backward_list.append((param_set[i], tracked_setpoints[i][j]))
-                            datasaver.add_result(
-                                *datasaver_backward_list,
-                                *process_params_meas(measured_params, use_threads=use_threads),
-                                *additional_setpoints_data,
-                            )
-                        break
-                    else:
-                        warnings.warn("Break condition was met.")
-                        break
-
+            if callable(break_condition) and break_condition():
+                if backsweep_after_break:
+                    # tracked_setpoints.reverse()
+                    # need nested reverse?
+                    tracked_setpoints = [setpoints[::-1] for setpoints in tracked_setpoints]
+                    time.sleep(wait_after_break)
+                    for j in range(len(tracked_setpoints[0])):
+                        datasaver_backward_list = []
+                        for i, param in enumerate(param_set):
+                            # tqdm might not work anymore as intended; need j instead of object?
+                            # for set_point in tqdm(tracked_setpoints, disable=not show_progress):
+                            param.set(tracked_setpoints[i][j])
+                            datasaver_backward_list.append((param_set[i], tracked_setpoints[i][j]))
+                        datasaver.add_result(
+                            *datasaver_backward_list,
+                            *process_params_meas(measured_params, use_threads=use_threads),
+                            *additional_setpoints_data,
+                        )
+                else:
+                    warnings.warn("Break condition was met.")
+                break
     param_set[0].post_delay = original_delay
 
     return _handle_plotting(dataset, do_plot, interrupted())
@@ -449,8 +441,7 @@ def _interpret_breaks(break_conditions: list, **kwargs) -> Callable[[], bool] | 
             raise NotImplementedError(
                 'Only parameter values can be used for breaks in this version. Use "val" for the break condition.'
             )
-        f = lambda: eval_binary_expr(cond["channel"].get(), ops[1], float(ops[2]))
-        conditions.append(f)
+        conditions.append(lambda: eval_binary_expr(cond["channel"].get(), ops[1], float(ops[2])))
     return partial(check_conditions, conditions) if conditions else None
 
 

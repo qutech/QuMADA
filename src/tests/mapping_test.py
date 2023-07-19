@@ -95,26 +95,24 @@ def fixture_script():
 
 @pytest.fixture
 def valid_mapping_data():
-    data = {
+    return {
         "parameter_names": {
             "IDN": "IDN",
             "v1": "voltage",
             "v2": "voltage",
         }
     }
-    return data
 
 
 @pytest.fixture
 def invalid_mapping_data():
-    data = {
+    return {
         "parameters": {
             "IDN": "IDN",
             "v1": "voltage",
             "v2": "voltage",
         }
     }
-    return data
 
 
 @parametrize(
@@ -153,6 +151,7 @@ def test_instrument_mapping(mocker: MockerFixture, valid_mapping_data):
 
     add_mapping_to_instrument(instr, path=path)
 
+    # TODO: Avoid loops in unit tests (software engineering best practice)
     for parameter in [instr.v1, instr.v2]:
         assert parameter._mapping == "voltage"
     mocker_load.assert_called_once_with(path)

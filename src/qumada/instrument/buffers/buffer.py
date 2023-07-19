@@ -29,6 +29,7 @@ from qcodes.metadatable import Metadatable
 from qcodes.parameters import Parameter
 
 
+# TODO: do not assign internal variable object!
 def is_bufferable(object: Instrument | Parameter):
     """Checks if the instrument or parameter is bufferable using the qumada Buffer definition."""
     if isinstance(object, Parameter):
@@ -37,6 +38,7 @@ def is_bufferable(object: Instrument | Parameter):
     # TODO: check, if parameter can really be buffered
 
 
+# TODO: do not assign internal variable object!
 def is_triggerable(object: Instrument | Parameter):
     """
     Checks if the instrument or parameter can be triggered by checking the corresponding flag in
@@ -68,17 +70,15 @@ def map_buffers(
     # subscribe to gettable parameters with buffer
     for gate, parameters in gate_parameters.items():
         for parameter, channel in parameters.items():
-            if properties[gate][parameter]["type"] == "gettable":
-                if is_bufferable(channel):
-                    buffer: Buffer = channel.root_instrument._qumada_buffer
-                    buffer.subscribe([channel])
+            if properties[gate][parameter]["type"] == "gettable" and is_bufferable(channel):
+                buffer: Buffer = channel.root_instrument._qumada_buffer
+                buffer.subscribe([channel])
 
     buffered_instruments = filter(is_bufferable, components.values())
     for instrument in buffered_instruments:
         buffer = instrument._qumada_buffer
-        if skip_mapped:
-            if buffer.trigger in buffer.AVAILABLE_TRIGGERS:
-                return
+        if skip_mapped and buffer.trigger in buffer.AVAILABLE_TRIGGERS:
+            return
         print("Available trigger inputs:")
         print("[0]: None")
         for idx, trigger in enumerate(buffer.AVAILABLE_TRIGGERS, 1):
@@ -87,14 +87,11 @@ def map_buffers(
         if overwrite_trigger is not None:
             try:
                 chosen = int(overwrite_trigger)
-            except:
+            except Exception:
                 chosen = int(input(f"Choose the trigger input for {instrument.name}: "))
         else:
             chosen = int(input(f"Choose the trigger input for {instrument.name}: "))
-        if chosen == 0:
-            trigger = None
-        else:
-            trigger = buffer.AVAILABLE_TRIGGERS[chosen - 1]
+        trigger = None if chosen == 0 else buffer.AVAILABLE_TRIGGERS[chosen - 1]
         buffer.trigger = trigger
         print(f"{buffer.trigger=}")
 
@@ -115,9 +112,8 @@ def _map_triggers(
     """
     triggered_instruments = filter(is_triggerable, components.values())
     for instrument in triggered_instruments:
-        if skip_mapped:
-            if instrument._qumada_mapping.trigger_in in instrument._qumada_mapping.AVAILABLE_TRIGGERS:
-                return
+        if skip_mapped and instrument._qumada_mapping.trigger_in in instrument._qumada_mapping.AVAILABLE_TRIGGERS:
+            return
         print("Available trigger inputs:")
         print("[0]: None")
         for idx, trigger in enumerate(instrument._qumada_mapping.AVAILABLE_TRIGGERS, 1):
@@ -126,7 +122,7 @@ def _map_triggers(
         if overwrite_trigger is not None:
             try:
                 chosen = int(overwrite_trigger)
-            except:
+            except Exception:
                 chosen = int(input(f"Choose the trigger input for {instrument.name}: "))
         else:
             chosen = int(input(f"Choose the trigger input for {instrument.name}: "))

@@ -197,7 +197,7 @@ def select_channel(station, **kwargs):
     if not silent:
         print(information)
     info_text = 'Please select index to proceed, enter "again" to start a new search or "exit" to abort. '
-    key = kwargs.get('key', input('Please enter key to seach for or exit to skip: 
+    key = kwargs.get('key', input('Please enter key to seach for or exit to skip:
 '))
     if key.lower() == "exit":
         return None

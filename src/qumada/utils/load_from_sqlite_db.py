@@ -23,37 +23,41 @@
 """
 Loading data from Database
 """
+
 from __future__ import annotations
 
+import contextlib
 from os import path
-import numpy as np
 
+import numpy as np
 import qcodes as qc
 from qcodes.dataset.data_export import reshape_2D_data
-from qcodes.dataset.plotting import plot_dataset
 from qcodes.dataset.data_set import DataSet
+from qcodes.dataset.plotting import plot_dataset
 
 import qumada as qt
 from qumada.utils.browsefiles import browsefiles
 
 
-#%%
+# %%
 def flatten_list(l: list) -> list:
     """
     Flattens nested lists
     """
     results = []
+
     def rec(sublist, results):
         for entry in sublist:
             if isinstance(entry, list):
                 rec(entry, results)
             else:
                 results.append(entry)
+
     rec(l, results)
     return results
 
 
-#%%
+# %%
 def load_db(filepath: str | None = None) -> None:
     """
     Loads or creates the database.
@@ -82,16 +86,15 @@ def load_db(filepath: str | None = None) -> None:
         return load_db(None)
 
 
-#%%
-def list_sample_names()-> set[str]:
+# %%
+def list_sample_names() -> set[str]:
     """
     Lists all sample names that appear in the database
     """
-    name_set = set(measurement.sample_name for measurement in qc.experiments())
-    return name_set
+    return {measurement.sample_name for measurement in qc.experiments()}
 
 
-#%%
+# %%
 def _pick_sample_name() -> str:
     """
     Lists all samples and allows the user to pick one.
@@ -103,13 +106,12 @@ def _pick_sample_name() -> str:
         print(f"{idx}: {sample}")
     while True:
         try:
-            chosen = samples[int(input("Enter sample number: "))]
-            return chosen
-        except:
+            return samples[int(input("Enter sample number: "))]
+        except Exception:
             print("Please chose a valid entry")
 
 
-#%%
+# %%
 def list_measurements_for_sample(sample_name: str | None = None) -> list[qc.DataSet]:
     """
     Lists all measurements done with a certain sample in the console.
@@ -126,26 +128,23 @@ def list_measurements_for_sample(sample_name: str | None = None) -> list[qc.Data
     """
     if not sample_name:
         sample_name = _pick_sample_name()
-    try:
+    with contextlib.suppress(NameError):
         qc.load_by_run_spec(sample_name=sample_name)
-    except NameError:
-        pass
     return _list_measurements_for_sample(sample_name)
 
 
-#%%
+# %%
 def _list_measurements_for_sample(sample_name: str | None = None) -> list[qc.DataSet]:
     """
     Returns flattened list containing all datasets belonging to the sample specified
     """
-    datasets = []
-    for experiment in qc.experiments():
-        if experiment.sample_name == sample_name:
-            datasets.append([*(dataset for dataset in experiment.data_sets())])
+    datasets = [
+        [*iter(experiment.data_sets())] for experiment in qc.experiments() if experiment.sample_name == sample_name
+    ]
     return flatten_list(datasets)
 
 
-#%%
+# %%
 def _flatten_experiment_container() -> list[qc.DataSet]:
     """
     Returns flattened list of all datasets in the currently loaded .db
@@ -153,37 +152,39 @@ def _flatten_experiment_container() -> list[qc.DataSet]:
     datasets = [*(experiment.data_sets() for experiment in qc.experiments())]
     return flatten_list(datasets)
 
-#%%
 
-def pick_measurement(sample_name: str = None, preview_dialogue = True):
+# %%
+
+
+def pick_measurement(sample_name: str = None, preview_dialogue=True):
     """
     Returns a measurement of your choice, plots it if you want.
     Interactive, if no sample_name is provided.
     """
-    
-    measurements = list_measurements_for_sample(sample_name = sample_name)
+
+    measurements = list_measurements_for_sample(sample_name=sample_name)
     for idx, measurement in enumerate(measurements):
         print(f"{idx} (Run ID {measurement.run_id}) : {measurement.name}")
     chosen = int(input("Please choose a measurement: "))
-    chosen_measurement = measurements[int(chosen)]
+    chosen_measurement = measurements[chosen]
     if preview_dialogue:
         preview = str(input("Do you want to see a plot? (Y/N) "))
         if str.lower(preview) == "y":
             plot_dataset(chosen_measurement)
     return chosen_measurement
 
-#%%
 
-def pick_measurements(sample_name: str = None,
-                      preview_dialogue = False,
-                      measurement_list = None):
+# %%
+
+
+def pick_measurements(sample_name: str = None, preview_dialogue=False, measurement_list=None):
     """
     Returns a measurement of your choice, plots it if you want.
     Interactive, if no sample_name is provided.
     """
     if not measurement_list:
-        measurement_list = list()
-    measurements = list_measurements_for_sample(sample_name = sample_name)
+        measurement_list = []
+    measurements = list_measurements_for_sample(sample_name=sample_name)
     for idx, measurement in enumerate(measurements):
         print(f"{idx} (Run ID {measurement.run_id}) : {measurement.name}")
     while True:
@@ -191,22 +192,22 @@ def pick_measurements(sample_name: str = None,
         if chosen == "f":
             return measurement_list
         if chosen == "s":
-            return(pick_measurements(preview_dialogue=preview_dialogue,
-                                     measurement_list=measurement_list))
+            return pick_measurements(preview_dialogue=preview_dialogue, measurement_list=measurement_list)
         chosen = int(chosen)
-        measurement_list.append(measurements[int(chosen)])
+        measurement_list.append(measurements[chosen])
         print("Please enter 'f' when your are finished or 's' if you want to add measurements of another sample")
 
 
-#%%
+# %%
+
 
 def plot_data(sample_name: str = None):
     """
     Simple plotting of datasets from the QCoDeS DB.
     """
-    dataset = pick_measurement(sample_name = sample_name, preview_dialogue = False)
-    independend_parameters = list()
-    dependend_parameters = list()
+    dataset = pick_measurement(sample_name=sample_name, preview_dialogue=False)
+    independend_parameters = []
+    dependend_parameters = []
     for parameter in dataset.get_parameters():
         if len(parameter._depends_on) == 0:
             independend_parameters.append(parameter)
@@ -217,23 +218,19 @@ def plot_data(sample_name: str = None):
         print(f"{idx} : {parameter.label}")
     plot_param_numbers = input("Please enter the numbers of the parameters you want to plot, separated by blank")
     param_list = plot_param_numbers.split()
-    plot_params = list()
-    for param in plot_param_numbers:
-        plot_params.append(dependend_parameters[int(param)].name)
+    plot_params = [dependend_parameters[int(param)].name for param in plot_param_numbers]
     print(plot_params)
     for param in plot_params:
         y_data = dataset.get_parameter_data(param)[param][param]
         print(dataset.get_parameter_data(param)[param])
         x_data = dataset.get_parameter_data(param)[param][dependend_parameters[0].name]
-        
+
         print(y_data)
         print(x_data)
-        
-        
-#%%
-def get_parameter_data(dataset = None,
-                       parameter_name = None,
-                       **kwargs):
+
+
+# %%
+def get_parameter_data(dataset=None, parameter_name=None, **kwargs):
     """
     Gets you the data for a chosen dependent parameter and the data of the first (!)
     parameter it depends on
@@ -257,31 +254,31 @@ def get_parameter_data(dataset = None,
     #     independent_param = independent_param[0]
     params = (*independent_param, parameter_name)
     labels = (*(dataset.paramspecs[i_p].label for i_p in independent_param), chosen_param.label)
-    units  = (*(dataset.paramspecs[i_p].unit for i_p in independent_param), chosen_param.unit)
-    data = *tuple(dataset.get_parameter_data(parameter_name)[parameter_name][param]\
-    for param in independent_param), dataset.get_parameter_data\
-    (parameter_name)[parameter_name][parameter_name]
+    units = (*(dataset.paramspecs[i_p].unit for i_p in independent_param), chosen_param.unit)
+    data = (
+        *tuple(dataset.get_parameter_data(parameter_name)[parameter_name][param] for param in independent_param),
+        dataset.get_parameter_data(parameter_name)[parameter_name][parameter_name],
+    )
     return zip(params, data, units, labels)
-        
-#%%
-def separate_up_down(x_data, y_data):
 
+
+# %%
+def separate_up_down(x_data, y_data):
     grad = np.gradient(x_data)
     curr_sign = np.sign(grad[0])
-    data_list_x = list()
-    data_list_y = list()
-    direction = list()
-    direction.append(curr_sign)
+    data_list_x = []
+    data_list_y = []
+    direction = [curr_sign]
     start_helper = 0
-    for i in range(0, len(grad)):
+    for i in range(len(grad)):
         if np.sign(grad[i]) != curr_sign:
             data_list_x.append(x_data[start_helper:i])
             data_list_y.append(y_data[start_helper:i])
-            start_helper = i+1
+            start_helper = i + 1
             curr_sign = np.sign(grad[i])
             direction.append(curr_sign)
-    data_list_x.append(x_data[start_helper:len(grad)])
-    data_list_y.append(y_data[start_helper:len(grad)])
-    if len(direction) == 0: 
+    data_list_x.append(x_data[start_helper : len(grad)])
+    data_list_y.append(y_data[start_helper : len(grad)])
+    if not direction:
         direction.append(1)
     return data_list_x, data_list_y, direction

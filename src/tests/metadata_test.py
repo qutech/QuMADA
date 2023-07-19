@@ -20,7 +20,7 @@
 
 from typing import runtime_checkable
 
-import pytest
+import pytest  # noqa: F401
 
 from qumada.metadata import BasicMetadata, Metadata, Savable
 

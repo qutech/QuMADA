@@ -18,3 +18,5 @@ htmlcov/
 coverage.xml
 
 .spyproject/
+.vscode/
+.pytest_cache/

@@ -238,7 +238,7 @@ class Timetrace(MeasurementScript):
                 ],
             )
         with meas.run() as datasaver:
-            start = timer.reset_clock()
+            timer.reset_clock()
             while timer() < duration:
                 now = timer()
                 results = [(channel, channel.get()) for channel in [*self.gettable_channels, *self.dynamic_channels]]
@@ -267,7 +267,8 @@ class Timetrace_buffered(MeasurementScript):
         # timestep = self.settings.get("timestep", 1)
         timer = ElapsedTimeParameter("time")
         TRIGGER_TYPES = ["software", "hardware"]
-        trigger_start = self.settings.get("trigger_start", "software")  # TODO: this should be set elsewhere
+        # TODO: this should be set elsewhere
+        trigger_start = self.settings.get("trigger_start", "software")
         trigger_reset = self.settings.get("trigger_reset", None)
         trigger_type = _validate_mapping(
             self.settings.get("trigger_type"),
@@ -329,10 +330,8 @@ class Timetrace_buffered(MeasurementScript):
                 # Set trigger to high here
                 try:
                     trigger_start()
-                except:
+                except Exception:
                     print("Please set a trigger or define a trigger_start method")
-                pass
-
             elif trigger_type == "software":
                 for buffer in self.buffers:
                     buffer.force_trigger()
@@ -341,7 +340,7 @@ class Timetrace_buffered(MeasurementScript):
                 sleep(0.1)
             try:
                 trigger_reset()
-            except:
+            except Exception:
                 print("No method to reset the trigger defined.")
 
             results = self.readout_buffers(timestamps=True)
@@ -368,7 +367,7 @@ class Timetrace_with_sweeps(MeasurementScript):
         self.initialize()
         duration = self.settings.get("duration", 300)
         timestep = self.settings.get("timestep", 1)
-        backsweeps = self.settings.get("backsweeps", False)
+        self.settings.get("backsweeps", False)
         timer = ElapsedTimeParameter("time")
         meas = Measurement(name=self.metadata.measurement.name or "timetrace")
         meas.register_parameter(timer)
@@ -379,12 +378,12 @@ class Timetrace_with_sweeps(MeasurementScript):
         for parameter in self.gettable_channels:
             meas.register_parameter(parameter, setpoints=setpoints)
         with meas.run() as datasaver:
-            start = timer.reset_clock()
+            timer.reset_clock()
             while timer() < duration:
                 for sweep in self.dynamic_sweeps:
                     ramp_or_set_parameter(sweep._param, sweep.get_setpoints()[0], ramp_time=timestep)
                 now = timer()
-                for i in range(0, len(self.dynamic_sweeps[0].get_setpoints())):
+                for i in range(len(self.dynamic_sweeps[0].get_setpoints())):
                     for sweep in self.dynamic_sweeps:
                         sweep._param.set(sweep.get_setpoints()[i])
                     set_values = [(sweep._param, sweep.get_setpoints()[i]) for sweep in self.dynamic_sweeps]
@@ -419,7 +418,8 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
     def run(self):
         self.buffered = True
         TRIGGER_TYPES = ["software", "hardware", "manual"]
-        trigger_start = self.settings.get("trigger_start", "manual")  # TODO: this should be set elsewhere
+        #  TODO: this should be set elsewhere
+        trigger_start = self.settings.get("trigger_start", "manual")
         trigger_reset = self.settings.get("trigger_reset", None)
         trigger_type = _validate_mapping(
             self.settings.get("trigger_type"),
@@ -508,8 +508,6 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                     )
                     raise e
 
-                if trigger_type == "manual":
-                    pass
                 if trigger_type == "hardware":
                     try:
                         trigger_start()
@@ -569,7 +567,8 @@ class Generic_1D_Hysteresis_buffered(MeasurementScript):
     def run(self):
         self.buffered = True
         TRIGGER_TYPES = ["software", "hardware", "manual"]
-        trigger_start = self.settings.get("trigger_start", "manual")  # TODO: this should be set elsewhere
+        # TODO: this should be set elsewhere
+        trigger_start = self.settings.get("trigger_start", "manual")
         trigger_reset = self.settings.get("trigger_reset", None)
         trigger_type = _validate_mapping(
             self.settings.get("trigger_type"),
@@ -643,7 +642,7 @@ class Generic_1D_Hysteresis_buffered(MeasurementScript):
                 self.initialize()
                 results = []
 
-                for iiter in range(0, iterations):
+                for iiter in range(iterations):
                     self.ready_buffers()
                     if iiter % 2 == 0:
                         set_points = dynamic_sweep.get_setpoints()
@@ -669,8 +668,6 @@ class Generic_1D_Hysteresis_buffered(MeasurementScript):
                         )
                         raise e
 
-                    if trigger_type == "manual":
-                        pass
                     if trigger_type == "hardware":
                         try:
                             trigger_start()
@@ -731,7 +728,8 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
     def run(self):
         self.buffered = True
         TRIGGER_TYPES = ["software", "hardware", "manual"]
-        trigger_start = self.settings.get("trigger_start", "manual")  # TODO: this should be set elsewhere
+        # TODO: this should be set elsewhere
+        trigger_start = self.settings.get("trigger_start", "manual")
         trigger_reset = self.settings.get("trigger_reset", None)
         trigger_type = _validate_mapping(
             self.settings.get("trigger_type"),
@@ -743,8 +741,6 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
         sync_trigger = self.settings.get("sync_trigger", None)
         reverse_param_order = self.settings.get("reverse_param_order", False)
         reset_time = self.settings.get("reset_time", 0)
-        datasets = []
-
         self.generate_lists()
 
         if len(self.dynamic_sweeps) != 2:
@@ -809,7 +805,7 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
         self.initialize()
         try:
             trigger_reset()
-        except:
+        except Exception:
             pass
         with meas.run() as datasaver:
             results = []
@@ -865,7 +861,7 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
                     sleep(0.1)
                 try:
                     trigger_reset()
-                except:
+                except Exception:
                     logging.info(
                         "No method to reset the trigger defined. \
                         As you are doing a 2D Sweep, this can have undesired \
@@ -879,5 +875,4 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
                     *results,
                     *static_gettables,
                 )
-        datasets.append(datasaver.dataset)
-        return datasets
+        return [datasaver.dataset]

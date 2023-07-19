@@ -35,11 +35,11 @@ class QDacMapping(InstrumentMapping):
         self,
         parameters: list[Parameter],
         *,
-        start_values: list[float]|None = None,
+        start_values: list[float] | None = None,
         end_values: list[float],
         ramp_time: float,
-        sync_trigger = None,
-        **kwargs
+        sync_trigger=None,
+        **kwargs,
     ) -> None:
         assert len(parameters) == len(end_values)
         if start_values is not None:
@@ -62,7 +62,7 @@ class QDacMapping(InstrumentMapping):
             start_values = []
         if sync_trigger is not None:
             parameters[0]._instrument.sync(sync_trigger)
-            
+
         instrument.ramp_voltages(
             channellist=channellist,
             v_startlist=start_values,
@@ -70,7 +70,6 @@ class QDacMapping(InstrumentMapping):
             ramptime=ramp_time,
         )
         parameters[0]._instrument.sync(0)
-        
+
     def setup_trigger_in():
         raise Exception("QDac does not have a trigger input!")
-        

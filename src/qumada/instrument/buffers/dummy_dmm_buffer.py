@@ -29,11 +29,10 @@ import numpy as np
 from jsonschema import validate
 from qcodes.parameters import Parameter
 
-from qumada.instrument.buffers.buffer import Buffer
+from qumada.instrument.buffers.buffer import Buffer, BufferException
 from qumada.instrument.custom_drivers.Dummies.dummy_dmm import DummyDmm
 
 
-#%%
 class DummyDMMBuffer(Buffer):
     """Buffer for Dummy DMM"""
 
@@ -58,10 +57,9 @@ class DummyDMMBuffer(Buffer):
         self.delay = settings.get("delay", 0)
         if self.delay < 0:
             raise BufferException("The Dummy Dac does not support negative delays.")
-        else:
-            self.delay_data_points = int(self.delay * self._device.buffer_SR())
-            self.num_points = self.delay_data_points + self.num_points
-            self._device.buffer_n_points(self.num_points)
+        self.delay_data_points = int(self.delay * self._device.buffer_SR())
+        self.num_points = self.delay_data_points + self.num_points
+        self._device.buffer_n_points(self.num_points)
         self._device.buffer.ready_buffer()
 
     @property

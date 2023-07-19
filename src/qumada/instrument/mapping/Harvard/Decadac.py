@@ -21,12 +21,14 @@
 
 
 
+import time
+
 import numpy as np
 from qcodes.instrument.parameter import Parameter
+
 from qumada.instrument.custom_drivers.Harvard.Decadac import Decadac
 from qumada.instrument.mapping import DECADAC_MAPPING
 from qumada.instrument.mapping.base import InstrumentMapping
-import time
 
 
 class DecadacMapping(InstrumentMapping):
@@ -75,8 +77,8 @@ class DecadacMapping(InstrumentMapping):
         #     sync_trigger._instrument.enable_ramp(False)
         #     sync_trigger.set(sync_trigger_level)
         for param, start_value, end_value, ramp_time in zip(parameters,
-                                                            start_values, 
-                                                            end_values, 
+                                                            start_values,
+                                                            end_values,
                                                             [ramp_time for _ in parameters]):
             param._instrument._script_ramp(start_value, end_value, ramp_time, trigger=self.trigger_mode)
         # if sync_trigger:
@@ -87,8 +89,8 @@ class DecadacMapping(InstrumentMapping):
         assert isinstance(instrument, Decadac)
         parameter._instrument.enable_ramp(False)
         parameter.volt.set(level)
-        
-        
+
+
     def setup_trigger_in(self, trigger_settings: dict):
         trigger_dict = {
             'always': 0,
@@ -118,9 +120,9 @@ class DecadacMapping(InstrumentMapping):
               Please make sure that your triggers are setup accordingly")
         trigger_mode = trigger_settings.get("trigger_mode", "continuous")
         polarity = trigger_settings.get("trigger_mode_polarity", "positive")
-        
+
         match (trigger_mode, polarity):
-            case ("edge", "positive"): 
+            case ("edge", "positive"):
                 mode = 12
             case ("edge", "negative"):
                 mode = 14
@@ -135,15 +137,15 @@ class DecadacMapping(InstrumentMapping):
                 mode = 0
             case _:
                 raise Exception("Selected trigger mode is not supported by DecaDac")
-                
+
         if self.trigger_in is None:
             mode = 0
             print("No trigger input selected. Using continuous acquisition")
         if self.trigger_in == "trigger_in_2":
             mode+=1
-            
+
         self.trigger_mode = mode
-    
+
     @property
     def trigger_in(self):
         return self._trigger_in

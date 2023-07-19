@@ -23,6 +23,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Mapping
@@ -99,14 +100,11 @@ def filter_flatten_parameters(node) -> dict[Any, Parameter]:
                     recurse(value)
                 elif isinstance(value, Metadatable):
                     # Object of some Metadatable type, try to get __dict__ and _filter_flatten_parameters
-                    try:
+                    with contextlib.suppress(TypeError):
                         value_hash = hash(value)
                         if value_hash not in seen:
                             seen.add(value_hash)
                             recurse(vars(value))
-                    except TypeError:
-                        # End of tree
-                        pass
 
     instrument_parameters: dict[Any, Parameter] = {}
     seen: set[int] = set()
@@ -164,11 +162,8 @@ def add_mapping_to_instrument(
         instrument._qumada_ramp = mapping.ramp
         instrument._is_triggerable = mapping._is_triggerable
         instrument._qumada_mapping = mapping
-        try:
+        with contextlib.suppress(Exception):
             instrument._qumada_trigger = mapping.trigger
-        except:
-            pass
-        # TODO: Better name??
     elif path is not None and mapping is None:
         helper_mapping = _load_instrument_mapping(path)
         instrument._is_triggerable = False
@@ -281,7 +276,7 @@ def map_gates_to_instruments(
                     # (Lists letters of parametername instead of parameter)
                     if not flag:
                         chosen = int(input(f'Which instrument shall be mapped to gate "{key}" ({gate}): '))
-                        chosen_instrument = list(components.values())[int(chosen)]
+                        chosen_instrument = list(components.values())[chosen]
                     chosen_instrument_parameters = {
                         k: v for k, v in instrument_parameters.items() if v.root_instrument is chosen_instrument
                     }
@@ -294,7 +289,7 @@ def map_gates_to_instruments(
                         # TODO: remove all parameters from Channel, if parent is a channel
                         keys_to_remove = (
                             key
-                            for key in chosen_instrument_parameters.keys()
+                            for key in chosen_instrument_parameters
                             if chosen_instrument_parameters[key] in gate.values()
                         )
                         for key in keys_to_remove:
@@ -308,7 +303,7 @@ def map_gates_to_instruments(
                         # Remove mapped parameters from parameter list
                         keys_to_remove = (
                             key
-                            for key in chosen_instrument_parameters.keys()
+                            for key in chosen_instrument_parameters
                             if chosen_instrument_parameters[key] in gate.values()
                         )
                         for key in keys_to_remove:
@@ -339,9 +334,9 @@ def _map_gate_to_instrument(gate: Mapping[Any, Parameter], instrument_parameters
             candidates = [parameter for parameter in mapped_parameters.values() if parameter._mapping == key]
             try:
                 gate[key] = candidates.pop(0)
-            except IndexError:
+            except IndexError as e:
                 instrument_name = next(iter(instrument_parameters.values())).instrument.name
-                raise MappingError(f'No mapping candidate for "{key}" in instrument "{instrument_name}" found.')
+                raise MappingError(f'No mapping candidate for "{key}" in instrument "{instrument_name}" found.') from e
 
 
 def _map_gate_parameters_to_instrument_parameters(
@@ -371,7 +366,7 @@ def _map_gate_parameters_to_instrument_parameters(
             # if there are no filtered candidates available, show all parameters
             candidates = {k: p for k, p in mapped_parameters.items() if p._mapping == key}
             if append_unmapped_parameters:
-                candidates = candidates | unmapped_parameters
+                candidates |= unmapped_parameters
             if not len(candidates):
                 candidates = mapped_parameters | unmapped_parameters
             candidates_keys = list(candidates.keys())
@@ -383,7 +378,7 @@ def _map_gate_parameters_to_instrument_parameters(
             while True:
                 try:
                     chosen = int(input(f'Please choose an instrument parameter for gate parameter "{key}": '))
-                    gate_parameters[key] = candidates_values[int(chosen)]
+                    gate_parameters[key] = candidates_values[chosen]
                     break
                 except (IndexError, ValueError):
                     continue

@@ -141,7 +141,7 @@ class MeasurementScript(ABC):
             if isinstance(gate, dict):
                 gate[parameter_name] = parameter
             else:
-                raise Exception("Gate {gate_name} is not a dictionary.")
+                raise TypeError("Gate {gate_name} is not a dictionary.")
 
     def _set_buffered_num_points(self) -> None:
         """
@@ -186,7 +186,7 @@ class MeasurementScript(ABC):
         *,
         add_script_to_metadata: bool = True,
         add_parameters_to_metadata: bool = True,
-        buffer_settings: dict = {},
+        buffer_settings: dict = None,
         measurement_name: str | None = None,
         **settings: dict,
     ) -> None:
@@ -209,6 +209,8 @@ class MeasurementScript(ABC):
                 setpoint_intervalle: Defines how smooth parameters are ramped
                 during initialization and reset.
         """
+        if buffer_settings is None:
+            buffer_settings = {}
         # TODO: Add settings to metadata
         self.metadata = metadata
         self.buffered = False
@@ -217,13 +219,13 @@ class MeasurementScript(ABC):
         cls = type(self)
         try:
             self.buffer_settings.update(buffer_settings)
-        except:
+        except Exception:
             self.buffer_settings = buffer_settings
         self._set_buffered_num_points()
 
         try:
             self.settings.update(settings)
-        except:
+        except Exception:
             self.settings = settings
 
         # Add script and parameters to metadata
@@ -271,8 +273,10 @@ class MeasurementScript(ABC):
                     self.gettable_parameters.append({"gate": gate, "parameter": parameter})
                     self.gettable_channels.append(channel)
                     with suppress(KeyError):
-                        for condition in self.properties[gate][parameter]["break_conditions"]:
-                            self.break_conditions.append({"channel": channel, "break_condition": condition})
+                        self.break_conditions.extend(
+                            {"channel": channel, "break_condition": condition}
+                            for condition in self.properties[gate][parameter]["break_conditions"]
+                        )
                 elif self.properties[gate][parameter]["type"].find("dynamic") >= 0:
                     self.dynamic_parameters.append({"gate": gate, "parameter": parameter})
                     self.dynamic_channels.append(channel)
@@ -533,8 +537,7 @@ class MeasurementScript(ABC):
         for buffer in self.buffers:
             buffer.stop()
             data[buffer] = buffer.read()
-            for param in buffer._subscribed_parameters:
-                results.append((param, flatten_array(data[buffer][param.name])))
+            results.extend((param, flatten_array(data[buffer][param.name])) for param in buffer._subscribed_parameters)
         if kwargs.get("timestamps", False):
             results.append(flatten_array(data[list(data.keys())[0]]["timestamps"]))
         return results
