@@ -249,26 +249,53 @@ class MeasurementScript(ABC):
 
     def generate_lists(self) -> None:
         """
-        TODO: Add docstring
+        Creates lists containing the corresponding parameters for further use.
+        
+        The .channels list always contain the QCoDes parameters that can for
+        example directly be called to get the corresponding values.
+        E.g. 
+            [param() for param in self.gettable_channels] 
+        will return a list of the current values of all gettable parameters.
+        
+        The .parameters lists contain dictionaries with the keywords "gate" for the
+        corresponding terminal name and "parameter" for the parameter name.
+        This is usefull to get the keys for specific parameters from
+        the gate_parameters.
+        
+        gettable and static lists both include static gettable parameters,
+        the static_gettable lists only the ones that are both, static and 
+        gettable. This is e.g. useful for logging static parameters that cannot
+        be buffered and thus cause errors in buffered measurements.
+                
         """
         self.gettable_parameters: list[str] = []
         self.gettable_channels: list[str] = []
+        self.static_gettable_parameters: list[str] = []
+        self.static_gettable_channels: list[str] = []
         self.break_conditions: list[str] = []
         self.static_parameters: list[str] = []
         self.static_channels: list[str] = []
         self.dynamic_parameters: list[str] = []
         self.dynamic_channels: list[str] = []
         self.dynamic_sweeps: list[str] = []
+        self.groups: dict[dict] = {}
         self.buffers: set = set()  # All buffers of gettable parameters
         self.trigger_ins: set = set()  # All trigger inputs that do not belong to buffers
+        self.priorities: dict = {}
 
         for gate, parameters in self.gate_parameters.items():
             for parameter, channel in parameters.items():
                 if self.properties[gate][parameter]["type"].find("static") >= 0:
-                    self.static_parameters.append({"gate": gate, "parameter": parameter})
+                    self.static_parameters.append(
+                        {"gate": gate, "parameter": parameter})
                     self.static_channels.append(channel)
+                    if self.properties[gate][parameter]["type"].find("gettable") >=0:
+                        self.static_gettable_parameters.append(
+                            {"gate": gate, "parameter": parameter})
+                        self.static_gettable_channels.append(channel)
                 if self.properties[gate][parameter]["type"].find("gettable") >= 0:
-                    self.gettable_parameters.append({"gate": gate, "parameter": parameter})
+                    self.gettable_parameters.append(
+                        {"gate": gate, "parameter": parameter})
                     self.gettable_channels.append(channel)
                     with suppress(KeyError):
                         for condition in self.properties[gate][parameter]["break_conditions"]:
@@ -286,42 +313,68 @@ class MeasurementScript(ABC):
                         try:
                             self.dynamic_sweeps.append(
                                 LinSweep(
-                                    channel,
-                                    self.properties[gate][parameter]["start"],
-                                    self.properties[gate][parameter]["stop"],
-                                    self.buffered_num_points,
-                                    delay=self.properties[gate][parameter].setdefault("delay", 0),
+                channel,
+                self.properties[gate][parameter]["start"],
+                self.properties[gate][parameter]["stop"],
+                self.buffered_num_points,
+                delay=self.properties[gate][parameter].setdefault("delay", 0),
                                 )
                             )
                         except KeyError:
                             self.dynamic_sweeps.append(
                                 LinSweep(
-                                    channel,
-                                    self.properties[gate][parameter]["setpoints"][0],
-                                    self.properties[gate][parameter]["setpoints"][-1],
-                                    self.buffered_num_points,
-                                    delay=self.properties[gate][parameter].setdefault("delay", 0),
+                channel,
+                self.properties[gate][parameter]["setpoints"][0],
+                self.properties[gate][parameter]["setpoints"][-1],
+                self.buffered_num_points,
+                delay=self.properties[gate][parameter].setdefault("delay", 0),
                                 )
                             )
                     else:
                         try:
                             self.dynamic_sweeps.append(
                                 LinSweep(
-                                    channel,
-                                    self.properties[gate][parameter]["start"],
-                                    self.properties[gate][parameter]["stop"],
-                                    self.properties[gate][parameter]["num_points"],
-                                    delay=self.properties[gate][parameter].setdefault("delay", 0),
+                channel,
+                self.properties[gate][parameter]["start"],
+                self.properties[gate][parameter]["stop"],
+                self.properties[gate][parameter]["num_points"],
+                delay=self.properties[gate][parameter].setdefault("delay", 0),
                                 )
                             )
                         except KeyError:
                             self.dynamic_sweeps.append(
                                 CustomSweep(
-                                    channel,
-                                    self.properties[gate][parameter]["setpoints"],
-                                    delay=self.properties[gate][parameter].setdefault("delay", 0),
+                channel,
+                self.properties[gate][parameter]["setpoints"],
+                delay=self.properties[gate][parameter].setdefault("delay", 0),
                                 )
                             )
+                if "group" in self.properties[gate][parameter].keys():
+                    group = self.properties[gate][parameter]["group"]
+                    if group not in self.groups.keys():
+                        self.groups[group]={"channels":[], 
+                                         "parameters": [],
+                                         "priority": None}
+                    self.groups[group]["channels"].append(channel)
+                    self.groups[group]["parameters"].append(
+                        {"gate": gate, "parameter": parameter})
+                    if self.groups[group]["priority"] is None:
+                        if "priority" in self.properties[gate][parameter].keys():
+                            if self.groups[group]["priority"] in self.priorities.keys():
+                                raise Exception("Assigned the same priority to multiple groups")
+                            elif self.groups[group]["priority"] is None: 
+                                self.groups[group]["priority"] = int(self.properties[gate][parameter]["priority"])
+                                self.priorities[int(self.groups[group]["priority"])] = self.groups[group]
+                        else:
+                            try:
+                                prio = int(group)
+                                if prio not in self.priorities.keys():
+                                    self.groups[group]["priority"] = prio
+                                    self.priorities[prio] = self.groups[group]
+                            except:
+                                pass
+                        
+                        
         if self.buffered:
             self.buffers = {
                 channel.root_instrument._qumada_buffer for channel in self.gettable_channels if is_bufferable(channel)
