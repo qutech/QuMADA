@@ -237,7 +237,7 @@ def test_mapping_gui_monitoring(monitoring: bool, qtbot, station_with_instrument
         # Test setting the monitoring delay
         # mock QInputDialog.getDouble() dialog (for setting a new rate), set a shorter (but random rate)
         delay_seconds = 0.2 + 0.1 * random()
-        mocker.patch("qtools.instrument.mapping.mapping_gui.QInputDialog.getDouble", return_value=(delay_seconds, True))
+        mocker.patch("qumada.instrument.mapping.mapping_gui.QInputDialog.getDouble", return_value=(delay_seconds, True))
         w.monitoring_refresh_delay.trigger()
 
         # sample the last get value, wait, sample, wait, sample (catching the change due to get command in monitoring)
@@ -272,9 +272,9 @@ def test_mapping_gui_monitoring(monitoring: bool, qtbot, station_with_instrument
 # This somehow doesnt work with the CI/CD pipeline (inside docker container)
 # def test_mapping_gui_map_with_enter(mocker, qtbot, station_with_instruments, script):
 #     # mock dialogs (specify behaviour in return_value and skip)
-#     mocker.patch("qtools.instrument.mapping.mapping_gui.MessageBox_notallmapped.exec", return_value=QMessageBox.No)
-#     mocker.patch("qtools.instrument.mapping.mapping_gui.MessageBox_duplicates.exec", return_value=QMessageBox.No)
-#     mocker.patch("qtools.instrument.mapping.mapping_gui.MessageBox_overwrite.exec", return_value=QMessageBox.No)
+#     mocker.patch("qumada.instrument.mapping.mapping_gui.MessageBox_notallmapped.exec", return_value=QMessageBox.No)
+#     mocker.patch("qumada.instrument.mapping.mapping_gui.MessageBox_duplicates.exec", return_value=QMessageBox.No)
+#     mocker.patch("qumada.instrument.mapping.mapping_gui.MessageBox_overwrite.exec", return_value=QMessageBox.No)
 
 #     w = MainWindow(
 #         station_with_instruments.components,
@@ -300,9 +300,9 @@ def test_mapping_gui_monitoring(monitoring: bool, qtbot, station_with_instrument
 
 def test_mapping_gui_map_automatically(mocker, qtbot, station_with_instruments, script):
     # mock dialogs (specify behaviour in return_value and skip)
-    mocker.patch("qtools.instrument.mapping.mapping_gui.MessageBox_notallmapped.exec", return_value=QMessageBox.No)
-    mocker.patch("qtools.instrument.mapping.mapping_gui.MessageBox_duplicates.exec", return_value=QMessageBox.No)
-    mocker.patch("qtools.instrument.mapping.mapping_gui.MessageBox_overwrite.exec", return_value=QMessageBox.No)
+    mocker.patch("qumada.instrument.mapping.mapping_gui.MessageBox_notallmapped.exec", return_value=QMessageBox.No)
+    mocker.patch("qumada.instrument.mapping.mapping_gui.MessageBox_duplicates.exec", return_value=QMessageBox.No)
+    mocker.patch("qumada.instrument.mapping.mapping_gui.MessageBox_overwrite.exec", return_value=QMessageBox.No)
 
     w = MainWindow(
         station_with_instruments.components,
