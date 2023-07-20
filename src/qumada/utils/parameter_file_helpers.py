@@ -23,9 +23,9 @@ from __future__ import annotations
 
 import json
 import operator
+from collections.abc import Mapping
 from os import PathLike
 from pathlib import Path
-from typing import Mapping
 
 import numpy as np
 import pandas as pd

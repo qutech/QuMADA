@@ -89,7 +89,7 @@ def list_sample_names() -> set[str]:
     """
     Lists all sample names that appear in the database
     """
-    name_set = set(measurement.sample_name for measurement in qc.experiments())
+    name_set = {measurement.sample_name for measurement in qc.experiments()}
     return name_set
 
 
