@@ -19,17 +19,18 @@
 # - Till Huckeman
 
 
-import qcodes as qc
-import qumada as qt
-from qumada.utils.load_from_sqlite_db import *
-from qumada.utils.browsefiles import browsefiles
-from qcodes.dataset.plotting import plot_dataset
-from qcodes.dataset.data_export import reshape_2D_data
+import matplotlib
 
 # from qumada.instrument.mapping.base import flatten_list
 import numpy as np
+import qcodes as qc
 from matplotlib import pyplot as plt
-import matplotlib
+from qcodes.dataset.data_export import reshape_2D_data
+from qcodes.dataset.plotting import plot_dataset
+
+import qumada as qt
+from qumada.utils.browsefiles import browsefiles
+from qumada.utils.load_from_sqlite_db import *
 
 
 # %%
