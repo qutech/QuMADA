@@ -29,7 +29,7 @@ import numpy as np
 from qcodes.instrument import Instrument
 from qcodes.validators import validators as vals
 
-#%%
+# %%
 
 
 class DummyDac(Instrument):

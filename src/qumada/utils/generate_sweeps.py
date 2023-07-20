@@ -19,7 +19,6 @@
 # - Sionludi Lab
 
 
-
 import numpy as np
 
 
@@ -35,16 +34,15 @@ def generate_sweep(start, stop, num_points, backsweep=False):
         sweep = np.linspace(start, stop, num_points)
     return sweep
 
-def replace_parameter_settings(parameters: dict,
-                               old_val : str,
-                               new_value):
+
+def replace_parameter_settings(parameters: dict, old_val: str, new_value):
     """
     Replaces parameters based on their values with other value. Can be used to
     pass setpoint arrays to parameter-dicts created from json files without
     having to change the values by hand everytime.
     """
     for gate, param in parameters.items():
-        for x,y in param.items():
+        for x, y in param.items():
             for name, val in y.items():
                 if val == old_val:
                     parameters[gate][x][name] = new_value
@@ -54,9 +52,7 @@ def replace_parameter_settings(parameters: dict,
 import copy
 
 
-def update_parameter_settings(parameters: dict,
-                               old_val : str,
-                               new_value):
+def update_parameter_settings(parameters: dict, old_val: str, new_value):
     """
     Replaces parameters based on their values with other value. Can be used to
     pass setpoint arrays to parameter-dicts created from json files without
@@ -65,17 +61,18 @@ def update_parameter_settings(parameters: dict,
     """
     updated_parameters = copy.deepcopy(parameters)
     for gate, param in updated_parameters.items():
-        for x,y in param.items():
+        for x, y in param.items():
             for name, val in y.items():
                 if val == old_val:
                     updated_parameters[gate][x][name] = new_value
     return updated_parameters
 
+
 def parse_code_from_json(parameters):
-    '''executes simple chunks of python code in strings starting with _'''
+    """executes simple chunks of python code in strings starting with _"""
     updated_parameters = copy.deepcopy(parameters)
     for gate, param in updated_parameters.items():
-        for x,y in param.items():
+        for x, y in param.items():
             for name, val in y.items():
                 if isinstance(val, str):
                     if val[0] == "_":

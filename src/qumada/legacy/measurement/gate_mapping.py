@@ -19,7 +19,7 @@
 # - Till Huckeman
 
 
-import json     # Used to store mappings until DB is functional
+import json  # Used to store mappings until DB is functional
 import re
 
 from qumada.utils import browsefiles
@@ -35,22 +35,22 @@ def create_or_load_mapping(mapping):
         MapGenerator object, to access the GateMapping() object,
         usage of .wrap is required (ToDo: Change this)
         """
+
         def __init__(self, station, **kwargs):
             # Get access to GateMapping methods
             self.get_method(station)
-            #self.wrap = mapping(station, **kwargs)
+            # self.wrap = mapping(station, **kwargs)
 
         def get_method(self, station):
             """
             User input to decide whether a mapping should be loaded from file
             or a new one should be created. DB support to be added
             """
-            method = input("Do you want to load an existing mapping? (y/n)
-")
+            method = input("Do you want to load an existing mapping? (y/n)\n")
             if method.lower() == "y":
                 return self.load_mapping(station)
             elif method.lower() == "n":
-                return self.create_mapping(station)    # Create new mapping
+                return self.create_mapping(station)  # Create new mapping
             else:
                 print("Please enter y or n")
                 return self.get_method()
@@ -61,8 +61,7 @@ def create_or_load_mapping(mapping):
             """
             self.wrap = mapping(station)
             try:
-                gate_number = int(input("Please enter number of gates: 
-"))
+                gate_number = int(input("Please enter number of gates:\n"))
             except ValueError:
                 print("Please enter an integer number")
                 self.create_mapping()
@@ -78,12 +77,12 @@ def create_or_load_mapping(mapping):
             instruments.
             ToDo: Check whether old and new station object are compatible
             """
-            filename = browsefiles.browsefiles(filetypes=(("json", ".json"),
-                                                          ("All files", "*.*")),
-                                               initialdir = lsc.load_from_config(
-                                                   "gate_mapping","save_directory"))
-            #Save last directory used in config so you dont have to search for it.
-            directory = '/'.join(filename.split('/')[0:-1])
+            filename = browsefiles.browsefiles(
+                filetypes=(("json", ".json"), ("All files", "*.*")),
+                initialdir=lsc.load_from_config("gate_mapping", "save_directory"),
+            )
+            # Save last directory used in config so you dont have to search for it.
+            directory = "/".join(filename.split("/")[0:-1])
             lsc.save_to_config("gate_mapping", "save_directory", directory)
             try:
                 with open(filename) as read_file:
@@ -98,8 +97,8 @@ def create_or_load_mapping(mapping):
 
 
 @create_or_load_mapping
-class GateMapping():
-    '''
+class GateMapping:
+    """
     Mapping of "physical" sample gates to device channels.
     Requires qcodes station object as input
     Requires user input.
@@ -109,56 +108,55 @@ class GateMapping():
         - Think about dictionary structure
         - Does not fit to our new concept of "Functionalities"- Probably direct
         interaction with station object does not belong here anymore.
-    '''
+    """
+
     def __init__(self, station, **kwargs):
         self.station = station
-        self.gate_number = kwargs.get('gate_number', 0)
-        self.gates = kwargs.get('gates', {})     # Mapping gate name <=> list with device channels: [0]=voltage, [1]=current
-        self.gate_types = kwargs.get('gate_types', self._load_gate_types())
+        self.gate_number = kwargs.get("gate_number", 0)
+        self.gates = kwargs.get(
+            "gates", {}
+        )  # Mapping gate name <=> list with device channels: [0]=voltage, [1]=current
+        self.gate_types = kwargs.get("gate_types", self._load_gate_types())
         # self.add_gates()
 
     def _load_gate_types(self, file="./gate_types.dat"):
-        '''
+        """
         Loads list of valid gate types from file.
         Will open gui for choosing file if the entered one is not valid.
         Todo: - Allow for user input/saving
-        '''
+        """
         types = set()
         try:
             f = open(file)
         except OSError:
             print("Could not find file with gate types", file)
             print("Please select file")
-            file = browsefiles.browsefiles(filetypes=(("dat", ".dat"),
-                                                      ("txt", ".txt"),
-                                                      ("All files", "*.*")))
+            file = browsefiles.browsefiles(filetypes=(("dat", ".dat"), ("txt", ".txt"), ("All files", "*.*")))
             return self._load_gate_types(file=file)
 
         for line in f:
             if line[0] != "#":
-                types.add(line.rstrip('
-'))
+                types.add(line.rstrip("\n"))
         f.close()
         return types
 
     def remove_gate(self, gate=None):
-        '''
+        """
         Allows user to delete gates.
         ToDo: Show list of available entries
-        '''
+        """
         if gate is None:
-            gate = input("Enter name of gate you want to delete: 
-")
+            gate = input("Enter name of gate you want to delete:\n")
         try:
             del self.gates[gate]
         except KeyError:
             print("This gate does not exist")
 
     def add_gate(self):
-        '''
+        """
         Method that should be used for adding gates to the mapping. Requires
         user input.
-        '''
+        """
         key = input("Please enter gate name: ")
         gate_type = self._gate_type_validator(self.gate_types)
         volt_channel = self._add_volt()
@@ -170,40 +168,35 @@ class GateMapping():
         self.gate_number += 1
 
     def _add_current(self):
-        '''
+        """
         Add current channel to gate entry
-        '''
-        string = "Please select a channel to apply and measure currents for this gate.
-"
+        """
+        string = "Please select a channel to apply and measure currents for this gate.\n"
         string += 'You can skip this by typing "exit"'
         current_channel = gfs.select_channel(self.station, information=string)
         return current_channel
 
     def _add_volt(self):
-        '''
+        """
         Add volt channel to gate entry
-        '''
-        string = "Please select a channel to apply and measure voltages for this gate.
-"
+        """
+        string = "Please select a channel to apply and measure voltages for this gate.\n"
         volt_channel = gfs.select_channel(self.station, information=string)
         return volt_channel
 
     def _gate_type_validator(self, gate_types, gate_type=None):
-        '''
+        """
         Checks whether chosen gate type is valid. Necessary to rely on gate_type
         variable in the measurement script.
-        '''
-        print("Valid gate types are: 
- %s" %gate_types)
+        """
+        print("Valid gate types are:\n %s" % gate_types)
         if gate_type in gate_types:
             return gate_type
         elif gate_type is None:
-            gate_type = input("Please enter gate type: 
-")
+            gate_type = input("Please enter gate type:\n")
             return self._gate_type_validator(gate_types, gate_type)
         else:
-            print("Invalid gate type. Known gate types are 
- %s" %gate_types)
+            print("Invalid gate type. Known gate types are\n%s" % gate_types)
             print("You can use 'other' for unspecified gates. Support for adding new types will be added later")
             return self._gate_type_validator(gate_types)
 
@@ -216,13 +209,13 @@ class GateMapping():
         """
         dictionary = self.__dict__
         dictionary["station"] = None
-        dictionary["gate_types"] = list(dictionary['gate_types'])
+        dictionary["gate_types"] = list(dictionary["gate_types"])
         text = json.dumps(dictionary)
-        file = browsefiles.browsesavefile(filetypes=(("Json", "*.json*"),
-                                                     ("All files", "*.*")),
-                                          initialdir=lsc.load_from_config(
-                                              "gate_mapping","save_directory"))
-        directory = '/'.join(file.strip('/')[0:-1])
-        lsc.save_to_config('gate_mapping', 'save_directory', directory)
+        file = browsefiles.browsesavefile(
+            filetypes=(("Json", "*.json*"), ("All files", "*.*")),
+            initialdir=lsc.load_from_config("gate_mapping", "save_directory"),
+        )
+        directory = "/".join(file.strip("/")[0:-1])
+        lsc.save_to_config("gate_mapping", "save_directory", directory)
         file.write(text)
         file.close()

@@ -29,7 +29,7 @@ yet compatible with the planned QuMADA-structure (e.g. functions still need
  instrument parameters rather than gate_mapping object) but can be adapted
 later on.
 """
-#%%
+# %%
 import os
 from time import sleep
 
@@ -63,9 +63,9 @@ from qcodes.tests.instrument_mocks import (
 # import src.qumada.utils.browsefiles as bf
 # import src.qumada.measurement.gate_mapping as gm
 
-#%%
+# %%
 start_all_logging()
-#%% Add imports here
+# %% Add imports here
 
 # Only dummy instruments available at home :-(
 # A dummy instrument dac with two parameters ch1 and ch2
@@ -77,17 +77,16 @@ dmm = DummyInstrumentWithMeasurement("dmm", setter_instr=dac)
 
 
 station = qc.Station(dac, dmm)
-#%% Setup all instruments needed
+# %% Setup all instruments needed
 qc.Instrument.close_all()
 
 # dac = Decadac('dac', 'ASRL6::INSTR', default_switch_pos=1) #-1=left, 0=middle, 1=right
-dac = Decadac("dac", "ASRL6::INSTR", min_val=-10, max_val=10, terminator="
-")
+dac = Decadac("dac", "ASRL6::INSTR", min_val=-10, max_val=10, terminator="\n")
 lockin = SR830("lockin", "GPIB1::12::INSTR")
 keithley = Keithley_2400("keithley", "GPIB1::27::INSTR")
 
 station = qc.Station(dac, lockin, keithley)
-#%% define channels here
+# %% define channels here
 
 sample_name = "AL809789_D2-SD7_QBB36_1_3_SET5"
 topgate = keithley
@@ -102,7 +101,8 @@ gate4 = dac.channels[6]
 gates = {"centergate": centergate, "gate1": gate1, "gate2": gate2, "gate3": gate3, "gate4": gate4}
 source_drain = lockin
 
-#%%
+
+# %%
 def set_db_location():
     """
     Used to create or load the sqlite db used to store the measurement results.
@@ -118,16 +118,14 @@ def set_db_location():
                                                        created succesfully)
         - Move to utils?
     """
-    load = input("Do you want to load an existing database? [y/n].
- If you choose no, a new one will be created
-")
+    load = input("Do you want to load an existing database? [y/n].\nIf you choose no, a new one will be created.\n")
     if load.lower() == "y":
         initialise_or_create_database_at(bf.browsefiles())  # filetypes = (("DB files", "*.db*"))))
         return True
     elif load.lower() == "n":
         path = input("Please enter the directory, where you want to create the DB")
         file = input("Please enter a name for the DB (without suffix)") + ".db"
-        initialise_or_create_database_at(path + "\" + file)
+        initialise_or_create_database_at(path + "\\" + file)
         return True
 
     else:
@@ -135,11 +133,11 @@ def set_db_location():
         return set_db_location()
 
 
-#%%
+# %%
 path = r"C:\Users\lab2\data\Huckemann\IMEC\4K_Measurements.db"
 initialise_or_create_database_at(path)
 
-#%%
+# %%
 
 
 def inducing_measurement(
@@ -156,7 +154,6 @@ def inducing_measurement(
     experiment_name="4K_Inducing_measurement",
     sample=sample_name,
 ):
-
     """
     Inducing measurement based on do1d. Writes to database.
     Works only if Keithley2400/2401 is used to control the topgate, DecaDac to
@@ -218,7 +215,7 @@ def inducing_measurement(
     return dataset_up, dataset_down
 
 
-#%%
+# %%
 
 
 def pinchoff_measurement_1d(
@@ -333,7 +330,7 @@ def pinchoff_measurement_1d(
     return datasets
 
 
-#%%
+# %%
 def pinchoff_measurement_2d(
     topgate=topgate,
     left_barrier=left_barrier,
@@ -350,7 +347,6 @@ def pinchoff_measurement_2d(
     experiment_name="4K_2D_pinchoff_measurement",
     sample_name=sample_name,
 ):
-
     exp = load_or_create_experiment(experiment_name, sample_name=sample_name)
     left_barrier.ramp(sweep_range_lb[0], 0.2)
     right_barrier.ramp(sweep_range_rb[0], 0.2)
@@ -382,7 +378,7 @@ def pinchoff_measurement_2d(
     return data
 
 
-#%%
+# %%
 
 
 def gate_measurement_1d(
@@ -468,10 +464,11 @@ def gate_measurement_1d(
     return datasets
 
 
-#%%
+# %%
 times = DummyInstrument("dac_times_1", gates=["ch1"])
 
-#%%
+
+# %%
 def time_trace_SET(
     topgate=topgate,
     left_barrier=left_barrier,

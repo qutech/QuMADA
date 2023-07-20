@@ -33,7 +33,7 @@ from qumada.instrument.buffers.buffer import Buffer
 from qumada.instrument.custom_drivers.Dummies.dummy_dmm import DummyDmm
 
 
-#%%
+# %%
 class DummyDMMBuffer(Buffer):
     """Buffer for Dummy DMM"""
 
