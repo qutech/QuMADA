@@ -32,6 +32,7 @@ spyder = ["spyder"]
 
 [project.urls]
 Repository = "https://github.com/qutech/qumada"
+Documentation = "https://qumada.readthedocs.io/en/latest/"
 
 [build-system]
 requires = ["setuptools"]
