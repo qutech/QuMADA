@@ -1,6 +1,9 @@
 # QuMADA
 Interfaces and measurement scripts for usage with QCoDeS.
 
+## Documentation
+Find the current documentation on [readthedocs](https://qumada.readthedocs.io/en/latest/).
+
 ## Installation
 
 ### Setup virtual environment
@@ -65,7 +68,7 @@ Set up pre-commit hooks
 python -m pre-commit install
 ```
 
-### Documentation
+### Build documentation
 
 To build the documentation, run:
 

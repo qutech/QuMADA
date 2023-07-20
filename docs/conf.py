@@ -49,6 +49,8 @@ autodoc_default_options = {
     "undoc-members": None,
 }
 
+autodoc_mock_imports = ["qutil"]
+
 autoclass_content = "both"
 autosummary_generate = True
 napoleon_include_init_with_doc = True

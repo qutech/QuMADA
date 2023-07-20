@@ -10,7 +10,7 @@ Welcome to QuMADA's documentation!
    tutorials
    examples
    mapping_gui
-   collecting
+   metadata
    qumada
 
 
