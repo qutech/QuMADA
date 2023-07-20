@@ -20,7 +20,6 @@
 # - Till Huckeman
 
 
-
 import numpy as np
 from qcodes.instrument.parameter import Parameter
 from qumada.instrument.custom_drivers.Harvard.Decadac import Decadac
@@ -31,12 +30,9 @@ import time
 
 class DecadacMapping(InstrumentMapping):
     def __init__(self):
-        super().__init__(DECADAC_MAPPING, is_triggerable = True)
+        super().__init__(DECADAC_MAPPING, is_triggerable=True)
         self._trigger_in: str | None = None
-        self.AVAILABLE_TRIGGERS: list = [
-            "trigger_in_1",
-            "trigger_in_2"
-            ]
+        self.AVAILABLE_TRIGGERS: list = ["trigger_in_1", "trigger_in_2"]
 
     def ramp(
         self,
@@ -74,10 +70,9 @@ class DecadacMapping(InstrumentMapping):
         #     assert isinstance(sync_trigger.root_instrument, Decadac)
         #     sync_trigger._instrument.enable_ramp(False)
         #     sync_trigger.set(sync_trigger_level)
-        for param, start_value, end_value, ramp_time in zip(parameters,
-                                                            start_values,
-                                                            end_values,
-                                                            [ramp_time for _ in parameters]):
+        for param, start_value, end_value, ramp_time in zip(
+            parameters, start_values, end_values, [ramp_time for _ in parameters]
+        ):
             param._instrument._script_ramp(start_value, end_value, ramp_time, trigger=self.trigger_mode)
         # if sync_trigger:
         #     sync_trigger.set(0)
@@ -88,24 +83,23 @@ class DecadacMapping(InstrumentMapping):
         parameter._instrument.enable_ramp(False)
         parameter.volt.set(level)
 
-
     def setup_trigger_in(self, trigger_settings: dict):
         trigger_dict = {
-            'always': 0,
-            'trig1_low': 2,
-            'trig2_low': 3,
-            'until_trig1_rising': 4,
-            'until_trig2_rising': 5,
-            'until_trig1_falling': 6,
-            'until_trig2_falling': 7,
-            'never': 8,
-            'trig1_high': 10,
-            'trig2_high': 11,
-            'after_trig1_rising': 12,
-            'after_trig2_rising': 13,
-            'after_trig1_falling': 14,
-            'after_trig2_falling': 15,
-            }
+            "always": 0,
+            "trig1_low": 2,
+            "trig2_low": 3,
+            "until_trig1_rising": 4,
+            "until_trig2_rising": 5,
+            "until_trig1_falling": 6,
+            "until_trig2_falling": 7,
+            "never": 8,
+            "trig1_high": 10,
+            "trig2_high": 11,
+            "after_trig1_rising": 12,
+            "after_trig2_rising": 13,
+            "after_trig1_falling": 14,
+            "after_trig2_falling": 15,
+        }
         TRIGGER_MODE_MAPPING: dict = {
             "continuous": 0,
             "edge": 1,
@@ -114,7 +108,9 @@ class DecadacMapping(InstrumentMapping):
             "tracking_pulse": 7,
             "digital": 6,
         }
-        print("Warning: The Decadacs trigger level is fixed at roughly 1.69 V and cannot be changed.\nPlease make sure that your triggers are setup accordingly.")
+        print(
+            "Warning: The Decadacs trigger level is fixed at roughly 1.69 V and cannot be changed.\nPlease make sure that your triggers are setup accordingly."
+        )
         trigger_mode = trigger_settings.get("trigger_mode", "continuous")
         polarity = trigger_settings.get("trigger_mode_polarity", "positive")
 
@@ -137,7 +133,7 @@ class DecadacMapping(InstrumentMapping):
             mode = 0
             print("No trigger input selected. Using continuous acquisition")
         if self.trigger_in == "trigger_in_2":
-            mode+=1
+            mode += 1
 
         self.trigger_mode = mode
 
