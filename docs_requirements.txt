@@ -1,6 +1,6 @@
 -e .
 
-sphinx
+sphinx>=6.2.1,<7
 sphinx_autodoc_typehints
 sphinx_autopackagesummary
 sphinx_rtd_theme
