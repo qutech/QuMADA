@@ -57,7 +57,7 @@ from qumada.utils.generate_sweeps import generate_sweep, replace_parameter_setti
 from qumada.utils.load_from_sqlite_db import load_db, pick_measurement
 from qumada.utils.ramp_parameter import *
 
-#%% Experiment Setup
+# %% Experiment Setup
 
 # Setup qcodes station
 station = Station()
@@ -67,8 +67,7 @@ station = Station()
 # ramp methods or add_mapping_to_instrument(instrument, path) for instruments without
 # to map the instrument's parameters to QuMADA-specific names.
 
-dac = Decadac("dac", "ASRL6::INSTR", min_val=-10, max_val=10, terminator="
-")
+dac = Decadac("dac", "ASRL6::INSTR", min_val=-10, max_val=10, terminator="\n")
 add_mapping_to_instrument(dac, mapping=DecadacMapping())
 station.add_component(dac)
 
@@ -84,15 +83,15 @@ mfli = MFLI("mfli", "DEV4121", "169.254.40.160")
 add_mapping_to_instrument(mfli, path=MFLI_MAPPING)
 station.add_component(mfli)
 
-#%% Metadata Setup
+# %% Metadata Setup
 from qtools_metadata.metadata import create_metadata, save_metadata_object_to_db
 
 db.api_url = "http://134.61.7.48:9124"
 metadata = create_metadata()
 
-#%% Load database for data storage
+# %% Load database for data storage
 load_db()
-#%% Setup measurement
+# %% Setup measurement
 buffer_settings = {
     # "channel": 0, #?
     "trigger_threshold": 0.005,
@@ -105,10 +104,10 @@ buffer_settings = {
 # qdac.ch01.sync_duration(0.2)
 # qdac.ch01.sync(1)
 
-#%% Measurement Setup
+# %% Measurement Setup
 with open(r"C:\Users\lab2\Documents\DATA\Huckemann\Tests\BufferTest.yaml") as file:
     parameters = yaml.safe_load(file)
-#%%
+# %%
 script = Generic_1D_Sweep_buffered()
 script.setup(
     parameters,
@@ -121,5 +120,5 @@ script.setup(
 map_gates_to_instruments(station.components, script.gate_parameters)
 map_buffers(station.components, script.properties, script.gate_parameters)
 
-#%% Run measurement
+# %% Run measurement
 script.run()
