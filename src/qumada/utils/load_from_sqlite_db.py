@@ -26,12 +26,12 @@ Loading data from Database
 from __future__ import annotations
 
 from os import path
-import numpy as np
 
+import numpy as np
 import qcodes as qc
 from qcodes.dataset.data_export import reshape_2D_data
-from qcodes.dataset.plotting import plot_dataset
 from qcodes.dataset.data_set import DataSet
+from qcodes.dataset.plotting import plot_dataset
 
 import qumada as qt
 from qumada.utils.browsefiles import browsefiles

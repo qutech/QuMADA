@@ -22,9 +22,9 @@
 import json  # Used to store mappings until DB is functional
 import re
 
-from qumada.utils import browsefiles
-from qumada.measurement import get_from_station as gfs
 import qumada.utils.load_save_config as lsc
+from qumada.measurement import get_from_station as gfs
+from qumada.utils import browsefiles
 
 
 def create_or_load_mapping(mapping):

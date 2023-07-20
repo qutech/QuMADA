@@ -19,13 +19,13 @@
 
 
 import sys
-
 from subprocess import Popen
 
 from qcodes.monitor.monitor import Monitor
+from qcodes.station import Station
+
 from qumada.instrument.mapping.base import filter_flatten_parameters
 from qumada.measurement.measurement import MeasurementScript
-from qcodes.station import Station
 
 
 def open_web_gui(parameters):
