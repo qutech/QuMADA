@@ -29,3 +29,25 @@ jobs:
       - name: Analysing the code with pylint
         run: |
           pylint src
+
+  mypy:
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install mypy
+      - name: Analysing the code with mypy
+        run: |
+          mypy src
