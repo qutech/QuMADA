@@ -220,7 +220,7 @@ class MFLIBuffer(Buffer):
                 self._daq.subscribe(node)
 
     def unsubscribe(self, parameters: list[Parameter]) -> None:
-        for parameter in parameters:
+        for parameter in parameters.copy():
             node = self._get_node_from_parameter(parameter)
             if node in self._sample_nodes:
                 self._sample_nodes.remove(node)

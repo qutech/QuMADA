@@ -377,7 +377,7 @@ class MeasurementScript(ABC):
         self._lists_created = True
         self._relabel_instruments()
 
-    def initialize(self) -> None:
+    def initialize(self, dyn_ramp_to_val=False, inactive_dyn_channels:list = []) -> None:
         """
         Sets all static/sweepable parameters to their value/start value.
         If parameters are both, static and dynamic, they will be set to the "value" property
@@ -388,6 +388,13 @@ class MeasurementScript(ABC):
         Provides gettable_parameters, static_parameters and dynamic parameters to
         measurement class and generates AbstractSweeps from the measurement
         properties. Sweeps form a list that can be found in "dynamic_sweeps"
+        Relevant kwargs:
+            dyn_ramp_to_val: Bool [False]: If true, dynamic parameters are 
+                    ramped to their value, before their sweep, else they are ramped
+                    to their first setpoint
+            inactive_dyn_channels: List of dynamic channels that are to be
+                    treated as static for this initialization. They are always
+                    ramped to their value instead of their sweeps starting point.)
         TODO: Is there a more elegant way?
         TODO: Put Sweep-Generation somewhere else?
         """
@@ -456,15 +463,33 @@ class MeasurementScript(ABC):
                                 )
                             )
                     # Handle different possibilities for starting points
-                    try:
-                        ramp_or_set_parameter(
-                            channel,
-                            self.properties[gate][parameter]["value"],
-                            ramp_rate=ramp_rate,
-                            ramp_time=ramp_time,
-                            setpoint_intervall=setpoint_intervall,
-                        )
-                    except KeyError:
+                    if dyn_ramp_to_val or channel in inactive_dyn_channels:
+                        try:
+                            ramp_or_set_parameter(
+                                channel,
+                                self.properties[gate][parameter]["value"],
+                                ramp_rate=ramp_rate,
+                                ramp_time=ramp_time,
+                                setpoint_intervall=setpoint_intervall,
+                            )
+                        except KeyError:
+                            try:
+                                ramp_or_set_parameter(
+                                    channel,
+                                    self.properties[gate][parameter]["start"],
+                                    ramp_rate=ramp_rate,
+                                    ramp_time=ramp_time,
+                                    setpoint_intervall=setpoint_intervall,
+                                )
+                            except KeyError:
+                                ramp_or_set_parameter(
+                                    channel,
+                                    self.properties[gate][parameter]["setpoints"][0],
+                                    ramp_rate=ramp_rate,
+                                    ramp_time=ramp_time,
+                                    setpoint_intervall=setpoint_intervall,
+                            )
+                    else:
                         try:
                             ramp_or_set_parameter(
                                 channel,
@@ -480,11 +505,12 @@ class MeasurementScript(ABC):
                                 ramp_rate=ramp_rate,
                                 ramp_time=ramp_time,
                                 setpoint_intervall=setpoint_intervall,
-                            )
+                        )
+                        
                     # Generate sweeps from parameters
 
         if self.buffered:
-            for gettable_param in self.gettable_channels:
+            for gettable_param in list(set(self.gettable_channels) - set(self.static_gettable_channels)):
                 if is_bufferable(gettable_param):
                     gettable_param.root_instrument._qumada_buffer.subscribe([gettable_param])
                 else:
@@ -536,6 +562,26 @@ class MeasurementScript(ABC):
                                 ramp_rate=ramp_rate,
                                 setpoint_intervall=setpoint_intervall,
                             )
+    
+    def clean_up(self, additional_actions: list = [], **kwargs) -> None:
+        """
+        Things to do after the measurement is complete
+
+        Parameters
+        ----------
+        **kwargs : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        None
+            DESCRIPTION.
+
+        """
+        for buffer in self.buffers:
+            buffer.unsubscribe(buffer._subscribed_parameters)
+        for action in additional_actions:
+            action()
 
     def ready_buffers(self, **kwargs) -> None:
         """
