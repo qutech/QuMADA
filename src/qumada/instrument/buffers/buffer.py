@@ -277,16 +277,20 @@ class Buffer(ABC):
 
         Output is a dict with the following structure:
 
-        {
-            timestamps: list[float],
-            param1: list[float],
-            param2: list[float],
-            ...
-        }"""
+        .. code-block:: python
+
+            {
+                "timestamps": list[float],
+                "param1": list[float],
+                "param2": list[float],
+                ...
+            }
+
+        """
 
     @abstractmethod
     def read_raw(self) -> Any:
-        "Read the buffer and return raw output."
+        """Read the buffer and return raw output."""
 
     @abstractmethod
     def subscribe(self, parameters: list[Parameter]) -> None:

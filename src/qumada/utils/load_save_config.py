@@ -22,8 +22,7 @@
 import configparser
 
 
-
-def load_from_config(section, key, config_file = "../config.cfg"):
+def load_from_config(section, key, config_file="../config.cfg"):
     """
     Helps you to load settings from the config file.
     """
@@ -32,12 +31,11 @@ def load_from_config(section, key, config_file = "../config.cfg"):
     if section in config:
         if key in config[section]:
             return config[section][key]
-    print("No such entry in config:
- %s 
- %s" %(section,key))
+    print(f"No such entry in config: {section} {key}")
     return None
 
-def save_to_config(section, key, value, config_file = "../config.cfg"):
+
+def save_to_config(section, key, value, config_file="../config.cfg"):
     """
     Stores settings in config file for you
     """
