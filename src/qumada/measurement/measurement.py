@@ -146,14 +146,14 @@ class MeasurementScript(ABC):
         """
 
         if "burst_duration" in self.buffer_settings:
-            self._burst_duration = self.buffer_settings["burst_duration"]
+            self._burst_duration = float(self.buffer_settings["burst_duration"])
 
         if "duration" in self.buffer_settings:
             if "burst_duration" in self.buffer_settings:
-                self._num_bursts = np.ceil(self.buffer_settings["duration"] / self._burst_duration)
+                self._num_bursts = np.ceil(float(self.buffer_settings["duration"]) / self._burst_duration)
             elif "num_bursts" in self.buffer_settings:
                 self._num_bursts = int(self.buffer_settings["num_bursts"])
-                self._burst_duration = self.buffer_settings["duration"] / self._num_bursts
+                self._burst_duration = float(self.buffer_settings["duration"]) / self._num_bursts
 
         if "num_points" in self.buffer_settings:
             self.buffered_num_points = int(self.buffer_settings["num_points"])
@@ -163,7 +163,7 @@ class MeasurementScript(ABC):
         elif "sampling_rate" in self.buffer_settings:
             self._sampling_rate = float(self.buffer_settings["sampling_rate"])
             if self._burst_duration is not None:
-                self.buffered_num_points = int(np.ceil(self._sampling_rate * self._burst_duration))
+                self.buffered_num_points = np.ceil(self._sampling_rate * self._burst_duration)
             elif all(k in self.buffer_settings for k in ("duration", "num_bursts")):
                 self._burst_duration = float(self.buffer_settings["duration"] / self.buffer_settings["num_bursts"])
 
@@ -238,22 +238,23 @@ class MeasurementScript(ABC):
     def generate_lists(self) -> None:
         """
         Creates lists containing the corresponding parameters for further use.
-
+        
         The .channels list always contain the QCoDes parameters that can for
         example directly be called to get the corresponding values.
-
-        E.g. ``[param() for param in self.gettable_channels]`` will return a list of the current values of all gettable parameters.
-
+        E.g. 
+            [param() for param in self.gettable_channels] 
+        will return a list of the current values of all gettable parameters.
+        
         The .parameters lists contain dictionaries with the keywords "gate" for the
         corresponding terminal name and "parameter" for the parameter name.
         This is usefull to get the keys for specific parameters from
         the gate_parameters.
-
+        
         gettable and static lists both include static gettable parameters,
-        the static_gettable lists only the ones that are both, static and
+        the static_gettable lists only the ones that are both, static and 
         gettable. This is e.g. useful for logging static parameters that cannot
         be buffered and thus cause errors in buffered measurements.
-
+                
         """
         self.gettable_parameters: list[str] = []
         self.gettable_channels: list[str] = []
@@ -273,13 +274,16 @@ class MeasurementScript(ABC):
         for gate, parameters in self.gate_parameters.items():
             for parameter, channel in parameters.items():
                 if self.properties[gate][parameter]["type"].find("static") >= 0:
-                    self.static_parameters.append({"gate": gate, "parameter": parameter})
+                    self.static_parameters.append(
+                        {"gate": gate, "parameter": parameter})
                     self.static_channels.append(channel)
-                    if self.properties[gate][parameter]["type"].find("gettable") >= 0:
-                        self.static_gettable_parameters.append({"gate": gate, "parameter": parameter})
+                    if self.properties[gate][parameter]["type"].find("gettable") >=0:
+                        self.static_gettable_parameters.append(
+                            {"gate": gate, "parameter": parameter})
                         self.static_gettable_channels.append(channel)
                 if self.properties[gate][parameter]["type"].find("gettable") >= 0:
-                    self.gettable_parameters.append({"gate": gate, "parameter": parameter})
+                    self.gettable_parameters.append(
+                        {"gate": gate, "parameter": parameter})
                     self.gettable_channels.append(channel)
                     with suppress(KeyError):
                         for condition in self.properties[gate][parameter]["break_conditions"]:
@@ -297,53 +301,56 @@ class MeasurementScript(ABC):
                         try:
                             self.dynamic_sweeps.append(
                                 LinSweep(
-                                    channel,
-                                    self.properties[gate][parameter]["start"],
-                                    self.properties[gate][parameter]["stop"],
-                                    self.buffered_num_points,
-                                    delay=self.properties[gate][parameter].setdefault("delay", 0),
+                channel,
+                self.properties[gate][parameter]["start"],
+                self.properties[gate][parameter]["stop"],
+                self.buffered_num_points,
+                delay=self.properties[gate][parameter].setdefault("delay", 0),
                                 )
                             )
                         except KeyError:
                             self.dynamic_sweeps.append(
                                 LinSweep(
-                                    channel,
-                                    self.properties[gate][parameter]["setpoints"][0],
-                                    self.properties[gate][parameter]["setpoints"][-1],
-                                    self.buffered_num_points,
-                                    delay=self.properties[gate][parameter].setdefault("delay", 0),
+                channel,
+                self.properties[gate][parameter]["setpoints"][0],
+                self.properties[gate][parameter]["setpoints"][-1],
+                self.buffered_num_points,
+                delay=self.properties[gate][parameter].setdefault("delay", 0),
                                 )
                             )
                     else:
                         try:
                             self.dynamic_sweeps.append(
                                 LinSweep(
-                                    channel,
-                                    self.properties[gate][parameter]["start"],
-                                    self.properties[gate][parameter]["stop"],
-                                    self.properties[gate][parameter]["num_points"],
-                                    delay=self.properties[gate][parameter].setdefault("delay", 0),
+                channel,
+                self.properties[gate][parameter]["start"],
+                self.properties[gate][parameter]["stop"],
+                self.properties[gate][parameter]["num_points"],
+                delay=self.properties[gate][parameter].setdefault("delay", 0),
                                 )
                             )
                         except KeyError:
                             self.dynamic_sweeps.append(
                                 CustomSweep(
-                                    channel,
-                                    self.properties[gate][parameter]["setpoints"],
-                                    delay=self.properties[gate][parameter].setdefault("delay", 0),
+                channel,
+                self.properties[gate][parameter]["setpoints"],
+                delay=self.properties[gate][parameter].setdefault("delay", 0),
                                 )
                             )
                 if "group" in self.properties[gate][parameter].keys():
                     group = self.properties[gate][parameter]["group"]
                     if group not in self.groups.keys():
-                        self.groups[group] = {"channels": [], "parameters": [], "priority": None}
+                        self.groups[group]={"channels":[], 
+                                         "parameters": [],
+                                         "priority": None}
                     self.groups[group]["channels"].append(channel)
-                    self.groups[group]["parameters"].append({"gate": gate, "parameter": parameter})
+                    self.groups[group]["parameters"].append(
+                        {"gate": gate, "parameter": parameter})
                     if self.groups[group]["priority"] is None:
                         if "priority" in self.properties[gate][parameter].keys():
                             if self.groups[group]["priority"] in self.priorities.keys():
                                 raise Exception("Assigned the same priority to multiple groups")
-                            elif self.groups[group]["priority"] is None:
+                            elif self.groups[group]["priority"] is None: 
                                 self.groups[group]["priority"] = int(self.properties[gate][parameter]["priority"])
                                 self.priorities[int(self.groups[group]["priority"])] = self.groups[group]
                         else:
@@ -354,7 +361,8 @@ class MeasurementScript(ABC):
                                     self.priorities[prio] = self.groups[group]
                             except:
                                 pass
-
+                        
+                        
         if self.buffered:
             self.buffers = {
                 channel.root_instrument._qumada_buffer for channel in self.gettable_channels if is_bufferable(channel)
@@ -408,10 +416,27 @@ class MeasurementScript(ABC):
                 elif self.properties[gate][parameter]["type"].find("dynamic") >= 0:
                     if self.properties[gate][parameter].get("_is_triggered", False) and self.buffered:
                         if "num_points" in self.properties[gate][parameter].keys():
-                            assert self.properties[gate][parameter]["num_points"] == self.buffered_num_points
+                            try:
+                                assert self.properties[gate][parameter]["num_points"] == self.buffered_num_points
+                            except AssertionError:
+                                logging.WARNING(
+                                    f"Number of datapoints from buffer_settings\
+                                    and gate_parameters do not match. Using \
+                                    the value from the buffer settings: \
+                                    {self.buffered_num_points}")
                         elif "setpoints" in self.properties[gate][parameter].keys():
-                            assert len(self.properties[gate][parameter]["setpoints"]) == self.buffered_num_points
+                            try:
+                                assert len(self.properties[gate][parameter]["setpoints"]) == self.buffered_num_points
+                            except AssertionError:
+                                logging.WARNING(
+                                    f"Number of datapoints from buffer_settings\
+                                    and gate_parameters do not match. Using \
+                                    the value from the buffer settings: \
+                                    {self.buffered_num_points}")
                         else:
+                            logging.INFO("No num_points or setpoints given for\
+                                         buffered measurement. The value from \
+                                         buffer_settings is used")
                             pass
                         try:
                             self.dynamic_sweeps.append(
