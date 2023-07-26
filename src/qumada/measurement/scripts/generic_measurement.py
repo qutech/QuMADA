@@ -42,6 +42,9 @@ from qumada.utils.ramp_parameter import ramp_or_set_parameter
 from qumada.utils.utils import _validate_mapping, naming_helper
 
 
+logger = logging.getLogger(__name__)
+
+
 class Generic_1D_Sweep(MeasurementScript):
     def run(self, **dond_kwargs) -> list:
         """
@@ -469,7 +472,7 @@ class Timetrace_with_Sweeps_buffered(MeasurementScript):
             try:
                 trigger_reset()
             except TypeError:
-                logging.info("No method to reset the trigger defined.")
+                logger.info("No method to reset the trigger defined.")
             while time()-start < duration:
                 self.initialize()
                 #start = timer.reset_clock()
@@ -482,13 +485,15 @@ class Timetrace_with_Sweeps_buffered(MeasurementScript):
                         ramp_time=self.buffer_settings["duration"],
                         sync_trigger=sync_trigger,
                     )
-                except AttributeError as e:
-                    print("Exception: This instrument probably does not have a \
-                          a qtools_ramp method. Buffered measurements without \
+                except AttributeError as ex:
+                    logger.error(
+                        "Exception: This instrument probably does not have a \
+                          qtools_ramp method. Buffered measurements without \
                           ramp method are no longer supported. \
-                          Use the unbuffered script!")
-                    raise e
-                
+                          Use the unbuffered script!"
+                    )
+                    raise ex
+
                 if trigger_type == "manual":
                     pass
                 if trigger_type == "hardware":
@@ -501,16 +506,18 @@ class Timetrace_with_Sweeps_buffered(MeasurementScript):
                 elif trigger_type == "software":
                     for buffer in self.buffers:
                         buffer.force_trigger()
-                    logging.warning("You are using software trigger, which \
-                                    can lead to significant delays between \
-                                    measurement instruments! Only recommended\
-                                    for debugging.")
+                    logger.warning(
+                        "You are using software trigger, which \
+                        can lead to significant delays between \
+                        measurement instruments! Only recommended\
+                        for debugging."
+                    )
                 while not all(buffer.is_finished() for buffer in list(self.buffers)):
                     sleep(0.1)
                 try:
                     trigger_reset()
                 except TypeError:
-                    logging.info("No method to reset the trigger defined.")
+                    logger.info("No method to reset the trigger defined.")
     
                 results = self.readout_buffers(timestamps=True)
                 # TODO: Append values from other dynamic parameters
@@ -598,7 +605,7 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                     try:
                         parameter_value = self.properties[parameter["gate"]][parameter["parameter"]]["value"]
                     except KeyError:
-                        logging.error(
+                        logger.error(
                             "An idle dynamic parameter has no value assigned\
                               and cannot be logged!"
                         )
@@ -621,7 +628,7 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                 try:
                     trigger_reset()
                 except TypeError:
-                    logging.info("No method to reset the trigger defined.")
+                    logger.info("No method to reset the trigger defined.")
                 results = []
                 self.ready_buffers()
                 try:
@@ -632,7 +639,7 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                         sync_trigger=sync_trigger,
                     )
                 except AttributeError as ex:
-                    print(
+                    logger.error(
                         "Exception: This instrument probably does not have a \
                           a qumada_ramp method. Buffered measurements without \
                           ramp method are no longer supported. \
@@ -652,17 +659,18 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                 elif trigger_type == "software":
                     for buffer in self.buffers:
                         buffer.force_trigger()
-                    logging.warning("You are using software trigger, which \
-                                    can lead to significant delays between \
-                                    measurement instruments! Only recommended\
-                                    for debugging."
+                    logger.warning(
+                        "You are using software trigger, which \
+                        can lead to significant delays between \
+                        measurement instruments! Only recommended \
+                        for debugging."
                     )
                 while not all(buffer.is_finished() for buffer in list(self.buffers)):
                     sleep(0.1)
                 try:
                     trigger_reset()
                 except TypeError:
-                    logging.info("No method to reset the trigger defined.")
+                    logger.info("No method to reset the trigger defined.")
 
                 results = self.readout_buffers()
                 datasaver.add_result(
@@ -750,7 +758,7 @@ class Generic_1D_Hysteresis_buffered(MeasurementScript):
                     try:
                         parameter_value = self.properties[parameter["gate"]][parameter["parameter"]]["value"]
                     except KeyError:
-                        logging.error(
+                        logger.error(
                             "An idle dynamic parameter has no value assigned\
                               and cannot be logged!"
                         )
@@ -771,7 +779,7 @@ class Generic_1D_Hysteresis_buffered(MeasurementScript):
             try:
                 trigger_reset()
             except TypeError:
-                logging.info("No method to reset the trigger defined.")
+                logger.info("No method to reset the trigger defined.")
 
             with meas.run() as datasaver:
                 inactive_channels  = [chan for chan in self.dynamic_channels \
@@ -797,7 +805,7 @@ class Generic_1D_Hysteresis_buffered(MeasurementScript):
                             sync_trigger=sync_trigger,
                         )
                     except AttributeError as ex:
-                        print(
+                        logger.error(
                             "Exception: This instrument probably does not have a \
                               a qumada_ramp method. Buffered measurements without \
                               ramp method are no longer supported. \
@@ -817,7 +825,7 @@ class Generic_1D_Hysteresis_buffered(MeasurementScript):
                     elif trigger_type == "software":
                         for buffer in self.buffers:
                             buffer.force_trigger()
-                        logging.info(
+                        logger.info(
                             "You are using software trigger, which \
                                         can lead to significant delays between \
                                         measurement instruments! Only recommended\
@@ -828,7 +836,7 @@ class Generic_1D_Hysteresis_buffered(MeasurementScript):
                     try:
                         trigger_reset()
                     except TypeError:
-                        logging.info("No method to reset the trigger defined.")
+                        logger.info("No method to reset the trigger defined.")
 
                     results = self.readout_buffers()
                     datasaver.add_result(
@@ -949,7 +957,7 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
         try:
             trigger_reset()
         except TypeError:
-            logging.info("No method to reset the trigger defined.")
+            logger.info("No method to reset the trigger defined.")
         with meas.run() as datasaver:
             results = []
             slow_setpoints = slow_sweep.get_setpoints()
@@ -972,7 +980,7 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
                         sync_trigger=sync_trigger,
                     )
                 except AttributeError as ex:
-                    print(
+                    logger.error(
                         "Exception: This instrument probably does not have a \
                           a qumada_ramp method. Buffered measurements without \
                           ramp method are no longer supported. \
@@ -993,10 +1001,11 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
                 elif trigger_type == "software":
                     for buffer in self.buffers:
                         buffer.force_trigger()
-                    logging.warning("You are using software trigger, which \
-                                    can lead to significant delays between \
-                                    measurement instruments! Only recommended\
-                                    for debugging."
+                    logger.warning(
+                        "You are using software trigger, which \
+                        can lead to significant delays between \
+                        measurement instruments! Only recommended\
+                        for debugging."
                     )
 
                 while not all(buffer.is_finished() for buffer in list(self.buffers)):
@@ -1004,7 +1013,8 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
                 try:
                     trigger_reset()
                 except TypeError:
-                    logging.info("No method to reset the trigger defined. \
+                    logger.info(
+                        "No method to reset the trigger defined. \
                         As you are doing a 2D Sweep, this can have undesired \
                         consequences!"
                     )
