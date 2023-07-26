@@ -29,7 +29,9 @@ from .generic_measurement import (
     Timetrace,
     Timetrace_buffered,
     Timetrace_with_sweeps,
+    Timetrace_with_Sweeps_buffered,
 )
+
 try:
     from .spectrometer import Measure_Spectrum
 except ModuleNotFoundError as ex:
@@ -48,5 +50,6 @@ __all__ = [
     "Timetrace",
     "Timetrace_with_sweeps",
     "Timetrace_buffered",
+    "Timetrace_with_Sweeps_buffered",
     "Measure_Spectrum",
 ]
