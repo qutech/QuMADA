@@ -631,14 +631,14 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                         ramp_time=self.buffer_settings["duration"],
                         sync_trigger=sync_trigger,
                     )
-                except AttributeError() as e:
+                except AttributeError as ex:
                     print(
                         "Exception: This instrument probably does not have a \
                           a qumada_ramp method. Buffered measurements without \
                           ramp method are no longer supported. \
                           Use the unbuffered script!"
                     )
-                    raise e
+                    raise ex
 
                 if trigger_type == "manual":
                     pass
@@ -796,14 +796,14 @@ class Generic_1D_Hysteresis_buffered(MeasurementScript):
                             ramp_time=self.buffer_settings["duration"],
                             sync_trigger=sync_trigger,
                         )
-                    except AttributeError() as e:
+                    except AttributeError as ex:
                         print(
                             "Exception: This instrument probably does not have a \
                               a qumada_ramp method. Buffered measurements without \
                               ramp method are no longer supported. \
                               Use the unbuffered script!"
                         )
-                        raise e
+                        raise ex
 
                     if trigger_type == "manual":
                         pass
@@ -971,14 +971,14 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
                         ramp_time=self.buffer_settings["duration"],
                         sync_trigger=sync_trigger,
                     )
-                except AttributeError() as e:
+                except AttributeError as ex:
                     print(
                         "Exception: This instrument probably does not have a \
                           a qumada_ramp method. Buffered measurements without \
                           ramp method are no longer supported. \
                           Use the unbuffered script!"
                     )
-                    raise e
+                    raise ex
 
                 if trigger_type == "manual":
                     pass
