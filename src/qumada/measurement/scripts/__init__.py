@@ -49,6 +49,6 @@ __all__ = [
     "Timetrace",
     "Timetrace_with_sweeps",
     "Timetrace_buffered",
-    "Timetrace_with_Sweeps_buffered"
+    "Timetrace_with_Sweeps_buffered",
     "Measure_Spectrum",
 ]
