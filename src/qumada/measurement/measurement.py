@@ -564,8 +564,8 @@ class MeasurementScript(ABC):
                                 ramp_rate=ramp_rate,
                                 setpoint_intervall=setpoint_intervall,
                             )
-    
-    def clean_up(self, additional_actions: list = [], **kwargs) -> None:
+
+    def clean_up(self, additional_actions: list[Callable] | None = None, **kwargs) -> None:
         """
         Things to do after the measurement is complete
 
@@ -582,8 +582,9 @@ class MeasurementScript(ABC):
         """
         for buffer in self.buffers:
             buffer.unsubscribe(buffer._subscribed_parameters)
-        for action in additional_actions:
-            action()
+        if additional_actions:
+            for action in additional_actions:
+                action()
 
     def ready_buffers(self, **kwargs) -> None:
         """
