@@ -377,7 +377,7 @@ class MeasurementScript(ABC):
         self._lists_created = True
         self._relabel_instruments()
 
-    def initialize(self, dyn_ramp_to_val=False, inactive_dyn_channels:list = []) -> None:
+    def initialize(self, dyn_ramp_to_val=False, inactive_dyn_channels: list | None = None) -> None:
         """
         Sets all static/sweepable parameters to their value/start value.
         If parameters are both, static and dynamic, they will be set to the "value" property
@@ -398,6 +398,8 @@ class MeasurementScript(ABC):
         TODO: Is there a more elegant way?
         TODO: Put Sweep-Generation somewhere else?
         """
+        if inactive_dyn_channels is None:
+            inactive_dyn_channels = []
 
         ramp_rate = self.settings.get("ramp_rate", 0.3)
         ramp_time = self.settings.get("ramp_time", 5)
