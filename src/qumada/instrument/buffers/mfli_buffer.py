@@ -29,7 +29,6 @@ from qcodes.parameters import Parameter
 from qumada.instrument.buffers.buffer import Buffer, BufferException
 from qumada.instrument.custom_drivers.ZI.MFLI import MFLI
 
-
 logger = logging.getLogger(__name__)
 
 

@@ -31,6 +31,7 @@ from .generic_measurement import (
     Timetrace_with_sweeps,
     Timetrace_with_Sweeps_buffered,
 )
+
 try:
     from .spectrometer import Measure_Spectrum
 except ModuleNotFoundError as ex:

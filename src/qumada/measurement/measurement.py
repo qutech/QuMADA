@@ -20,10 +20,6 @@
 # - Jonas Mertens
 # - Sionludi Lab
 
-
-"""
-Measurement
-"""
 from __future__ import annotations
 
 import inspect
@@ -34,7 +30,7 @@ from collections.abc import MutableSequence
 from contextlib import suppress
 from datetime import datetime
 from functools import wraps
-from typing import Any, Union
+from typing import Any, Callable
 
 import numpy as np
 import qcodes as qc
@@ -147,14 +143,6 @@ class MeasurementScript(ABC):
         """
         Calculates number of datapoints when buffered measurements are performed and sets
         the buffered_num_points accordingly. Required to define QCoDeS datastructure.
-
-        Raises
-        ------
-        None
-
-        Returns
-        -------
-        None
         """
 
         if "burst_duration" in self.buffer_settings:
@@ -389,15 +377,15 @@ class MeasurementScript(ABC):
         measurement class and generates AbstractSweeps from the measurement
         properties. Sweeps form a list that can be found in "dynamic_sweeps"
         Relevant kwargs:
-            dyn_ramp_to_val: Bool [False]: If true, dynamic parameters are 
+            dyn_ramp_to_val: Bool [False]: If true, dynamic parameters are
                     ramped to their value, before their sweep, else they are ramped
                     to their first setpoint
             inactive_dyn_channels: List of dynamic channels that are to be
                     treated as static for this initialization. They are always
                     ramped to their value instead of their sweeps starting point.)
-        TODO: Is there a more elegant way?
-        TODO: Put Sweep-Generation somewhere else?
         """
+        # TODO: Is there a more elegant way?
+        # TODO: Put Sweep-Generation somewhere else?
         if inactive_dyn_channels is None:
             inactive_dyn_channels = []
 
@@ -490,7 +478,7 @@ class MeasurementScript(ABC):
                                     ramp_rate=ramp_rate,
                                     ramp_time=ramp_time,
                                     setpoint_intervall=setpoint_intervall,
-                            )
+                                )
                     else:
                         try:
                             ramp_or_set_parameter(
@@ -507,8 +495,8 @@ class MeasurementScript(ABC):
                                 ramp_rate=ramp_rate,
                                 ramp_time=ramp_time,
                                 setpoint_intervall=setpoint_intervall,
-                        )
-                        
+                            )
+
                     # Generate sweeps from parameters
 
         if self.buffered:
@@ -567,18 +555,12 @@ class MeasurementScript(ABC):
 
     def clean_up(self, additional_actions: list[Callable] | None = None, **kwargs) -> None:
         """
-        Things to do after the measurement is complete
+        Things to do after the measurement is complete.
 
-        Parameters
-        ----------
-        **kwargs : TYPE
-            DESCRIPTION.
-
-        Returns
-        -------
-        None
-            DESCRIPTION.
-
+        Args:
+            additional_actions (list[Callable], optional):
+                List of functions to be called after the measurement is
+                complete. Defaults to None.
         """
         for buffer in self.buffers:
             buffer.unsubscribe(buffer._subscribed_parameters)
@@ -588,15 +570,7 @@ class MeasurementScript(ABC):
 
     def ready_buffers(self, **kwargs) -> None:
         """
-        Setup all buffers registered in the measurement and start them
-
-        Parameters
-        ----------
-        **kwargs : None so far...
-
-        Returns
-        -------
-        None
+        Setup all buffers registered in the measurement and start them.
         """
         for buffer in self.buffers:
             buffer.setup_buffer(settings=self.buffer_settings)
@@ -609,19 +583,17 @@ class MeasurementScript(ABC):
         Readout all buffer and return the results as list of tuples
         (parameters, values) as required by qcodes measurement context manager.
 
-        Parameters
-        ----------
-        **kwargs :
-            timestamps: Set True if timestamp data is to be included in the
-                    results. Not implemented yet.
-        Returns
-        -------
-        dict
-            Results, list with one tuple for each subscribed parameter. Tuple
-            contains (parameter, measurement_data).
+        Args:
+            **kwargs (dict):
+                timestamps (bool): Set True if timestamp data is to be included
+                    in the results. Not implemented yet.
 
-        #TODO: Handle multiple bursts etc.
+        Returns:
+            dict: Results, list with one tuple for each subscribed parameter.
+            Tuple contains (parameter, measurement_data).
+
         """
+        # TODO: Handle multiple bursts etc.
         data = {}
         results = []
         for buffer in self.buffers:
