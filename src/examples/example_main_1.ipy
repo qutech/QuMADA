@@ -3,10 +3,8 @@ import json
 import yaml
 
 from qcodes.station import Station
-from qcodes.instrument_drivers.Harvard.Decadac import Decadac
-from qcodes.instrument_drivers.stanford_research.SR830 import SR830
-from qcodes.instrument_drivers.tektronix.Keithley_2400 import Keithley_2400
 from qcodes_contrib_drivers.drivers.QDevil.QDAC1 import QDac
+from qumada.instrument.custom_drivers.ZI.MFLI import MFLI
 from qcodes.dataset import (
     Measurement,
     experiments,
@@ -14,15 +12,12 @@ from qcodes.dataset import (
     load_by_run_spec,
     load_or_create_experiment,
 )
-
-import qtools_metadata.db as db
+from qumada.instrument.mapping.QDevil.qdac import QDacMapping
 from qumada.instrument.mapping import (
     add_mapping_to_instrument,
-    DECADAC_MAPPING,
-    SR830_MAPPING,
-    KEITHLEY_2400_MAPPING,
-    QDAC_MAPPING)
-from qumada.instrument.mapping.base import map_gates_to_instruments
+    QDAC_MAPPING,
+    MFLI_MAPPING,
+    map_terminals_gui)
 from qumada.measurement.scripts import (
     Generic_1D_Sweep,
     Generic_nD_Sweep,
@@ -31,7 +26,6 @@ from qumada.measurement.scripts import (
 from qumada.utils.load_from_sqlite_db import load_db
 from qumada.utils.generate_sweeps import generate_sweep, replace_parameter_settings
 from qumada.utils.ramp_parameter import *
-
 #%% Experiment Setup
 
 # Setup qcodes station
@@ -39,49 +33,76 @@ station = Station()
 
 # Setup instruments
 # Call add_mapping_to_instrument(instrument, mapping) to map the instrument's parameters to QuMADA-specific names.
-dac = Decadac(
-    "dac",
-    "ASRL3::INSTR",
-    min_val=-10,
-    max_val=10,
-    terminator="\n")
-add_mapping_to_instrument(dac, DECADAC_MAPPING)
-station.add_component(dac)
-
-lockin = SR830("lockin", "GPIB1::12::INSTR")
-add_mapping_to_instrument(lockin, SR830_MAPPING)
-station.add_component(lockin)
 
 qdac = QDac("qdac", "ASRL5::INSTR")
-add_mapping_to_instrument(qdac, QDAC_MAPPING)
+add_mapping_to_instrument(qdac, mapping = QDacMapping())
 station.add_component(qdac)
 
-keithley = Keithley_2400("keithley", "GPIB1::27::INSTR")
-add_mapping_to_instrument(keithley, KEITHLEY_2400_MAPPING)
-station.add_component(keithley)
-
-#%% Metadata Setup
-from qtools_metadata.metadata import create_metadata, save_metadata_object_to_db
-
-db.api_url = "http://134.61.7.48:9124"
-metadata = create_metadata()
-
+mfli = MFLI("mfli", "DEV4039", serverhost = "192.168.1.142")
+add_mapping_to_instrument(mfli, mapping = MFLI_MAPPING)
+station.add_component(mfli)
 
 #%% Measurement Setup
 
 # Set path for measurement data db
 load_db()
 # load_db("path/to/measurements.db")
+#%% Set Parameters
 
-# Load parameters
-with open("parameters.yaml", "r") as file:
-    parameters = yaml.safe_load(file)
-
+parameters = {
+    "Source Drain": {
+        "amplitude": {
+            "type": "static",
+            "value": 1e-4,
+        },
+        "current": {
+            "type": "gettable",
+            "break_conditions": ["val > 1e-9"],
+        },
+        "frequency": {
+            "type": "static",
+            "value": 773,
+        }
+    },
+    "Topgate": {
+        "voltage": {
+            "type": "static",
+            "value": 0.6,
+        },
+    },
+    "Left Barrier": {
+        "voltage": {
+            "type": "dynamic",
+            "start": 0,
+            "stop": 0.5,
+            "num_points": 100,
+            "delay": 0,
+        },
+    },
+    "Right Barrier": {
+        "voltage": {
+            "type": "dynamic",
+            "setpoints": generate_sweep(0, 0.5, 100),
+            "delay": 0,
+        },
+    },
+}
+#%%
 script = Generic_1D_Sweep()
-script.setup(parameters, metadata)
-
-# map measurement gates to instrument gates
-map_gates_to_instruments(station.components, script.gate_parameters)
-
+script.setup(parameters, metadata = None, measurement_name = "Test1")
+#%% Map measurement gates to instrument gates
+"""
+As shown below, you can use existing mappings and pass them to the mapping method in order
+to skip the process for later measurements. Thanks to the try-except block, you do
+not have to change this cell - it will work for the first measurement and follow-up
+measurements.
+"""
+try:
+    mapping
+except:
+    mapping = {}
+map_terminals_gui(station.components, script.gate_parameters, mapping, monitoring=True)
+mapping = script.gate_parameters
+#%%
 # run script
 script.run()
