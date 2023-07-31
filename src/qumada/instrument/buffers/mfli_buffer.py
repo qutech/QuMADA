@@ -29,6 +29,8 @@ from qcodes.parameters import Parameter
 from qumada.instrument.buffers.buffer import Buffer, BufferException
 from qumada.instrument.custom_drivers.ZI.MFLI import MFLI
 
+logger = logging.getLogger(__name__)
+
 
 class MFLIBuffer(Buffer):
     """Buffer for ZurichInstruments MFLI"""
@@ -89,7 +91,7 @@ class MFLIBuffer(Buffer):
             self._device.triggers.in_[0].level(settings["trigger_threshold"])
             self._device.triggers.in_[1].level(settings["trigger_threshold"])
         else:
-            print("Warning: No trigger threshold specified!")
+            logger.warning("No trigger threshold specified!")
         self._set_num_points()
         self._daq.delay = settings.get("delay", 0)
 
@@ -103,7 +105,7 @@ class MFLIBuffer(Buffer):
         # TODO: This is done BEFORE the setup_buffer, so changes to trigger type will be overriden anyway?
         # print(f"Running trigger setter with: {trigger}")
         if trigger is None:
-            print("No Trigger provided! Setting trigger to continuous.")
+            logger.info("No Trigger provided! Setting trigger to continuous.")
             self._daq.type(0)
         elif trigger in self.AVAILABLE_TRIGGERS:
             samplenode = self._device.demods[self._channel].sample
@@ -178,9 +180,10 @@ class MFLIBuffer(Buffer):
                 self._num_bursts = int(self.settings["num_bursts"])
                 self._burst_duration = self.settings["duration"] / self._num_bursts
             else:
-                logging.info(
+
+                logger.info(
                     "You have specified neither burst_duration nor num_bursts. \
-                      Using duration as burst_duration!"
+                    Using duration as burst_duration!"
                 )
                 self._burst_duration = self.settings["duration"]
 
@@ -223,7 +226,7 @@ class MFLIBuffer(Buffer):
                 self._daq.subscribe(node)
 
     def unsubscribe(self, parameters: list[Parameter]) -> None:
-        for parameter in parameters:
+        for parameter in parameters.copy():
             node = self._get_node_from_parameter(parameter)
             if node in self._sample_nodes:
                 self._sample_nodes.remove(node)
