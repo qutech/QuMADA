@@ -73,12 +73,13 @@ class Generic_1D_Sweep(MeasurementScript):
             List with all QCoDeS Datasets.
 
         """
-        self.initialize()
+        
         wait_time = self.settings.get("wait_time", 5)
         include_gate_name = self.settings.get("include_gate_name", True)
         naming_helper(self, default_name="1D Sweep")
         data = list()
         sleep(wait_time)
+        self.generate_lists()
         for sweep, dynamic_parameter in zip(self.dynamic_sweeps, self.dynamic_parameters):
             if include_gate_name:
                 self._measurement_name = f"{self.measurement_name} {dynamic_parameter['gate']}"
@@ -89,7 +90,9 @@ class Generic_1D_Sweep(MeasurementScript):
                 measured_channels = {*self.gettable_channels, *idle_channels}
             else:
                 measured_channels = set(self.gettable_channels)
-            ramp_or_set_parameter(sweep._param, sweep.get_setpoints()[0])
+            #ramp_or_set_parameter(sweep._param, sweep.get_setpoints()[0])
+            inactive_channels = [chan for chan in self.dynamic_channels if chan != sweep.param]
+            self.initialize(inactive_dyn_channels=inactive_channels)
             sleep(wait_time)
             data.append(
                 dond(
@@ -100,7 +103,7 @@ class Generic_1D_Sweep(MeasurementScript):
                     **dond_kwargs,
                 )
             )
-            self.reset()
+            #self.reset()
         return data
 
 
