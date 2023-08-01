@@ -228,7 +228,7 @@ class Timetrace(MeasurementScript):
     """
 
     def run(self):
-        self.initialize()
+        self.initialize(dyn_ramp_to_val=True)
         duration = self.settings.get("duration", 300)
         timestep = self.settings.get("timestep", 1)
         timer = ElapsedTimeParameter("time")
@@ -267,7 +267,7 @@ class Timetrace_buffered(MeasurementScript):
     """
 
     def run(self):
-        self.initialize()
+        self.initialize(dyn_ramp_to_val=True)
         # duration = self.settings.get("duration", 300)
         # timestep = self.settings.get("timestep", 1)
         timer = ElapsedTimeParameter("time")
