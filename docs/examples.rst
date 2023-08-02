@@ -78,9 +78,9 @@ measurements of the barrier gates whereas the Barrier gates will be set to 0 V
 
 The 1D_Generic sweep is very useful for performing pinchoff measurements of many gates.
 
-#########################
+############################
 Generic_1D_parallel_Sweep()
-#########################
+############################
 
 .. py:class:: Generic_1D_parallel_Sweep(MeasurementScript)
 
@@ -228,9 +228,9 @@ All gettable (and static gettable) parameters will be recorded, static and dynam
 	the stepsize and duration of the complete measurement. Use custom measurement scripts to perform very fast or high-precision measurements.
 
 
-#####################################
+##########################################
 Writing your own measurement scripts (WIP)
-#####################################
+##########################################
 
 Although the generic measurement scripts coming with QuMADA can handle a lot of different measurements there are certainly cases where you want to define your own measurements.
 In general QuMADA supports all the freedom the QCoDeS Measurement Context Manager provides. However, in order to make it work with QuMADA features like the gate mapping you have
@@ -338,7 +338,7 @@ a dictionary once loaded into python, you can use keywords to modify the paramet
 Therefore, we included some useful method in the "utils" section of QuMADA.
 
 
-
+.. _target to buffered measurements:
 Buffered Measurements
 ----------------------
 
@@ -376,7 +376,7 @@ to the used instruments. This requires a few changes to the way the measurement 
 	station.add_component(dac)
 
 	mfli = MFLI("mfli", "DEV4121", "169.254.40.160")
-	add_mapping_to_instrument(mfli, path = MFLI_MAPPING)
+	add_mapping_to_instrument(mfli, mapping = MFLI_MAPPING)
 	station.add_component(mfli)
 
 (This tutorial expects you to do the basic qcodes and QuMADA imports on your own)
@@ -385,10 +385,12 @@ For the MFLI the BufferedMFLI class is used instead of the normal driver. It inh
 The QuMADA buffer has methods to setup the buffer and triggers as well as to start, stop and readout measurements. Using a instrument for buffered measurements requires a wrapper mapping the instruments driver specific commands
 to the QuMADA ones. Currently, QuMADA supports the MFLI and the SR830 (more to come), how to add additional instruments by yourself will be covered in a different section.
 
-The DecaDac's is required to do a smooth ramp, which requires usage of the built in ramp method. As this cannot be mapped by using the normal QuMADA mapping.json file, we use the DecadacMapping class and pass it as the mapping-kwarg
-(instead of "path") to "add_mapping_to_instrument". This does not only add the normal mapping but includes the _qumada_ramp() method which is used in QuMADA' buffered measurement scripts for ramping channels. This method makes use of the
+The DecaDac's is required to do a smooth ramp, which requires usage of the built in ramp method. As this cannot be mapped by using the normal QuMADA mapping.json file, we use the DecadacMapping class and pass it as the mapping-kwarg to "add_mapping_to_instrument". This does not only add the normal mapping but includes the _qumada_ramp() method which is used in QuMADA' buffered measurement scripts for ramping channels. This method makes use of the
 built-in ramp method, but standardizes the input parameters so that different instruments can be used with the same measurement script. Note that instruments without built-in ramps can be used for the buffered measurements as well, but then require communication at
 each setpoint, which slows down the measurement and can lead to asynchronicity. It is strongly adviced to use this feature only for debugging.
+
+.. note::
+	It is totally fine to always use the InstrumentMapping Class instead of string. Whereas currently not all instrument do have an InstrumentMapping, the mapping path might be removed once they have.
 
 .. note::
 

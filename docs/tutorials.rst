@@ -54,9 +54,9 @@ It contains a couple of blocks for the steps you have to do in order to set up t
 	from qumada.utils.generate_sweeps import generate_sweep, replace_parameter_settings
 	from qumada.utils.ramp_parameter import *
 
-#################
+###############################
 Station and Instruments
-#################
+###############################
 
 
 After importing everything necessary we can start with setting up the QCoDeS station object and the measurement instruments.
@@ -81,7 +81,8 @@ Adding the mapping is easily done by using the "add_mapping_to_instrument" comma
 	Applies the mapping specified to the instrument
 
    :instrument: Instrument
-   :mapping: Mapping, has to be imported from qumada.instrument.mapping and be listed in the corresponding __init__ file
+   :mapping: str or InstrumentMapping, str has to be the path to a json file that contains the mapping. 
+             InstrumentMapping has to be imported from qumada.instrument.mapping and be listed in the corresponding __init__ file
    :return: None
 
 .. code-block:: python
@@ -97,29 +98,27 @@ Adding the mapping is easily done by using the "add_mapping_to_instrument" comma
 		min_val=-10,
 		max_val=10,
 		terminator="\n")
-	add_mapping_to_instrument(dac, path = DECADAC_MAPPING)
+	add_mapping_to_instrument(dac, mapping = DECADAC_MAPPING)
 	station.add_component(dac)
 
 	lockin = SR830("lockin", "GPIB1::12::INSTR")
-	add_mapping_to_instrument(lockin, path = SR830_MAPPING)
+	add_mapping_to_instrument(lockin, mapping = SR830_MAPPING)
 	station.add_component(lockin)
 
 	qdac = QDac("qdac", "ASRL5::INSTR")
-	add_mapping_to_instrument(qdac, QDAC_MAPPING)
+	add_mapping_to_instrument(qdac, mapping = QDAC_MAPPING)
 	station.add_component(qdac)
 
 	keithley = Keithley_2400("keithley", "GPIB1::27::INSTR")
-	add_mapping_to_instrument(keithley, path = KEITHLEY_2400_MAPPING)
+	add_mapping_to_instrument(keithley, mapping = KEITHLEY_2400_MAPPING)
 	station.add_component(keithley)
 
 In this sample we just add a couple of real instruments. Of course you can add QCoDeS dummy instruments as well and provide mappings for them.
+For this simple example without any buffered measurements it is sufficient to provide the path to a json-mapping file as "mapping" argument. Note that "DECADAC_MAPPING", "SR830_MAPPING", etc. are 
+basically just strings containing the path to the mapping files, which were renamed and imported for convenience.
+Later on, you might want to use instances of the InstrumentMapping-Class instead, which contain the parameter mapping as well as built-in
+ramping methods (more details :ref:`here <target to buffered measurements>`).
 
-.. note::
-
-	There is a known bug that requires the instrument's name to be the same as the name found in the corresponding mapping file.
-	This is especcially relevant when you want to use two instruments of the same type. We are working on a fix for this issue.
-	As a workaround, you can create a second mapping file for the second instrument and alter the instrument name on the left side of
-	the mapping file to the name of the second instrument.
 
 #############
 Metadata
@@ -149,7 +148,8 @@ The easiest way to create the metadata-object is by entering the data into the m
 The connection to the metadabase is required for loading information of already existing samples and measurements (so you do not have to enter them again) and
 - of course - for storing the data. Right now, we are only interested in creating the metadata object for usage in our measurements.
 
-In case you have not already initialized a QCoDeS database you can easily do so by using the load_db(path_to_db [optional) method, which either takes the path to the database you want to use or, when no argument is supplied,
+In case you have not already initialized a QCoDeS database you can easily do so by using the qcodes initialise_or_create_database_at method(path :str). If you already created a QCoDeS database simply use load_db(path : str [optional]), 
+which either takes the path to the database you want to use or, when no argument is supplied,
 opens an open-file prompt allowing you to simply pick the database you want to use (be aware that the prompt might pop up behind other windows).
 
 At this point we have taken care of all preliminary steps required before defining the measurement.
@@ -253,9 +253,9 @@ be separated by blanks.
 
 In our case we added a maximum current as we want to stop the measurement when the current becomes to large.
 
-###################
-Measurement Scripts
-###################
+#########################
+Using Measurement Scripts
+#########################
 
 Obviously, the measurement is not yet completely defined. We still have to a create measurement script or -more precisely- a measurement_script object.
 In QuMADA all information relevant for the measurement are stored in this object, including the gate_parameters and their mapping to the used instruments,
@@ -326,7 +326,7 @@ However, the "utils section" has a couple of tools that make working with the QC
 
 
 Adding the QuMADA Buffer Class to Instruments (WIP)
------------------------------------------------
+----------------------------------------------------
 
 Using QuMADA for doing buffered measurements requires the measurement instruments to have a QuMADA "Buffered" Class.
 In analogy to the gate mapping it will map the instrument's buffer's properties and functions to a common QuMADA interface.
