@@ -339,6 +339,7 @@ Therefore, we included some useful method in the "utils" section of QuMADA.
 
 
 .. _target to buffered measurements:
+
 Buffered Measurements
 ----------------------
 
