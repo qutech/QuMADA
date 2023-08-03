@@ -90,7 +90,7 @@ buffer_settings = {
 }
 
 # %% Measurement Setup
-# with open(r"C:\Users	ill3\Documents\PythonScripts\Test Measurements	estsettings.yaml") as file:
+# with open(r"C:\Users\till3\Documents\PythonScripts\Test Measurements\testsettings.yaml") as file:
 #     parameters = yaml.safe_load(file)
 parameters = {
     "dmm": {"voltage": {"type": "gettable"}},
