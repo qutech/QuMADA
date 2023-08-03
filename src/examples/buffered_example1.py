@@ -67,8 +67,7 @@ station = Station()
 # ramp methods or add_mapping_to_instrument(instrument, path) for instruments without
 # to map the instrument's parameters to QuMADA-specific names.
 
-dac = Decadac("dac", "ASRL6::INSTR", min_val=-10, max_val=10, terminator="
-")
+dac = Decadac("dac", "ASRL6::INSTR", min_val=-10, max_val=10, terminator="\n")
 add_mapping_to_instrument(dac, mapping=DecadacMapping())
 station.add_component(dac)
 
