@@ -44,6 +44,7 @@ from qumada.metadata import Metadata
 from qumada.utils.ramp_parameter import ramp_or_set_parameter
 from qumada.utils.utils import flatten_array
 
+logger = logging.getLogger(__name__)
 
 def is_measurement_script(o):
     return inspect.isclass(o) and issubclass(o, MeasurementScript)
@@ -293,48 +294,65 @@ class MeasurementScript(ABC):
                     self.dynamic_channels.append(channel)
                     if self.properties[gate][parameter].get("_is_triggered", False) and self.buffered:
                         if "num_points" in self.properties[gate][parameter].keys():
-                            assert self.properties[gate][parameter]["num_points"] == self.buffered_num_points
+                            try:
+                                assert self.properties[gate][parameter]["num_points"] == self.buffered_num_points
+                            except AssertionError:
+                                logger.warning(
+                                    f"Number of datapoints from buffer_settings\
+                                    and gate_parameters do not match. Using \
+                                    the value from the buffer settings: \
+                                    {self.buffered_num_points}")
                         elif "setpoints" in self.properties[gate][parameter].keys():
-                            assert len(self.properties[gate][parameter]["setpoints"]) == self.buffered_num_points
+                            try:
+                                assert len(self.properties[gate][parameter]["setpoints"]) == self.buffered_num_points
+                            except AssertionError:
+                                logger.warning(
+                                    f"Number of datapoints from buffer_settings\
+                                    and gate_parameters do not match. Using \
+                                    the value from the buffer settings: \
+                                    {self.buffered_num_points}")
+
                         else:
-                            pass
+                            logger.info("No num_points or setpoints given for\
+                                         buffered measurement. The value from \
+                                         buffer_settings is used")
                         try:
                             self.dynamic_sweeps.append(
                                 LinSweep(
-                channel,
-                self.properties[gate][parameter]["start"],
-                self.properties[gate][parameter]["stop"],
-                self.buffered_num_points,
-                delay=self.properties[gate][parameter].setdefault("delay", 0),
+                                    channel,
+                                    self.properties[gate][parameter]["start"],
+                                    self.properties[gate][parameter]["stop"],
+                                    int(self.buffered_num_points),
+                                    delay=self.properties[gate][parameter].setdefault("delay", 0),
                                 )
                             )
                         except KeyError:
                             self.dynamic_sweeps.append(
                                 LinSweep(
-                channel,
-                self.properties[gate][parameter]["setpoints"][0],
-                self.properties[gate][parameter]["setpoints"][-1],
-                self.buffered_num_points,
-                delay=self.properties[gate][parameter].setdefault("delay", 0),
+                                    channel,
+                                    self.properties[gate][parameter]["setpoints"][0],
+                                    self.properties[gate][parameter]["setpoints"][-1],
+                                    int(self.buffered_num_points),
+                                    delay=self.properties[gate][parameter].setdefault("delay", 0),
                                 )
                             )
                     else:
                         try:
                             self.dynamic_sweeps.append(
                                 LinSweep(
-                channel,
-                self.properties[gate][parameter]["start"],
-                self.properties[gate][parameter]["stop"],
-                self.properties[gate][parameter]["num_points"],
-                delay=self.properties[gate][parameter].setdefault("delay", 0),
+                                    channel,
+                                    self.properties[gate][parameter]["start"],
+                                    self.properties[gate][parameter]["stop"],
+                                    int(self.properties[gate][parameter]["num_points"]),
+                                    delay=self.properties[gate][parameter].setdefault("delay", 0),
                                 )
                             )
                         except KeyError:
                             self.dynamic_sweeps.append(
                                 CustomSweep(
-                channel,
-                self.properties[gate][parameter]["setpoints"],
-                delay=self.properties[gate][parameter].setdefault("delay", 0),
+                                    channel,
+                                    self.properties[gate][parameter]["setpoints"],
+                                    delay=self.properties[gate][parameter].setdefault("delay", 0),
                                 )
                             )
                 if "group" in self.properties[gate][parameter].keys():
@@ -419,32 +437,34 @@ class MeasurementScript(ABC):
                             try:
                                 assert self.properties[gate][parameter]["num_points"] == self.buffered_num_points
                             except AssertionError:
-                                logging.WARNING(
+                                logger.warning(
                                     f"Number of datapoints from buffer_settings\
                                     and gate_parameters do not match. Using \
                                     the value from the buffer settings: \
                                     {self.buffered_num_points}")
+                                self.properties[gate][parameter]["num_points"] = self.buffered_num_points
+
                         elif "setpoints" in self.properties[gate][parameter].keys():
                             try:
                                 assert len(self.properties[gate][parameter]["setpoints"]) == self.buffered_num_points
                             except AssertionError:
-                                logging.WARNING(
+                                logger.warning(
                                     f"Number of datapoints from buffer_settings\
                                     and gate_parameters do not match. Using \
                                     the value from the buffer settings: \
                                     {self.buffered_num_points}")
+
                         else:
-                            logging.INFO("No num_points or setpoints given for\
+                            logger.info("No num_points or setpoints given for\
                                          buffered measurement. The value from \
                                          buffer_settings is used")
-                            pass
                         try:
                             self.dynamic_sweeps.append(
                                 LinSweep(
                                     channel,
                                     self.properties[gate][parameter]["start"],
                                     self.properties[gate][parameter]["stop"],
-                                    self.buffered_num_points,
+                                    int(self.buffered_num_points),
                                     delay=self.properties[gate][parameter].setdefault("delay", 0),
                                 )
                             )
@@ -454,7 +474,7 @@ class MeasurementScript(ABC):
                                     channel,
                                     self.properties[gate][parameter]["setpoints"][0],
                                     self.properties[gate][parameter]["setpoints"][-1],
-                                    self.buffered_num_points,
+                                    int(self.buffered_num_points),
                                     delay=self.properties[gate][parameter].setdefault("delay", 0),
                                 )
                             )
@@ -465,7 +485,7 @@ class MeasurementScript(ABC):
                                     channel,
                                     self.properties[gate][parameter]["start"],
                                     self.properties[gate][parameter]["stop"],
-                                    self.properties[gate][parameter]["num_points"],
+                                    int(self.properties[gate][parameter]["num_points"]),
                                     delay=self.properties[gate][parameter].setdefault("delay", 0),
                                 )
                             )

@@ -293,11 +293,11 @@ class Buffer(ABC):
         """Read the buffer and return raw output."""
 
     @abstractmethod
-    def subscribe(self, parameters: list[Parameter]) -> None:
+    def subscribe(self, parameters: set | list[Parameter]) -> None:
         """Measure provided parameters with the buffer."""
 
     @abstractmethod
-    def unsubscribe(self, parameters: list[Parameter]) -> None:
+    def unsubscribe(self, parameters: set | list[Parameter]) -> None:
         """Unsubscribe provided parameters, if they were subscribed."""
 
     @abstractmethod
