@@ -17,20 +17,20 @@
 # Contributors:
 # - Till Huckeman
 
-from time import sleep
 import logging
+from time import sleep
+
 import numpy as np
-
 from qcodes.dataset.measurements import Measurement
-from qcodes.parameters.specialized_parameters import ElapsedTimeParameter
 from qcodes.parameters.parameter import Parameter
+from qcodes.parameters.specialized_parameters import ElapsedTimeParameter
+from qutil.measurement.spectrometer import Spectrometer, daq
 
+from qumada.instrument.buffers.buffer import is_bufferable
 from qumada.measurement.measurement import MeasurementScript
 from qumada.utils.ramp_parameter import ramp_or_set_parameter
 from qumada.utils.utils import _validate_mapping, naming_helper
-from qumada.instrument.buffers.buffer import is_bufferable
 
-from qutil.measurement.spectrometer import Spectrometer, daq
 
 class Measure_Spectrum(MeasurementScript):
     """

@@ -21,9 +21,11 @@
 
 
 from __future__ import annotations
-from qumada.utils.generate_sweeps import generate_sweep
-import time
+
 import logging
+import time
+
+from qumada.utils.generate_sweeps import generate_sweep
 
 LOG = logging.getLogger(__name__)
 

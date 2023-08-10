@@ -20,9 +20,9 @@
 
 
 from functools import partial
-from time import time, sleep
-from typing import Union, cast
 from math import ceil
+from time import sleep, time
+from typing import Union, cast
 
 import qcodes.utils.validators as vals
 from qcodes.instrument import ChannelList, InstrumentChannel, VisaInstrument

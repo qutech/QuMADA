@@ -25,8 +25,8 @@
 
 # import filedialog module
 import tkinter
-from tkinter import filedialog
 from os import curdir
+from tkinter import filedialog
 
 
 # Function for opening the file explorer window
