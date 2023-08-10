@@ -119,22 +119,21 @@ class DecadacMapping(InstrumentMapping):
         trigger_mode = trigger_settings.get("trigger_mode", "continuous")
         polarity = trigger_settings.get("trigger_mode_polarity", "positive")
         
-        match (trigger_mode, polarity):
-            case ("edge", "positive"): 
-                mode = 12
-            case ("edge", "negative"):
-                mode = 14
-            case ("digital", "positive"):
-                mode = 10
-            case("digital", "negative"):
-                mode = 2
-            # TODO: CHeck other cases
-            case("continuous", "positive"):
-                mode = 0
-            case("continuous", "negative"):
-                mode = 0
-            case _:
-                raise Exception("Selected trigger mode is not supported by DecaDac")
+        if (trigger_mode, polarity) == ("edge", "positive"):
+            mode = 12
+        elif (trigger_mode, polarity) == ("edge", "negative"):
+            mode = 14
+        elif (trigger_mode, polarity) == ("digital", "positive"):
+            mode = 10
+        elif (trigger_mode, polarity) == ("digital", "negative"):
+            mode = 2
+        # TODO: Check other cases
+        elif (trigger_mode, polarity) == ("continuous", "positive"):
+            mode = 0
+        elif (trigger_mode, polarity) == ("continuous", "negative"):
+            mode = 0
+        else:
+            raise Exception("Selected trigger mode is not supported by DecaDac")
                 
         if self.trigger_in is None:
             mode = 0
