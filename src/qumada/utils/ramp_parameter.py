@@ -33,15 +33,16 @@ LOG = logging.getLogger(__name__)
 class Unsweepable_parameter(Exception):
     pass
 
+
 def ramp_parameter(
-        parameter,
-        target,
-        ramp_rate : float | None = None,
-        ramp_time : float | None = None,
-        setpoint_intervall: float = 0.1,
-        valid_units: str = "all",
-        **kwargs
-        ):
+    parameter,
+    target,
+    ramp_rate: float | None = None,
+    ramp_time: float | None = None,
+    setpoint_intervall: float = 0.1,
+    valid_units: str = "all",
+    **kwargs,
+):
     """
     Used for ramping float-valued parameters. Allows to specify ramp_rate and/or
     ramp_time. The ramp_time provides an upper limit to the time the sweep may
@@ -81,7 +82,7 @@ def ramp_parameter(
         True if sweep was completed, False if it failed.
 
     """
-    #time.sleep(0.1)
+    # time.sleep(0.1)
     LOG.debug(f"parameter: {parameter}")
     current_value = parameter.get()
     LOG.debug(f"current value: {current_value}")
@@ -93,19 +94,23 @@ def ramp_parameter(
                 print("Please specify either ramp_time or ramp_speed")
                 return False
             else:
-                ramp_rate = abs(current_value-float(target))/ramp_time
+                ramp_rate = abs(current_value - float(target)) / ramp_time
 
-        num_points = int(abs(current_value-float(target))/(ramp_rate*setpoint_intervall))+2
-        if ramp_time is not None and ramp_time < abs(current_value-float(target))/ramp_rate:
-            print("Ramp rate is to low to reach target value in specified"\
-                  "max ramp time. Adapting ramp rate to match ramp time")
-            return ramp_parameter(parameter=parameter,
-                                           target=target,
-                                           ramp_rate=None,
-                                           ramp_time=ramp_time,
-                                           setpoint_intervall=setpoint_intervall,
-                                           valid_units=valid_units,
-                                           **kwargs)
+        num_points = int(abs(current_value - float(target)) / (ramp_rate * setpoint_intervall)) + 2
+        if ramp_time is not None and ramp_time < abs(current_value - float(target)) / ramp_rate:
+            print(
+                "Ramp rate is to low to reach target value in specified"
+                "max ramp time. Adapting ramp rate to match ramp time"
+            )
+            return ramp_parameter(
+                parameter=parameter,
+                target=target,
+                ramp_rate=None,
+                ramp_time=ramp_time,
+                setpoint_intervall=setpoint_intervall,
+                valid_units=valid_units,
+                **kwargs,
+            )
         sweep = generate_sweep(parameter.get(), target, num_points)
         LOG.debug(f"sweep: {sweep}")
         for value in sweep:
@@ -117,22 +122,19 @@ def ramp_parameter(
     return False
 
 
-
-def ramp_or_set_parameter(parameter,
-                          target,
-                          ramp_rate : float | None = 0.1,
-                          ramp_time : float | None = 10,
-                          setpoint_intervall: float = 0.1,
-                          **kwargs):
+def ramp_or_set_parameter(
+    parameter,
+    target,
+    ramp_rate: float | None = 0.1,
+    ramp_time: float | None = 10,
+    setpoint_intervall: float = 0.1,
+    **kwargs,
+):
     """
     Trys to ramp parameter to specified value, if the parameter values are not
     float, they are just set.
     """
     try:
-        ramp_parameter(parameter,
-                       target,
-                       ramp_rate,
-                       ramp_time,
-                       setpoint_intervall)
+        ramp_parameter(parameter, target, ramp_rate, ramp_time, setpoint_intervall)
     except Unsweepable_parameter:
         parameter.set(target)

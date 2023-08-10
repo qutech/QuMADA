@@ -23,7 +23,7 @@
 import numpy as np
 
 
-#%%
+# %%
 def flatten_array(l) -> list:
     """
     Flattens nested lists and arrays, returns flattened list
@@ -41,7 +41,7 @@ def flatten_array(l) -> list:
     return results
 
 
-#%%
+# %%
 
 
 def _validate_mapping(entry, valid_entries, mapping: dict = None, default=None, default_key_error=None):
@@ -80,7 +80,8 @@ def _validate_mapping(entry, valid_entries, mapping: dict = None, default=None, 
         print(f"{entry} is not in mapping. Using default value: {default_key_error}")
         return default_key_error
 
-#%%
+
+# %%
 def naming_helper(measurement_script, default_name="Measurement"):
     """
     Handles the naming of measurements for measurement scripts.

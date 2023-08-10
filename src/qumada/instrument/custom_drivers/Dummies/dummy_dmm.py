@@ -31,7 +31,7 @@ from qcodes.parameters import Parameter
 from qcodes.validators import validators as vals
 
 
-#%%
+# %%
 class dmm_results_random(Parameter):
     def get_raw(self):
         return np.random.sample()

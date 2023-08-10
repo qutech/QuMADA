@@ -18,7 +18,6 @@
 # - Till Huckeman
 
 
-
 import sys
 from subprocess import Popen
 
@@ -51,10 +50,12 @@ def open_web_gui(parameters):
     elif isinstance(parameters, list):
         params = parameters
     else:
-        print("The provided parameters are invalid. Please pass as Station \
+        print(
+            "The provided parameters are invalid. Please pass as Station \
               object, a Measurement Script (after parameter mapping) or a \
-              list of parameters")
+              list of parameters"
+        )
         return False
-    monitor_process = Popen([sys.executable, "-m", "qcodes.monitor.monitor"], shell = True)
+    monitor_process = Popen([sys.executable, "-m", "qcodes.monitor.monitor"], shell=True)
     monitor = Monitor(*params)
     return monitor, monitor_process

@@ -35,11 +35,11 @@ class QDacMapping(InstrumentMapping):
         self,
         parameters: list[Parameter],
         *,
-        start_values: list[float]|None = None,
+        start_values: list[float] | None = None,
         end_values: list[float],
         ramp_time: float,
-        sync_trigger = None,
-        **kwargs
+        sync_trigger=None,
+        **kwargs,
     ) -> None:
         assert len(parameters) == len(end_values)
         if start_values is not None:
