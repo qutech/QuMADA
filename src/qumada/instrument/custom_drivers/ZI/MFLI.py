@@ -65,9 +65,9 @@ class MFLI(Instrument):
             set_cmd=False,
             docstring="Absolute voltage as measured by demod0",
         )
-        
+
         self.voltage.signal_name = ("demod0", "r")
-        
+
         self.add_parameter(
             "voltage_offset",
             label="Voltage Offset",
@@ -78,7 +78,7 @@ class MFLI(Instrument):
             docstring="Offset to voltage output in V",
         )
 
-        
+
         self.add_parameter(
             "voltage_y_component",
             label="Y",
@@ -90,7 +90,7 @@ class MFLI(Instrument):
         )
         self.voltage_y_component.signal_name = ("demod0", "y")
 
-        
+
         self.add_parameter(
             "voltage_x_component",
             label="X",
@@ -101,8 +101,8 @@ class MFLI(Instrument):
             docstring="X component of sample measured by demod1",
         )
         self.voltage_x_component.signal_name = ("demod0", "x")
-        
-        
+
+
         self.add_parameter(
             "current",
             label="R",

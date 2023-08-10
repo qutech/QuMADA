@@ -92,19 +92,18 @@ def naming_helper(measurement_script, default_name="Measurement"):
     If measurement_script.auto_naming is True, the default name is used always!
     Changes measurement_script.measurement_name to highest priority name
     and returns it.
-    If metadata object is available the name in the metadata object is also 
+    If metadata object is available the name in the metadata object is also
     changed!
     """
-    if measurement_script.settings.get("auto_naming", False): 
+    if measurement_script.settings.get("auto_naming", False):
         if measurement_script.metadata is not None:
             measurement_script.metadata.measurement.name = default_name
         measurement_script.measurement_name = default_name
     else:
         if measurement_script.metadata is not None:
-            measurement_script.measurement_name = measurement_script.metadata.measurement.name  
+            measurement_script.measurement_name = measurement_script.metadata.measurement.name
         elif getattr(measurement_script, "measurement_name", None) is not None:
             pass
         else:
             measurement_script.measurement_name = default_name
     return measurement_script.measurement_name
-        

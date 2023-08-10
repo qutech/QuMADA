@@ -103,7 +103,7 @@ class DacReader:
             raise DACException(f"Unexpected return from DAC when setting "
                                f"channel: {resp}. DAC channel may not have "
                                f"been set.")
-            
+
     def _script_set_channel(self):
         """
         Set the active DAC channel within a script
@@ -358,7 +358,7 @@ class DacChannel(InstrumentChannel, DacReader):
         if block:
             while self.slope.get() != 0:
                 pass
-            
+
     def _script_ramp(self, start, end, duration, trigger = 0):
         """
         Ramp the DAC to a given voltage.
@@ -391,7 +391,7 @@ class DacChannel(InstrumentChannel, DacReader):
             'after_trig1_falling': 14,
             'after_trig2_falling': 15,
             }
-        
+
         #_control_str = f'G{trigger_mapping[trigger]};'
         _control_str = f'G{trigger};'
         timestep = 1000
@@ -434,7 +434,7 @@ class DacChannel(InstrumentChannel, DacReader):
             code = int(code)
             self._set_channel()
             self.ask_raw(f"U65535;L0;D{code};")
-            
+
     def _script_set_dac(self, code):
         """
         Set the voltage on the dac channel, without varification
@@ -442,7 +442,7 @@ class DacChannel(InstrumentChannel, DacReader):
         Params:
             code (int): the DAC code to set the voltage to
         """
-        
+
         code = int(code)
         self._script_set_channel()
         self.ask_raw(f"U65535;L0;D{code};")
@@ -594,13 +594,13 @@ class Decadac(VisaInstrument, DacReader):
         self.add_submodule("channels", channels.to_channel_tuple())
 
         self.connect_message()
-        
+
     def start_script(self):
         self.ask_raw('{*1:')
-        
+
     def end_script(self):
         self.ask_raw('}')
-    
+
     def run_script(self):
         self.write_raw('X0;}X1;')
         sleep(1)

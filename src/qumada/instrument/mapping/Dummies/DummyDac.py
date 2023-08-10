@@ -63,6 +63,6 @@ class DummyDacMapping(InstrumentMapping):
         for param, start_value, end_value, ramp_time in zip(parameters, start_values, end_values, ramp_times):
             param._instrument._triggered_ramp(start_value, end_value, ramp_time)
 
-        
+
     def setup_trigger_in():
         pass

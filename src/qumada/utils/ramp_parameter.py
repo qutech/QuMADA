@@ -42,7 +42,7 @@ def ramp_parameter(
         ):
     """
     Used for ramping float-valued parameters. Allows to specify ramp_rate and/or
-    ramp_time. The ramp_time provides an upper limit to the time the sweep may 
+    ramp_time. The ramp_time provides an upper limit to the time the sweep may
     take if specified.
 
     Parameters
@@ -61,7 +61,7 @@ def ramp_parameter(
         time.
     setpoint_intervall : float, optional
         Stepsize of the sweep. The smaller, the smoother the sweep will be
-        Very small steps can increase the sweeptime significantly. 
+        Very small steps can increase the sweeptime significantly.
         The default is 0.1.
     valid_units : str, optional
         Not used yet. The default is "all".
@@ -83,7 +83,7 @@ def ramp_parameter(
     LOG.debug(f"parameter: {parameter}")
     current_value = parameter.get()
     LOG.debug(f"current value: {current_value}")
-    
+
     if type(current_value) == float:
         LOG.debug(f"target: {target}")
         if not ramp_rate:
@@ -92,15 +92,15 @@ def ramp_parameter(
                 return False
             else:
                 ramp_rate = abs(current_value-float(target))/ramp_time
-        
+
         num_points = int(abs(current_value-float(target))/(ramp_rate*setpoint_intervall))+2
         if ramp_time is not None and ramp_time < abs(current_value-float(target))/ramp_rate:
             print("Ramp rate is to low to reach target value in specified"\
                   "max ramp time. Adapting ramp rate to match ramp time")
             return ramp_parameter(parameter=parameter,
-                                           target=target, 
+                                           target=target,
                                            ramp_rate=None,
-                                           ramp_time=ramp_time, 
+                                           ramp_time=ramp_time,
                                            setpoint_intervall=setpoint_intervall,
                                            valid_units=valid_units,
                                            **kwargs)

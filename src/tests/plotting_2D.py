@@ -31,7 +31,7 @@ from matplotlib import pyplot as plt
 import matplotlib
 
 #%%
-def _handle_overload(*args, 
+def _handle_overload(*args,
                      output_dimension : int = 1,
                      x_name = None,
                      y_name = None,
@@ -58,11 +58,11 @@ def _handle_overload(*args,
     if z_name:
         for i, param in enumerate(all_params):
             if param[0] == z_name:
-                params[2]=all_params.pop(i)  
+                params[2]=all_params.pop(i)
                 output_dimension-=1
-    
+
     print(f"To many parameters found. Please choose {output_dimension} parameter(s)")
-    for i in range(0, output_dimension):       
+    for i in range(0, output_dimension):
         for idx, j in enumerate(all_params):
             print(f"{idx} : {j[0]}")
         choice = input("Please enter ID: ")
@@ -74,8 +74,8 @@ def _handle_overload(*args,
     #%%
 def plot_2D(x_data, y_data, z_data, *args, **kwargs):
     """
-    Plots 2D derivatives. Requires tuples of name and 1D arrays corresponding 
-    to x, y and z data as input. 
+    Plots 2D derivatives. Requires tuples of name and 1D arrays corresponding
+    to x, y and z data as input.
     Works well with QuMADA "get_parameter_data" method found in
     load_from_sqlite.
 
@@ -83,7 +83,7 @@ def plot_2D(x_data, y_data, z_data, *args, **kwargs):
     TODO: Add further image manipulation and line detection functionality
     """
     if args:
-        x_data, y_data, z_data=_handle_overload(x_data, y_data, z_data, *args, 
+        x_data, y_data, z_data=_handle_overload(x_data, y_data, z_data, *args,
                                                 output_dimension=3)
     fig, ax = plt.subplots()
     x, y, z = reshape_2D_data(x_data[1], y_data[1], z_data[1])
@@ -98,17 +98,17 @@ def plot_2D(x_data, y_data, z_data, *args, **kwargs):
 #%%
 def plot_2D_grad(x_data, y_data, z_data, *args, direction = "both"):
     """
-    Plots 2D derivatives. Requires tuples of name and 1D arrays corresponding 
-    to x, y and z data as input. 
+    Plots 2D derivatives. Requires tuples of name and 1D arrays corresponding
+    to x, y and z data as input.
     Works well with QuMADA "get_parameter_data" method found in load_from_sqlite.
-    direction argument can be x, y or z corresponding to the direction of the 
+    direction argument can be x, y or z corresponding to the direction of the
     gradient used. "both" adds the gradients quadratically.
 
     TODO: Add get_parameter_data method as default to call when no data is provided
-    TODO: Add further image manipulation and line detection functionality    
+    TODO: Add further image manipulation and line detection functionality
     """
     if args:
-        x_data, y_data, z_data=_handle_overload(x_data, y_data, z_data, *args, 
+        x_data, y_data, z_data=_handle_overload(x_data, y_data, z_data, *args,
                                                 output_dimension=3)
     fig, ax = plt.subplots()
     x, y, z = reshape_2D_data(x_data[1], y_data[1], z_data[1])
@@ -130,17 +130,17 @@ def plot_2D_grad(x_data, y_data, z_data, *args, direction = "both"):
 def plot_2D_sec_derivative(x_data, y_data, z_data, *args):
     """
     Plots second derivative of data.
-    Requires tuples of name and 1D arrays corresponding 
-    to x, y and z data as input. 
+    Requires tuples of name and 1D arrays corresponding
+    to x, y and z data as input.
     Works well with QuMADA "get_parameter_data" method found in load_from_sqlite.
-    direction argument can be x, y or z corresponding to the direction of the 
+    direction argument can be x, y or z corresponding to the direction of the
     gradient used. "both" adds the gradients quadratically.
 
     TODO: Add get_parameter_data method as default to call when no data is provided
-    TODO: Add further image manipulation and line detection functionality   
+    TODO: Add further image manipulation and line detection functionality
     """
     if args:
-        x_data, y_data, z_data=_handle_overload(x_data, y_data, z_data, *args, 
+        x_data, y_data, z_data=_handle_overload(x_data, y_data, z_data, *args,
                                                 output_dimension=3)
     fig, ax = plt.subplots()
     x, y, z = reshape_2D_data(x_data[1], y_data[1], z_data[1])
@@ -173,11 +173,11 @@ def plot_hysteresis(dataset,
             curr_sign = np.sign(grad[i])
     data_list_x.append(dataset[x_name][start_helper:len(grad)])
     data_list_y.append(dataset[y_name][start_helper:len(grad)])
-            
-            
 
 
-            
+
+
+
     for i in range(0, len(data_list_x)):
         plt.plot(data_list_x[i], data_list_y[i])
     plt.show()
@@ -230,18 +230,18 @@ def plot_multiple_datasets(datasets : list = None,
         List of QuMADA datasets. If set to None, you can pick measurements from
         the currently loaded QuMADA database. Default is None.
     x_axis_parameters_name : str, optional
-        Pass the namestring of the parameter you want to plot on the x-axis. 
+        Pass the namestring of the parameter you want to plot on the x-axis.
         If none, you will be asked to set it individually for every chosen
         dataset, if more than two parameters are in the dataset.
         The default is None.
     y_axis_parameters_name : str, optional
-        Pass the namestring of the parameter you want to plot on the y-axis. 
+        Pass the namestring of the parameter you want to plot on the y-axis.
         If none, you will be asked to set it individually for every chosen
         dataset, if more than two parameters are in the dataset.
         The default is None.
     plot_hysteresis : bool, optional
         Will separate datasets that contain multiple sweeps into multiple
-        graphs, based on the monotony of the x-axis parameters data. 
+        graphs, based on the monotony of the x-axis parameters data.
         The default is True.
     **kwargs : TYPE
         DESCRIPTION.
@@ -250,7 +250,7 @@ def plot_multiple_datasets(datasets : list = None,
     -------
     fig : pyplot Figure object.
     ax : pyplot axis objects.
-    
+
     TODO: Move pyplot plot settings into kwargs.
     """
     if not datasets:
@@ -290,19 +290,19 @@ def plot_multiple_datasets(datasets : list = None,
                     f_label = f"{label} backsweep"
                     f_label =f_label.replace("Gate ", "")
                 if j > 0:
-                    p = plt.plot(x_s[j], y_s[j], marker, 
-                                 color = p[-1].get_color(), 
-                                 label = f_label, 
+                    p = plt.plot(x_s[j], y_s[j], marker,
+                                 color = p[-1].get_color(),
+                                 label = f_label,
                                  markersize = kwargs.get("markersize", 15))
                 else:
-                    p = plt.plot(x_s[j], y_s[j], 
-                                 marker, 
-                                 label = f_label, 
+                    p = plt.plot(x_s[j], y_s[j],
+                                 marker,
+                                 label = f_label,
                                  markersize = kwargs.get("markersize", 15))
         else:
-            p = plt.plot(x_data[i], y_data[i], 
-                         marker = kwargs.get("marker", "."), 
-                         label = label, 
+            p = plt.plot(x_data[i], y_data[i],
+                         marker = kwargs.get("marker", "."),
+                         label = label,
                          markersize = kwargs.get("markersize", 15))
     plt.xlabel(f"{x_labels[0]} ({x_units[0]})")
     plt.ylabel(f"{y_labels[0]} ({y_units[0]})")
@@ -312,7 +312,7 @@ def plot_multiple_datasets(datasets : list = None,
     plt.tight_layout()
 
     return fig, ax
-    
+
 #%%
 
 def separate_up_down_old(x_data, y_data):
@@ -330,12 +330,12 @@ def separate_up_down_old(x_data, y_data):
             curr_sign = np.sign(grad[i])
     data_list_x.append(x_data[start_helper:len(grad)])
     data_list_y.append(y_data[start_helper:len(grad)])
-    
+
     return data_list_x, data_list_y
 
 #%%
 def hysteresis(dataset, I_threshold = 15e-12, parameter_name = "lockin_current"):
-    
+
     data = list(get_parameter_data(dataset = dataset, parameter_name = parameter_name))
     voltage = data[0][1]
     current = data[1][1]

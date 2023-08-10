@@ -160,7 +160,7 @@ def pick_measurement(sample_name: str = None, preview_dialogue = True):
     Returns a measurement of your choice, plots it if you want.
     Interactive, if no sample_name is provided.
     """
-    
+
     measurements = list_measurements_for_sample(sample_name = sample_name)
     for idx, measurement in enumerate(measurements):
         print(f"{idx} (Run ID {measurement.run_id}) : {measurement.name}")
@@ -225,11 +225,11 @@ def plot_data(sample_name: str = None):
         y_data = dataset.get_parameter_data(param)[param][param]
         print(dataset.get_parameter_data(param)[param])
         x_data = dataset.get_parameter_data(param)[param][dependend_parameters[0].name]
-        
+
         print(y_data)
         print(x_data)
-        
-        
+
+
 #%%
 def get_parameter_data(dataset = None,
                        parameter_name = None,
@@ -262,7 +262,7 @@ def get_parameter_data(dataset = None,
     for param in independent_param), dataset.get_parameter_data\
     (parameter_name)[parameter_name][parameter_name]
     return zip(params, data, units, labels)
-        
+
 #%%
 def separate_up_down(x_data, y_data):
 
@@ -282,6 +282,6 @@ def separate_up_down(x_data, y_data):
             direction.append(curr_sign)
     data_list_x.append(x_data[start_helper:len(grad)])
     data_list_y.append(y_data[start_helper:len(grad)])
-    if len(direction) == 0: 
+    if len(direction) == 0:
         direction.append(1)
     return data_list_x, data_list_y, direction

@@ -75,8 +75,8 @@ class DecadacMapping(InstrumentMapping):
         #     sync_trigger._instrument.enable_ramp(False)
         #     sync_trigger.set(sync_trigger_level)
         for param, start_value, end_value, ramp_time in zip(parameters,
-                                                            start_values, 
-                                                            end_values, 
+                                                            start_values,
+                                                            end_values,
                                                             [ramp_time for _ in parameters]):
             param._instrument._script_ramp(start_value, end_value, ramp_time, trigger=self.trigger_mode)
         # if sync_trigger:
@@ -87,8 +87,8 @@ class DecadacMapping(InstrumentMapping):
         assert isinstance(instrument, Decadac)
         parameter._instrument.enable_ramp(False)
         parameter.volt.set(level)
-        
-        
+
+
     def setup_trigger_in(self, trigger_settings: dict):
         trigger_dict = {
             'always': 0,
@@ -118,7 +118,7 @@ class DecadacMapping(InstrumentMapping):
               Please make sure that your triggers are setup accordingly")
         trigger_mode = trigger_settings.get("trigger_mode", "continuous")
         polarity = trigger_settings.get("trigger_mode_polarity", "positive")
-        
+
         if (trigger_mode, polarity) == ("edge", "positive"):
             mode = 12
         elif (trigger_mode, polarity) == ("edge", "negative"):
@@ -140,9 +140,9 @@ class DecadacMapping(InstrumentMapping):
             print("No trigger input selected. Using continuous acquisition")
         if self.trigger_in == "trigger_in_2":
             mode+=1
-            
+
         self.trigger_mode = mode
-    
+
     @property
     def trigger_in(self):
         return self._trigger_in
