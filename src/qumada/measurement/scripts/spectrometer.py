@@ -95,8 +95,8 @@ class Measure_Spectrum(MeasurementScript):
             independent_param = frequency
             #TODO: Adjust unit/Name to settings
             signal = Parameter("signal",
-                               label = "$\sqrt{S}$",
-                               unit = "$V/\sqrt{Hz}$")
+                               label = r"$\sqrt{S}$",
+                               unit = r"$V/\sqrt{Hz}$")
             dependent_param = signal
 
             x = results["f_processed"]

@@ -25,7 +25,7 @@ import json
 import operator
 from os import PathLike
 from pathlib import Path
-from typing import Mapping
+from collections.abc import Mapping
 
 import numpy as np
 import pandas as pd
