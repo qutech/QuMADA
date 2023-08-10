@@ -629,8 +629,6 @@ class MeasurementScript(ABC):
             try:
                 metadata = self.metadata
                 cls = type(self)
-                if not metadata.measurement.data:
-                    metadata.measurement.data = []
                 db_location = qc.config.core.db_location
                 metadata.add_data_to_metadata(db_location, "sqlite3", f"{cls.__name__}Data")
             except Exception as ex:
