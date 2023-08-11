@@ -29,4 +29,4 @@ repos:
     hooks:
     -   id: black
         args: ["--line-length", "120"]
-        language_version: python3.9
+        language_version: python3.11
