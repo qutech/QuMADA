@@ -43,7 +43,7 @@ class DacReader:
         """
         resp = resp.strip()
         if resp[-1] != "!":
-            raise DACException(f"Unexpected terminator on response: {resp}. " f'Should end with "!"')
+            raise DACException(f'Unexpected terminator on response: {resp}. Should end with "!"')
         return resp.strip()[1:-1]
 
     def _dac_v_to_code(self, volt):
@@ -54,8 +54,7 @@ class DacReader:
         """
         if volt < self.min_val or volt >= self.max_val:
             raise ValueError(
-                f"Cannot convert voltage {volt} V " + "to a voltage code, value out of range "
-                "({} V - {} V).".format(self.min_val, self.max_val)
+                f"Cannot convert voltage {volt} V to a voltage code, value out of range ({self.min_val} V - {self.max_val} V)"
             )
 
         frac = (volt - self.min_val) / (self.max_val - self.min_val)
@@ -64,9 +63,7 @@ class DacReader:
         # receive an out-of-bounds value
         if val > 65535 or val < 0:
             raise ValueError(
-                "Voltage ({} V) resulted in the voltage code {}"
-                ", which is not within the allowed range."
-                "".format(volt, val)
+                f"Voltage ({volt} V) resulted in the voltage code {val}, which is not within the allowed range."
             )
         return val
 
@@ -102,7 +99,7 @@ class DacReader:
         resp = self.ask_raw(f"B{self._slot};C{self._channel};")
         if resp.strip() != f"B{self._slot}!C{self._channel}!":
             raise DACException(
-                f"Unexpected return from DAC when setting " f"channel: {resp}. DAC channel may not have " f"been set."
+                f"Unexpected return from DAC when setting channel: {resp}. DAC channel may not have been set."
             )
 
     def _script_set_channel(self):
@@ -176,7 +173,7 @@ class DacReader:
         # Validate value
         val = int(val)
         if val < 0 or val >= 2**32:
-            raise DACException(f"Writing invalid value " f"({val}) to address {addr}.")
+            raise DACException(f"Writing invalid value ({val}) to address {addr}.")
 
         # Choose a poke command depending on whether we are querying a
         # VERSADAC eeprom or main memory. If we are writing to a versadac
@@ -197,7 +194,7 @@ class DacReader:
         self.ask_raw(f"{write_command}{val};")  # type: ignore[attr-defined]
         # Check the write was successful
         if int(self._dac_parse(self.ask_raw(query_command))) != val:  # type: ignore[attr-defined]
-            raise DACException(f"Failed to write value ({val}) to " f"address {addr}.")
+            raise DACException(f"Failed to write value ({val}) to address {addr}.")
 
 
 class DacChannel(InstrumentChannel, DacReader):
@@ -681,9 +678,7 @@ class Decadac(VisaInstrument, DacReader):
         # heed our request to return all 4 fields.
         t = time() - (begin_time or self._t0)
 
-        con_msg = "Connected to Harvard DecaDAC " "(hw ver: {}, serial: {}) in {:.2f}s".format(
-            self.version, self.serial_no, t
-        )
+        con_msg = f"Connected to Harvard DecaDAC (hw ver: {self.version}, serial: {self.serial_no}) in {t:.2f}s"
         print(con_msg)
 
     def __repr__(self):
