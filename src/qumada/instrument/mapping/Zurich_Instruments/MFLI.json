@@ -5,7 +5,7 @@
         "current": "current",
         "voltage": "voltage",
         "voltage_x_component": "voltage_x_component",
-        "voltage_y_component": "voltage_y_component",        
+        "voltage_y_component": "voltage_y_component",
         "current_x_component" : "current_x_component",
         "current_y_component" : "current_y_component",
         "frequency": "frequency",

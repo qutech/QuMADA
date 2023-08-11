@@ -26,9 +26,7 @@ from contextlib import suppress
 from types import ModuleType
 
 
-def import_submodules(
-    package: str | ModuleType, recursive: bool = True
-) -> dict[str, ModuleType]:
+def import_submodules(package: str | ModuleType, recursive: bool = True) -> dict[str, ModuleType]:
     """Import all submodules of a module, recursively, including subpackages"""
     if isinstance(package, str):
         package = importlib.import_module(package)

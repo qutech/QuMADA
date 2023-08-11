@@ -40,3 +40,13 @@ build-backend = "setuptools.build_meta"
 
 [tool.pytest.ini_options]
 qt_api = "pyqt5"
+
+[tool.black]
+line-length = 120
+target-version = ['py39', 'py310', 'py311']
+include = '\.pyi?$'
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+py_version = 39
