@@ -139,7 +139,7 @@ class Generic_nD_Sweep(MeasurementScript):
         else:
             try:
                 measurement_name = self.metadata.measurement.name or "measurement"
-            except:
+            except Exception:
                 measurement_name = "measurement"
 
         for sweep in self.dynamic_sweeps:
@@ -243,7 +243,7 @@ class Timetrace(MeasurementScript):
                 ],
             )
         with meas.run() as datasaver:
-            start = timer.reset_clock()
+            timer.reset_clock()
             while timer() < duration:
                 now = timer()
                 results = [(channel, channel.get()) for channel in [*self.gettable_channels, *self.dynamic_channels]]
@@ -334,7 +334,7 @@ class Timetrace_buffered(MeasurementScript):
                 # Set trigger to high here
                 try:
                     trigger_start()
-                except:
+                except Exception:
                     print("Please set a trigger or define a trigger_start method")
                 pass
 
@@ -346,7 +346,7 @@ class Timetrace_buffered(MeasurementScript):
                 sleep(0.1)
             try:
                 trigger_reset()
-            except:
+            except Exception:
                 print("No method to reset the trigger defined.")
 
             results = self.readout_buffers(timestamps=True)
@@ -374,7 +374,7 @@ class Timetrace_with_sweeps(MeasurementScript):
         self.initialize()
         duration = self.settings.get("duration", 300)
         timestep = self.settings.get("timestep", 1)
-        backsweeps = self.settings.get("backsweeps", False)
+        # backsweeps = self.settings.get("backsweeps", False)
         timer = ElapsedTimeParameter("time")
         meas = Measurement(name=self.metadata.measurement.name or "timetrace")
         meas.register_parameter(timer)
@@ -385,7 +385,7 @@ class Timetrace_with_sweeps(MeasurementScript):
         for parameter in self.gettable_channels:
             meas.register_parameter(parameter, setpoints=setpoints)
         with meas.run() as datasaver:
-            start = timer.reset_clock()
+            timer.reset_clock()
             while timer() < duration:
                 for sweep in self.dynamic_sweeps:
                     ramp_or_set_parameter(sweep._param, sweep.get_setpoints()[0], ramp_time=timestep)
@@ -510,7 +510,7 @@ class Timetrace_with_Sweeps_buffered(MeasurementScript):
                 #                      (timer, [ti+t for ti in results.pop(-1)]),
                 #                      *results,
                 #                      *static_gettables,)
-                ti = results.pop(-1)
+                results.pop(-1)
                 datasaver.add_result(
                     (timer, t),
                     (dyn_channel, self.dynamic_sweeps[0].get_setpoints()),
