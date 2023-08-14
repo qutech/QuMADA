@@ -87,7 +87,7 @@ def ramp_parameter(
     current_value = parameter.get()
     LOG.debug(f"current value: {current_value}")
 
-    if type(current_value) == float:
+    if isinstance(current_value, float):
         LOG.debug(f"target: {target}")
         if not ramp_rate:
             if not ramp_time:

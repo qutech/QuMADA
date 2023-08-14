@@ -24,7 +24,7 @@ import numpy as np
 
 
 # %%
-def flatten_array(l) -> list:
+def flatten_array(lst) -> list:
     """
     Flattens nested lists and arrays, returns flattened list
     """
@@ -37,7 +37,7 @@ def flatten_array(l) -> list:
             else:
                 results.append(entry)
 
-    rec(l, results)
+    rec(lst, results)
     return results
 
 

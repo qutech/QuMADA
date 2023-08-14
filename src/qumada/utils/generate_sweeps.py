@@ -19,6 +19,8 @@
 # - Sionludi Lab
 
 
+import copy
+
 import numpy as np
 
 
@@ -47,9 +49,6 @@ def replace_parameter_settings(parameters: dict, old_val: str, new_value):
                 if val == old_val:
                     parameters[gate][x][name] = new_value
     return parameters
-
-
-import copy
 
 
 def update_parameter_settings(parameters: dict, old_val: str, new_value):
