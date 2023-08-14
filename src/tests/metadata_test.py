@@ -20,8 +20,6 @@
 
 from typing import runtime_checkable
 
-import pytest
-
 from qumada.metadata import BasicMetadata, Metadata, Savable
 
 
