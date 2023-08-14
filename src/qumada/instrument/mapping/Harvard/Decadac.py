@@ -20,9 +20,6 @@
 # - Till Huckeman
 
 
-import time
-
-import numpy as np
 from qcodes.instrument.parameter import Parameter
 
 from qumada.instrument.custom_drivers.Harvard.Decadac import Decadac
@@ -65,7 +62,7 @@ class DecadacMapping(InstrumentMapping):
 
         if not start_values:
             start_values = [param.get() for param in parameters]
-        ramp_rates = np.abs((np.array(end_values) - np.array(start_values)) / np.array(ramp_time))
+        # ramp_rates = np.abs((np.array(end_values) - np.array(start_values)) / np.array(ramp_time))
         # if sync_trigger:
         #     if sync_trigger in parameters:
         #         raise Exception("Synchronized trigger cannot be part of parameters")
@@ -86,33 +83,33 @@ class DecadacMapping(InstrumentMapping):
         parameter.volt.set(level)
 
     def setup_trigger_in(self, trigger_settings: dict):
-        trigger_dict = {
-            "always": 0,
-            "trig1_low": 2,
-            "trig2_low": 3,
-            "until_trig1_rising": 4,
-            "until_trig2_rising": 5,
-            "until_trig1_falling": 6,
-            "until_trig2_falling": 7,
-            "never": 8,
-            "trig1_high": 10,
-            "trig2_high": 11,
-            "after_trig1_rising": 12,
-            "after_trig2_rising": 13,
-            "after_trig1_falling": 14,
-            "after_trig2_falling": 15,
-        }
-        TRIGGER_MODE_MAPPING: dict = {
-            "continuous": 0,
-            "edge": 1,
-            "pulse": 3,
-            "tracking_edge": 4,
-            "tracking_pulse": 7,
-            "digital": 6,
-        }
+        # trigger_dict = {
+        #     "always": 0,
+        #     "trig1_low": 2,
+        #     "trig2_low": 3,
+        #     "until_trig1_rising": 4,
+        #     "until_trig2_rising": 5,
+        #     "until_trig1_falling": 6,
+        #     "until_trig2_falling": 7,
+        #     "never": 8,
+        #     "trig1_high": 10,
+        #     "trig2_high": 11,
+        #     "after_trig1_rising": 12,
+        #     "after_trig2_rising": 13,
+        #     "after_trig1_falling": 14,
+        #     "after_trig2_falling": 15,
+        # }
+        # TRIGGER_MODE_MAPPING: dict = {
+        #     "continuous": 0,
+        #     "edge": 1,
+        #     "pulse": 3,
+        #     "tracking_edge": 4,
+        #     "tracking_pulse": 7,
+        #     "digital": 6,
+        # }
         print(
-            "Warning: The Decadacs trigger level is fixed at roughly 1.69 V and cannot be changed. \
-              Please make sure that your triggers are setup accordingly"
+            "Warning: The Decadacs trigger level is fixed at roughly 1.69 V and cannot be changed. "
+            "Please make sure that your triggers are setup accordingly"
         )
         trigger_mode = trigger_settings.get("trigger_mode", "continuous")
         polarity = trigger_settings.get("trigger_mode_polarity", "positive")
