@@ -30,13 +30,7 @@ jobs:
         run: python -m pip install -e .
       - name: Analysing the code with flake8
         run: |
-          flake8 --color=never --tee --output-file=flake8-output src
-      - name: Upload flake8 output
-        uses: actions/upload-artifact@v3
-        with:
-          name: flake8-output
-          path: flake8-output
-        if: always()
+          flake8 src
 
   mypy:
     strategy:
