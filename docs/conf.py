@@ -13,7 +13,7 @@
 # import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
-
+from importlib.metadata import version as get_version
 
 # -- Project information -----------------------------------------------------
 
@@ -22,7 +22,9 @@ copyright = "2023, JARA Institute for Quantum Information"
 author = "JARA Institute for Quantum Information"
 
 # The full version, including alpha/beta/rc tags
-release = "0.3.2"
+__version__ = get_version("qumada")
+release = __version__
+version = __version__
 
 
 # -- General configuration ---------------------------------------------------
