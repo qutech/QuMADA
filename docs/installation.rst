@@ -65,6 +65,12 @@ Run
 
 .. code-block:: console
 
+    tox -e docs
+
+or
+
+.. code-block:: console
+    
     cd docs
     make html
 
