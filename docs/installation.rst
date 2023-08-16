@@ -70,7 +70,7 @@ Run
 or
 
 .. code-block:: console
-    
+
     cd docs
     make html
 
