@@ -51,10 +51,6 @@ qt_api = "pyqt5"
 source = [
     "qumada",
 ]
-omit = [
-    "*/__init__.py",
-    "src/tests/*",
-]
 
 [tool.coverage.paths]
 source = [
