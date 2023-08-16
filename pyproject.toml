@@ -47,6 +47,17 @@ addopts = [
 ]
 qt_api = "pyqt5"
 
+[tool.coverage.run]
+source = [
+    "qumada",
+]
+
+[tool.coverage.paths]
+source = [
+    "src",
+    "*/site-packages"
+]
+
 [tool.black]
 line-length = 120
 target-version = ['py39', 'py310', 'py311']
