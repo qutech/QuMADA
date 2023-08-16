@@ -38,7 +38,13 @@ Documentation = "https://qumada.readthedocs.io/en/latest/"
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools.package-data]
+qumada = ["*.json"]
+
 [tool.pytest.ini_options]
+addopts = [
+    "--import-mode=importlib",
+]
 qt_api = "pyqt5"
 
 [tool.black]
