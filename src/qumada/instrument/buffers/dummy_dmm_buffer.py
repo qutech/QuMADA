@@ -128,7 +128,7 @@ class DummyDMMBuffer(Buffer):
             self._subscribed_parameters.add(parameter)
 
     def unsubscribe(self, parameters: set | list[Parameter]) -> None:
-        for parameter in parameters:
+        for parameter in parameters.copy():
             if parameter in self._device.buffer.subscribed_params:
                 self._device.buffer.subscribed_params.remove(parameter)
                 self._subscribed_parameters.remove(parameter)
