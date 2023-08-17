@@ -45,6 +45,7 @@ build-backend = "setuptools.build_meta"
 qumada = ["*.json"]
 
 [tool.versioningit]
+default_version = "0.0"
 
 [tool.pytest.ini_options]
 addopts = [
