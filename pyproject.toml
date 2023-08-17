@@ -24,6 +24,7 @@ dependencies = [
     "jsonschema",
     "zhinst-toolkit >= 0.3.3",
     "pyqt5",
+    "versioningit ~= 2.2.0",
 ]
 
 [project.optional-dependencies]
@@ -46,6 +47,10 @@ qumada = ["*.json"]
 
 [tool.versioningit]
 default-version = "0.0"
+
+[tool.versioningit.onbuild]
+source-file = "src/qumada/_version.py"
+build-file = "qumada/_version.py"
 
 [tool.pytest.ini_options]
 addopts = [
