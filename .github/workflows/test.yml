@@ -18,6 +18,10 @@ jobs:
     steps:
       - uses: tlambert03/setup-qt-libs@v1
       - uses: actions/checkout@v3
+        with:
+          # Fetch all history to get correct version numbers with versioningit
+          # Otherwise, `git describe` is not working
+          fetch-depth: 0
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:

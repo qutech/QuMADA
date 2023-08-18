@@ -1,6 +1,5 @@
 [project]
 name = "QuMADA"
-version = "0.4.1"
 description = "Measurement Abstraction and Database Access layer for QCoDeS"
 readme = "README.md"
 authors = [
@@ -15,6 +14,7 @@ classifiers = [
     "Topic :: Scientific/Engineering",
     "Intended Audience :: Science/Research",
 ]
+dynamic = ["version"]
 
 requires-python = ">=3.9"
 dependencies = [
@@ -24,6 +24,7 @@ dependencies = [
     "jsonschema",
     "zhinst-toolkit >= 0.3.3",
     "pyqt5",
+    "versioningit ~= 2.2.0",
 ]
 
 [project.optional-dependencies]
@@ -35,11 +36,21 @@ Repository = "https://github.com/qutech/qumada"
 Documentation = "https://qumada.readthedocs.io/en/latest/"
 
 [build-system]
-requires = ["setuptools"]
+requires = [
+    "setuptools >= 68.1.0",
+    "versioningit ~= 2.2.0",
+]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.package-data]
 qumada = ["*.json"]
+
+[tool.versioningit]
+default-version = "0.0"
+
+[tool.versioningit.onbuild]
+source-file = "src/qumada/_version.py"
+build-file = "qumada/_version.py"
 
 [tool.pytest.ini_options]
 addopts = [
