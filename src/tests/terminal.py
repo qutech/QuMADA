@@ -187,7 +187,7 @@ class Terminal_Parameter(ABC):
 
     @value.getter
     def value(self):
-        return self.value
+        return self._value
 
     def ramp(self, value, ramp_rate):
         pass
