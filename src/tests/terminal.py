@@ -163,6 +163,12 @@ class Terminal(ABC):
     def update_terminal_parameter(self, parameter_name: str, parameter: Parameter|None=None) -> None:
         self.terminal_parameters[parameter_name].instrument_parameter = self._parent.instrument_parameters[self.name][parameter_name]
 
+    def __call__(self, value=None):
+        if "voltage" in self.terminal_parameters.keys():
+            return self.voltage(value)
+        else:
+            raise TypeError
+
 
 class Terminal_Parameter(ABC):
     def __init__(self, name: str, Terminal: Terminal) -> None:
