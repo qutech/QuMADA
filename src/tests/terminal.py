@@ -32,7 +32,7 @@ def is_measurement_script(o):
 class QumadaDevice():
     def __init__(self):
         self.terminals = {}
-        self.instrument_parameters = {} #For the mapping, has to be renamed!
+        self.instrument_parameters = {}
     
     def add_terminal(self, terminal_name, type: str|None = None):
         if terminal_name not in self.terminals.keys():
@@ -180,8 +180,8 @@ class Terminal_Parameter(ABC):
         self.limits = None
         self.rampable = False
         self.default_value = None
-        self.scaling = None
-        self.instrument_parameter = None
+        self.scaling = 1
+        self._instrument_parameter = None
 
     def reset(self):
         pass
@@ -193,17 +193,36 @@ class Terminal_Parameter(ABC):
     @value.setter
     def value(self, value):
         if self.limits == None:
-            self._value = value
-            self.instrument_parameter(value)
+            if type(value) == float:
+                self._value = self.scaling*value
+                self.instrument_parameter(self.scaling*value)
+            else:
+                self._value = value
+                self.instrument_parameter(value)
         else:
             raise Exception("Limits are not yet implemented!")
 
     @value.getter
     def value(self):
         return self.instrument_parameter()
+    
+    @property
+    def instrument_parameter(self):
+        return self._instrument_parameter
+    
+    @instrument_parameter.setter
+    def instrument_parameter(self, param):
+        if isinstance(param, Parameter) or param == None:
+            self._instrument_parameter = param
+        else:
+            raise TypeError(f"{param} is not a QCoDeS parameter!")
 
-    def ramp(self, value, ramp_rate):
-        pass
+    def ramp(self, value, ramp_rate=0.1, ramp_time=5, setpoint_intervall=0.01):
+        ramp_or_set_parameter(self.instrument_parameter, value, 
+                              ramp_rate=ramp_rate, 
+                              ramp_time=ramp_time, 
+                              setpoint_intervall=setpoint_intervall)
+        
 
     def __call__(self, value = None):
         if value == None:
