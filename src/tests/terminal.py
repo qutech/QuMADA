@@ -29,10 +29,10 @@ def is_measurement_script(o):
     return inspect.isclass(o) and issubclass(o, MeasurementScript)
 
 
-class QtoolsDevice():
+class QumadaDevice():
     def __init__(self):
         self.terminals = {}
-        self.gate_parameters = {} #For the mapping, has to be renamed!
+        self.instrument_parameters = {} #For the mapping, has to be renamed!
     
     def add_terminal(self, terminal_name, type: str|None = None):
         if terminal_name not in self.terminals.keys():
@@ -47,6 +47,10 @@ class QtoolsDevice():
         else:
             logger.warning(f"{terminal_name} does not exist and could not be deleted")
 
+    def update_terminal_parameters(self):
+        for terminal, mapping in self.instrument_parameters.items():
+            for param in mapping.keys():
+                self.terminals[terminal].update_terminal_parameter(param)
 
     def load_from_dict(dictionary: dict):
         pass
@@ -120,7 +124,7 @@ class Terminal(ABC):
         self.type = type
         self.terminal_parameters: dict[Any, dict[Any, Parameter | None] | Parameter | None] = {}
 
-    def add_terminal_parameter(self, parameter_name: str, parameter: Parameter = None) -> None:
+    def add_terminal_parameter(self, parameter_name: str, parameter: Parameter=None) -> None:
         """
         Adds a gate parameter to self.terminal_parameters.
 
@@ -134,13 +138,13 @@ class Terminal(ABC):
             raise NameError(f'parameter_name "{parameter_name}" not in MeasurementScript.PARAMETER_NAMES.')
         if parameter_name not in self.terminal_parameters.keys():
             self.__dict__[parameter_name] = self.terminal_parameters[parameter_name] = Terminal_Parameter(parameter_name, self)
-            if self.name not in self._parent.gate_parameters.keys():
-                self._parent.gate_parameters[self.name] = {}
-            self._parent.gate_parameters[self.name][parameter_name] = parameter
+            if self.name not in self._parent.instrument_parameters.keys():
+                self._parent.instrument_parameters[self.name] = {}
+            self._parent.instrument_parameters[self.name][parameter_name] = parameter
         else:
             raise Exception(f"Parameter{parameter_name} already exists")
         
-    def remove_terminal_parameter(self, parameter_name: str, parameter: Parameter = None) -> None:
+    def remove_terminal_parameter(self, parameter_name: str) -> None:
         """
         Adds a gate parameter to self.terminal_parameters.
 
@@ -155,7 +159,9 @@ class Terminal(ABC):
             del self.terminal_parameters[parameter_name]
         else:
             raise Exception(f"Parameter{parameter_name} does not exist!")
-
+        
+    def update_terminal_parameter(self, parameter_name: str, parameter: Parameter|None=None) -> None:
+        self.terminal_parameters[parameter_name].instrument_parameter = self._parent.instrument_parameters[self.name][parameter_name]
 
 
 class Terminal_Parameter(ABC):
@@ -166,7 +172,7 @@ class Terminal_Parameter(ABC):
         self._value = None
         self.name = None
         self.limits = None
-        self._rampable = False
+        self.rampable = False
         self.default_value = None
         self.scaling = None
         self.instrument_parameter = None
@@ -182,12 +188,13 @@ class Terminal_Parameter(ABC):
     def value(self, value):
         if self.limits == None:
             self._value = value
+            self.instrument_parameter(value)
         else:
             raise Exception("Limits are not yet implemented!")
 
     @value.getter
     def value(self):
-        return self._value
+        return self.instrument_parameter()
 
     def ramp(self, value, ramp_rate):
         pass
