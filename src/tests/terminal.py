@@ -211,16 +211,31 @@ class Terminal_Parameter(ABC):
         if self.limits == None:
             if type(value) == float:
                 self._value = self.scaling*value
-                self.instrument_parameter(self.scaling*value)
+                try:
+                    self.instrument_parameter(self.scaling*value)
+                except:
+                    self._parent._parent.update_terminal_parameters()
+                    self.instrument_parameter(self.scaling*value)
             else:
                 self._value = value
-                self.instrument_parameter(value)
+                #TODO: Replace Try/Except block, update_terminal_parameters() should be called by mapping function
+                try:
+                    self.instrument_parameter(value)
+                except:
+                    self._parent._parent.update_terminal_parameters()
+                    self.instrument_parameter(value)
+
         else:
             raise Exception("Limits are not yet implemented!")
 
     @value.getter
     def value(self):
-        return self.instrument_parameter()
+        #TODO: Replace Try/Except block, update_terminal_parameters() should be called by mapping function
+        try:
+            return self.instrument_parameter()
+        except:
+            self._parent._parent.update_terminal_parameters()
+            return self.instrument_parameter()
     
     @property
     def instrument_parameter(self):
