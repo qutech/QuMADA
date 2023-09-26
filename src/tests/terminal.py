@@ -52,6 +52,22 @@ class QumadaDevice():
             for param in mapping.keys():
                 self.terminals[terminal].update_terminal_parameter(param)
 
+    def save_defaults(self):
+        """
+        Saves current values as default for all Terminals and their parameters
+        """
+        for terminal in self.terminals.values():
+            for param in terminal.terminal_parameters.values():
+                param.save_default()
+    
+    def set_defaults(self):
+        """
+        Sets all Terminals and their parameters to their default values
+        """
+        for terminal in self.terminals.values():
+            for param in terminal.terminal_parameters.values():
+                param.set_default()
+
     def load_from_dict(dictionary: dict):
         pass
     
@@ -176,7 +192,7 @@ class Terminal_Parameter(ABC):
         self.properties: Dict[Any, Any] = {}
         self.type = None
         self._value = None
-        self.name = None
+        self.name = name
         self.limits = None
         self.rampable = False
         self.default_value = None
@@ -223,12 +239,31 @@ class Terminal_Parameter(ABC):
                               ramp_time=ramp_time, 
                               setpoint_intervall=setpoint_intervall)
         
+    def save_default(self):
+        """
+        Saves current value as default value.
+        """
+        try:
+            self.default_value = self.value
+        except Exception as e:
+            logger.warning(f"{e} was raised when trying to save default value of {self.name}")
+            pass
+
+    def set_default(self):
+        """
+        Sets value to default value
+        """
+        if self.default_value is not None:
+            try:
+                self.value=self.default_value
+            except NotImplementedError as e:
+                logger.debug(f"{e} was raised and ignored")
+        else:
+            logger.warning(f"No default value set for parameter {self.name}")
+        
 
     def __call__(self, value = None):
         if value == None:
             return self.value
         else:
             self.value=value
-
-
-
