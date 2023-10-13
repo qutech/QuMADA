@@ -14,3 +14,7 @@
 # You should have received a copy of the GNU General Public License along with
 # QuMADA. If not, see <https://www.gnu.org/licenses/>.
 #
+
+import qumada._version
+
+__version__ = qumada._version.__version__

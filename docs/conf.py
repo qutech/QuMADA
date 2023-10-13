@@ -13,7 +13,9 @@
 # import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
+from packaging.version import parse
 
+import qumada
 
 # -- Project information -----------------------------------------------------
 
@@ -22,7 +24,8 @@ copyright = "2023, JARA Institute for Quantum Information"
 author = "JARA Institute for Quantum Information"
 
 # The full version, including alpha/beta/rc tags
-release = "0.3.2"
+release = parse(qumada.__version__).public
+version = qumada.__version__
 
 
 # -- General configuration ---------------------------------------------------

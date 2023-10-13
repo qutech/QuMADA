@@ -14,3 +14,27 @@
 # You should have received a copy of the GNU General Public License along with
 # QuMADA. If not, see <https://www.gnu.org/licenses/>.
 #
+# Contributors:
+# - Daniel Grothe
+
+# The idea is to get the current version from versioningit for editable installed qumada.
+# For built packages, versioningit's onbuild functionality replaces __version__'s value
+# with a fixed string.
+#
+# See
+# - https://github.com/QCoDeS/Qcodes/blob/master/qcodes/_version.py
+# - https://github.com/jwodder/versioningit/issues/8
+
+
+def get_version() -> str:
+    from pathlib import Path
+
+    import versioningit
+
+    import qumada
+
+    qumada_path = Path(qumada.__file__).parent
+    return versioningit.get_version(project_dir=qumada_path.parent.parent)
+
+
+__version__ = get_version()
