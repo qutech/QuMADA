@@ -20,7 +20,6 @@
 
 
 from functools import partial
-from math import ceil
 from time import sleep, time
 from typing import Union, cast
 
@@ -54,7 +53,8 @@ class DacReader:
         """
         if volt < self.min_val or volt >= self.max_val:
             raise ValueError(
-                f"Cannot convert voltage {volt} V to a voltage code, value out of range ({self.min_val} V - {self.max_val} V)"
+                f"Cannot convert voltage {volt} V to a voltage code, "
+                f"value out of range ({self.min_val} V - {self.max_val} V)"
             )
 
         frac = (volt - self.min_val) / (self.max_val - self.min_val)
@@ -82,9 +82,7 @@ class DacReader:
         """
         resp = self.ask_raw(f"B{self._slot};")
         if int(self._dac_parse(resp)) != self._slot:
-            raise DACException(
-                "Unexpected return from DAC when setting slot: " f"{resp}. DAC slot may not have been set."
-            )
+            raise DACException(f"Unexpected return from DAC when setting slot: {resp}. DAC slot may not have been set.")
 
     def _script_set_slot(self):
         """
@@ -370,27 +368,27 @@ class DacChannel(InstrumentChannel, DacReader):
             timestep (bool): Should the call block until the ramp is complete?
         """
         _control_str = ""
-        trigger_mapping = {
-            "continous": 0,
-            "edge": 12,
-        }
+        # trigger_mapping = {
+        #     "continous": 0,
+        #     "edge": 12,
+        # }
         # trigger = 'after_trig1_rising'
-        trigger_dict = {
-            "always": 0,
-            "trig1_low": 2,
-            "trig2_low": 3,
-            "until_trig1_rising": 4,
-            "until_trig2_rising": 5,
-            "until_trig1_falling": 6,
-            "until_trig2_falling": 7,
-            "never": 8,
-            "trig1_high": 10,
-            "trig2_high": 11,
-            "after_trig1_rising": 12,
-            "after_trig2_rising": 13,
-            "after_trig1_falling": 14,
-            "after_trig2_falling": 15,
-        }
+        # trigger_dict = {
+        #     "always": 0,
+        #     "trig1_low": 2,
+        #     "trig2_low": 3,
+        #     "until_trig1_rising": 4,
+        #     "until_trig2_rising": 5,
+        #     "until_trig1_falling": 6,
+        #     "until_trig2_falling": 7,
+        #     "never": 8,
+        #     "trig1_high": 10,
+        #     "trig2_high": 11,
+        #     "after_trig1_rising": 12,
+        #     "after_trig2_rising": 13,
+        #     "after_trig1_falling": 14,
+        #     "after_trig2_falling": 15,
+        # }
 
         # _control_str = f'G{trigger_mapping[trigger]};'
         _control_str = f"G{trigger};"

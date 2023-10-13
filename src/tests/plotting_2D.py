@@ -23,14 +23,14 @@ import matplotlib
 
 # from qumada.instrument.mapping.base import flatten_list
 import numpy as np
-import qcodes as qc
 from matplotlib import pyplot as plt
 from qcodes.dataset.data_export import reshape_2D_data
-from qcodes.dataset.plotting import plot_dataset
 
-import qumada as qt
-from qumada.utils.browsefiles import browsefiles
-from qumada.utils.load_from_sqlite_db import *
+from qumada.utils.load_from_sqlite_db import (
+    get_parameter_data,
+    pick_measurements,
+    separate_up_down,
+)
 
 
 # %%
@@ -258,6 +258,7 @@ def plot_multiple_datasets(
     fig, ax = plt.subplots(figsize=(30, 30))
     x_labels = []
     y_labels = []
+    p = []
     for i in range(len(datasets)):
         label = datasets[i].name
         x, y = _handle_overload(

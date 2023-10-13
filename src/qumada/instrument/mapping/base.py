@@ -166,7 +166,7 @@ def add_mapping_to_instrument(
         instrument._qumada_mapping = mapping
         try:
             instrument._qumada_trigger = mapping.trigger
-        except:
+        except Exception:
             pass
         # TODO: Better name??
     elif path is not None and mapping is None:
@@ -187,7 +187,8 @@ def add_mapping_to_instrument(
 
 def _generate_mapping_stub(instrument: Instrument, path: str) -> None:
     """
-    Generates JSON stub of instrument parametes and saves it under the provided path. Overwrites existing files by default.
+    Generates JSON stub of instrument parametes and saves it under the provided path.
+    Overwrites existing files by default.
 
     The saved JSON-structure is as follows:
 
@@ -231,9 +232,11 @@ def map_gates_to_instruments(
 
     Args:
         components (Mapping[Any, Metadatable]): Instruments/Components in QCoDeS
-        gate_parameters (Mapping[Any, Union[Mapping[Any, Parameter], Parameter]]): Gates, as defined in the measurement script
-        existing_gate_parameters (Mapping[Any, Union[Mapping[Any, Parameter], Parameter]] | None): Already existing mapping
-                that is used to automatically create the mapping for already known gates without user input.
+        gate_parameters (Mapping[Any, Union[Mapping[Any, Parameter], Parameter]]):
+            Gates, as defined in the measurement script
+        existing_gate_parameters (Mapping[Any, Union[Mapping[Any, Parameter], Parameter]] | None):
+            Already existing mapping that is used to automatically create the mapping for already known gates
+            without user input.
         metadata (Metadata | None): If provided, add mapping to the metadata object.
         map_manually (bool): If set to True, don't try to automatically map parameters to gates. Defaults to False.
     """

@@ -45,7 +45,7 @@ class MFLI(Instrument):
         self, name: str, device: str, serverhost: str = "localhost", existing_session: Session = None, **kwargs
     ):
         super().__init__(name, **kwargs)
-        if type(existing_session) == Session:
+        if isinstance(existing_session, Session):
             session = existing_session
         else:
             self.session = session = Session(serverhost)
