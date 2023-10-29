@@ -58,12 +58,11 @@ from qcodes.instrument.parameter import Parameter
 from qcodes.utils.metadata import Metadatable
 
 from qumada.instrument.mapping.base import (
+    TerminalParameters,
     add_mapping_to_instrument,
     filter_flatten_parameters,
 )
 from qumada.metadata import Metadata
-
-TerminalParameters = Mapping[Any, Union[Mapping[Any, Parameter], Parameter]]
 
 RED = QColor(255, 0, 0)
 WHITE = QColor(255, 255, 255)

@@ -24,16 +24,23 @@
 from __future__ import annotations
 
 import json
+import logging
 from abc import ABC, abstractmethod
-from collections.abc import Iterable, Mapping
-from typing import Any
+from collections.abc import Iterable, Mapping, MutableMapping
+from typing import Any, Union
 
 import jsonschema
 from qcodes.instrument import Instrument
 from qcodes.metadatable import Metadatable
 from qcodes.parameters import Parameter
+from qcodes.station import Station
 
 from qumada.metadata import Metadata
+
+logger = logging.getLogger(__name__)
+
+
+TerminalParameters = Mapping[Any, Union[Mapping[Any, Parameter], Parameter]]
 
 
 class MappingError(Exception):
@@ -220,8 +227,8 @@ def _generate_mapping_stub(instrument: Instrument, path: str) -> None:
 
 def map_gates_to_instruments(
     components: Mapping[Any, Metadatable],
-    gate_parameters: Mapping[Any, Mapping[Any, Parameter] | Parameter],
-    existing_gate_parameters: Mapping[Any, Mapping[Any, Parameter] | Parameter] | None = None,
+    gate_parameters: TerminalParameters,
+    existing_gate_parameters: TerminalParameters | None = None,
     *,
     metadata: Metadata | None = None,
     map_manually: bool = False,
@@ -231,8 +238,8 @@ def map_gates_to_instruments(
 
     Args:
         components (Mapping[Any, Metadatable]): Instruments/Components in QCoDeS
-        gate_parameters (Mapping[Any, Union[Mapping[Any, Parameter], Parameter]]): Gates, as defined in the measurement script
-        existing_gate_parameters (Mapping[Any, Union[Mapping[Any, Parameter], Parameter]] | None): Already existing mapping
+        gate_parameters (TerminalParameters): Gates, as defined in the measurement script
+        existing_gate_parameters (TerminalParameters | None): Already existing mapping
                 that is used to automatically create the mapping for already known gates without user input.
         metadata (Metadata | None): If provided, add mapping to the metadata object.
         map_manually (bool): If set to True, don't try to automatically map parameters to gates. Defaults to False.
@@ -387,3 +394,88 @@ def _map_gate_parameters_to_instrument_parameters(
                     break
                 except (IndexError, ValueError):
                     continue
+
+
+def save_mapped_terminal_parameters(terminal_parameters: TerminalParameters, path: str) -> None:
+    """
+    Saves already mapped terminals and components to a json file,
+    so they can be loaded easily for the exact same setup.
+
+    The saved JSON-structure is as follows:
+
+    {
+        "name_of_parameter": {
+            "name_of_terminal": "qcodes_parameter_full_name",
+            ...
+        },
+        "name_of_parameter_2": {
+            ...
+        },
+    }
+    """
+    # Compile concrete mapping data
+    tmp_terminal_parameters = {}
+    for terminal_parameter, terminals in terminal_parameters.items():
+        if isinstance(terminals, Parameter):
+            tmp_terminal_parameters[str(terminal_parameter)] = terminals.full_name
+        elif isinstance(terminals, MutableMapping):
+            terminals_dict = tmp_terminal_parameters[str(terminal_parameter)] = {}
+            for terminal, parameter in terminals.items():
+                try:
+                    terminals_dict[str(terminal)] = parameter.full_name
+                except Exception:
+                    logger.warning(
+                        "Parameter was not saved: Could not get the 'full_name' of parameter %s.", str(parameter)
+                    )
+    with open(path, mode="w") as file:
+        json.dump(tmp_terminal_parameters, file)
+
+
+def load_mapped_terminal_parameters(terminal_parameters: TerminalParameters, station: Station, path: str) -> None:
+    """
+    Loads a concrete mapping, that was previously saved to file.
+    If errors occur, the mapping will continue, and a warning will
+    be logged.
+
+    Warning: Existing mapping for terminal parameters are overwritten if they are given in the file!
+    """
+    with open(path) as file:
+        tmp_terminal_parameters: Mapping[str, Mapping[str, str] | str] = json.load(file)
+        assert isinstance(tmp_terminal_parameters, Mapping)
+
+        for parameter_name, terminals in terminal_parameters.items():
+            try:
+                assert parameter_name in tmp_terminal_parameters
+            except AssertionError:
+                logger.warning("Parameter could not be loaded: Parameter %s was not found in file.", parameter_name)
+
+            if not isinstance(terminals, MutableMapping):
+                # Single parameter, get component by full name
+                try:
+                    terminal_parameters[parameter_name] = station.get_component(tmp_terminal_parameters[parameter_name])
+                except KeyError:
+                    logger.warning(
+                        "Parameter could not be loaded: QCoDeS station does not contain parameter %s",
+                        tmp_terminal_parameters[parameter_name],
+                    )
+            else:
+                # Parameter terminals
+                for terminal_name in terminals.keys():
+                    try:
+                        assert terminal_name in tmp_terminal_parameters[parameter_name]
+                    except AssertionError:
+                        logger.warning(
+                            "Terminal could not be loaded: Terminal %s_%s was not found in file.",
+                            parameter_name,
+                            terminal_name,
+                        )
+
+                    try:
+                        terminals[terminal_name] = station.get_component(
+                            tmp_terminal_parameters[parameter_name][terminal_name]
+                        )
+                    except KeyError:
+                        logger.warning(
+                            "Parameter could not be loaded: QCoDeS station does not contain parameter %s",
+                            tmp_terminal_parameters[parameter_name][terminal_name],
+                        )
