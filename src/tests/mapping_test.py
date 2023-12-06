@@ -114,7 +114,8 @@ def fixture_unmapped_terminal_parameters():
     return terminal_parameters
 
 
-# # TODO: valid_terminal_parameters_mapping, fixture_script, fixture_station_with_instruments is only valid TOGETHER. They must exist within some kind of group
+# TODO: valid_terminal_parameters_mapping, fixture_script, fixture_station_with_instruments is only valid TOGETHER.
+# They must exist within some kind of group
 @pytest.fixture(name="mapped_terminal_parameters")
 def fixture_mapped_terminal_parameters(station_with_instruments):  # valid for given fixture_station_with_instruments
     terminal_params = {
@@ -283,7 +284,8 @@ def test_mapping_gui_monitoring(monitoring: bool, qtbot, station_with_instrument
         assert w.toggle_monitoring_action.text() == "Disable"
 
     # test monitoring in action (switch back to enabling monitoring first)
-    # This block is a bit convoluted because I am actually measuring the value of the monitored param over time in order to test the monitoring
+    # This block is a bit convoluted because I am actually measuring the value of the monitored param over time
+    # in order to test the monitoring
     #   > this is much nicer if I mock the get command (this somehow didnt work for me...)
     if monitoring:
         w.toggle_monitoring_action.trigger()
@@ -303,11 +305,12 @@ def test_mapping_gui_monitoring(monitoring: bool, qtbot, station_with_instrument
         w.monitoring_refresh_delay.trigger()
 
         # sample the last get value, wait, sample, wait, sample (catching the change due to get command in monitoring)
-        # careful with setting delay_seconds and the actual waiting times. There might be additional delay in process_events function call
-        #   and cache.get() making this not completely exact. So dont make the window (time margin) to tight
+        # careful with setting delay_seconds and the actual waiting times.
+        # There might be additional delay in process_events function call and cache.get() making this not
+        # completely exact. So dont make the window (time margin) too tight.
         before = station_with_instruments.dmm.current.cache.get()
         # wait 0.5*delay_seconds
-        n = 5  # num_steps
+        # n = 5  # num_steps
         time_now = datetime.now()
         while (datetime.now() - time_now).microseconds < 1e6 * delay_seconds * 0.5:
             pass
@@ -326,9 +329,9 @@ def test_mapping_gui_monitoring(monitoring: bool, qtbot, station_with_instrument
         assert before == tmp
 
         # this makes sure (with high probability) that monitoring called the get function within the second time window
-        assert (
-            after != before
-        )  # TODO: maybe test this differently. this can fail with some probability... (new random value is equal to old value)
+        assert after != before
+        # TODO: maybe test this differently. this can fail with some probability...
+        # (new random value is equal to old value)
 
 
 # This somehow doesnt work with the CI/CD pipeline (inside docker container)
@@ -348,7 +351,9 @@ def test_mapping_gui_monitoring(monitoring: bool, qtbot, station_with_instrument
 #         qtbot.keyPress(w, Qt.Key_Return)
 #         QApplication.processEvents()
 
-#     # wanted mapping (TODO: better as fixture? Problem is that this has to be manually set and fit to the specific station fixture (ORDER) and script fixture)
+#     # wanted mapping
+#     # (TODO: better as fixture? Problem is that this has to be manually set and fit to the specific station fixture
+#     # (ORDER) and script fixture)
 #     terminal_params = {
 #         "dmm": {"voltage": station_with_instruments.dmm.voltage, "current": station_with_instruments.dmm.current},
 #         "dac": {"voltage": station_with_instruments.dac.voltage},

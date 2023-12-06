@@ -173,7 +173,7 @@ def add_mapping_to_instrument(
         instrument._qumada_mapping = mapping
         try:
             instrument._qumada_trigger = mapping.trigger
-        except:
+        except Exception:
             pass
         # TODO: Better name??
     elif path is not None and mapping is None:
@@ -194,7 +194,8 @@ def add_mapping_to_instrument(
 
 def _generate_mapping_stub(instrument: Instrument, path: str) -> None:
     """
-    Generates JSON stub of instrument parametes and saves it under the provided path. Overwrites existing files by default.
+    Generates JSON stub of instrument parametes and saves it under the provided path.
+    Overwrites existing files by default.
 
     The saved JSON-structure is as follows:
 

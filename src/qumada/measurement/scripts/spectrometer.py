@@ -18,7 +18,6 @@
 # - Till Huckeman
 
 import logging
-from time import sleep
 
 import numpy as np
 from qcodes.dataset.measurements import Measurement
@@ -26,10 +25,10 @@ from qcodes.parameters.parameter import Parameter
 from qcodes.parameters.specialized_parameters import ElapsedTimeParameter
 from qutil.measurement.spectrometer import Spectrometer, daq
 
-from qumada.instrument.buffers.buffer import is_bufferable
 from qumada.measurement.measurement import MeasurementScript
-from qumada.utils.ramp_parameter import ramp_or_set_parameter
-from qumada.utils.utils import _validate_mapping, naming_helper
+from qumada.utils.utils import naming_helper
+
+logger = logging.getLogger(__name__)
 
 
 class Measure_Spectrum(MeasurementScript):
@@ -45,7 +44,7 @@ class Measure_Spectrum(MeasurementScript):
         settings = self.settings
         store_timetrace = settings.get("store_timetrace", True)
         store_spectrum = settings.get("store_spectrum", True)
-        module = settings.get("module", "scope")
+        # module = settings.get("module", "scope")
 
         # TODO: Check if instrument is supported
         # TODO: Cases for different instruments/modes

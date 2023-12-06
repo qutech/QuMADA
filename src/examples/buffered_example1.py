@@ -18,6 +18,10 @@
 # - Till Huckemann
 # - Daniel Grothe
 
+# Ignore flake8 and mypy, as these file is going to be redone either way.
+# TODO: Remove these comments then
+# flake8: noqa
+# type: ignore
 
 import qtools_metadata.db as db
 import yaml

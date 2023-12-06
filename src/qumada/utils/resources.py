@@ -22,7 +22,6 @@ from __future__ import annotations
 
 import importlib.resources as res
 from pathlib import Path
-from types import ModuleType
 
 
 def import_resources(package: res.Package, ext: str = "*", recursive: bool = True) -> list[res.Resource]:
