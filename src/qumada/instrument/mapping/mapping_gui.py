@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Iterable, Mapping
-from typing import Any, Union
+from typing import Any
 
 from PyQt5.QtCore import QItemSelectionModel, Qt, QTimer, pyqtSignal, pyqtSlot
 from PyQt5.QtGui import (
@@ -57,10 +57,8 @@ from qcodes.instrument.instrument import Instrument
 from qcodes.instrument.parameter import Parameter
 from qcodes.utils.metadata import Metadatable
 
-from qumada.instrument.mapping.base import filter_flatten_parameters
+from qumada.instrument.mapping.base import TerminalParameters, filter_flatten_parameters
 from qumada.metadata import Metadata
-
-TerminalParameters = Mapping[Any, Union[Mapping[Any, Parameter], Parameter]]
 
 RED = QColor(255, 0, 0)
 WHITE = QColor(255, 255, 255)

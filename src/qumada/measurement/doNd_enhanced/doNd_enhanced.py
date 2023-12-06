@@ -41,11 +41,11 @@ from qcodes.dataset.data_set_protocol import DataSetProtocol
 from qcodes.dataset.descriptions.detect_shapes import detect_shape_of_measurement
 from qcodes.dataset.descriptions.versioning.rundescribertypes import Shapes
 from qcodes.dataset.dond.do_nd_utils import (
-    _catch_interrupts,
     _handle_plotting,
     _register_actions,
     _register_parameters,
     _set_write_period,
+    catch_interrupts,
 )
 from qcodes.dataset.experiment_container import Experiment
 from qcodes.dataset.measurements import Measurement
@@ -181,7 +181,7 @@ def do1d_parallel(
     # do1D enforces a simple relationship between measured parameters
     # and set parameters. For anything more complicated this should be
     # reimplemented from scratch
-    with _catch_interrupts() as interrupted, meas.run() as datasaver, param_meas_caller:
+    with catch_interrupts() as interrupted, meas.run() as datasaver, param_meas_caller as call_param_meas:  # noqa: F841
         dataset = datasaver.dataset
         additional_setpoints_data = process_params_meas(additional_setpoints)
 
@@ -345,7 +345,7 @@ def do1d_parallel_asym(
     # do1D enforces a simple relationship between measured parameters
     # and set parameters. For anything more complicated this should be
     # reimplemented from scratch
-    with _catch_interrupts() as interrupted, meas.run() as datasaver, param_meas_caller:
+    with catch_interrupts() as interrupted, meas.run() as datasaver, param_meas_caller as call_param_meas:  # noqa: F841
         dataset = datasaver.dataset
         additional_setpoints_data = process_params_meas(additional_setpoints)
 

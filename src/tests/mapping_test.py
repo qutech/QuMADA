@@ -18,8 +18,11 @@
 # - Daniel Grothe
 
 
-# pylint: disable=missing-function-docstring
 import json
+
+# pylint: disable=missing-function-docstring
+import os
+import tempfile
 from contextlib import nullcontext as does_not_raise
 from datetime import datetime
 from random import random
@@ -37,7 +40,11 @@ import qumada.instrument.mapping as mapping
 from qumada.instrument.custom_drivers.Dummies.dummy_dac import DummyDac
 from qumada.instrument.custom_drivers.Dummies.dummy_dmm import DummyDmm
 from qumada.instrument.mapping import add_mapping_to_instrument, map_terminals_gui
-from qumada.instrument.mapping.base import _load_instrument_mapping
+from qumada.instrument.mapping.base import (
+    _load_instrument_mapping,
+    load_mapped_terminal_parameters,
+    save_mapped_terminal_parameters,
+)
 from qumada.instrument.mapping.Dummies.DummyDac import DummyDacMapping
 from qumada.instrument.mapping.mapping_gui import MainWindow
 from qumada.measurement.scripts.generic_measurement import Generic_1D_Sweep
@@ -96,19 +103,28 @@ def fixture_script():
     return script
 
 
-# # TODO: valid_terminal_parameters_mapping, fixture_script, fixture_station_with_instruments is only valid TOGETHER.
-# # They must exist within some kind of group
-# # valid for given fixture_script and fixture_station_with_instruments
-# @pytest.fixture
-# def valid_terminal_parameters_mapping(station_with_instruments):
-#     terminal_params = {
-#         "dmm" : {"voltage" : station_with_instruments.dmm.voltage,
-#                  "current" : station_with_instruments.dmm.current},
-#         "dac" : {"voltage" : station_with_instruments.dac.voltage},
-#         "T1" : {"test_parameter" : station_with_instruments.dci.A.temperature},
-#         "T2" : {"test_parameter" : station_with_instruments.dci.B.temperature},
-#     }
-#     return terminal_params
+@pytest.fixture(name="unmapped_terminal_parameters")
+def fixture_unmapped_terminal_parameters():
+    terminal_parameters = {
+        "dmm": {"voltage": None, "current": None},
+        "dac": {"voltage": None},
+        "T1": {"test_parameter": None},
+        "T2": {"test_parameter": None},
+    }
+    return terminal_parameters
+
+
+# TODO: valid_terminal_parameters_mapping, fixture_script, fixture_station_with_instruments is only valid TOGETHER.
+# They must exist within some kind of group
+@pytest.fixture(name="mapped_terminal_parameters")
+def fixture_mapped_terminal_parameters(station_with_instruments):  # valid for given fixture_station_with_instruments
+    terminal_params = {
+        "dmm": {"voltage": station_with_instruments.dmm.voltage, "current": station_with_instruments.dmm.current},
+        "dac": {"voltage": station_with_instruments.dac.voltage},
+        "T1": {"test_parameter": station_with_instruments.dci.A.temperature},
+        "T2": {"test_parameter": station_with_instruments.dci.B.temperature},
+    }
+    return terminal_params
 
 
 @pytest.fixture
@@ -135,6 +151,20 @@ def invalid_mapping_data():
     return data
 
 
+@pytest.fixture
+def valid_mapped_terminal_parameter_data():
+    data = {
+        "dmm": {
+            "voltage": "dmm_voltage",
+            "current": "dmm_current",
+        },
+        "dac": {"voltage": "dac_voltage"},
+        "T1": {"test_parameter": "dci_ChanA_temperature"},
+        "T2": {"test_parameter": "dci_ChanB_temperature"},
+    }
+    return data
+
+
 @parametrize(
     "mapping_data, expectation",
     [
@@ -151,6 +181,38 @@ def test_load_instrument_mapping(mocker: MockerFixture, mapping_data, expectatio
         ret = _load_instrument_mapping(path)
         assert ret == mapping_data
         mock.assert_called_once_with(path)
+
+
+def test_save_mapped_terminal_parameters(
+    mocker: MockerFixture, mapped_terminal_parameters, valid_mapped_terminal_parameter_data
+):
+    path = os.path.join(tempfile.gettempdir(), os.urandom(24).hex())
+    try:
+        save_mapped_terminal_parameters(mapped_terminal_parameters, path)
+        with open(path) as file:
+            contents = json.load(file)
+    finally:
+        os.remove(path)
+    assert valid_mapped_terminal_parameter_data == contents
+
+
+def test_load_mapped_terminal_parameters(
+    mocker: MockerFixture,
+    station_with_instruments: Station,
+    unmapped_terminal_parameters,
+    mapped_terminal_parameters,
+    valid_mapped_terminal_parameter_data,
+):
+    path = "mapped_terminal_parameters.json"
+    mock = mocker.mock_open(read_data=json.dumps(valid_mapped_terminal_parameter_data))
+    mocker.patch("builtins.open", mock)
+
+    load_mapped_terminal_parameters(
+        terminal_parameters=unmapped_terminal_parameters,
+        station=station_with_instruments,
+        path=path,
+    )
+    assert mapped_terminal_parameters == unmapped_terminal_parameters
 
 
 @pytest.mark.parametrize(
