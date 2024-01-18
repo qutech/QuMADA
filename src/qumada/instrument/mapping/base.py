@@ -171,8 +171,10 @@ def add_mapping_to_instrument(
         helper_mapping = _load_instrument_mapping(mapping)
         instrument._is_triggerable = False
     else:
-        raise ValueError("Mapping parameter has to be either of type \
-                         InstrumentMapping or str")
+        raise ValueError(
+            "Mapping parameter has to be either of type \
+                         InstrumentMapping or str"
+        )
 
     mapping = {}
     mapping["parameter_names"] = {
