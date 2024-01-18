@@ -18,6 +18,11 @@
 # - Daniel Grothe
 # - Till Huckeman
 
+# Ignore flake8 and mypy, as these file is going to be redone either way.
+# TODO: Remove these comments then
+# flake8: noqa
+# type: ignore
+
 # %% Experiment Setup
 # As we have only dummy instruments that are not connected, we have to use a global
 # trigger event for triggering.
@@ -90,7 +95,7 @@ buffer_settings = {
 }
 
 # %% Measurement Setup
-# with open(r"C:\Users	ill3\Documents\PythonScripts\Test Measurements	estsettings.yaml") as file:
+# with open(r"C:\Users\till3\Documents\PythonScripts\Test Measurements\testsettings.yaml") as file:
 #     parameters = yaml.safe_load(file)
 parameters = {
     "dmm": {"voltage": {"type": "gettable"}},

@@ -45,7 +45,7 @@ class MFLI(Instrument):
         self, name: str, device: str, serverhost: str = "localhost", existing_session: Session = None, **kwargs
     ):
         super().__init__(name, **kwargs)
-        if type(existing_session) == Session:
+        if isinstance(existing_session, Session):
             session = existing_session
         else:
             self.session = session = Session(serverhost)
@@ -65,9 +65,9 @@ class MFLI(Instrument):
             set_cmd=False,
             docstring="Absolute voltage as measured by demod0",
         )
-        
+
         self.voltage.signal_name = ("demod0", "r")
-        
+
         self.add_parameter(
             "voltage_offset",
             label="Voltage Offset",
@@ -78,7 +78,6 @@ class MFLI(Instrument):
             docstring="Offset to voltage output in V",
         )
 
-        
         self.add_parameter(
             "voltage_y_component",
             label="Y",
@@ -90,7 +89,6 @@ class MFLI(Instrument):
         )
         self.voltage_y_component.signal_name = ("demod0", "y")
 
-        
         self.add_parameter(
             "voltage_x_component",
             label="X",
@@ -101,8 +99,7 @@ class MFLI(Instrument):
             docstring="X component of sample measured by demod1",
         )
         self.voltage_x_component.signal_name = ("demod0", "x")
-        
-        
+
         self.add_parameter(
             "current",
             label="R",
@@ -164,7 +161,7 @@ class MFLI(Instrument):
             set_cmd=lambda a: self.instr.sigouts[0].amplitudes[1](a),
             docstring="Amplitude of the voltage output",
         )
-        #self.amplitude.signal_name = ("demod0", "y")
+        # self.amplitude.signal_name = ("demod0", "y")
 
         # self.add_parameter(
         #     name = "output_enabled",

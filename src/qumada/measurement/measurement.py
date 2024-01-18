@@ -44,6 +44,8 @@ from qumada.metadata import Metadata
 from qumada.utils.ramp_parameter import ramp_or_set_parameter
 from qumada.utils.utils import flatten_array
 
+logger = logging.getLogger(__name__)
+
 
 def is_measurement_script(o):
     return inspect.isclass(o) and issubclass(o, MeasurementScript)
@@ -205,13 +207,13 @@ class MeasurementScript(ABC):
         cls = type(self)
         try:
             self.buffer_settings.update(buffer_settings)
-        except:
+        except Exception:
             self.buffer_settings = buffer_settings
         self._set_buffered_num_points()
 
         try:
             self.settings.update(settings)
-        except:
+        except Exception:
             self.settings = settings
 
         # Add script and parameters to metadata
@@ -242,7 +244,8 @@ class MeasurementScript(ABC):
         The .channels list always contain the QCoDes parameters that can for
         example directly be called to get the corresponding values.
 
-        E.g. ``[param() for param in self.gettable_channels]`` will return a list of the current values of all gettable parameters.
+        E.g.: ``[param() for param in self.gettable_channels]`` will return a list
+        of the current values of all gettable parameters.
 
         The .parameters lists contain dictionaries with the keywords "gate" for the
         corresponding terminal name and "parameter" for the parameter name.
@@ -352,7 +355,7 @@ class MeasurementScript(ABC):
                                 if prio not in self.priorities.keys():
                                     self.groups[group]["priority"] = prio
                                     self.priorities[prio] = self.groups[group]
-                            except:
+                            except Exception:
                                 pass
 
         if self.buffered:
@@ -636,8 +639,6 @@ class MeasurementScript(ABC):
             try:
                 metadata = self.metadata
                 cls = type(self)
-                if not metadata.measurement.data:
-                    metadata.measurement.data = []
                 db_location = qc.config.core.db_location
                 metadata.add_data_to_metadata(db_location, "sqlite3", f"{cls.__name__}Data")
             except Exception as ex:

@@ -73,6 +73,12 @@ python -m pre-commit install
 To build the documentation, run:
 
 ```
+tox -e docs
+```
+
+or
+
+```
 cd docs
 make html
 ```

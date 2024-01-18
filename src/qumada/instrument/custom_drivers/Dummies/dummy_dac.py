@@ -29,7 +29,7 @@ import numpy as np
 from qcodes.instrument import Instrument
 from qcodes.validators import validators as vals
 
-#%%
+# %%
 
 
 class DummyDac(Instrument):
@@ -58,7 +58,7 @@ class DummyDac(Instrument):
         self.thread.start()
 
     def _run_triggered_ramp(self, start, stop, duration, stepsize=0.01):
-        _is_triggered = self._is_triggered.wait()
+        _ = self._is_triggered.wait()
         num_points = int((stop - start) / stepsize)
         for setpoint in np.linspace(start, stop, num_points):
             self.voltage(setpoint)

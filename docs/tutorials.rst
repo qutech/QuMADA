@@ -289,9 +289,11 @@ Mapping terminals to instruments
 ##################################
 
 Assigning the terminals to their correspoing instruments channels can be either done manually or by passing an already existing gate mapping object. The gate mapping is stored inside the measurement script and can be accessed via measurement_scipt.gate_parameter.
-The method we use to perform the gate mapping is:
+The gate mapping can be performed either per function or using a GUI:
 
-.. py:function:: map_gates_to_instruments(components, mapping, existing_mapping [optional])
+.. autofunction:: qumada.instrument.mapping.base.map_gates_to_instruments
+
+.. autofunction:: qumada.instrument.mapping.mapping_gui.map_terminals_gui
 
 In our case we can simply pass station.components containing all the measurement instruments and their parameters and script.gate_parameters. If we already had a mapping from a previous measurement, we could simply pass it as third argument. Map_gates_to_instruments is also
 capable of handling existing mappings with different parameters than the current measurement script, you only have to add the changed parameters manually then.
@@ -308,6 +310,21 @@ As QuMADA' :ref:`gate mapping<Station and Instruments>` has well defined paramet
 	Right now there are some issues with multichannel instruments such as the DecaDac. The different channels are all part of the same instrument, whenever you assign a parameter to the instrument the first unassigned channel will be mapped.
 	In general this means that the channels are assigned in the order of their numbers (first parameter mapped to Channel 1, second parameter mapped to Channel 2, etc.) Make sure to add the parameters to the gate_parameters.yaml in the corresponding order.
 
+
+########################################
+Save and load mapped terminal parameters
+########################################
+
+For recurring measurements with the same terminals and instruments, it is possible to save terminal parameters and the mapped instrument parameters to a file and later load the mapping again. With this, the mapping process is only needed once.
+
+.. autofunction:: qumada.instrument.mapping.base.save_mapped_terminal_parameters
+
+.. autofunction:: qumada.instrument.mapping.base.load_mapped_terminal_parameters
+
+
+###################
+Run the measurement
+###################
 
 Finally you can use
 
