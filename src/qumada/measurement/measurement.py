@@ -520,9 +520,9 @@ class MeasurementScript(ABC):
         TODO: Remove! Since initialize() does only create lists one, there is no advantage of using reset().
         """
         logger.warning(
-                        "The reset() method is deprecated and will be removed in a future release! \
+            "The reset() method is deprecated and will be removed in a future release! \
                         It is recommended to replace all calls of reset() with initialize()"
-                    )
+        )
         ramp_rate = self.settings.get("ramp_rate", 0.3)
         setpoint_intervall = self.settings.get("setpoint_intervall", 0.1)
         for gate, parameters in self.gate_parameters.items():
