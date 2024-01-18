@@ -382,10 +382,10 @@ class MeasurementScript(ABC):
         Relevant kwargs:
             dyn_ramp_to_val: Bool [False]: If true, dynamic parameters are
                     ramped to their value, before their sweep, else they are ramped
-                    to their first setpoint
-            inactive_dyn_channels: List of dynamic channels that are to be
+                    to their first setpoint.
+            inactive_dyn_channels: List|None [None]: List of dynamic channels that are to be
                     treated as static for this initialization. They are always
-                    ramped to their value instead of their sweeps starting point.)
+                    ramped to their value instead of their sweeps starting point.
         """
         # TODO: Is there a more elegant way?
         # TODO: Put Sweep-Generation somewhere else?
@@ -520,7 +520,12 @@ class MeasurementScript(ABC):
     def reset(self) -> None:
         """
         Resets all static/dynamic parameters to their value/start value.
+        TODO: Remove! Since initialize() does only create lists one, there is no advantage of using reset().
         """
+        logger.warning(
+            "The reset() method is deprecated and will be removed in a future release! \
+                        It is recommended to replace all calls of reset() with initialize()"
+        )
         ramp_rate = self.settings.get("ramp_rate", 0.3)
         setpoint_intervall = self.settings.get("setpoint_intervall", 0.1)
         for gate, parameters in self.gate_parameters.items():
@@ -558,7 +563,9 @@ class MeasurementScript(ABC):
 
     def clean_up(self, additional_actions: list[Callable] | None = None, **kwargs) -> None:
         """
-        Things to do after the measurement is complete.
+        Things to do after the measurement is complete. Cleans up subscribed paramteres for
+        buffered measurements by default.
+        TODO: Hook into measurement.run()
 
         Args:
             additional_actions (list[Callable], optional):
