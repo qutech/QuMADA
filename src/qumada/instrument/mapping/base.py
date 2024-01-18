@@ -151,8 +151,7 @@ def _load_instrument_mapping(path: str) -> Any:
 def add_mapping_to_instrument(
     instrument: Instrument,
     *,
-    path: str | None = None,
-    mapping: InstrumentMapping | None = None,
+    mapping: InstrumentMapping | str | None = None,
 ) -> None:
     """
     Loads instrument mapping from mapping JSON file and adds it as instrument attribute.
@@ -163,10 +162,10 @@ def add_mapping_to_instrument(
 
     Args:
         instrument (Instrument): Instrument, the mapping is added to.
-        path (str): Path to the JSON file.
-        mapping (InstrumentMapping): mapping object
+        mapping (InstrumentMapping | str): Either mapping object or path to json file
+                                           with mapping.
     """
-    if path is None and mapping is not None:
+    if isinstance(mapping, InstrumentMapping):
         helper_mapping = mapping.mapping
         instrument._qumada_ramp = mapping.ramp
         instrument._is_triggerable = mapping._is_triggerable
@@ -175,12 +174,14 @@ def add_mapping_to_instrument(
             instrument._qumada_trigger = mapping.trigger
         except Exception:
             pass
-        # TODO: Better name??
-    elif path is not None and mapping is None:
-        helper_mapping = _load_instrument_mapping(path)
+    elif isinstance(mapping, str):
+        helper_mapping = _load_instrument_mapping(mapping)
         instrument._is_triggerable = False
     else:
-        raise ValueError("Arguments 'path' and 'mapping' are exclusive.")
+        raise ValueError(
+            "Mapping parameter has to be either of type \
+                         InstrumentMapping or str"
+        )
 
     mapping = {}
     mapping["parameter_names"] = {
