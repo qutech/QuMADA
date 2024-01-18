@@ -47,7 +47,7 @@ from qumada.measurement.scripts.generic_measurement import Generic_1D_Sweep
 @pytest.fixture(name="dmm", scope="session")
 def fixture_dmm():
     dmm = DummyDmm("dmm")
-    add_mapping_to_instrument(dmm, path=mapping.DUMMY_DMM_MAPPING)
+    add_mapping_to_instrument(dmm, mapping=mapping.DUMMY_DMM_MAPPING)
     return dmm
 
 
@@ -61,7 +61,7 @@ def fixture_dac():
 @pytest.fixture(name="dci", scope="session")
 def fixture_dci():
     dci = DummyChannelInstrument("dci")
-    add_mapping_to_instrument(dci, path=mapping.DUMMY_CHANNEL_MAPPING)
+    add_mapping_to_instrument(dci, mapping=mapping.DUMMY_CHANNEL_MAPPING)
     return dci
 
 
@@ -168,7 +168,7 @@ def test_instrument_mapping(mocker: MockerFixture, valid_mapping_data):
     )
     path = "pathtomapping.json"
 
-    add_mapping_to_instrument(instr, path=path)
+    add_mapping_to_instrument(instr, mapping=path)
 
     for parameter in [instr.v1, instr.v2]:
         assert parameter._mapping == "voltage"
