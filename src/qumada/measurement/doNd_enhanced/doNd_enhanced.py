@@ -181,7 +181,7 @@ def do1d_parallel(
     # do1D enforces a simple relationship between measured parameters
     # and set parameters. For anything more complicated this should be
     # reimplemented from scratch
-    with catch_interrupts() as interrupted, meas.run() as datasaver, param_meas_caller as call_param_meas:  # noqa: F841
+    with _catch_interrupts() as interrupted, meas.run() as datasaver, param_meas_caller as call_param_meas:  # noqa: F841
         dataset = datasaver.dataset
         additional_setpoints_data = process_params_meas(additional_setpoints)
 
@@ -345,7 +345,7 @@ def do1d_parallel_asym(
     # do1D enforces a simple relationship between measured parameters
     # and set parameters. For anything more complicated this should be
     # reimplemented from scratch
-    with catch_interrupts() as interrupted, meas.run() as datasaver, param_meas_caller as call_param_meas:  # noqa: F841
+    with _catch_interrupts() as interrupted, meas.run() as datasaver, param_meas_caller as call_param_meas:  # noqa: F841
         dataset = datasaver.dataset
         additional_setpoints_data = process_params_meas(additional_setpoints)
 
