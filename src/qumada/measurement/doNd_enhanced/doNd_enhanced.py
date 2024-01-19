@@ -49,9 +49,7 @@ from qcodes.dataset.dond.do_nd_utils import (
 )
 from qcodes.dataset.experiment_container import Experiment
 from qcodes.dataset.measurements import Measurement
-from qcodes.dataset.threading import (
-    #SequentialParamsCaller,
-    #ThreadPoolParamsCaller,
+from qcodes.dataset.threading import (  # SequentialParamsCaller,; ThreadPoolParamsCaller,
     process_params_meas,
 )
 from qcodes.parameters import ParameterBase
@@ -180,7 +178,7 @@ def do1d_parallel(
     # do1D enforces a simple relationship between measured parameters
     # and set parameters. For anything more complicated this should be
     # reimplemented from scratch
-    
+
     with _catch_interrupts() as interrupted, meas.run() as datasaver:
         dataset = datasaver.dataset
         additional_setpoints_data = process_params_meas(additional_setpoints)
