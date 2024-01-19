@@ -560,7 +560,7 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
         # meas.register_parameter(timer)
 
         for i in range(len(self.dynamic_sweeps.copy())):
-            # dynamic_sweep and dynamic_parameter are from copy and not 
+            # dynamic_sweep and dynamic_parameter are from copy and not
             # affected by changes made to parameter in original list!
             self.measurement_name = measurement_name
             dynamic_parameter = self.dynamic_parameters[i]
