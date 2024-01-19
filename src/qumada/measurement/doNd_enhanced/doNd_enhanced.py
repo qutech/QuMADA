@@ -180,7 +180,7 @@ def do1d_parallel(
     # do1D enforces a simple relationship between measured parameters
     # and set parameters. For anything more complicated this should be
     # reimplemented from scratch
-        dataset = datasaver.dataset
+    dataset = datasaver.dataset
     with _catch_interrupts() as interrupted, meas.run() as datasaver:
         additional_setpoints_data = process_params_meas(additional_setpoints)
 
