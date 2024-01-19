@@ -41,7 +41,7 @@ def save_to_config(section, key, value, config_file="../config.cfg"):
     """
     config = configparser.ConfigParser()
     config.read(config_file)
-    if not section in config:
+    if section not in config:
         config[section] = {}
     config[section][key] = value
     with open(config_file, "w") as configfile:

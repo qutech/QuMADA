@@ -29,11 +29,11 @@ import numpy as np
 from jsonschema import validate
 from qcodes.parameters import Parameter
 
-from qumada.instrument.buffers.buffer import Buffer
+from qumada.instrument.buffers.buffer import Buffer, BufferException
 from qumada.instrument.custom_drivers.Dummies.dummy_dmm import DummyDmm
 
 
-#%%
+# %%
 class DummyDMMBuffer(Buffer):
     """Buffer for Dummy DMM"""
 
@@ -72,7 +72,8 @@ class DummyDMMBuffer(Buffer):
     def num_points(self, num_points) -> None:
         if num_points > 16383:
             raise BufferException(
-                "Dummy Dacs Buffer is to small for this measurement. Please reduce the number of data points or the delay"
+                "Dummy Dacs Buffer is to small for this measurement. "
+                "Please reduce the number of data points or the delay"
             )
         self._num_points = int(num_points)
 
@@ -121,6 +122,7 @@ class DummyDMMBuffer(Buffer):
     def read(self) -> dict:
         # TODO: Add timetrace if possible
         return self.read_raw()
+
 
     def subscribe(self, parameters: set | list[Parameter]) -> None:
         for parameter in parameters:

@@ -63,7 +63,8 @@ def map_buffers(
 
     Args:
         components (Mapping[Any, Metadatable]): Instruments/Components in QCoDeS
-        gate_parameters (Mapping[Any, Union[Mapping[Any, Parameter], Parameter]]): Gates, as defined in the measurement script
+        gate_parameters (Mapping[Any, Union[Mapping[Any, Parameter], Parameter]]):
+            Gates, as defined in the measurement script
     """
     # subscribe to gettable parameters with buffer
     for gate, parameters in gate_parameters.items():
@@ -87,7 +88,7 @@ def map_buffers(
         if overwrite_trigger is not None:
             try:
                 chosen = int(overwrite_trigger)
-            except:
+            except Exception:
                 chosen = int(input(f"Choose the trigger input for {instrument.name}: "))
         else:
             chosen = int(input(f"Choose the trigger input for {instrument.name}: "))
@@ -111,7 +112,8 @@ def _map_triggers(
 
     Args:
         components (Mapping[Any, Metadatable]): Instruments/Components in QCoDeS
-        gate_parameters (Mapping[Any, Union[Mapping[Any, Parameter], Parameter]]): Gates, as defined in the measurement script
+        gate_parameters (Mapping[Any, Union[Mapping[Any, Parameter], Parameter]]):
+            Gates, as defined in the measurement script
     """
     triggered_instruments = filter(is_triggerable, components.values())
     for instrument in triggered_instruments:
@@ -126,7 +128,7 @@ def _map_triggers(
         if overwrite_trigger is not None:
             try:
                 chosen = int(overwrite_trigger)
-            except:
+            except Exception:
                 chosen = int(input(f"Choose the trigger input for {instrument.name}: "))
         else:
             chosen = int(input(f"Choose the trigger input for {instrument.name}: "))

@@ -206,13 +206,13 @@ class MeasurementScript(ABC):
         cls = type(self)
         try:
             self.buffer_settings.update(buffer_settings)
-        except:
+        except Exception:
             self.buffer_settings = buffer_settings
         self._set_buffered_num_points()
 
         try:
             self.settings.update(settings)
-        except:
+        except Exception:
             self.settings = settings
 
         # Add script and parameters to metadata
@@ -242,10 +242,10 @@ class MeasurementScript(ABC):
         
         The .channels list always contain the QCoDes parameters that can for
         example directly be called to get the corresponding values.
-        E.g. 
-            [param() for param in self.gettable_channels] 
-        will return a list of the current values of all gettable parameters.
-        
+
+        E.g.: ``[param() for param in self.gettable_channels]`` will return a list
+        of the current values of all gettable parameters.
+
         The .parameters lists contain dictionaries with the keywords "gate" for the
         corresponding terminal name and "parameter" for the parameter name.
         This is usefull to get the keys for specific parameters from
@@ -377,7 +377,7 @@ class MeasurementScript(ABC):
                                 if prio not in self.priorities.keys():
                                     self.groups[group]["priority"] = prio
                                     self.priorities[prio] = self.groups[group]
-                            except:
+                            except Exception:
                                 pass
                         
                         
@@ -405,10 +405,10 @@ class MeasurementScript(ABC):
         Relevant kwargs:
             dyn_ramp_to_val: Bool [False]: If true, dynamic parameters are
                     ramped to their value, before their sweep, else they are ramped
-                    to their first setpoint
-            inactive_dyn_channels: List of dynamic channels that are to be
+                    to their first setpoint.
+            inactive_dyn_channels: List|None [None]: List of dynamic channels that are to be
                     treated as static for this initialization. They are always
-                    ramped to their value instead of their sweeps starting point.)
+                    ramped to their value instead of their sweeps starting point.
         """
         # TODO: Is there a more elegant way?
         # TODO: Put Sweep-Generation somewhere else?
@@ -562,7 +562,12 @@ class MeasurementScript(ABC):
     def reset(self) -> None:
         """
         Resets all static/dynamic parameters to their value/start value.
+        TODO: Remove! Since initialize() does only create lists one, there is no advantage of using reset().
         """
+        logger.warning(
+            "The reset() method is deprecated and will be removed in a future release! \
+                        It is recommended to replace all calls of reset() with initialize()"
+        )
         ramp_rate = self.settings.get("ramp_rate", 0.3)
         setpoint_intervall = self.settings.get("setpoint_intervall", 0.1)
         for gate, parameters in self.gate_parameters.items():
@@ -600,7 +605,9 @@ class MeasurementScript(ABC):
 
     def clean_up(self, additional_actions: list[Callable] | None = None, **kwargs) -> None:
         """
-        Things to do after the measurement is complete.
+        Things to do after the measurement is complete. Cleans up subscribed paramteres for
+        buffered measurements by default.
+        TODO: Hook into measurement.run()
 
         Args:
             additional_actions (list[Callable], optional):
@@ -674,8 +681,6 @@ class MeasurementScript(ABC):
             try:
                 metadata = self.metadata
                 cls = type(self)
-                if not metadata.measurement.data:
-                    metadata.measurement.data = []
                 db_location = qc.config.core.db_location
                 metadata.add_data_to_metadata(db_location, "sqlite3", f"{cls.__name__}Data")
             except Exception as ex:

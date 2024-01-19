@@ -25,8 +25,8 @@ def get_station_instr(station):
     Can be used to create instances of instruments after loading the station.
     """
     result = []
-    for elem in station.__dict__['_added_methods']:
-        result.append(elem.strip('load_'))
+    for elem in station.__dict__["_added_methods"]:
+        result.append(elem.strip("load_"))
     return result
 
 

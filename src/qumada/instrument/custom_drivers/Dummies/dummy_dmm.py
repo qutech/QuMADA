@@ -31,7 +31,7 @@ from qcodes.parameters import Parameter
 from qcodes.validators import validators as vals
 
 
-#%%
+# %%
 class dmm_results_random(Parameter):
     def get_raw(self):
         return np.random.sample()
@@ -78,13 +78,13 @@ class dmm_buffer(Parameter):
         self.thread.start()
 
     def _run(self):
-        _is_triggered = self._is_triggered.wait()
+        _ = self._is_triggered.wait()
         for i in range(0, self.buffer_length):
             for j in range(len(self.subscribed_params)):
                 datapoint = self.subscribed_params[j]()
-                if type(datapoint) == float:
+                if isinstance(datapoint, float):
                     self.buffer_data[j].append(self.subscribed_params[j]())
-                elif type(datapoint) == list:
+                elif isinstance(datapoint, list):
                     self.buffer_data[j].append(self.subscribed_params[j]()[i])
             sleep(1 / self.SR)
         self.is_finished = True

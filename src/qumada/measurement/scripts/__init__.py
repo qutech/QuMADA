@@ -34,7 +34,7 @@ from .generic_measurement import (
 
 try:
     from .spectrometer import Measure_Spectrum
-except ModuleNotFoundError as ex:
+except ModuleNotFoundError:
     # Only relevant if you want to use spectrometer.
     # Requires access to Bluhm Group GitLab
     pass

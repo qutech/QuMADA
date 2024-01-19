@@ -25,7 +25,10 @@ from typing import Protocol
 
 
 class Metadata(Protocol):
-    """Protocol for a Metadata object. Defines the methods to handle specific metadata portions collected with QuMADA."""
+    """
+    Protocol for a Metadata object.
+    Defines the methods to handle specific metadata portions collected with QuMADA.
+    """
 
     def add_terminal_mapping(self, mapping: str, name: str):
         """Adds metadata of the mapping between terminals and instrument parameters as a (JSON) string."""

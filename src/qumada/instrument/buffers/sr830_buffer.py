@@ -114,7 +114,8 @@ class SR830Buffer(Buffer):
             self._device.buffer_trig_mode("ON")
         else:
             raise BufferException(
-                "SR830 does not support setting custom trigger inputs. Use 'external' and the input on the back of the unit."
+                "SR830 does not support setting custom trigger inputs. "
+                "Use 'external' and the input on the back of the unit."
             )
         self._trigger = trigger
 

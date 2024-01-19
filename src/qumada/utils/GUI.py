@@ -18,20 +18,20 @@
 # - Till Huckeman
 
 
-
 import sys
-
 from subprocess import Popen
 
-from qcodes.monitor.monitor import  Monitor
+from qcodes.monitor.monitor import Monitor
+from qcodes.station import Station
+
 from qumada.instrument.mapping.base import filter_flatten_parameters
 from qumada.measurement.measurement import MeasurementScript
-from qcodes.station import Station        
+
 
 def open_web_gui(parameters):
     """
     Opens Gui from qcodes.monitor.monitor
-    parameters: Provides the parameters to display. Has to be Station object, 
+    parameters: Provides the parameters to display. Has to be Station object,
     QuMADA MeasurementScript object or list of qcodes parameters.
     When a station object is used, all parameters of all components are shown.
     """
@@ -41,7 +41,7 @@ def open_web_gui(parameters):
         params = []
         try:
             channels = [val for val in parameters.gate_parameters.values()]
-        except:
+        except Exception:
             print("Error not yet implemented. Maybe you forgot to do the mapping first?")
             return False
         for gate in channels:
@@ -49,17 +49,13 @@ def open_web_gui(parameters):
                 params.append(item)
     elif isinstance(parameters, list):
         params = parameters
-    else: 
-        print("The provided parameters are invalid. Please pass as Station \
+    else:
+        print(
+            "The provided parameters are invalid. Please pass as Station \
               object, a Measurement Script (after parameter mapping) or a \
-              list of parameters")
+              list of parameters"
+        )
         return False
-    monitor_process = Popen([sys.executable, "-m", "qcodes.monitor.monitor"], shell = True)
+    monitor_process = Popen([sys.executable, "-m", "qcodes.monitor.monitor"], shell=True)
     monitor = Monitor(*params)
     return monitor, monitor_process
-
-        
-        
-        
-    
-    

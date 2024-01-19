@@ -22,12 +22,9 @@ from __future__ import annotations
 
 import importlib.resources as res
 from pathlib import Path
-from types import ModuleType
 
 
-def import_resources(
-    package: res.Package, ext: str = "*", recursive: bool = True
-) -> list[res.Resource]:
+def import_resources(package: res.Package, ext: str = "*", recursive: bool = True) -> list[res.Resource]:
     """
     Loads resource files from a given package and returns them as list of Path-objects.
 

@@ -18,6 +18,11 @@
 # - Daniel Grothe
 # - Till Huckeman
 
+# Ignore flake8 and mypy, as these file is going to be redone either way.
+# TODO: Remove these comments then
+# flake8: noqa
+# type: ignore
+
 # %% Experiment Setup
 # As we have only dummy instruments that are not connected, we have to use a global
 # trigger event for triggering.
@@ -79,7 +84,6 @@ buffer_settings = {
 }
 
 # %% Measurement Setup
-
 parameters = {
     "dmm": {"voltage": {"type": "gettable"}},
     "dac": {
