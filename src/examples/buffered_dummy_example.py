@@ -28,7 +28,6 @@
 # trigger event for triggering.
 import threading
 
-import qtools_metadata.db as db
 import yaml
 from qcodes.dataset import (
     Measurement,
@@ -38,7 +37,6 @@ from qcodes.dataset import (
     load_or_create_experiment,
 )
 from qcodes.station import Station
-from qtools_metadata.metadata import Metadata
 
 from qumada.instrument.buffered_instruments import BufferedDummyDMM as DummyDmm
 from qumada.instrument.buffers.buffer import map_buffers
@@ -75,13 +73,6 @@ dac = DummyDac("dac", trigger_event=trigger)
 add_mapping_to_instrument(dac, mapping=DummyDacMapping())
 station.add_component(dac)
 
-
-# %% Metadata Setup
-from qtools_metadata.metadata import create_metadata, save_metadata_object_to_db
-
-db.api_url = "http://134.61.7.48:9124"
-metadata = create_metadata()
-
 # %% Load database for data storage
 load_db()
 # %% Setup measurement
@@ -95,8 +86,6 @@ buffer_settings = {
 }
 
 # %% Measurement Setup
-# with open(r"C:\Users\till3\Documents\PythonScripts\Test Measurements\testsettings.yaml") as file:
-#     parameters = yaml.safe_load(file)
 parameters = {
     "dmm": {"voltage": {"type": "gettable"}},
     "dac": {
@@ -110,7 +99,7 @@ parameters = {
 script = Generic_1D_Sweep_buffered()
 script.setup(
     parameters,
-    metadata,
+    metadata=None,
     buffer_settings=buffer_settings,
     trigger_type="hardware",
     trigger_start=trigger.set,
@@ -122,5 +111,3 @@ map_buffers(station.components, script.properties, script.gate_parameters)
 
 # %% Run measurement
 script.run(insert_metadata_into_db=False)
-
-# %%

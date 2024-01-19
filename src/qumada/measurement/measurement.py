@@ -148,14 +148,14 @@ class MeasurementScript(ABC):
         """
 
         if "burst_duration" in self.buffer_settings:
-            self._burst_duration = self.buffer_settings["burst_duration"]
+            self._burst_duration = float(self.buffer_settings["burst_duration"])
 
         if "duration" in self.buffer_settings:
             if "burst_duration" in self.buffer_settings:
-                self._num_bursts = np.ceil(self.buffer_settings["duration"] / self._burst_duration)
+                self._num_bursts = np.ceil(float(self.buffer_settings["duration"]) / self._burst_duration)
             elif "num_bursts" in self.buffer_settings:
                 self._num_bursts = int(self.buffer_settings["num_bursts"])
-                self._burst_duration = self.buffer_settings["duration"] / self._num_bursts
+                self._burst_duration = float(self.buffer_settings["duration"]) / self._num_bursts
 
         if "num_points" in self.buffer_settings:
             self.buffered_num_points = int(self.buffer_settings["num_points"])
@@ -165,7 +165,7 @@ class MeasurementScript(ABC):
         elif "sampling_rate" in self.buffer_settings:
             self._sampling_rate = float(self.buffer_settings["sampling_rate"])
             if self._burst_duration is not None:
-                self.buffered_num_points = int(np.ceil(self._sampling_rate * self._burst_duration))
+                self.buffered_num_points = np.ceil(self._sampling_rate * self._burst_duration)
             elif all(k in self.buffer_settings for k in ("duration", "num_bursts")):
                 self._burst_duration = float(self.buffer_settings["duration"] / self.buffer_settings["num_bursts"])
 
@@ -292,18 +292,39 @@ class MeasurementScript(ABC):
                     self.dynamic_channels.append(channel)
                     if self.properties[gate][parameter].get("_is_triggered", False) and self.buffered:
                         if "num_points" in self.properties[gate][parameter].keys():
-                            assert self.properties[gate][parameter]["num_points"] == self.buffered_num_points
+                            try:
+                                assert self.properties[gate][parameter]["num_points"] == self.buffered_num_points
+                            except AssertionError:
+                                logger.warning(
+                                    f"Number of datapoints from buffer_settings\
+                                    and gate_parameters do not match. Using \
+                                    the value from the buffer settings: \
+                                    {self.buffered_num_points}"
+                                )
                         elif "setpoints" in self.properties[gate][parameter].keys():
-                            assert len(self.properties[gate][parameter]["setpoints"]) == self.buffered_num_points
+                            try:
+                                assert len(self.properties[gate][parameter]["setpoints"]) == self.buffered_num_points
+                            except AssertionError:
+                                logger.warning(
+                                    f"Number of datapoints from buffer_settings\
+                                    and gate_parameters do not match. Using \
+                                    the value from the buffer settings: \
+                                    {self.buffered_num_points}"
+                                )
+
                         else:
-                            pass
+                            logger.info(
+                                "No num_points or setpoints given for\
+                                         buffered measurement. The value from \
+                                         buffer_settings is used"
+                            )
                         try:
                             self.dynamic_sweeps.append(
                                 LinSweep(
                                     channel,
                                     self.properties[gate][parameter]["start"],
                                     self.properties[gate][parameter]["stop"],
-                                    self.buffered_num_points,
+                                    int(self.buffered_num_points),
                                     delay=self.properties[gate][parameter].setdefault("delay", 0),
                                 )
                             )
@@ -313,7 +334,7 @@ class MeasurementScript(ABC):
                                     channel,
                                     self.properties[gate][parameter]["setpoints"][0],
                                     self.properties[gate][parameter]["setpoints"][-1],
-                                    self.buffered_num_points,
+                                    int(self.buffered_num_points),
                                     delay=self.properties[gate][parameter].setdefault("delay", 0),
                                 )
                             )
@@ -324,7 +345,7 @@ class MeasurementScript(ABC):
                                     channel,
                                     self.properties[gate][parameter]["start"],
                                     self.properties[gate][parameter]["stop"],
-                                    self.properties[gate][parameter]["num_points"],
+                                    int(self.properties[gate][parameter]["num_points"]),
                                     delay=self.properties[gate][parameter].setdefault("delay", 0),
                                 )
                             )
@@ -411,18 +432,41 @@ class MeasurementScript(ABC):
                 elif self.properties[gate][parameter]["type"].find("dynamic") >= 0:
                     if self.properties[gate][parameter].get("_is_triggered", False) and self.buffered:
                         if "num_points" in self.properties[gate][parameter].keys():
-                            assert self.properties[gate][parameter]["num_points"] == self.buffered_num_points
+                            try:
+                                assert self.properties[gate][parameter]["num_points"] == self.buffered_num_points
+                            except AssertionError:
+                                logger.warning(
+                                    f"Number of datapoints from buffer_settings\
+                                    and gate_parameters do not match. Using \
+                                    the value from the buffer settings: \
+                                    {self.buffered_num_points}"
+                                )
+                                self.properties[gate][parameter]["num_points"] = self.buffered_num_points
+
                         elif "setpoints" in self.properties[gate][parameter].keys():
-                            assert len(self.properties[gate][parameter]["setpoints"]) == self.buffered_num_points
+                            try:
+                                assert len(self.properties[gate][parameter]["setpoints"]) == self.buffered_num_points
+                            except AssertionError:
+                                logger.warning(
+                                    f"Number of datapoints from buffer_settings\
+                                    and gate_parameters do not match. Using \
+                                    the value from the buffer settings: \
+                                    {self.buffered_num_points}"
+                                )
+
                         else:
-                            pass
+                            logger.info(
+                                "No num_points or setpoints given for\
+                                         buffered measurement. The value from \
+                                         buffer_settings is used"
+                            )
                         try:
                             self.dynamic_sweeps.append(
                                 LinSweep(
                                     channel,
                                     self.properties[gate][parameter]["start"],
                                     self.properties[gate][parameter]["stop"],
-                                    self.buffered_num_points,
+                                    int(self.buffered_num_points),
                                     delay=self.properties[gate][parameter].setdefault("delay", 0),
                                 )
                             )
@@ -432,7 +476,7 @@ class MeasurementScript(ABC):
                                     channel,
                                     self.properties[gate][parameter]["setpoints"][0],
                                     self.properties[gate][parameter]["setpoints"][-1],
-                                    self.buffered_num_points,
+                                    int(self.buffered_num_points),
                                     delay=self.properties[gate][parameter].setdefault("delay", 0),
                                 )
                             )
@@ -443,7 +487,7 @@ class MeasurementScript(ABC):
                                     channel,
                                     self.properties[gate][parameter]["start"],
                                     self.properties[gate][parameter]["stop"],
-                                    self.properties[gate][parameter]["num_points"],
+                                    int(self.properties[gate][parameter]["num_points"]),
                                     delay=self.properties[gate][parameter].setdefault("delay", 0),
                                 )
                             )

@@ -143,7 +143,7 @@ class SR830Buffer(Buffer):
         # TODO: Add timetrace if possible
         return self.read_raw()
 
-    def subscribe(self, parameters: list[Parameter]) -> None:
+    def subscribe(self, parameters: set | list[Parameter]) -> None:
         for parameter in parameters:
             name = parameter.name
             if name in self.ch1_names:
@@ -163,7 +163,7 @@ class SR830Buffer(Buffer):
             else:
                 raise BufferException(f"Parameter {parameter.name} can not be buffered.")
 
-    def unsubscribe(self, parameters: list[Parameter]) -> None:
+    def unsubscribe(self, parameters: set | list[Parameter]) -> None:
         for parameter in parameters.copy():
             name = parameter.name
             if name in ["X", "R", "X Noise", "aux_in1", "aux_in2"]:

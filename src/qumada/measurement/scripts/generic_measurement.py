@@ -558,12 +558,17 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
         self.generate_lists()
         measurement_name = naming_helper(self, default_name="1D Sweep")
         # meas.register_parameter(timer)
-        for dynamic_sweep, dynamic_parameter in zip(self.dynamic_sweeps.copy(), self.dynamic_parameters.copy()):
+
+        for i in range(len(self.dynamic_sweeps.copy())):
+            # dynamic_sweep and dynamic_parameter are from copy and not
+            # affected by changes made to parameter in original list!
             self.measurement_name = measurement_name
+            dynamic_parameter = self.dynamic_parameters[i]
             if include_gate_name:
                 self.measurement_name += f" {dynamic_parameter['gate']}"
             self.properties[dynamic_parameter["gate"]][dynamic_parameter["parameter"]]["_is_triggered"] = True
-            dynamic_param = dynamic_sweep.param
+
+            dynamic_param = self.dynamic_sweeps[i].param
             meas = Measurement(name=self.measurement_name)
             meas.register_parameter(dynamic_param)
 
@@ -604,7 +609,7 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
             with meas.run() as datasaver:
                 inactive_channels = [chan for chan in self.dynamic_channels if chan != dynamic_param]
                 self.initialize(inactive_dyn_channels=inactive_channels)
-
+                dynamic_sweep = self.dynamic_sweeps[i]
                 try:
                     trigger_reset()
                 except TypeError:
