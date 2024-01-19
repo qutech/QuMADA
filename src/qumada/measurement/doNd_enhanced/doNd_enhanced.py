@@ -45,7 +45,7 @@ from qcodes.dataset.dond.do_nd_utils import (
     _register_actions,
     _register_parameters,
     _set_write_period,
-    catch_interrupts,
+    _catch_interrupts,
 )
 from qcodes.dataset.experiment_container import Experiment
 from qcodes.dataset.measurements import Measurement
