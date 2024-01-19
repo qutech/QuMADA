@@ -176,11 +176,11 @@ def do1d_parallel(
     if use_threads is None:
         use_threads = config.dataset.use_threads
 
-    param_meas_caller = ThreadPoolParamsCaller(*param_meas) if use_threads else SequentialParamsCaller(*param_meas)
     tracked_setpoints = list()
     # do1D enforces a simple relationship between measured parameters
     # and set parameters. For anything more complicated this should be
     # reimplemented from scratch
+        dataset = datasaver.dataset
     with _catch_interrupts() as interrupted, meas.run() as datasaver:
         additional_setpoints_data = process_params_meas(additional_setpoints)
 
@@ -339,7 +339,6 @@ def do1d_parallel_asym(
     if use_threads is None:
         use_threads = config.dataset.use_threads
 
-    param_meas_caller = ThreadPoolParamsCaller(*param_meas) if use_threads else SequentialParamsCaller(*param_meas)
     tracked_setpoints = list([] for _ in param_set)
     # do1D enforces a simple relationship between measured parameters
     # and set parameters. For anything more complicated this should be
