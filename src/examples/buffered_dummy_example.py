@@ -27,6 +27,7 @@
 # As we have only dummy instruments that are not connected, we have to use a global
 # trigger event for triggering.
 import threading
+
 import yaml
 from qcodes.dataset import (
     Measurement,
@@ -36,6 +37,7 @@ from qcodes.dataset import (
     load_or_create_experiment,
 )
 from qcodes.station import Station
+
 from qumada.instrument.buffered_instruments import BufferedDummyDMM as DummyDmm
 from qumada.instrument.buffers.buffer import map_buffers
 from qumada.instrument.custom_drivers.Dummies.dummy_dac import DummyDac

@@ -46,6 +46,7 @@ from qumada.utils.utils import flatten_array
 
 logger = logging.getLogger(__name__)
 
+
 def is_measurement_script(o):
     return inspect.isclass(o) and issubclass(o, MeasurementScript)
 
@@ -239,7 +240,7 @@ class MeasurementScript(ABC):
     def generate_lists(self) -> None:
         """
         Creates lists containing the corresponding parameters for further use.
-        
+
         The .channels list always contain the QCoDes parameters that can for
         example directly be called to get the corresponding values.
 
@@ -250,12 +251,12 @@ class MeasurementScript(ABC):
         corresponding terminal name and "parameter" for the parameter name.
         This is usefull to get the keys for specific parameters from
         the gate_parameters.
-        
+
         gettable and static lists both include static gettable parameters,
-        the static_gettable lists only the ones that are both, static and 
+        the static_gettable lists only the ones that are both, static and
         gettable. This is e.g. useful for logging static parameters that cannot
         be buffered and thus cause errors in buffered measurements.
-                
+
         """
         self.gettable_parameters: list[str] = []
         self.gettable_channels: list[str] = []
@@ -275,16 +276,13 @@ class MeasurementScript(ABC):
         for gate, parameters in self.gate_parameters.items():
             for parameter, channel in parameters.items():
                 if self.properties[gate][parameter]["type"].find("static") >= 0:
-                    self.static_parameters.append(
-                        {"gate": gate, "parameter": parameter})
+                    self.static_parameters.append({"gate": gate, "parameter": parameter})
                     self.static_channels.append(channel)
-                    if self.properties[gate][parameter]["type"].find("gettable") >=0:
-                        self.static_gettable_parameters.append(
-                            {"gate": gate, "parameter": parameter})
+                    if self.properties[gate][parameter]["type"].find("gettable") >= 0:
+                        self.static_gettable_parameters.append({"gate": gate, "parameter": parameter})
                         self.static_gettable_channels.append(channel)
                 if self.properties[gate][parameter]["type"].find("gettable") >= 0:
-                    self.gettable_parameters.append(
-                        {"gate": gate, "parameter": parameter})
+                    self.gettable_parameters.append({"gate": gate, "parameter": parameter})
                     self.gettable_channels.append(channel)
                     with suppress(KeyError):
                         for condition in self.properties[gate][parameter]["break_conditions"]:
@@ -301,7 +299,8 @@ class MeasurementScript(ABC):
                                     f"Number of datapoints from buffer_settings\
                                     and gate_parameters do not match. Using \
                                     the value from the buffer settings: \
-                                    {self.buffered_num_points}")
+                                    {self.buffered_num_points}"
+                                )
                         elif "setpoints" in self.properties[gate][parameter].keys():
                             try:
                                 assert len(self.properties[gate][parameter]["setpoints"]) == self.buffered_num_points
@@ -310,12 +309,15 @@ class MeasurementScript(ABC):
                                     f"Number of datapoints from buffer_settings\
                                     and gate_parameters do not match. Using \
                                     the value from the buffer settings: \
-                                    {self.buffered_num_points}")
+                                    {self.buffered_num_points}"
+                                )
 
                         else:
-                            logger.info("No num_points or setpoints given for\
+                            logger.info(
+                                "No num_points or setpoints given for\
                                          buffered measurement. The value from \
-                                         buffer_settings is used")
+                                         buffer_settings is used"
+                            )
                         try:
                             self.dynamic_sweeps.append(
                                 LinSweep(
@@ -358,17 +360,14 @@ class MeasurementScript(ABC):
                 if "group" in self.properties[gate][parameter].keys():
                     group = self.properties[gate][parameter]["group"]
                     if group not in self.groups.keys():
-                        self.groups[group]={"channels":[], 
-                                         "parameters": [],
-                                         "priority": None}
+                        self.groups[group] = {"channels": [], "parameters": [], "priority": None}
                     self.groups[group]["channels"].append(channel)
-                    self.groups[group]["parameters"].append(
-                        {"gate": gate, "parameter": parameter})
+                    self.groups[group]["parameters"].append({"gate": gate, "parameter": parameter})
                     if self.groups[group]["priority"] is None:
                         if "priority" in self.properties[gate][parameter].keys():
                             if self.groups[group]["priority"] in self.priorities.keys():
                                 raise Exception("Assigned the same priority to multiple groups")
-                            elif self.groups[group]["priority"] is None: 
+                            elif self.groups[group]["priority"] is None:
                                 self.groups[group]["priority"] = int(self.properties[gate][parameter]["priority"])
                                 self.priorities[int(self.groups[group]["priority"])] = self.groups[group]
                         else:
@@ -379,8 +378,7 @@ class MeasurementScript(ABC):
                                     self.priorities[prio] = self.groups[group]
                             except Exception:
                                 pass
-                        
-                        
+
         if self.buffered:
             self.buffers = {
                 channel.root_instrument._qumada_buffer for channel in self.gettable_channels if is_bufferable(channel)
@@ -441,7 +439,8 @@ class MeasurementScript(ABC):
                                     f"Number of datapoints from buffer_settings\
                                     and gate_parameters do not match. Using \
                                     the value from the buffer settings: \
-                                    {self.buffered_num_points}")
+                                    {self.buffered_num_points}"
+                                )
                                 self.properties[gate][parameter]["num_points"] = self.buffered_num_points
 
                         elif "setpoints" in self.properties[gate][parameter].keys():
@@ -452,12 +451,15 @@ class MeasurementScript(ABC):
                                     f"Number of datapoints from buffer_settings\
                                     and gate_parameters do not match. Using \
                                     the value from the buffer settings: \
-                                    {self.buffered_num_points}")
+                                    {self.buffered_num_points}"
+                                )
 
                         else:
-                            logger.info("No num_points or setpoints given for\
+                            logger.info(
+                                "No num_points or setpoints given for\
                                          buffered measurement. The value from \
-                                         buffer_settings is used")
+                                         buffer_settings is used"
+                            )
                         try:
                             self.dynamic_sweeps.append(
                                 LinSweep(

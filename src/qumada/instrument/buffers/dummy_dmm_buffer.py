@@ -123,7 +123,6 @@ class DummyDMMBuffer(Buffer):
         # TODO: Add timetrace if possible
         return self.read_raw()
 
-
     def subscribe(self, parameters: set | list[Parameter]) -> None:
         for parameter in parameters:
             self._device.buffer.subscribe(parameter)
