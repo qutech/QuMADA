@@ -241,8 +241,7 @@ class MFLIBuffer(Buffer):
     def stop(self) -> None:
         self._daq.raw_module.finish()
 
-    def is_ready(self) -> bool:
-        ...
+    def is_ready(self) -> bool: ...
 
     def is_finished(self) -> bool:
         return self._daq.raw_module.finished()

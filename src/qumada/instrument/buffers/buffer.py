@@ -251,8 +251,7 @@ class Buffer(ABC):
 
     @trigger.setter  # type: ignore
     @abstractmethod
-    def trigger(self, parameter: Parameter | None) -> None:
-        ...
+    def trigger(self, parameter: Parameter | None) -> None: ...
 
     @property
     @abstractmethod
@@ -265,8 +264,7 @@ class Buffer(ABC):
 
     @num_points.setter
     @abstractmethod
-    def num_points(self) -> None:
-        ...
+    def num_points(self) -> None: ...
 
     @abstractmethod
     def force_trigger(self) -> None:
