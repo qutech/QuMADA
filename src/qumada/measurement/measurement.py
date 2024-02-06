@@ -105,6 +105,8 @@ class MeasurementScript(ABC):
         "aux_voltage_2",
         "temperature",
         "test_parameter",
+        "demod0_aux_in_1",
+        "demod0_aux_in_2",
     }
 
     def __init__(self):
@@ -268,6 +270,11 @@ class MeasurementScript(ABC):
         self.dynamic_parameters: list[str] = []
         self.dynamic_channels: list[str] = []
         self.dynamic_sweeps: list[str] = []
+        self.compensating_parameters: list[str] = []
+        self.compensating_channels: list[str] = []
+        self.compensating_leverarms: list[float] = []
+        self.compensated_parameters: list[str] = []
+        self.compensating_limits: list[list] = []
         self.groups: dict[dict] = {}
         self.buffers: set = set()  # All buffers of gettable parameters
         self.trigger_ins: set = set()  # All trigger inputs that do not belong to buffers
@@ -287,6 +294,30 @@ class MeasurementScript(ABC):
                     with suppress(KeyError):
                         for condition in self.properties[gate][parameter]["break_conditions"]:
                             self.break_conditions.append({"channel": channel, "break_condition": condition})
+                if self.properties[gate][parameter]["type"].find("comp") >= 0:
+                    self.compensating_parameters.append({"gate": gate, "parameter": parameter})
+                    self.compensating_channels.append(channel)
+                    try:
+                        self.compensating_leverarms.append(self.properties[gate][parameter]["leverarm"])
+                    except KeyError as e:
+                        print(f"No leverarm specified for parameters {self.compensating_parameters[-1]}!")
+                        raise e
+                    try:
+                        compensation_dict = self.properties[gate][parameter]["comp_gate"]
+                        self.compensated_parameters.append({"gate": compensation_dict["terminal"], 
+                                                            "parameter": compensation_dict["parameter"]})
+                    except KeyError as e:
+                        print(f"The terminal to be compensated for with {self.compensating_parameters[-1]} \
+                            is not properly specified! Make sure to define a dictionary with terminal and parameter as keys.")
+                        raise e
+                    try:
+                        limits = self.properties[gate][parameter]["limits"]
+                        self.compensating_limits.append(limits)
+                    except KeyError as e:
+                        print(f"No limits assigned to compensating parameter {self.compensated_parameters[-1]}!")
+                        raise e
+
+
                 elif self.properties[gate][parameter]["type"].find("dynamic") >= 0:
                     self.dynamic_parameters.append({"gate": gate, "parameter": parameter})
                     self.dynamic_channels.append(channel)
@@ -357,6 +388,11 @@ class MeasurementScript(ABC):
                                     delay=self.properties[gate][parameter].setdefault("delay", 0),
                                 )
                             )
+
+                for item in self.compensated_parameters:
+                    if item not in self.dynamic_parameters:
+                        raise Exception(f"{item} is not in dynamic parameters and cannot be compensated!")
+
                 if "group" in self.properties[gate][parameter].keys():
                     group = self.properties[gate][parameter]["group"]
                     if group not in self.groups.keys():
@@ -419,6 +455,7 @@ class MeasurementScript(ABC):
         if not self._lists_created:
             self.generate_lists()
         self.dynamic_sweeps = []
+        self.compensating_sweeps = []
         for gate, parameters in self.gate_parameters.items():
             for parameter, channel in parameters.items():
                 if self.properties[gate][parameter]["type"].find("static") >= 0:
@@ -499,6 +536,32 @@ class MeasurementScript(ABC):
                                     delay=self.properties[gate][parameter].setdefault("delay", 0),
                                 )
                             )
+                    # Generating sweeps for sensor compensation
+                    try:
+                        i = self.compensated_parameters.index({"gate": gate, "parameter": parameter})
+                        comped_param = self.compensated_parameters[i]
+                        if self.compensated_parameters.count(comped_param) > 1:
+                            raise Exception(f"{comped_param} is compensated by multiple other gates. This is currently not supported!")
+                        leverarm = self.compensating_leverarms[i]
+                        compensating_param = self.compensating_parameters[i]
+                        if self.compensating_parameters.count(compensating_param) > 1:
+                            raise Exception(f"{compensating_param} is compensating by multiple other gates. This is currently not supported!")
+                        set_value = self.properties[compensating_param["gate"]][compensating_param["parameter"]]["value"]
+                        self.compensating_sweeps.append(
+                            CustomSweep(
+                                self.compensating_channels[i],
+                                set_value + leverarm*(self.dynamic_sweeps[-1].get_setpoints() - self.dynamic_sweeps[-1].get_setpoints()[0]),
+                                delay=self.properties[gate][parameter].setdefault("delay", 0)
+                            )
+                        )
+                        if self.properties[gate][parameter].get("_is_triggered", False) and self.buffered:
+                            self.properties[compensating_param["gate"]][compensating_param["parameter"]]["_is_triggered"] = True
+                        if min(self.compensating_sweeps[-1].get_setpoints()) < min(self.compensating_limits) or max(
+                            self.compensating_sweeps[-1].get_setpoints()) < max(self.compensating_limits):
+                            raise Exception(f"Value for compensating gate {compensating_param} exceeds limits!")
+                    except ValueError:
+                        pass
+
                     # Handle different possibilities for starting points
                     if dyn_ramp_to_val or channel in inactive_dyn_channels:
                         try:
