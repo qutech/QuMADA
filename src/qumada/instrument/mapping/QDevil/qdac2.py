@@ -19,13 +19,14 @@
 # - Daniel Grothe
 # - Till Huckeman
 
-
+import logging
 from qcodes.parameters import Parameter
 from qcodes_contrib_drivers.drivers.QDevil.QDAC2 import QDac2
 
 from qumada.instrument.mapping import QDAC2_MAPPING
 from qumada.instrument.mapping.base import InstrumentMapping
 
+logger = logging.getLogger(__name__)
 
 class QDac2Mapping(InstrumentMapping):
     def __init__(self):
@@ -46,6 +47,9 @@ class QDac2Mapping(InstrumentMapping):
         wait_time=ramp_time/points
 
         assert len(parameters) == len(end_values)
+        for parameter in parameters:
+            assert parameter._short_name == "dc_constant_V"
+        
         if start_values is not None:
             assert len(parameters) == len(start_values)
 
@@ -57,17 +61,15 @@ class QDac2Mapping(InstrumentMapping):
         if len(instruments) > 1:
             raise Exception("Parameters are from more than one instrument. This would lead to non synchronized ramps.")
 
-        instrument: QDac2 = instruments.pop()
-        assert isinstance(instrument, QDac2)
+        qdac: QDac2 = instruments.pop()
+        assert isinstance(qdac, QDac2)
 
         if not start_values:
             start_values = [param.dc_constant_V() for param in parameters]
-        if sync_trigger is not None:
-            # parameters[0]._instrument.sync(sync_trigger)
-            pass
-
-        for channel, start, stop in zip(parameters, start_values, end_values):
-            channel.dc_sweep(
+        
+        channels = [param._instrument for param in parameters]
+        for channel, start, stop in zip(channels, start_values, end_values):
+            dc_sweep = channel.dc_sweep(
                         start_V=start,
                         stop_V=stop, 
                         points=points,
@@ -77,14 +79,24 @@ class QDac2Mapping(InstrumentMapping):
             # The sweep direction is always from the lower to the large value if
             # backwards==False and the other way round if it is true.
             # Once this is fixed, remove the backwards argument from function call!
-        instrument.start_all()
+
+        if sync_trigger is not None:
+            if sync_trigger in range(1, 6):
+                trigger = dc_sweep.start_marker()
+                qdac.external_triggers[sync_trigger-1].width_s(1e-3)
+                qdac.external_triggers[sync_trigger-1].polarity('norm')
+                qdac.external_triggers[sync_trigger-1].source_from_trigger(trigger)
+            else:
+                logger.warning(f"{sync_trigger} is no valid sync trigger for QDac II. Choose an integer between 1 and 5!")
+
+        qdac.start_all()
         
-        # parameters[0]._instrument.sync(0)
+        
     def pulse(
         self,
         parameters: list[Parameter],
         *,
-        setpoints: list[float],
+        setpoints: list[list[float]],
         delay: float,
         sync_trigger=None,
         **kwargs,
@@ -93,24 +105,30 @@ class QDac2Mapping(InstrumentMapping):
         assert len(parameters) == len(setpoints)
         for points in setpoints:
             assert len(points) == len(setpoints[0])
+            for parameter in parameters:
+                assert parameter._short_name == "dc_constant_V"
         instruments = {parameter.root_instrument for parameter in parameters}
         if len(instruments) > 1:
             raise Exception("Parameters are from more than one instrument. \
                 This would lead to non synchronized ramps.")
         qdac: QDac2 = instruments.pop()
         assert isinstance(qdac, QDac2)
-
-        for param, points in zip(parameters, setpoints):
-            param.dc_list(
+        channels = [param._instrument for param in parameters]
+        for channel, points in zip(channels, setpoints):
+            dc_list = channel.dc_list(
                 voltages = points,
                 dwell_s = delay,
             )
+
+        if sync_trigger is not None:
+            if sync_trigger in range(1, 6):
+                trigger = dc_list.start_marker()
+                qdac.external_triggers[sync_trigger-1].width_s(1e-3)
+                qdac.external_triggers[sync_trigger-1].polarity('norm')
+                qdac.external_triggers[sync_trigger-1].source_from_trigger(trigger)
+            else:
+                logger.warning(f"{sync_trigger} is no valid sync trigger for QDac II. Choose an integer between 1 and 5!")
         qdac.start_all()
-
-
-
-
-
 
     def setup_trigger_in():
         raise Exception("QDac2 does not have a trigger input \
