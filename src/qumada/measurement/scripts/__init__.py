@@ -38,6 +38,8 @@ except ModuleNotFoundError:
     # Only relevant if you want to use spectrometer.
     # Requires access to Bluhm Group GitLab
     pass
+except ImportError:
+    pass
 
 __all__ = [
     "Generic_1D_Sweep",

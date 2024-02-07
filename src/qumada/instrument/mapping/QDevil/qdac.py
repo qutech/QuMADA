@@ -49,7 +49,7 @@ class QDacMapping(InstrumentMapping):
             raise Exception("Maximum length of rampable parameters is 8.")
 
         # check, if all parameters are from the same instrument
-        instruments = [parameter.root_instrument for parameter in parameters]
+        instruments = {parameter.root_instrument for parameter in parameters}
         if len(instruments) > 1:
             raise Exception("Parameters are from more than one instrument. This would lead to non synchronized ramps.")
 
