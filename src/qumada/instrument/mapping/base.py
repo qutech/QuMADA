@@ -68,6 +68,16 @@ class InstrumentMapping(ABC):
     ) -> None:
         """Wrapper to ramp the provided parameters"""
 
+    def pulse(
+        self,
+        parameters: list[Parameter],
+        *,
+        setpoints: list[float],
+        delay: float,
+        **kwargs,
+    ) -> None:
+        """Wrapper to apply pulse of arbitrary values"""
+
     @abstractmethod
     def setup_trigger_in(self, trigger_settings: dict) -> None:
         """Setup the trigger based on the buffer_settings"""
@@ -168,6 +178,10 @@ def add_mapping_to_instrument(
     if isinstance(mapping, InstrumentMapping):
         helper_mapping = mapping.mapping
         instrument._qumada_ramp = mapping.ramp
+        try:
+            instrument._qumada_pulse = mapping.pulse
+        except TypeError:
+            pass
         instrument._is_triggerable = mapping._is_triggerable
         instrument._qumada_mapping = mapping
         try:
