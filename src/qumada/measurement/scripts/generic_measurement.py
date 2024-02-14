@@ -100,6 +100,7 @@ class Generic_1D_Sweep(MeasurementScript):
                     **dond_kwargs,
                 )
             )
+        self.clean_up()
         return data
 
 
@@ -152,6 +153,7 @@ class Generic_nD_Sweep(MeasurementScript):
             use_threads=True,
             **dond_kwargs,
         )
+        self.clean_up()
         return data
 
 
@@ -181,6 +183,7 @@ class Generic_1D_parallel_asymm_Sweep(MeasurementScript):
             backsweep_after_break=backsweep_after_break,
             **do1d_kwargs,
         )
+        self.clean_up()
         return data
 
 
@@ -210,6 +213,7 @@ class Generic_1D_parallel_Sweep(MeasurementScript):
             backsweep_after_break=backsweep_after_break,
             **do1d_kwargs,
         )
+        self.clean_up()
         return data
 
 
@@ -248,6 +252,7 @@ class Timetrace(MeasurementScript):
                 datasaver.add_result((timer, now), *results)
                 sleep(timestep)
         dataset = datasaver.dataset
+        self.clean_up()
         return dataset
 
 
@@ -396,6 +401,7 @@ class Timetrace_with_sweeps(MeasurementScript):
                     datasaver.add_result((timer, now), *set_values, *results)
                 # sleep(timestep)
         dataset = datasaver.dataset
+        self.clean_up()
         return dataset
 
 
