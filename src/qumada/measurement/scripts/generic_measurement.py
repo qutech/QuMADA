@@ -132,13 +132,14 @@ class Generic_nD_Sweep(MeasurementScript):
         self.initialize()
         wait_time = self.settings.get("wait_time", 5)
         include_gate_name = self.settings.get("include_gate_name", True)
+        naming_helper(self, default_name="nD Sweep")
         if include_gate_name:
             measurement_name = (
-                f"{self.metadata.measurement.name} Gates: {[gate['gate'] for gate in self.dynamic_parameters]}"
+                f"{self.measurement_name} {[gate['gate'] for gate in self.dynamic_parameters]}"
             )
         else:
             try:
-                measurement_name = self.metadata.measurement.name or "measurement"
+                measurement_name = self.measurement_name
             except Exception:
                 measurement_name = "measurement"
 
