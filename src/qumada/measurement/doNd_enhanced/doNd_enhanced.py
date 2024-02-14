@@ -448,7 +448,8 @@ def _interpret_breaks(break_conditions: list, **kwargs) -> Callable[[], bool] | 
             raise NotImplementedError(
                 'Only parameter values can be used for breaks in this version. Use "val" for the break condition.'
             )
-        f = partial(eval_binary_expr, cond["channel"].get(), ops[1], float(ops[2]))
+        def f():
+            return partial(eval_binary_expr, cond["channel"].get(), ops[1], float(ops[2]))()
         conditions.append(f)
     return partial(check_conditions, conditions) if conditions else None
 
@@ -505,14 +506,16 @@ def _dev_interpret_breaks(break_conditions: list, sweep_values: dict, **kwargs) 
         ops = cond["break_condition"].split(" ")
         data = sweep_values[cond["channel"]]
         if ops[0] == "val":
-            f = partial(eval_binary_expr, data[-1], ops[1], float(ops[2]))
+            def f():
+                return partial(eval_binary_expr, data[-1], ops[1], float(ops[2]))()
         elif ops[0] == "grad":
             if int(ops[1]) >= len(data):
                 f = return_false
             elif float(ops[1]) < len(data):
                 if data[len(data) - 1] != 0:
                     dx = (data[len(data) - 1] - data[len(data) - 1 - int(ops[1])]) / data[len(data) - 1]
-                    f = partial(eval_binary_expr, dx, ops[2], float(ops[3]))
+                    def f():
+                        return partial(eval_binary_expr, dx, ops[2], float(ops[3]))()
                 else:
                     f = return_false
         else:
