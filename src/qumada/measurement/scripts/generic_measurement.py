@@ -320,7 +320,7 @@ class Timetrace_buffered(MeasurementScript):
                     ],
                 )
                 parameter_value = self.properties[parameter["gate"]][parameter["parameter"]]["value"]
-                static_gettables.append((channel, [parameter_value for _ in range(self.buffered_num_points)]))
+                static_gettables.append((channel, [parameter_value for _ in range(int(self.buffered_num_points))]))
         for channel in del_channels:
             self.gettable_channels.remove(channel)
         for param in del_params:
@@ -455,7 +455,7 @@ class Timetrace_with_Sweeps_buffered(MeasurementScript):
             elif channel in self.static_gettable_channels:
                 meas.register_parameter(channel, setpoints=[timer, dyn_channel])
                 parameter_value = self.properties[parameter["gate"]][parameter["parameter"]]["value"]
-                static_gettables.append((channel, [parameter_value for _ in range(self.buffered_num_points)]))
+                static_gettables.append((channel, [parameter_value for _ in range(int(self.buffered_num_points))]))
         start = time()
         with meas.run() as datasaver:
             try:
@@ -589,7 +589,7 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                 elif channel in self.static_gettable_channels:
                     parameter_value = self.properties[parameter["gate"]][parameter["parameter"]]["value"]
                     parameter_value = channel.get()
-                    static_gettables.append((channel, [parameter_value for _ in range(self.buffered_num_points)]))
+                    static_gettables.append((channel, [parameter_value for _ in range(int(self.buffered_num_points))]))
             for parameter, channel in zip(self.dynamic_parameters, self.dynamic_channels):
                 if channel != dynamic_param:
                     try:
@@ -600,7 +600,7 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                               and cannot be logged!"
                         )
                         break
-                    static_gettables.append((channel, [parameter_value for _ in range(self.buffered_num_points)]))
+                    static_gettables.append((channel, [parameter_value for _ in range(int(self.buffered_num_points))]))
             for param in static_gettables:
                 meas.register_parameter(
                     param[0],
@@ -740,7 +740,7 @@ class Generic_1D_Hysteresis_buffered(MeasurementScript):
                     del_channels.append(channel)
                     del_params.append(parameter)
                     parameter_value = self.properties[parameter["gate"]][parameter["parameter"]]["value"]
-                    static_gettables.append((channel, [parameter_value for _ in range(self.buffered_num_points)]))
+                    static_gettables.append((channel, [parameter_value for _ in range(int(self.buffered_num_points))]))
             for parameter, channel in zip(self.dynamic_parameters, self.dynamic_channels):
                 if channel != dynamic_param:
                     try:
@@ -751,7 +751,7 @@ class Generic_1D_Hysteresis_buffered(MeasurementScript):
                               and cannot be logged!"
                         )
                         break
-                    static_gettables.append((channel, [parameter_value for _ in range(self.buffered_num_points)]))
+                    static_gettables.append((channel, [parameter_value for _ in range(int(self.buffered_num_points))]))
             for param in static_gettables:
                 meas.register_parameter(
                     param[0],
@@ -931,7 +931,7 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
                     ],
                 )
                 parameter_value = self.properties[parameter["gate"]][parameter["parameter"]]["value"]
-                static_gettables.append((channel, [parameter_value for _ in range(self.buffered_num_points)]))
+                static_gettables.append((channel, [parameter_value for _ in range(int(self.buffered_num_points))]))
         for channel in del_channels:
             self.gettable_channels.remove(channel)
         for param in del_params:
