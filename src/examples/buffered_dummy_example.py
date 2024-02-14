@@ -28,6 +28,7 @@
 # trigger event for triggering.
 import threading
 
+import numpy as np
 import yaml
 from qcodes.dataset import (
     Measurement,
@@ -41,8 +42,11 @@ from qcodes.station import Station
 from qumada.instrument.buffered_instruments import BufferedDummyDMM as DummyDmm
 from qumada.instrument.buffers.buffer import map_buffers
 from qumada.instrument.custom_drivers.Dummies.dummy_dac import DummyDac
-from qumada.instrument.mapping import DUMMY_DMM_MAPPING, add_mapping_to_instrument
-from qumada.instrument.mapping import map_terminals_gui
+from qumada.instrument.mapping import (
+    DUMMY_DMM_MAPPING,
+    add_mapping_to_instrument,
+    map_terminals_gui,
+)
 from qumada.instrument.mapping.Dummies.DummyDac import DummyDacMapping
 from qumada.measurement.scripts import (
     Generic_1D_parallel_asymm_Sweep,
@@ -56,8 +60,8 @@ from qumada.utils.generate_sweeps import generate_sweep, replace_parameter_setti
 from qumada.utils.GUI import open_web_gui
 from qumada.utils.load_from_sqlite_db import load_db
 from qumada.utils.ramp_parameter import *
-import numpy as np
-#%%
+
+# %%
 trigger = threading.Event()
 
 # Setup qcodes station
@@ -91,23 +95,12 @@ buffer_settings = {
 
 # %% Measurement Setup
 parameters = {
-    "dmm": {"voltage": {"type": "gettable"},
-            "current": {"type": "gettable"},
-            },
-    "dac": {
-        "voltage": {
-            "type": "dynamic",
-            "setpoints": np.linspace(0, np.pi, 100),
-            "value": 0
-        }
+    "dmm": {
+        "voltage": {"type": "gettable"},
+        "current": {"type": "gettable"},
     },
-    "dac2": {
-        "voltage": {
-            "type": "dynamic",
-            "setpoints": np.linspace(0, np.pi, 100),
-            "value": 0
-        }
-    },
+    "dac": {"voltage": {"type": "dynamic", "setpoints": np.linspace(0, np.pi, 100), "value": 0}},
+    "dac2": {"voltage": {"type": "dynamic", "setpoints": np.linspace(0, np.pi, 100), "value": 0}},
 }
 # %%
 script = Generic_1D_Sweep_buffered()
