@@ -29,7 +29,7 @@ from .base import (
     map_gates_to_instruments,
 )
 from .mapping_gui import map_terminals_gui
-
+import os
 
 def _build_path(subpath: str) -> str:
     """
@@ -41,7 +41,8 @@ def _build_path(subpath: str) -> str:
     Returns:
         str: Path to the JSON file.
     """
-    return __file__.replace("__init__.py", subpath)
+    file = os.path.normpath(__file__.replace("__init__.py", ""))
+    return os.path.join(file, os.path.normpath(subpath))
 
 
 DECADAC_MAPPING = _build_path("Harvard/Decadac.json")
