@@ -134,9 +134,7 @@ class Generic_nD_Sweep(MeasurementScript):
         include_gate_name = self.settings.get("include_gate_name", True)
         naming_helper(self, default_name="nD Sweep")
         if include_gate_name:
-            measurement_name = (
-                f"{self.measurement_name} {[gate['gate'] for gate in self.dynamic_parameters]}"
-            )
+            measurement_name = f"{self.measurement_name} {[gate['gate'] for gate in self.dynamic_parameters]}"
         else:
             try:
                 measurement_name = self.measurement_name
