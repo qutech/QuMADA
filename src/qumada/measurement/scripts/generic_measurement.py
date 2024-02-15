@@ -466,7 +466,7 @@ class Timetrace_with_Sweeps_buffered(MeasurementScript):
                     dyn_channel.root_instrument._qtools_ramp(
                         [dyn_channel],
                         end_values=[self.dynamic_sweeps[0].get_setpoints()[-1]],
-                        ramp_time=self.buffer_settings["duration"],
+                        ramp_time=self._burst_duration,
                         sync_trigger=sync_trigger,
                     )
                 except AttributeError as ex:
@@ -620,7 +620,7 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                     dynamic_param.root_instrument._qumada_ramp(
                         [dynamic_param],
                         end_values=[dynamic_sweep.get_setpoints()[-1]],
-                        ramp_time=self.buffer_settings["duration"],
+                        ramp_time=self._burst_duration,
                         sync_trigger=sync_trigger,
                     )
                 except AttributeError as ex:
@@ -783,7 +783,7 @@ class Generic_1D_Hysteresis_buffered(MeasurementScript):
                             [dynamic_param],
                             start_values=None,
                             end_values=[end_value],
-                            ramp_time=self.buffer_settings["duration"],
+                            ramp_time=self._burst_duration,
                             sync_trigger=sync_trigger,
                         )
                     except AttributeError as ex:
@@ -956,7 +956,7 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
                     fast_param.root_instrument._qumada_ramp(
                         [fast_param],
                         end_values=[fast_sweep.get_setpoints()[-1]],
-                        ramp_time=self.buffer_settings["duration"],
+                        ramp_time=self._burst_duration,
                         sync_trigger=sync_trigger,
                     )
                 except AttributeError as ex:
@@ -1048,7 +1048,7 @@ class Generic_Pulsed_Measurement(MeasurementScript):
         sync_trigger = self.settings.get("sync_trigger", None)
         reset_time = self.settings.get("reset_time", 0)
         datasets = []
-
+        timer = ElapsedTimeParameter("time")
         self.generate_lists()
         self.measurement_name = naming_helper(self, default_name="nD Sweep")
         if include_gate_name:
@@ -1061,6 +1061,7 @@ class Generic_Pulsed_Measurement(MeasurementScript):
             self.properties[parameter["gate"]][parameter["parameter"]]["_is_triggered"] = True
         for dynamic_param in self.dynamic_channels:
             meas.register_parameter(dynamic_param)
+        meas.register_parameter(timer)
         # -------------------
         static_gettables = []
         del_channels = []
@@ -1070,6 +1071,7 @@ class Generic_Pulsed_Measurement(MeasurementScript):
                 meas.register_parameter(
                     channel,
                     setpoints=[
+                        timer,
                         self.dynamic_channels,
                     ]
                 )
@@ -1079,6 +1081,7 @@ class Generic_Pulsed_Measurement(MeasurementScript):
                 meas.register_parameter(
                     channel,
                     setpoints=[
+                        timer,
                         self.dynamic_channels,
                     ],
                 )
@@ -1092,6 +1095,7 @@ class Generic_Pulsed_Measurement(MeasurementScript):
 
         self.initialize()
         instruments = set([param.root_instrument for param in self.dynamic_channels])
+        time_setpoints = np.linspace(0, self._burst_duration, self.buffered_num_points)
         setpoints = [sweep.get_setpoints() for sweep in self.dynamic_sweeps]
         try:
             trigger_reset()
@@ -1105,7 +1109,7 @@ class Generic_Pulsed_Measurement(MeasurementScript):
                     instr._qumada_pulse(
                         parameters = self.dynamic_channels
                         setpoints =  setpoints,
-                        delay = self.buffer_settings["duration"]/self.buffer_settings["num_points"],
+                        delay = self._burst_duration/self.buffered_num_points,
                         sync_trigger = sync_trigger,
 
                     )
@@ -1150,7 +1154,8 @@ class Generic_Pulsed_Measurement(MeasurementScript):
 
             results = self.readout_buffers()
             datasaver.add_result(
-                *(map(self.dynamic_channels, setpoints)),
+                (timer, time_setpoints),
+                *(zip(self.dynamic_channels, setpoints)),
                 *results,
                 *static_gettables,
             )
