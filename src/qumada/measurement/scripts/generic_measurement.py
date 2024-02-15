@@ -1009,3 +1009,151 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
         datasets.append(datasaver.dataset)
         self.clean_up()
         return datasets
+
+class Generic_Pulsed_Measurement(MeasurementScript):
+    """
+    Measurement script for buffered measurements with abritary setpoints.
+    Trigger Types:
+            "software": Sends a software command to each buffer and dynamic parameters
+                        in order to start data acquisition and ramping. Timing
+                        might be off slightly
+            "hardware": Expects a trigger command for each setpoint. Can be used
+                        with a preconfigured hardware trigger (Todo), a method,
+                        that starts a manually adjusted hardware trigger
+                        (has to be passed as trigger_start() method to
+                         measurement script) or a manual trigger.
+            "manual"  : The trigger setup is done by the user. The measurent script will
+                        just start the first ramp. Usefull for synchronized trigger outputs
+                        as in the QDac.
+    trigger_start: A callable that triggers the trigger (called to start the measurement)
+                    or the keyword "manual" when triggering is done by user. Defauls is manual.
+    trigger_reset (optional): Callable to reset the trigger. Default is NONE.
+    include_gate_name (optional): Appends name of ramped gates to measurement name. Default is TRUE.
+    reset_time: Time for ramping fast param back to the start value.
+    TODO: Add Time!
+    """
+
+    def run(self):
+        self.buffered = True
+        TRIGGER_TYPES = ["software", "hardware", "manual"]
+        trigger_start = self.settings.get("trigger_start", "manual")  # TODO: this should be set elsewhere
+        trigger_reset = self.settings.get("trigger_reset", None)
+        trigger_type = _validate_mapping(
+            self.settings.get("trigger_type"),
+            TRIGGER_TYPES,
+            default="software",
+            default_key_error="software",
+        )
+        include_gate_name = self.settings.get("include_gate_name", True)
+        sync_trigger = self.settings.get("sync_trigger", None)
+        reset_time = self.settings.get("reset_time", 0)
+        datasets = []
+
+        self.generate_lists()
+        self.measurement_name = naming_helper(self, default_name="nD Sweep")
+        if include_gate_name:
+            gate_names = [gate["gate"] for gate in self.dynamic_parameters]
+            self.measurement_name += f" {gate_names}"
+
+        meas = Measurement(name=self.measurement_name)
+
+        for parameter in self.dynamic_channels:
+            self.properties[parameter["gate"]][parameter["parameter"]]["_is_triggered"] = True
+        for dynamic_param in self.dynamic_channels:
+            meas.register_parameter(dynamic_param)
+        # -------------------
+        static_gettables = []
+        del_channels = []
+        del_params = []
+        for parameter, channel in zip(self.gettable_parameters, self.gettable_channels):
+            if is_bufferable(channel):
+                meas.register_parameter(
+                    channel,
+                    setpoints=[
+                        self.dynamic_channels,
+                    ]
+                )
+            elif channel in self.static_channels:
+                del_channels.append(channel)
+                del_params.append(parameter)
+                meas.register_parameter(
+                    channel,
+                    setpoints=[
+                        self.dynamic_channels,
+                    ],
+                )
+                parameter_value = self.properties[parameter["gate"]][parameter["parameter"]]["value"]
+                static_gettables.append((channel, [parameter_value for _ in range(self.buffered_num_points)]))
+        for channel in del_channels:
+            self.gettable_channels.remove(channel)
+        for param in del_params:
+            self.gettable_parameters.remove(param)
+        # --------------------------
+
+        self.initialize()
+        instruments = set([param.root_instrument for param in self.dynamic_channels])
+        setpoints = [sweep.get_setpoints() for sweep in self.dynamic_sweeps]
+        try:
+            trigger_reset()
+        except TypeError:
+            logger.info("No method to reset the trigger defined.")
+        with meas.run() as datasaver:
+            results = []
+            self.ready_buffers()
+            for instr in instruments:
+                try:
+                    instr._qumada_pulse(
+                        parameters = self.dynamic_channels
+                        setpoints =  setpoints,
+                        delay = self.buffer_settings["duration"]/self.buffer_settings["num_points"],
+                        sync_trigger = sync_trigger,
+
+                    )
+                except AttributeError as ex:
+                    logger.error(
+                        f"Exception: {instr} probably does not have a \
+                            a qumada_pulse method. Buffered measurements without \
+                            ramp method are no longer supported. \
+                            Use the unbuffered script!"
+                    )
+                    raise ex
+
+            if trigger_type == "manual":
+                logger.warning("You are using manual triggering. If you want to pulse parameters on multiple"
+                            "instruments this can lead to delays and bad timing!")
+
+            if trigger_type == "hardware":
+                try:
+                    trigger_start()
+                except NameError as ex:
+                    print("Please set a trigger or define a trigger_start method")
+                    raise ex
+
+            elif trigger_type == "software":
+                for buffer in self.buffers:
+                    buffer.force_trigger()
+                logger.warning(
+                    "You are using software trigger, which \
+                    can lead to significant delays between \
+                    measurement instruments! Only recommended\
+                    for debugging."
+                )
+
+            while not all(buffer.is_finished() for buffer in list(self.buffers)):
+                sleep(0.1)
+            try:
+                trigger_reset()
+            except TypeError:
+                logger.info(
+                    "No method to reset the trigger defined."
+                )
+
+            results = self.readout_buffers()
+            datasaver.add_result(
+                *(map(self.dynamic_channels, setpoints)),
+                *results,
+                *static_gettables,
+            )
+        datasets.append(datasaver.dataset)
+        self.clean_up()
+        return datasets
