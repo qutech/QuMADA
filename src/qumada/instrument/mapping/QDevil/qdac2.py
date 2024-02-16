@@ -90,6 +90,7 @@ class QDac2Mapping(InstrumentMapping):
                 logger.warning(f"{sync_trigger} is no valid sync trigger for QDac II. Choose an integer between 1 and 5!")
 
         qdac.start_all()
+        qdac.free_all_triggers()
         
         
     def pulse(
@@ -129,6 +130,7 @@ class QDac2Mapping(InstrumentMapping):
             else:
                 logger.warning(f"{sync_trigger} is no valid sync trigger for QDac II. Choose an integer between 1 and 5!")
         qdac.start_all()
+        qdac.free_all_triggers()
 
     def setup_trigger_in():
         raise Exception("QDac2 does not have a trigger input \
