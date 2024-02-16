@@ -472,11 +472,9 @@ class MeasurementScript(ABC):
                             )
                         except KeyError:
                             self.dynamic_sweeps.append(
-                                LinSweep(
+                                CustomSweep(
                                     channel,
-                                    self.properties[gate][parameter]["setpoints"][0],
-                                    self.properties[gate][parameter]["setpoints"][-1],
-                                    int(self.buffered_num_points),
+                                    self.properties[gate][parameter]["setpoints"],
                                     delay=self.properties[gate][parameter].setdefault("delay", 0),
                                 )
                             )
