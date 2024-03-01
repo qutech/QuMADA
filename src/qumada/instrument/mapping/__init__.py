@@ -53,6 +53,7 @@ QDAC_MAPPING = _build_path("QDevil/QDac.json")
 DUMMY_DMM_MAPPING = _build_path("Dummies/DummyDmm.json")
 DUMMY_DAC_MAPPING = _build_path("Dummies/DummyDac.json")
 DUMMY_CHANNEL_MAPPING = _build_path("Dummies/DummyChannel.json")
+KEYSIGHT_B1500_MAPPING = _build_path("Keysight/KeysightB1500.json")
 
 __all__ = [
     "MappingError",
@@ -68,4 +69,5 @@ __all__ = [
     "QDAC_MAPPING",
     "DUMMY_DMM_MAPPING",
     "DUMMY_DAC_MAPPING",
+    "KEYSIGHT_B1500_MAPPING"
 ]
