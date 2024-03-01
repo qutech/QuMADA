@@ -26,6 +26,7 @@ from qumada.instrument.buffers.buffer import (
 from qumada.instrument.buffers.dummy_dmm_buffer import DummyDMMBuffer
 from qumada.instrument.buffers.mfli_buffer import MFLIBuffer
 from qumada.instrument.buffers.sr830_buffer import SR830Buffer
+from qumada.instrument.buffers.B1500_buffer import B1500Buffer
 
 __all__ = [
     "Buffer",
@@ -35,4 +36,5 @@ __all__ = [
     "MFLIBuffer",
     "SR830Buffer",
     "DummyDMMBuffer",
+    "B1500Buffer"
 ]
