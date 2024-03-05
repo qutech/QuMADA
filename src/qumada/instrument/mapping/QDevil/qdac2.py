@@ -43,8 +43,30 @@ class QDac2Mapping(InstrumentMapping):
         **kwargs,
     ) -> None:
 
+        """
+        Qumada ramp method using the QDacII dc_sweep to ramp smoothly.
+            parameters: List of parameters to be set. 
+                        Elements have to be from the same QDACII
+            start_values:  List of start values for the parameters (optional).
+                        Current value will be used if None.
+            stop_values: List of end values for the parameters.
+            delay:      Time in between to setpoints in s. Has to be >=1e-6 s
+            sync_trigger [int|None]: Ext Trigger output (1-6) to use for sync triggering
+                        Sends a trigger pulse when the ramp is started.
+        kwargs:
+            num_points [int]: Number of datapoints to use, defines smoothness. Default
+                        is 1000/sec.
+            trigger_width [float]: Length of sync trigger pulse in s. Default 1e-3.
+            trigger_polarity [str]: Direction of sync trigger pulse.
+
+        """
+
+        trigger_width = kwargs.get("trigger_width", 1e-3)
+        trigger_polarity = kwargs.get("trigger_polarity", "norm")
         points=kwargs.get("num_points", int(ramp_time*1000))
         wait_time=ramp_time/points
+        if wait_time < 1e-6:
+            raise Exception("QDac 2 wait_time is to small (<1e-6s)")
 
         assert len(parameters) == len(end_values)
         for parameter in parameters:
@@ -83,8 +105,8 @@ class QDac2Mapping(InstrumentMapping):
         if sync_trigger is not None:
             if sync_trigger in range(1, 6):
                 trigger = dc_sweep.start_marker()
-                qdac.external_triggers[sync_trigger-1].width_s(1e-3)
-                qdac.external_triggers[sync_trigger-1].polarity('norm')
+                qdac.external_triggers[sync_trigger-1].width_s(trigger_width)
+                qdac.external_triggers[sync_trigger-1].polarity(trigger_polarity)
                 qdac.external_triggers[sync_trigger-1].source_from_trigger(trigger)
             else:
                 logger.warning(f"{sync_trigger} is no valid sync trigger for QDac II. Choose an integer between 1 and 5!")
@@ -102,6 +124,22 @@ class QDac2Mapping(InstrumentMapping):
         sync_trigger=None,
         **kwargs,
     ) -> None:
+        """
+        Qumada Pulse method using the QDacII dc_list to set arbitrary pulses.
+            parameters: List of parameters to be set. 
+                        Elements have to be from the same QDACII
+            setpoints:  List of setpoint arrays.
+            delay:      Time in between to setpoints in s. Has to be >=1e-6 s
+            sync_trigger [int|None]: Ext Trigger output (1-6) to use for sync triggering
+                        Sends a trigger pulse when the ramp is started.
+        kwargs:
+            trigger_width [float]: Length of sync trigger pulse in s. Default 1e-3.
+            trigger_polarity [str]: Direction of sync trigger pulse.
+
+        """
+
+        trigger_width = kwargs.get("trigger_width", 1e-3)
+        trigger_polarity = kwargs.get("trigger_polarity", "norm")
         # Make sure everything is in order...
         assert len(parameters) == len(setpoints)
         for points in setpoints:
@@ -114,6 +152,8 @@ class QDac2Mapping(InstrumentMapping):
                 This would lead to non synchronized ramps.")
         qdac: QDac2 = instruments.pop()
         assert isinstance(qdac, QDac2)
+        if delay < 1e-6:
+            raise Exception("Delay for QDacII pulse is to small (<1 us)")
         channels = [param._instrument for param in parameters]
         for channel, points in zip(channels, setpoints):
             dc_list = channel.dc_list(
@@ -124,8 +164,8 @@ class QDac2Mapping(InstrumentMapping):
         if sync_trigger is not None:
             if sync_trigger in range(1, 6):
                 trigger = dc_list.start_marker()
-                qdac.external_triggers[sync_trigger-1].width_s(1e-3)
-                qdac.external_triggers[sync_trigger-1].polarity('norm')
+                qdac.external_triggers[sync_trigger-1].width_s(trigger_width)
+                qdac.external_triggers[sync_trigger-1].polarity(trigger_polarity)
                 qdac.external_triggers[sync_trigger-1].source_from_trigger(trigger)
             else:
                 logger.warning(f"{sync_trigger} is no valid sync trigger for QDac II. Choose an integer between 1 and 5!")
