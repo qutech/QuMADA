@@ -24,8 +24,8 @@
 
 import logging
 from time import sleep, time
-import numpy as np
 
+import numpy as np
 from qcodes.dataset import dond
 from qcodes.dataset.measurements import Measurement
 from qcodes.parameters.specialized_parameters import ElapsedTimeParameter
@@ -1011,6 +1011,7 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
         self.clean_up()
         return datasets
 
+
 class Generic_Pulsed_Measurement(MeasurementScript):
     """
     Measurement script for buffered measurements with abritary setpoints.
@@ -1061,8 +1062,12 @@ class Generic_Pulsed_Measurement(MeasurementScript):
         for parameter in self.dynamic_parameters:
             self.properties[parameter["gate"]][parameter["parameter"]]["_is_triggered"] = True
         for dynamic_param in self.dynamic_channels:
-            meas.register_parameter(dynamic_param,
-                                    setpoints=[timer,])
+            meas.register_parameter(
+                dynamic_param,
+                setpoints=[
+                    timer,
+                ],
+            )
 
         # -------------------
         static_gettables = []
@@ -1074,7 +1079,7 @@ class Generic_Pulsed_Measurement(MeasurementScript):
                     channel,
                     setpoints=[
                         timer,
-                    ]
+                    ],
                 )
             elif channel in self.static_channels:
                 del_channels.append(channel)
@@ -1094,7 +1099,7 @@ class Generic_Pulsed_Measurement(MeasurementScript):
         # --------------------------
 
         self.initialize()
-        instruments = set([param.root_instrument for param in self.dynamic_channels])
+        instruments = {param.root_instrument for param in self.dynamic_channels}
         time_setpoints = np.linspace(0, self._burst_duration, int(self.buffered_num_points))
         setpoints = [sweep.get_setpoints() for sweep in self.dynamic_sweeps]
         try:
@@ -1107,11 +1112,10 @@ class Generic_Pulsed_Measurement(MeasurementScript):
             for instr in instruments:
                 try:
                     instr._qumada_pulse(
-                        parameters = self.dynamic_channels,
-                        setpoints =  setpoints,
-                        delay = self._burst_duration/self.buffered_num_points,
-                        sync_trigger = sync_trigger,
-
+                        parameters=self.dynamic_channels,
+                        setpoints=setpoints,
+                        delay=self._burst_duration / self.buffered_num_points,
+                        sync_trigger=sync_trigger,
                     )
                 except AttributeError as ex:
                     logger.error(
@@ -1123,8 +1127,10 @@ class Generic_Pulsed_Measurement(MeasurementScript):
                     raise ex
 
             if trigger_type == "manual":
-                logger.warning("You are using manual triggering. If you want to pulse parameters on multiple"
-                            "instruments this can lead to delays and bad timing!")
+                logger.warning(
+                    "You are using manual triggering. If you want to pulse parameters on multiple"
+                    "instruments this can lead to delays and bad timing!"
+                )
 
             if trigger_type == "hardware":
                 try:
@@ -1148,12 +1154,10 @@ class Generic_Pulsed_Measurement(MeasurementScript):
             try:
                 trigger_reset()
             except TypeError:
-                logger.info(
-                    "No method to reset the trigger defined."
-                )
+                logger.info("No method to reset the trigger defined.")
 
             results = self.readout_buffers()
-            
+
             datasaver.add_result(
                 (timer, time_setpoints),
                 *(zip(self.dynamic_channels, setpoints)),
