@@ -1048,7 +1048,6 @@ class Generic_Pulsed_Measurement(MeasurementScript):
         )
         include_gate_name = self.settings.get("include_gate_name", True)
         sync_trigger = self.settings.get("sync_trigger", None)
-        reset_time = self.settings.get("reset_time", 0)
         datasets = []
         timer = ElapsedTimeParameter("time")
         self.generate_lists()
