@@ -509,11 +509,9 @@ class MeasurementScript(ABC):
                             )
                         except KeyError:
                             self.dynamic_sweeps.append(
-                                LinSweep(
+                                CustomSweep(
                                     channel,
-                                    self.properties[gate][parameter]["setpoints"][0],
-                                    self.properties[gate][parameter]["setpoints"][-1],
-                                    int(self.buffered_num_points),
+                                    self.properties[gate][parameter]["setpoints"],
                                     delay=self.properties[gate][parameter].setdefault("delay", 0),
                                 )
                             )
@@ -681,6 +679,7 @@ class MeasurementScript(ABC):
         """
         for buffer in self.buffers:
             buffer.unsubscribe(buffer._subscribed_parameters)
+        self.measurement_name = None
         if additional_actions:
             for action in additional_actions:
                 action()

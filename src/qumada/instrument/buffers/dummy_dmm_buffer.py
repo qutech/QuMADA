@@ -142,11 +142,9 @@ class DummyDMMBuffer(Buffer):
     def start(self) -> None:
         self._device.start()
 
-    def stop(self) -> None:
-        ...
+    def stop(self) -> None: ...
 
-    def is_ready(self) -> bool:
-        ...
+    def is_ready(self) -> bool: ...
 
     def is_finished(self) -> bool:
         return self._device.is_finished()
