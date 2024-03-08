@@ -87,7 +87,7 @@ class QDac2Mapping(InstrumentMapping):
         assert isinstance(qdac, QDac2)
 
         if not start_values:
-            start_values = [param.dc_constant_V() for param in parameters]
+            start_values = [param() for param in parameters]
         
         channels = [param._instrument for param in parameters]
         for channel, start, stop in zip(channels, start_values, end_values):
