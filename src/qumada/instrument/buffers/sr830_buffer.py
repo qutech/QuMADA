@@ -183,8 +183,7 @@ class SR830Buffer(Buffer):
     def stop(self) -> None:
         self._device.buffer_pause()
 
-    def is_ready(self) -> bool:
-        ...
+    def is_ready(self) -> bool: ...
 
     def is_finished(self) -> bool:
         if self._device.buffer_npts() >= self.num_points:

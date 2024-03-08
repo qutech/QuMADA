@@ -28,6 +28,7 @@
 # trigger event for triggering.
 import threading
 
+import numpy as np
 import yaml
 from qcodes.dataset import (
     Measurement,
@@ -41,8 +42,11 @@ from qcodes.station import Station
 from qumada.instrument.buffered_instruments import BufferedDummyDMM as DummyDmm
 from qumada.instrument.buffers.buffer import map_buffers
 from qumada.instrument.custom_drivers.Dummies.dummy_dac import DummyDac
-from qumada.instrument.mapping import DUMMY_DMM_MAPPING, add_mapping_to_instrument
-from qumada.instrument.mapping.base import map_gates_to_instruments
+from qumada.instrument.mapping import (
+    DUMMY_DMM_MAPPING,
+    add_mapping_to_instrument,
+    map_terminals_gui,
+)
 from qumada.instrument.mapping.Dummies.DummyDac import DummyDacMapping
 from qumada.measurement.scripts import (
     Generic_1D_parallel_asymm_Sweep,
@@ -54,9 +58,10 @@ from qumada.measurement.scripts import (
 )
 from qumada.utils.generate_sweeps import generate_sweep, replace_parameter_settings
 from qumada.utils.GUI import open_web_gui
-from qumada.utils.load_from_sqlite_db import load_db, pick_measurement
+from qumada.utils.load_from_sqlite_db import load_db
 from qumada.utils.ramp_parameter import *
 
+# %%
 trigger = threading.Event()
 
 # Setup qcodes station
@@ -66,13 +71,16 @@ station = Station()
 # the trigger inputs of real instruments.
 
 dmm = DummyDmm("dmm", trigger_event=trigger)
-add_mapping_to_instrument(dmm, path=DUMMY_DMM_MAPPING)
+add_mapping_to_instrument(dmm, mapping=DUMMY_DMM_MAPPING)
 station.add_component(dmm)
 
 dac = DummyDac("dac", trigger_event=trigger)
 add_mapping_to_instrument(dac, mapping=DummyDacMapping())
 station.add_component(dac)
 
+dac2 = DummyDac("dac2", trigger_event=trigger)
+add_mapping_to_instrument(dac2, mapping=DummyDacMapping())
+station.add_component(dac2)
 # %% Load database for data storage
 load_db()
 # %% Setup measurement
@@ -87,13 +95,12 @@ buffer_settings = {
 
 # %% Measurement Setup
 parameters = {
-    "dmm": {"voltage": {"type": "gettable"}},
-    "dac": {
-        "voltage": {
-            "type": "dynamic",
-            "setpoints": [0, 5],
-        }
+    "dmm": {
+        "voltage": {"type": "gettable"},
+        "current": {"type": "gettable"},
     },
+    "dac": {"voltage": {"type": "dynamic", "setpoints": np.linspace(0, np.pi, 100), "value": 0}},
+    "dac2": {"voltage": {"type": "dynamic", "setpoints": np.linspace(0, np.pi, 100), "value": 0}},
 }
 # %%
 script = Generic_1D_Sweep_buffered()
@@ -106,7 +113,7 @@ script.setup(
     trigger_reset=trigger.clear,
 )
 
-map_gates_to_instruments(station.components, script.gate_parameters)
+map_terminals_gui(station.components, script.gate_parameters)
 map_buffers(station.components, script.properties, script.gate_parameters)
 
 # %% Run measurement

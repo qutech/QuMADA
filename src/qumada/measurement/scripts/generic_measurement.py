@@ -101,6 +101,7 @@ class Generic_1D_Sweep(MeasurementScript):
                     **dond_kwargs,
                 )
             )
+        self.clean_up()
         return data
 
 
@@ -132,13 +133,12 @@ class Generic_nD_Sweep(MeasurementScript):
         self.initialize()
         wait_time = self.settings.get("wait_time", 5)
         include_gate_name = self.settings.get("include_gate_name", True)
+        naming_helper(self, default_name="nD Sweep")
         if include_gate_name:
-            measurement_name = (
-                f"{self.metadata.measurement.name} Gates: {[gate['gate'] for gate in self.dynamic_parameters]}"
-            )
+            measurement_name = f"{self.measurement_name} {[gate['gate'] for gate in self.dynamic_parameters]}"
         else:
             try:
-                measurement_name = self.metadata.measurement.name or "measurement"
+                measurement_name = self.measurement_name
             except Exception:
                 measurement_name = "measurement"
 
@@ -153,6 +153,7 @@ class Generic_nD_Sweep(MeasurementScript):
             use_threads=True,
             **dond_kwargs,
         )
+        self.clean_up()
         return data
 
 
@@ -182,6 +183,7 @@ class Generic_1D_parallel_asymm_Sweep(MeasurementScript):
             backsweep_after_break=backsweep_after_break,
             **do1d_kwargs,
         )
+        self.clean_up()
         return data
 
 
@@ -211,6 +213,7 @@ class Generic_1D_parallel_Sweep(MeasurementScript):
             backsweep_after_break=backsweep_after_break,
             **do1d_kwargs,
         )
+        self.clean_up()
         return data
 
 
@@ -249,6 +252,7 @@ class Timetrace(MeasurementScript):
                 datasaver.add_result((timer, now), *results)
                 sleep(timestep)
         dataset = datasaver.dataset
+        self.clean_up()
         return dataset
 
 
@@ -317,7 +321,7 @@ class Timetrace_buffered(MeasurementScript):
                     ],
                 )
                 parameter_value = self.properties[parameter["gate"]][parameter["parameter"]]["value"]
-                static_gettables.append((channel, [parameter_value for _ in range(self.buffered_num_points)]))
+                static_gettables.append((channel, [parameter_value for _ in range(int(self.buffered_num_points))]))
         for channel in del_channels:
             self.gettable_channels.remove(channel)
         for param in del_params:
@@ -397,6 +401,7 @@ class Timetrace_with_sweeps(MeasurementScript):
                     datasaver.add_result((timer, now), *set_values, *results)
                 # sleep(timestep)
         dataset = datasaver.dataset
+        self.clean_up()
         return dataset
 
 
@@ -451,7 +456,7 @@ class Timetrace_with_Sweeps_buffered(MeasurementScript):
             elif channel in self.static_gettable_channels:
                 meas.register_parameter(channel, setpoints=[timer, dyn_channel])
                 parameter_value = self.properties[parameter["gate"]][parameter["parameter"]]["value"]
-                static_gettables.append((channel, [parameter_value for _ in range(self.buffered_num_points)]))
+                static_gettables.append((channel, [parameter_value for _ in range(int(self.buffered_num_points))]))
         start = time()
         with meas.run() as datasaver:
             try:
@@ -585,7 +590,7 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                 elif channel in self.static_gettable_channels:
                     parameter_value = self.properties[parameter["gate"]][parameter["parameter"]]["value"]
                     parameter_value = channel.get()
-                    static_gettables.append((channel, [parameter_value for _ in range(self.buffered_num_points)]))
+                    static_gettables.append((channel, [parameter_value for _ in range(int(self.buffered_num_points))]))
             for parameter, channel in zip(self.dynamic_parameters, self.dynamic_channels):
                 if channel != dynamic_param:
                     try:
@@ -596,7 +601,7 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                               and cannot be logged!"
                         )
                         break
-                    static_gettables.append((channel, [parameter_value for _ in range(self.buffered_num_points)]))
+                    static_gettables.append((channel, [parameter_value for _ in range(int(self.buffered_num_points))]))
             for param in static_gettables:
                 meas.register_parameter(
                     param[0],
@@ -736,7 +741,7 @@ class Generic_1D_Hysteresis_buffered(MeasurementScript):
                     del_channels.append(channel)
                     del_params.append(parameter)
                     parameter_value = self.properties[parameter["gate"]][parameter["parameter"]]["value"]
-                    static_gettables.append((channel, [parameter_value for _ in range(self.buffered_num_points)]))
+                    static_gettables.append((channel, [parameter_value for _ in range(int(self.buffered_num_points))]))
             for parameter, channel in zip(self.dynamic_parameters, self.dynamic_channels):
                 if channel != dynamic_param:
                     try:
@@ -747,7 +752,7 @@ class Generic_1D_Hysteresis_buffered(MeasurementScript):
                               and cannot be logged!"
                         )
                         break
-                    static_gettables.append((channel, [parameter_value for _ in range(self.buffered_num_points)]))
+                    static_gettables.append((channel, [parameter_value for _ in range(int(self.buffered_num_points))]))
             for param in static_gettables:
                 meas.register_parameter(
                     param[0],
@@ -927,7 +932,7 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
                     ],
                 )
                 parameter_value = self.properties[parameter["gate"]][parameter["parameter"]]["value"]
-                static_gettables.append((channel, [parameter_value for _ in range(self.buffered_num_points)]))
+                static_gettables.append((channel, [parameter_value for _ in range(int(self.buffered_num_points))]))
         for channel in del_channels:
             self.gettable_channels.remove(channel)
         for param in del_params:

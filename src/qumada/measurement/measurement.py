@@ -616,6 +616,7 @@ class MeasurementScript(ABC):
         """
         for buffer in self.buffers:
             buffer.unsubscribe(buffer._subscribed_parameters)
+        self.measurement_name = None
         if additional_actions:
             for action in additional_actions:
                 action()
