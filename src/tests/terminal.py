@@ -34,13 +34,13 @@ class QumadaDevice():
         self.terminals = {}
         self.instrument_parameters = {}
     
-    def add_terminal(self, terminal_name, type: str|None = None):
+    def add_terminal(self, terminal_name: str, type: str|None = None):
         if terminal_name not in self.terminals.keys():
             self.__dict__[terminal_name] = self.terminals[terminal_name] = Terminal(terminal_name, self, type)
         else:
             raise Exception(f"Terminal {terminal_name} already exists. Please remove it first!")
     
-    def remove_terminal(self, terminal_name):
+    def remove_terminal(self, terminal_name: str):
         if terminal_name in self.terminals.keys():
             del self.__dict__[terminal_name]
             del self.terminals[terminal_name]
@@ -198,6 +198,7 @@ class Terminal_Parameter(ABC):
         self.default_value = None
         self.scaling = 1
         self._instrument_parameter = None
+        self.locked = False
 
     def reset(self):
         pass
@@ -208,6 +209,9 @@ class Terminal_Parameter(ABC):
     
     @value.setter
     def value(self, value):
+        if self.locked:
+            raise Exception(f"Parameter {self.name} of Terminal {self._parent.name} is locked and cannot be set!")
+            return
         if self.limits == None:
             if type(value) == float:
                 self._value = self.scaling*value
@@ -242,13 +246,13 @@ class Terminal_Parameter(ABC):
         return self._instrument_parameter
     
     @instrument_parameter.setter
-    def instrument_parameter(self, param):
+    def instrument_parameter(self, param: Parameter):
         if isinstance(param, Parameter) or param == None:
             self._instrument_parameter = param
         else:
             raise TypeError(f"{param} is not a QCoDeS parameter!")
 
-    def ramp(self, value, ramp_rate=0.1, ramp_time=5, setpoint_intervall=0.01):
+    def ramp(self, value, ramp_rate: float=0.1, ramp_time: float=5, setpoint_intervall: float=0.01):
         ramp_or_set_parameter(self.instrument_parameter, value, 
                               ramp_rate=ramp_rate, 
                               ramp_time=ramp_time, 
@@ -282,3 +286,6 @@ class Terminal_Parameter(ABC):
             return self.value
         else:
             self.value=value
+
+class Virtual_Terminal_Parameter(Terminal_Parameter):
+    
