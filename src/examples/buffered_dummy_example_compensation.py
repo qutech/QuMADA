@@ -82,14 +82,14 @@ dac2 = DummyDac("dac2", trigger_event=trigger)
 add_mapping_to_instrument(dac2, mapping=DummyDacMapping())
 station.add_component(dac2)
 # %% Load database for data storage
-load_db()
+load_db(r"C:\Users\till3\Documents\PythonScripts\Test Measurements\Testdb.db")
 # %% Setup measurement
 buffer_settings = {
     # "trigger_threshold": 0.005,
     # "trigger_mode": "digital",
-    "sampling_rate": 10,
-    "duration": 10,
-    "burst_duration": 10,
+    "sampling_rate": 20,
+    "duration": 5,
+    "burst_duration": 5,
     "delay": 0,
 }
 
@@ -101,14 +101,22 @@ parameters = {
     },
     "dac": {"voltage": {"type": "compensating", 
                         "setpoints": np.linspace(0, np.pi, 100), "value": 0,
-                        "comp_gate": {"terminal": "dac2", "parameter": "voltage"},
-                        "leverarm": 0.2,
+                        "compensated_gates": [{"terminal": "dac2", "parameter": "voltage"},
+                                              {"terminal": "dac3", "parameter": "voltage"}],
+                        "leverarms": [0.2, -0.1],
                         "limits": [-3,3],
                         "value": 0.5,
                         },
     },
     "dac2": {"voltage": {"type": "dynamic", "setpoints": np.linspace(0, np.pi, 100), "value": 0}},
-}
+    "dac3": {"voltage": {"type": "dynamic", "setpoints": np.linspace(0, 2, 100), "value": 0}},
+    "dac4": {"voltage": {"type": "compensating",
+                         "compensated_gates": [{"terminal": "dac2", "parameter":"voltage"}],
+                         "leverarms": [0.5],
+                         "limits": [-10, 10],
+                         "value": 1},
+                         },
+                        }
 # %%
 script = Generic_1D_Sweep_buffered()
 script.setup(
