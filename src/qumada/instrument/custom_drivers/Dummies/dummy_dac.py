@@ -60,7 +60,7 @@ class DummyDac(Instrument):
         self.add_function("force_trigger", call_cmd=self._is_triggered.set)
 
     def _run_ramp(self, channel, start, stop, duration, num_points):
-        for setpoint in np.linspace(start, stop, num_points):
+        for setpoint in np.linspace(start, stop, int(num_points)):
             channel.voltage(setpoint)
             sleep(duration / num_points)
 
@@ -104,10 +104,10 @@ class DummyDac(Instrument):
     
     def _run_triggered_ramp_channels(self, channels, start_values, stop_values, duration, num_points):
         setpoints = []
-        for ch, start, stop in zip(channels, start_values, stop_values):
-            setpoints.append(np.linspace(start, stop, num_points))
+        for start, stop in zip(start_values, stop_values):
+            setpoints.append(np.linspace(start, stop, int(num_points)))
         setpoints_inv=[]
-        for i in range(num_points):
+        for i in range(int(num_points)):
             setpoints_inv.append([setpoints[j][i] for j in range(len(channels))])
         _ = self._is_triggered.wait()
         for setpoint in setpoints_inv:
