@@ -575,9 +575,11 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
             self.properties[dynamic_parameter["gate"]][dynamic_parameter["parameter"]]["_is_triggered"] = True
 
             dynamic_param = self.dynamic_sweeps[i].param
+            inactive_channels = [chan for chan in self.dynamic_channels if chan != dynamic_param]
+            self.initialize(inactive_dyn_channels=inactive_channels)
             meas = Measurement(name=self.measurement_name)
             meas.register_parameter(dynamic_param)
-            for c_param in self.compensating_channels:
+            for c_param in self.active_compensating_channels:
                 meas.register_parameter(c_param,
                               setpoints=[
                                   dynamic_param,
@@ -617,8 +619,7 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
             meas.write_period = 0.5
 
             with meas.run() as datasaver:
-                inactive_channels = [chan for chan in self.dynamic_channels if chan != dynamic_param]
-                self.initialize(inactive_dyn_channels=inactive_channels)
+
                 dynamic_sweep = self.dynamic_sweeps[i]
                 try:
                     trigger_reset()
@@ -628,7 +629,7 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                 self.ready_buffers()
                 try:
                     dynamic_param.root_instrument._qumada_ramp(
-                        [dynamic_param, *self.compensating_channels],
+                        [dynamic_param, *self.active_compensating_channels],
                         end_values=[dynamic_sweep.get_setpoints()[-1],
                                     *[sweep.get_setpoints()[-1] for sweep in self.compensating_sweeps]
                                     ],
@@ -670,9 +671,12 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                     logger.info("No method to reset the trigger defined.")
 
                 results = self.readout_buffers()
+                comp_results = []
+                for ch, sw in zip(self.active_compensating_channels, self.compensating_sweeps):
+                    comp_results.append((ch, sw.get_setpoints()))
                 datasaver.add_result(
                     (dynamic_param, dynamic_sweep.get_setpoints()),
-                    (*self.compensating_channels, *[sweep.get_setpoints() for sweep in self.compensating_sweeps]),
+                    *comp_results,
                     *results,
                     *static_gettables,
                 )
