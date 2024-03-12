@@ -1,6 +1,9 @@
 {
     "parameter_names": {
         "IDN": "IDN",
-        "voltage": "voltage"
+        "ch01_voltage": "voltage",
+        "ch02_voltage": "voltage",
+        "ch03_voltage": "voltage",
+        "ch04_voltage": "voltage"
     }
 }
