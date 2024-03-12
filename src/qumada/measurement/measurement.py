@@ -389,10 +389,6 @@ class MeasurementScript(ABC):
                                 )
                             )
 
-                for item in self.compensated_parameters:
-                    if item not in self.dynamic_parameters:
-                        raise Exception(f"{item} is not in dynamic parameters and cannot be compensated!")
-
                 if "group" in self.properties[gate][parameter].keys():
                     group = self.properties[gate][parameter]["group"]
                     if group not in self.groups.keys():
@@ -454,6 +450,9 @@ class MeasurementScript(ABC):
         setpoint_intervall = self.settings.get("setpoint_intervall", 0.1)
         if not self._lists_created:
             self.generate_lists()
+        for item in self.compensated_parameters:
+            if item not in self.dynamic_parameters:
+                raise Exception(f"{item} is not in dynamic parameters and cannot be compensated!")
         self.dynamic_sweeps = []
         self.compensating_sweeps = []
         for gate, parameters in self.gate_parameters.items():
@@ -554,8 +553,8 @@ class MeasurementScript(ABC):
                         )
                         if self.properties[gate][parameter].get("_is_triggered", False) and self.buffered:
                             self.properties[compensating_param["gate"]][compensating_param["parameter"]]["_is_triggered"] = True
-                        if min(self.compensating_sweeps[-1].get_setpoints()) < min(self.compensating_limits) or max(
-                            self.compensating_sweeps[-1].get_setpoints()) < max(self.compensating_limits):
+                        if min(self.compensating_sweeps[-1].get_setpoints()) < min(*self.compensating_limits) or max(
+                            self.compensating_sweeps[-1].get_setpoints()) > max(*self.compensating_limits):
                             raise Exception(f"Value for compensating gate {compensating_param} exceeds limits!")
                     except ValueError:
                         pass
