@@ -439,7 +439,7 @@ Add the keywords
 The leverarm represents the relative leverarm of the two gates, e.g. if you set it to 0.5, 1 V change in the compensated gate will lead to 0.5 V change of the compensating gate. 
 The limits (list with two floats) work as safety measure to avoid unwanted large voltages, an Exception is erased if the measurement would surpass them. 
 The value is set at the starting point of the compensated gate's sweep, e.g. if your compensated gate is swept lineariliy from 0 to 1 V, the value of the compensating gate is set to 0.5 V and the leverarm is 0.5, your compensating gate will be swept 
-from 0.5 to 1.0 V. The formula to calculate the setpoints for the compensating gates is $etpoints_comp_gate = value_comp_gate + leverarm \times (setpoints - setpoints[0])$
+from 0.5 to 1.0 V. The formula to calculate the setpoints for the compensating gates is $etpoints_comp_gate = value_comp_gate - leverarm \times (setpoints - setpoints[0])$
 
 Of course, the compensation has to be included in the measurement scripts. Right now, the initialize method of the script will create a list of sweeps for compensation (script.compensating_sweeps) that can be used in the measurement script.run().
 In the near future, this will be included into the Generic Sweeps.

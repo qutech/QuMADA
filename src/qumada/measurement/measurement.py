@@ -547,7 +547,7 @@ class MeasurementScript(ABC):
                         self.compensating_sweeps.append(
                             CustomSweep(
                                 self.compensating_channels[i],
-                                set_value + leverarm*(self.dynamic_sweeps[-1].get_setpoints() - self.dynamic_sweeps[-1].get_setpoints()[0]),
+                                set_value - leverarm*(self.dynamic_sweeps[-1].get_setpoints() - self.dynamic_sweeps[-1].get_setpoints()[0]),
                                 delay=self.properties[gate][parameter].setdefault("delay", 0)
                             )
                         )
