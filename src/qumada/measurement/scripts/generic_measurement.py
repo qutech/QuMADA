@@ -620,6 +620,9 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                 index = self.compensating_parameters.index(self.active_compensating_parameters[j])
                 active_comping_setpoints = self.compensating_parameters_values[index] + sum(
                         [sweep.get_setpoints() for sweep in self.compensating_sweeps[j]])
+                if min(active_comping_setpoints) < min(self.compensating_limits[index]) or max(
+                    active_comping_setpoints) > max(self.compensating_limits[index]):
+                    raise Exception(f"Setpoints of {self.compensating_parameters[index]} exceed limits!")
                 sweep_delay = self.compensating_sweeps[j][-1]._delay
                 active_comping_sweeps.append(CustomSweep(
                     param=self.active_compensating_channels[j],
