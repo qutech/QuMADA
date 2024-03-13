@@ -916,17 +916,21 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
         meas = Measurement(name=self.measurement_name)
 
         if reverse_param_order:
-            slow_param = self.dynamic_channels[1]
+            slow_param = self.dynamic_parameters[1]
+            slow_channel = self.dynamic_channels[1]
             slow_sweep = self.dynamic_sweeps[1]
-            fast_param = self.dynamic_channels[0]
+            fast_param = self.dynamic_parameters[0]
+            fast_channel = self.dynamic_channels[0]
             fast_sweep = self.dynamic_sweeps[0]
             self.properties[self.dynamic_parameters[0]["gate"]][self.dynamic_parameters[0]["parameter"]][
                 "_is_triggered"
             ] = True
         else:
-            slow_param = self.dynamic_channels[0]
+            slow_param = self.dynamic_parameters[0]
+            slow_channel = self.dynamic_channels[0]
             slow_sweep = self.dynamic_sweeps[0]
-            fast_param = self.dynamic_channels[1]
+            fast_param = self.dynamic_parameters[1]
+            fast_channel = self.dynamic_channels[1]
             fast_sweep = self.dynamic_sweeps[1]
             self.properties[self.dynamic_parameters[1]["gate"]][self.dynamic_parameters[1]["parameter"]][
                 "_is_triggered"
@@ -943,8 +947,8 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
                 meas.register_parameter(
                     channel,
                     setpoints=[
-                        slow_param,
-                        fast_param,
+                        slow_channel,
+                        fast_channel,
                     ],
                 )
             elif channel in self.static_channels:
@@ -953,8 +957,8 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
                 meas.register_parameter(
                     channel,
                     setpoints=[
-                        slow_param,
-                        fast_param,
+                        slow_channel,
+                        fast_channel,
                     ],
                 )
                 parameter_value = self.properties[parameter["gate"]][parameter["parameter"]]["value"]
@@ -964,19 +968,14 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
         for param in del_params:
             self.gettable_parameters.remove(param)
         # --------------------------
+        self.initialize()
         #####################Sensor compensation#####################    
         for c_param in self.active_compensating_channels:
             meas.register_parameter(c_param,
                             setpoints=[
-                                slow_param,
-                                fast_param,
+                                slow_channel,
+                                fast_channel,
                             ])
-            
-        slow_param_index = self.compensating_channels
-        for i in self.compensating_sweeps:
-            compensation_sweep = self.compensating_sweeps
-
-        self.initialize()
         try:
             trigger_reset()
         except TypeError:
@@ -985,20 +984,48 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
             results = []
             slow_setpoints = slow_sweep.get_setpoints()
             for setpoint in slow_setpoints:
-                slow_param.set(setpoint)
+                slow_channel.set(setpoint)
                 if reset_time > 0:
                     ramp_or_set_parameter(
-                        fast_param, fast_sweep.get_setpoints()[0], ramp_rate=None, ramp_time=reset_time
+                        fast_channel, fast_sweep.get_setpoints()[0], ramp_rate=None, ramp_time=reset_time
                     )
                 else:
-                    fast_param.set(fast_sweep.get_setpoints()[0])
+                    fast_channel.set(fast_sweep.get_setpoints()[0])
                 if reset_time < slow_sweep._delay:
                     sleep(slow_sweep._delay - reset_time)
+
+                comping_results = []
+                active_comping_sweeps = []
+                for j in range(len(self.active_compensating_channels)):
+                    index = self.compensating_parameters.index(self.active_compensating_parameters[j])
+                    active_comping_setpoints = np.array([self.compensating_parameters_values[index] for _ in range(len(fast_sweep.get_setpoints()))], dtype=float)
+                    try:
+                        slow_index = self.compensated_parameters[j].index(slow_param)
+                        active_comping_setpoints -= float(self.compensating_leverarms[j][slow_index])*float(setpoint)
+                    except ValueError:
+                        pass
+                    try:
+                        fast_index = self.compensated_parameters[j].index(fast_param)
+                        active_comping_setpoints += self.compensating_sweeps[j][fast_index].get_setpoints()
+                    except ValueError:
+                        pass
+
+                    if min(active_comping_setpoints) < min(self.compensating_limits[index]) or max(
+                        active_comping_setpoints) > max(self.compensating_limits[index]):
+                        raise Exception(f"Setpoints of {self.compensating_parameters[index]} exceed limits!")
+                    sweep_delay = self.compensating_sweeps[j][-1]._delay
+                    active_comping_sweeps.append(CustomSweep(
+                        param=self.active_compensating_channels[j],
+                        setpoints=active_comping_setpoints,
+                        delay=sweep_delay
+                    ))
+                    comping_results.append((self.active_compensating_channels[j], active_comping_setpoints))
+
                 self.ready_buffers()
                 try:
-                    fast_param.root_instrument._qumada_ramp(
-                        [fast_param],
-                        end_values=[fast_sweep.get_setpoints()[-1]],
+                    fast_channel.root_instrument._qumada_ramp(
+                        [fast_channel, *self.active_compensating_channels],
+                        end_values=[fast_sweep.get_setpoints()[-1], *[sweep.get_setpoints()[-1] for sweep in active_comping_sweeps]],
                         ramp_time=self._burst_duration,
                         sync_trigger=sync_trigger,
                     )
@@ -1044,8 +1071,9 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
 
                 results = self.readout_buffers()
                 datasaver.add_result(
-                    (slow_param, setpoint),
-                    (fast_param, fast_sweep.get_setpoints()),
+                    (slow_channel, setpoint),
+                    (fast_channel, fast_sweep.get_setpoints()),
+                    *comping_results,
                     *results,
                     *static_gettables,
                 )
