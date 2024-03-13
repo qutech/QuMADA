@@ -37,7 +37,7 @@ from qumada.measurement.doNd_enhanced.doNd_enhanced import (
     do1d_parallel,
     do1d_parallel_asym,
 )
-from qumada.measurement.measurement import MeasurementScript
+from qumada.measurement.measurement import MeasurementScript, CustomSweep
 from qumada.utils.ramp_parameter import ramp_or_set_parameter
 from qumada.utils.utils import _validate_mapping, naming_helper
 
@@ -615,7 +615,19 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                         dynamic_param,
                     ],
                 )
+            active_comping_sweeps = []
+            for j in range(len(self.active_compensating_channels)):
+                index = self.compensating_parameters.index(self.active_compensating_parameters[j])
+                active_comping_setpoints = self.compensating_parameters_values[index] + sum(
+                        [sweep.get_setpoints() for sweep in self.compensating_sweeps[j]])
+                sweep_delay = self.compensating_sweeps[j][-1]._delay
+                active_comping_sweeps.append(CustomSweep(
+                    param=self.active_compensating_channels[j],
+                    setpoints=active_comping_setpoints,
+                    delay=sweep_delay
+                ))
 
+                
             meas.write_period = 0.5
 
             with meas.run() as datasaver:
@@ -631,7 +643,7 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                     dynamic_param.root_instrument._qumada_ramp(
                         [dynamic_param, *self.active_compensating_channels],
                         end_values=[dynamic_sweep.get_setpoints()[-1],
-                                    *[sweep.get_setpoints()[-1] for sweep in self.compensating_sweeps]
+                                    *[sweep.get_setpoints()[-1] for sweep in active_comping_sweeps]
                                     ],
                         ramp_time=self._burst_duration,
                         sync_trigger=sync_trigger,
@@ -672,7 +684,7 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
 
                 results = self.readout_buffers()
                 comp_results = []
-                for ch, sw in zip(self.active_compensating_channels, self.compensating_sweeps):
+                for ch, sw in zip(self.active_compensating_channels, active_comping_sweeps):
                     comp_results.append((ch, sw.get_setpoints()))
                 datasaver.add_result(
                     (dynamic_param, dynamic_sweep.get_setpoints()),
@@ -949,6 +961,17 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
         for param in del_params:
             self.gettable_parameters.remove(param)
         # --------------------------
+        #####################Sensor compensation#####################    
+        for c_param in self.active_compensating_channels:
+            meas.register_parameter(c_param,
+                            setpoints=[
+                                slow_param,
+                                fast_param,
+                            ])
+            
+        slow_param_index = self.compensating_channels
+        for i in self.compensating_sweeps:
+            compensation_sweep = self.compensating_sweeps
 
         self.initialize()
         try:

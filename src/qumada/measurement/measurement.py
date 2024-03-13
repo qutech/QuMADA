@@ -272,6 +272,7 @@ class MeasurementScript(ABC):
         self.dynamic_channels: list[str] = []
         self.dynamic_sweeps: list[str] = []
         self.compensating_parameters: list[str] = []
+        self.compensating_parameters_values: list[float] = []
         self.compensating_channels: list[str] = []
         self.compensating_leverarms: list[list[float]] = []
         self.compensated_parameters: list[list[str]] = []
@@ -298,6 +299,11 @@ class MeasurementScript(ABC):
                 if self.properties[gate][parameter]["type"].find("comp") >= 0:
                     self.compensating_parameters.append({"gate": gate, "parameter": parameter})
                     self.compensating_channels.append(channel)
+                    try:
+                        self.compensating_parameters_values.append(self.properties[gate][parameter]["value"])
+                    except KeyError as e:
+                        print(f"No value assigned for compensating parameter {self.compensating_parameters[-1]}")
+                        raise e
                     try:
                         leverarms = self.properties[gate][parameter]["leverarms"]
                         assert type(leverarms) == list
@@ -588,23 +594,28 @@ class MeasurementScript(ABC):
                     # Generate sweeps from parameters
         self.active_compensated_channels = []
         self.active_compensating_channels = []
+        self.active_compensating_parameters = []
         inactive_dyn_params = []
         for ch in inactive_dyn_channels:
             inactive_dyn_params.append(self.dynamic_parameters[self.dynamic_channels.index(ch)])
         for gate, parameters in self.gate_parameters.items():
             for parameter, channel in parameters.items():
+                # This iterates over all compensating parameters
                 if self.properties[gate][parameter]["type"].find("comp") >= 0:
                     try:
                         i = self.compensating_parameters.index({"gate": gate, "parameter": parameter})
                         leverarms = self.compensating_leverarms[i]
-                        comped_params = copy.deepcopy(self.compensated_parameters[i])
-                        comped_sweeps = []
-                        comped_leverarms = []
+                        comped_params = copy.deepcopy(self.compensated_parameters[i]) #list of parameters compensated by the current parameter
+                        comped_sweeps = []  # Sweeps that are compensated by current param
+                        comped_leverarms = [] # Leverarms of the current param
+                        comping_sweeps = [] # List to store only the sweeps for the current param
     
                         for comped_param in comped_params.copy():
+                            # Check if the parameter is actually ramped in this part of the measurement
                             if comped_param in inactive_dyn_params:
                                 comped_params.remove(comped_param)
                             else:
+                                # Get only the relevant list entries for the current parameter
                                 comped_index = self.dynamic_parameters.index(comped_param)
                                 comped_sweeps.append(self.dynamic_sweeps[comped_index])
                                 comped_leverarms.append(leverarms[comped_index])
@@ -612,27 +623,34 @@ class MeasurementScript(ABC):
                         # if self.compensated_parameters.count(comped_param) > 1:
                         #     raise Exception(f"{comped_param} is compensated by multiple other gates. This is currently not supported!")
                         compensating_param = self.compensating_parameters[i]
+                        self.active_compensating_parameters.append(compensating_param)
                         # if self.compensating_parameters.count(compensating_param) > 1:
                         #     raise Exception(f"{compensating_param} is compensating by multiple other gates. This is currently not supported!")
-                        set_value = self.properties[compensating_param["gate"]][compensating_param["parameter"]]["value"]
                         if len(comped_params) > 0:
                             self.active_compensating_channels.append(channel)
-                            set_values_array = np.array([float(set_value) for _ in range(len(comped_sweeps[0].get_setpoints()))])
                             for j in range(len(comped_params)):
-                                set_values_array -= float(comped_leverarms[j])*(comped_sweeps[j].get_setpoints() - comped_sweeps[j].get_setpoints()[0])
-                                
-                            self.compensating_sweeps.append(
-                                CustomSweep(
+                                # Here we create lists/sweeps only containing the difference required for compensation.
+                                # Still has to be substracted from the set value in the measurement script as this can depend
+                                # on the measurement script used (e.g. 1D vs 2D sweeps)
+                                comping_setpoints = -1*float(comped_leverarms[j])*(comped_sweeps[j].get_setpoints() - comped_sweeps[j].get_setpoints()[0])
+                                # This creates an inner list of required setpoint differences only for the param that is currently iterated over!
+                                # The final self.compensating_sweeps list will contain list for each compensating parameters with one sweep per
+                                # parameter that is compensated by this compensating parameters.
+                                comping_sweeps.append(CustomSweep(
                                     channel,
-                                    set_values_array,
-                                    delay=self.properties[gate][parameter].setdefault("delay", 0)
+                                    comping_setpoints,
+                                    delay=self.properties[gate][parameter].setdefault("delay", 0))
                                 )
-                            )
-                            if self.properties[gate][parameter].get("_is_triggered", False) and self.buffered:
+                            self.compensating_sweeps.append(comping_sweeps)
+                            if any(
+                                [self.properties[param["gate"]][param["parameter"]].get(
+                                    "_is_triggered", False) for param in comped_params]) and self.buffered:
                                 self.properties[compensating_param["gate"]][compensating_param["parameter"]]["_is_triggered"] = True
-                            if min(self.compensating_sweeps[-1].get_setpoints()) < min(*self.compensating_limits[i]) or max(
-                                self.compensating_sweeps[-1].get_setpoints()) > max(*self.compensating_limits[i]):
-                                raise Exception(f"Value for compensating gate {compensating_param} exceeds limits!")
+                            # TODO: This part has to be moved into the measurement script, as the final setpoints for the comping params
+                            # are now set at the measurement script. A helper method would be nice to have.
+                            # if min(self.compensating_sweeps[-1].get_setpoints()) < min(*self.compensating_limits[i]) or max(
+                            #     self.compensating_sweeps[-1].get_setpoints()) > max(*self.compensating_limits[i]):
+                            #     raise Exception(f"Value for compensating gate {compensating_param} exceeds limits!")
                         else:
                             ramp_or_set_parameter(
                                 channel,
