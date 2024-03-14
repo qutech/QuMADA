@@ -115,6 +115,17 @@ class DummyDac(Instrument):
                 channels[i].voltage(setpoint[i])
             sleep(duration/num_points)
 
+    def _run_triggered_pulse_channels(self, channels, setpoints, duration):
+        setpoints_inv=[]
+        num_points = len(setpoints[0])
+        for i in range(int(len(setpoints[0]))):
+            setpoints_inv.append([setpoints[j][i] for j in range(len(channels))])
+        _ = self._is_triggered.wait()
+        for setpoint in setpoints_inv:
+            for i in range(len(channels)):
+                channels[i].voltage(setpoint[i])
+            sleep(duration/num_points)
+
     def _triggered_ramp(self, channel, start, stop, duration, num_points):
         self.thread = threading.Thread(
             target=self._run_triggered_ramp,
@@ -131,6 +142,16 @@ class DummyDac(Instrument):
             daemon=True,
         )
         self.thread.start()
+
+    def _triggered_pulse_channels(self, channels, setpoints, duration):
+        self.thread = threading.Thread(
+            target=self._run_triggered_pulse_channels,
+            args=(channels, setpoints, duration),
+            daemon=True,
+        )
+        self.thread.start()
+
+    
         
 
 # %%
