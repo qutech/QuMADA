@@ -616,16 +616,17 @@ class MeasurementScript(ABC):
                                 comped_params.remove(comped_param)
                             else:
                                 # Get only the relevant list entries for the current parameter
-                                comped_index = self.dynamic_parameters.index(comped_param)
+                                try:
+                                    comped_index = self.dynamic_parameters.index(comped_param)
+                                except ValueError as e:
+                                    logger.exception("Watch out, there is an Exception incoming!" + 
+                                                     "Did you try to compensate for a not dynamic parameter?")
+                                    raise e
                                 comped_sweeps.append(self.dynamic_sweeps[comped_index])
                                 comped_leverarms.append(leverarms[comped_index])
                                 self.active_compensated_channels.append(self.dynamic_channels[comped_index])
-                        # if self.compensated_parameters.count(comped_param) > 1:
-                        #     raise Exception(f"{comped_param} is compensated by multiple other gates. This is currently not supported!")
                         compensating_param = self.compensating_parameters[i]
                         self.active_compensating_parameters.append(compensating_param)
-                        # if self.compensating_parameters.count(compensating_param) > 1:
-                        #     raise Exception(f"{compensating_param} is compensating by multiple other gates. This is currently not supported!")
                         if len(comped_params) > 0:
                             self.active_compensating_channels.append(channel)
                             for j in range(len(comped_params)):
