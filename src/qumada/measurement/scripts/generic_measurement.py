@@ -1168,9 +1168,21 @@ class Generic_Pulsed_Measurement(MeasurementScript):
         # --------------------------
 
         self.initialize()
+        for c_param in self.active_compensating_channels:
+            meas.register_parameter(c_param,
+                            setpoints=[
+                                timer,
+                            ])
+
         instruments = {param.root_instrument for param in self.dynamic_channels}
         time_setpoints = np.linspace(0, self._burst_duration, int(self.buffered_num_points))
         setpoints = [sweep.get_setpoints() for sweep in self.dynamic_sweeps]
+        compensating_setpoints = []
+        for i in range(len(self.active_compensating_channels)):
+            index = self.compensating_channels.index(self.active_compensating_channels[i])
+            active_setpoints = sum([sweep.get_setpoints() for sweep in self.compensating_sweeps[i]])
+            active_setpoints += float(self.compensating_parameters_values[index])
+            compensating_setpoints.append(active_setpoints)
         try:
             trigger_reset()
         except TypeError:
@@ -1181,8 +1193,8 @@ class Generic_Pulsed_Measurement(MeasurementScript):
             for instr in instruments:
                 try:
                     instr._qumada_pulse(
-                        parameters=self.dynamic_channels,
-                        setpoints=setpoints,
+                        parameters=[*self.dynamic_channels, *self.active_compensating_channels],
+                        setpoints=[*setpoints, *compensating_setpoints],
                         delay=self._burst_duration / self.buffered_num_points,
                         sync_trigger=sync_trigger,
                     )
@@ -1230,6 +1242,7 @@ class Generic_Pulsed_Measurement(MeasurementScript):
             datasaver.add_result(
                 (timer, time_setpoints),
                 *(zip(self.dynamic_channels, setpoints)),
+                *(zip(self.active_compensating_channels, compensating_setpoints)),
                 *results,
                 *static_gettables,
             )
