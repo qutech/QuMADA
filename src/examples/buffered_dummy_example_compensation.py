@@ -54,6 +54,8 @@ from qumada.measurement.scripts import (
     Generic_1D_Sweep,
     Generic_1D_Sweep_buffered,
     Generic_nD_Sweep,
+    Generic_2D_Sweep_buffered,
+    Generic_Pulsed_Measurement,
     Timetrace,
 )
 from qumada.utils.generate_sweeps import generate_sweep, replace_parameter_settings
@@ -82,14 +84,14 @@ dac2 = DummyDac("dac2", trigger_event=trigger)
 add_mapping_to_instrument(dac2, mapping=DummyDacMapping())
 station.add_component(dac2)
 # %% Load database for data storage
-load_db(r"C:\Users\till3\Documents\PythonScripts\Test Measurements\Testdb.db")
+load_db)
 # %% Setup measurement
 buffer_settings = {
     # "trigger_threshold": 0.005,
     # "trigger_mode": "digital",
     "sampling_rate": 20,
-    "duration": 5,
-    "burst_duration": 5,
+    "duration": 10,
+    "burst_duration": 10,
     "delay": 0,
 }
 
@@ -104,21 +106,21 @@ parameters = {
                         "compensated_gates": [{"terminal": "dac2", "parameter": "voltage"},
                                               {"terminal": "dac3", "parameter": "voltage"}],
                         "leverarms": [0.2, -0.1],
-                        "limits": [-3,3],
+                        "limits": [-2, 2],
                         "value": 0.5,
                         },
     },
-    "dac2": {"voltage": {"type": "dynamic", "setpoints": np.linspace(0, np.pi, 100), "value": 0}},
-    "dac3": {"voltage": {"type": "dynamic", "setpoints": np.linspace(0, 2, 100), "value": 0}},
+    "dac2": {"voltage": {"type": "dynamic", "setpoints": np.linspace(0, np.pi, 200), "value": 0}},
+    "dac3": {"voltage": {"type": "dynamic", "setpoints": [*np.linspace(0, 2, 100),*[0.4 for _ in range(100)]]}},
     "dac4": {"voltage": {"type": "compensating",
                          "compensated_gates": [{"terminal": "dac2", "parameter":"voltage"}],
                          "leverarms": [0.5],
-                         "limits": [-10, 10],
+                         "limits": [-1, 1],
                          "value": 1},
                          },
                         }
 # %%
-script = Generic_1D_Sweep_buffered()
+script = Generic_Pulsed_Measurement()
 script.setup(
     parameters,
     metadata=None,
@@ -133,5 +135,6 @@ map_buffers(station.components, script.properties, script.gate_parameters)
 
 # %% Run measurement
 script.run(insert_metadata_into_db=False)
+
 
 # %%
