@@ -1001,7 +1001,8 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
                     active_comping_setpoints = np.array([self.compensating_parameters_values[index] for _ in range(len(fast_sweep.get_setpoints()))], dtype=float)
                     try:
                         slow_index = self.compensated_parameters[j].index(slow_param)
-                        active_comping_setpoints -= float(self.compensating_leverarms[j][slow_index])*float(setpoint)
+                        active_comping_setpoints -= float(self.compensating_leverarms[j][slow_index])*(
+                            float(setpoint)-float(slow_sweep.get_setpoints()[0]))
                     except ValueError:
                         pass
                     try:
@@ -1025,6 +1026,7 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
                 try:
                     fast_channel.root_instrument._qumada_ramp(
                         [fast_channel, *self.active_compensating_channels],
+                        start_values=[fast_sweep.get_setpoints()[0], *[sweep.get_setpoints()[0] for sweep in active_comping_sweeps]],
                         end_values=[fast_sweep.get_setpoints()[-1], *[sweep.get_setpoints()[-1] for sweep in active_comping_sweeps]],
                         ramp_time=self._burst_duration,
                         sync_trigger=sync_trigger,
