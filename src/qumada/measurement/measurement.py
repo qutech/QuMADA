@@ -653,14 +653,13 @@ class MeasurementScript(ABC):
                             # if min(self.compensating_sweeps[-1].get_setpoints()) < min(*self.compensating_limits[i]) or max(
                             #     self.compensating_sweeps[-1].get_setpoints()) > max(*self.compensating_limits[i]):
                             #     raise Exception(f"Value for compensating gate {compensating_param} exceeds limits!")
-                        else:
-                            ramp_or_set_parameter(
-                                channel,
-                                self.properties[gate][parameter]["value"],
-                                ramp_rate=ramp_rate,
-                                ramp_time=ramp_time,
-                                setpoint_intervall=setpoint_intervall,
-                            )
+                        ramp_or_set_parameter(
+                            channel,
+                            self.properties[gate][parameter]["value"],
+                            ramp_rate=ramp_rate,
+                            ramp_time=ramp_time,
+                            setpoint_intervall=setpoint_intervall,
+                        )
                     except ValueError as e:
                         raise e
                         
