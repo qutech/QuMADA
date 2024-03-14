@@ -609,7 +609,7 @@ class MeasurementScript(ABC):
                         comped_sweeps = []  # Sweeps that are compensated by current param
                         comped_leverarms = [] # Leverarms of the current param
                         comping_sweeps = [] # List to store only the sweeps for the current param
-    
+                        k=0
                         for comped_param in comped_params.copy():
                             # Check if the parameter is actually ramped in this part of the measurement
                             if comped_param in inactive_dyn_params:
@@ -623,8 +623,9 @@ class MeasurementScript(ABC):
                                                      "Did you try to compensate for a not dynamic parameter?")
                                     raise e
                                 comped_sweeps.append(self.dynamic_sweeps[comped_index])
-                                comped_leverarms.append(leverarms[comped_index])
+                                comped_leverarms.append(leverarms[k])
                                 self.active_compensated_channels.append(self.dynamic_channels[comped_index])
+                            k+=1
                         compensating_param = self.compensating_parameters[i]
                         self.active_compensating_parameters.append(compensating_param)
                         if len(comped_params) > 0:
