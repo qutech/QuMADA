@@ -1183,6 +1183,8 @@ class Generic_Pulsed_Measurement(MeasurementScript):
             active_setpoints = sum([sweep.get_setpoints() for sweep in self.compensating_sweeps[i]])
             active_setpoints += float(self.compensating_parameters_values[index])
             compensating_setpoints.append(active_setpoints)
+            if min(active_setpoints) < min(self.compensating_limits[index]) or max(active_setpoints) > max(self.compensating_limits[index]):
+                raise Exception(f"Setpoints of compensating gate {self.compensating_parameters[index]} exceed limits!")
         try:
             trigger_reset()
         except TypeError:
