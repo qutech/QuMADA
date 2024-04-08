@@ -634,7 +634,7 @@ class MeasurementScript(ABC):
                                 # Here we create lists/sweeps only containing the difference required for compensation.
                                 # Still has to be substracted from the set value in the measurement script as this can depend
                                 # on the measurement script used (e.g. 1D vs 2D sweeps)
-                                comping_setpoints = -1*float(comped_leverarms[j])*(comped_sweeps[j].get_setpoints() - comped_sweeps[j].get_setpoints()[0])
+                                comping_setpoints = -1*float(comped_leverarms[j])*(np.array(comped_sweeps[j].get_setpoints()) - comped_sweeps[j].get_setpoints()[0])
                                 # This creates an inner list of required setpoint differences only for the param that is currently iterated over!
                                 # The final self.compensating_sweeps list will contain list for each compensating parameters with one sweep per
                                 # parameter that is compensated by this compensating parameters.
