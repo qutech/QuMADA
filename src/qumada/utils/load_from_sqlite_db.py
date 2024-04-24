@@ -29,7 +29,6 @@ from os import path
 
 import numpy as np
 import qcodes as qc
-from qcodes.dataset import initialise_or_create_database_at
 from qcodes.dataset.data_set import DataSet
 from qcodes.dataset.plotting import plot_dataset
 
