@@ -29,9 +29,10 @@ from os import path
 
 import numpy as np
 import qcodes as qc
+from qcodes.dataset import initialise_or_create_database_at
 from qcodes.dataset.data_set import DataSet
 from qcodes.dataset.plotting import plot_dataset
-from qcodes.dataset import initialise_or_create_database_at
+
 from qumada.utils.browsefiles import browsefiles
 
 
@@ -82,7 +83,6 @@ def load_db(filepath: str | None = None) -> None:
         except Exception as e:
             print("Please provide a valid path")
             raise e
-
 
 
 # %%
