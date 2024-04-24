@@ -36,7 +36,7 @@ class QumadaDevice():
     
     def add_terminal(self, terminal_name: str, type: str|None = None):
         if terminal_name not in self.terminals.keys():
-            self.__dict__[terminal_name] = self.terminals[terminal_name] = Terminal(terminal_name, self, type)
+            self.__dict__[terminal_name.replace(" ", "_")] = self.terminals[terminal_name] = Terminal(terminal_name, self, type)
         else:
             raise Exception(f"Terminal {terminal_name} already exists. Please remove it first!")
     
@@ -68,11 +68,27 @@ class QumadaDevice():
             for param in terminal.terminal_parameters.values():
                 param.set_default()
 
-    def load_from_dict(dictionary: dict):
-        pass
+
+    @staticmethod
+    def create_from_dict(data: dict):
+        device = QumadaDevice()
+        for terminal_name, terminal_data in data.items():
+            device.add_terminal(terminal_name, terminal_data)
+            for parameter_name, properties in terminal_data.items():
+                device.terminals[terminal_name].add_terminal_parameter(parameter_name, properties=properties)
+        return device
+
+    def load_from_dict(self, data: dict):
+        device = self
+        for terminal_name, terminal_data in data.items():
+            device.add_terminal(terminal_name, terminal_data)
+            for parameter_name, properties in terminal_data.items():
+                device.terminals[terminal_name].add_terminal_parameter(parameter_name, properties=properties)
+        return device
     
-    def save_to_dict(dictionary: dict):
-        pass
+    def save_to_dict(self, dictionary: dict):
+        ...
+
 
 
 def create_hook(func, hook):
@@ -140,7 +156,7 @@ class Terminal(ABC):
         self.type = type
         self.terminal_parameters: dict[Any, dict[Any, Parameter | None] | Parameter | None] = {}
 
-    def add_terminal_parameter(self, parameter_name: str, parameter: Parameter=None) -> None:
+    def add_terminal_parameter(self, parameter_name: str, parameter: Parameter=None, properties: dict|None=None) -> None:
         """
         Adds a gate parameter to self.terminal_parameters.
 
@@ -153,7 +169,7 @@ class Terminal(ABC):
         if parameter_name not in Terminal.PARAMETER_NAMES:
             raise NameError(f'parameter_name "{parameter_name}" not in MeasurementScript.PARAMETER_NAMES.')
         if parameter_name not in self.terminal_parameters.keys():
-            self.__dict__[parameter_name] = self.terminal_parameters[parameter_name] = Terminal_Parameter(parameter_name, self)
+            self.__dict__[parameter_name] = self.terminal_parameters[parameter_name] = Terminal_Parameter(parameter_name, self, properties=properties)
             if self.name not in self._parent.instrument_parameters.keys():
                 self._parent.instrument_parameters[self.name] = {}
             self._parent.instrument_parameters[self.name][parameter_name] = parameter
@@ -187,10 +203,13 @@ class Terminal(ABC):
 
 
 class Terminal_Parameter(ABC):
-    def __init__(self, name: str, Terminal: Terminal) -> None:
+    def __init__(self, name: str, Terminal: Terminal, properties: dict={}) -> None:
         self._parent = Terminal
-        self.properties: Dict[Any, Any] = {}
-        self.type = None
+        self.properties: Dict[Any, Any] = properties
+        self.type = self.properties.get("type", None)
+        self._stored_value = self.properties.get("value", None)
+        self.setpoints = self.properties.get("setpoints", None)
+        self.delay = self.properties.get("delay", 0)
         self._value = None
         self.name = name
         self.limits = None
@@ -228,7 +247,6 @@ class Terminal_Parameter(ABC):
                 except:
                     self._parent._parent.update_terminal_parameters()
                     self.instrument_parameter(value)
-
         else:
             raise Exception("Limits are not yet implemented!")
 
@@ -287,5 +305,5 @@ class Terminal_Parameter(ABC):
         else:
             self.value=value
 
-class Virtual_Terminal_Parameter(Terminal_Parameter):
+# class Virtual_Terminal_Parameter(Terminal_Parameter):
     
