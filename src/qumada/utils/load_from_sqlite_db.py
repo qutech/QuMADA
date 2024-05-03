@@ -29,16 +29,14 @@ from os import path
 
 import numpy as np
 import qcodes as qc
-from qcodes.dataset.data_export import reshape_2D_data
 from qcodes.dataset.data_set import DataSet
 from qcodes.dataset.plotting import plot_dataset
 
-import qumada as qt
 from qumada.utils.browsefiles import browsefiles
 
 
 # %%
-def flatten_list(l: list) -> list:
+def flatten_list(lst: list) -> list:
     """
     Flattens nested lists
     """
@@ -51,7 +49,7 @@ def flatten_list(l: list) -> list:
             else:
                 results.append(entry)
 
-    rec(l, results)
+    rec(lst, results)
     return results
 
 
@@ -71,17 +69,19 @@ def load_db(filepath: str | None = None) -> None:
     None.
     #TODO: Checks only whether provided path is a file but not which type.
     """
-    if not filepath or not path.isfile(filepath):
+    if not filepath:
         filetypes = (("DB Files", "*.db*"), ("All files", "*.*"))
         filepath = browsefiles(filetypes=filetypes)
         if filepath == "":
             return None
-    try:
-        qc.initialise_or_create_database_at(filepath)
-        return None
-    except Exception:
-        print("Please provide a valid path")
-        return load_db(None)
+    elif not path.isfile(filepath):
+        try:
+            qc.initialise_or_create_database_at(filepath)
+            print("Created new Database")
+            return None
+        except Exception as e:
+            print("Please provide a valid path")
+            raise e
 
 
 # %%
@@ -107,7 +107,7 @@ def _pick_sample_name() -> str:
         try:
             chosen = samples[int(input("Enter sample number: "))]
             return chosen
-        except:
+        except Exception:
             print("Please chose a valid entry")
 
 
@@ -220,7 +220,6 @@ def plot_data(sample_name: str = None):
     for idx, parameter in enumerate(dependend_parameters):
         print(f"{idx} : {parameter.label}")
     plot_param_numbers = input("Please enter the numbers of the parameters you want to plot, separated by blank")
-    param_list = plot_param_numbers.split()
     plot_params = list()
     for param in plot_param_numbers:
         plot_params.append(dependend_parameters[int(param)].name)

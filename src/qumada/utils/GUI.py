@@ -41,7 +41,7 @@ def open_web_gui(parameters):
         params = []
         try:
             channels = [val for val in parameters.gate_parameters.values()]
-        except:
+        except Exception:
             print("Error not yet implemented. Maybe you forgot to do the mapping first?")
             return False
         for gate in channels:

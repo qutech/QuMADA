@@ -29,7 +29,7 @@ import numpy as np
 from jsonschema import validate
 from qcodes.parameters import Parameter
 
-from qumada.instrument.buffers.buffer import Buffer
+from qumada.instrument.buffers.buffer import Buffer, BufferException
 from qumada.instrument.custom_drivers.Dummies.dummy_dmm import DummyDmm
 
 
@@ -72,7 +72,8 @@ class DummyDMMBuffer(Buffer):
     def num_points(self, num_points) -> None:
         if num_points > 16383:
             raise BufferException(
-                "Dummy Dacs Buffer is to small for this measurement. Please reduce the number of data points or the delay"
+                "Dummy Dacs Buffer is to small for this measurement. "
+                "Please reduce the number of data points or the delay"
             )
         self._num_points = int(num_points)
 
@@ -122,15 +123,13 @@ class DummyDMMBuffer(Buffer):
         # TODO: Add timetrace if possible
         return self.read_raw()
 
-    def subscribe(self, parameters: list[Parameter]) -> None:
-        assert type(parameters) == list
+    def subscribe(self, parameters: set | list[Parameter]) -> None:
         for parameter in parameters:
             self._device.buffer.subscribe(parameter)
             self._subscribed_parameters.add(parameter)
 
-    def unsubscribe(self, parameters: list[Parameter]) -> None:
-        assert type(parameters) == list
-        for parameter in parameters:
+    def unsubscribe(self, parameters: set | list[Parameter]) -> None:
+        for parameter in parameters.copy():
             if parameter in self._device.buffer.subscribed_params:
                 self._device.buffer.subscribed_params.remove(parameter)
                 self._subscribed_parameters.remove(parameter)
@@ -143,11 +142,9 @@ class DummyDMMBuffer(Buffer):
     def start(self) -> None:
         self._device.start()
 
-    def stop(self) -> None:
-        ...
+    def stop(self) -> None: ...
 
-    def is_ready(self) -> bool:
-        ...
+    def is_ready(self) -> bool: ...
 
     def is_finished(self) -> bool:
         return self._device.is_finished()

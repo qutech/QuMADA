@@ -29,32 +29,32 @@ import operator
 import sys
 import time
 import warnings
-from collections.abc import Iterator, Sequence
+from collections.abc import Sequence
 from functools import partial
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Optional, Union
 
 import matplotlib.axes
 import matplotlib.colorbar
 import numpy as np
 from qcodes import config
-from qcodes.dataset.data_set import DataSet
-from qcodes.dataset.data_set_protocol import DataSetProtocol, res_type
+from qcodes.dataset.data_set_protocol import DataSetProtocol
 from qcodes.dataset.descriptions.detect_shapes import detect_shape_of_measurement
 from qcodes.dataset.descriptions.versioning.rundescribertypes import Shapes
 from qcodes.dataset.dond.do_nd_utils import (
-    BreakConditionInterrupt,
-    _catch_interrupts,
     _handle_plotting,
     _register_actions,
     _register_parameters,
     _set_write_period,
 )
+
+try:
+    from qcodes.dataset.dond.do_nd_utils import _catch_interrupts
+except ImportError:
+    from qcodes.dataset.dond.do_nd_utils import catch_interrupts as _catch_interrupts
+
 from qcodes.dataset.experiment_container import Experiment
 from qcodes.dataset.measurements import Measurement
-from qcodes.dataset.plotting import plot_dataset
-from qcodes.dataset.threading import (
-    SequentialParamsCaller,
-    ThreadPoolParamsCaller,
+from qcodes.dataset.threading import (  # SequentialParamsCaller,; ThreadPoolParamsCaller,
     process_params_meas,
 )
 from qcodes.parameters import ParameterBase
@@ -97,8 +97,8 @@ def do1d_parallel(
     show_progress: None | None = None,
     log_info: str | None = None,
     break_condition: BreakConditionT | None = None,
-    backsweep_after_break: Optional = False,
-    wait_after_break: Optional = 0,
+    backsweep_after_break: bool = False,
+    wait_after_break: float = 0,
 ) -> AxesTupleListWithDataSet:
     """
     Performs a 1D scan of all ``param_set`` according to "setpoints" in parallel,
@@ -179,12 +179,12 @@ def do1d_parallel(
     if use_threads is None:
         use_threads = config.dataset.use_threads
 
-    param_meas_caller = ThreadPoolParamsCaller(*param_meas) if use_threads else SequentialParamsCaller(*param_meas)
     tracked_setpoints = list()
     # do1D enforces a simple relationship between measured parameters
     # and set parameters. For anything more complicated this should be
     # reimplemented from scratch
-    with _catch_interrupts() as interrupted, meas.run() as datasaver, param_meas_caller as call_param_meas:
+
+    with _catch_interrupts() as interrupted, meas.run() as datasaver:
         dataset = datasaver.dataset
         additional_setpoints_data = process_params_meas(additional_setpoints)
 
@@ -249,8 +249,8 @@ def do1d_parallel_asym(
     show_progress: None | None = None,
     log_info: str | None = None,
     break_condition: BreakConditionT | None = None,
-    backsweep_after_break: Optional = False,
-    wait_after_break: Optional = 0,
+    backsweep_after_break: bool = False,
+    wait_after_break: float = 0,
 ) -> AxesTupleListWithDataSet:
     """
     Performs a 1D scan of all ``param_set`` according to "setpoints" in parallel,
@@ -343,12 +343,11 @@ def do1d_parallel_asym(
     if use_threads is None:
         use_threads = config.dataset.use_threads
 
-    param_meas_caller = ThreadPoolParamsCaller(*param_meas) if use_threads else SequentialParamsCaller(*param_meas)
     tracked_setpoints = list([] for _ in param_set)
     # do1D enforces a simple relationship between measured parameters
     # and set parameters. For anything more complicated this should be
     # reimplemented from scratch
-    with _catch_interrupts() as interrupted, meas.run() as datasaver, param_meas_caller as call_param_meas:
+    with _catch_interrupts() as interrupted, meas.run() as datasaver:
         dataset = datasaver.dataset
         additional_setpoints_data = process_params_meas(additional_setpoints)
 
@@ -449,7 +448,10 @@ def _interpret_breaks(break_conditions: list, **kwargs) -> Callable[[], bool] | 
             raise NotImplementedError(
                 'Only parameter values can be used for breaks in this version. Use "val" for the break condition.'
             )
-        f = lambda: eval_binary_expr(cond["channel"].get(), ops[1], float(ops[2]))
+
+        def f():
+            return partial(eval_binary_expr, cond["channel"].get(), ops[1], float(ops[2]))()
+
         conditions.append(f)
     return partial(check_conditions, conditions) if conditions else None
 
@@ -479,6 +481,9 @@ def _dev_interpret_breaks(break_conditions: list, sweep_values: dict, **kwargs) 
 
     """
 
+    def return_false():
+        return False
+
     def eval_binary_expr(op1: Any, oper: str, op2: Any) -> bool:
         # evaluates the string "op1 [operator] op2
         # supports <, > and == as operators
@@ -503,16 +508,22 @@ def _dev_interpret_breaks(break_conditions: list, sweep_values: dict, **kwargs) 
         ops = cond["break_condition"].split(" ")
         data = sweep_values[cond["channel"]]
         if ops[0] == "val":
-            f = lambda: eval_binary_expr(data[-1], ops[1], float(ops[2]))
+
+            def f():
+                return partial(eval_binary_expr, data[-1], ops[1], float(ops[2]))()
+
         elif ops[0] == "grad":
             if int(ops[1]) >= len(data):
-                f = lambda: False
+                f = return_false
             elif float(ops[1]) < len(data):
                 if data[len(data) - 1] != 0:
                     dx = (data[len(data) - 1] - data[len(data) - 1 - int(ops[1])]) / data[len(data) - 1]
-                    f = lambda: eval_binary_expr(dx, ops[2], float(ops[3]))
+
+                    def f():
+                        return partial(eval_binary_expr, dx, ops[2], float(ops[3]))()
+
                 else:
-                    f = lambda: False
+                    f = return_false
         else:
             raise NotImplementedError("NOT IMPLEMENTED")
         conditions.append(f)

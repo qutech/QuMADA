@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Iterable, Mapping
-from typing import Any, Union
+from typing import Any
 
 from PyQt5.QtCore import QItemSelectionModel, Qt, QTimer, pyqtSignal, pyqtSlot
 from PyQt5.QtGui import (
@@ -57,13 +57,8 @@ from qcodes.instrument.instrument import Instrument
 from qcodes.instrument.parameter import Parameter
 from qcodes.utils.metadata import Metadatable
 
-from qumada.instrument.mapping.base import (
-    add_mapping_to_instrument,
-    filter_flatten_parameters,
-)
+from qumada.instrument.mapping.base import TerminalParameters, filter_flatten_parameters
 from qumada.metadata import Metadata
-
-TerminalParameters = Mapping[Any, Union[Mapping[Any, Parameter], Parameter]]
 
 RED = QColor(255, 0, 0)
 WHITE = QColor(255, 255, 255)
@@ -76,7 +71,8 @@ BLUE = QColor(0, 0, 255)
 # TODO: terminal_parameter attributes
 class TerminalTreeView(QTreeView):
     """
-    QTreeView, that displays QuMADA `TerminalParameters` (`Mapping[Any, Mapping[Any, Parameter] | Parameter]`) datastructure.
+    QTreeView, that displays QuMADA `TerminalParameters` datastructure
+    (`Mapping[Any, Mapping[Any, Parameter] | Parameter]`).
     Items are draggable to map them to instruments.
     """
 
@@ -120,19 +116,19 @@ class TerminalTreeView(QTreeView):
         for terminal in get_children(root):
             for terminal_param in get_children(terminal):
                 param = self.terminal_parameters[terminal_param.source[0]][terminal_param.source[1]]
-                if not param is None:
+                if param is not None:
                     if self.monitoring_get_type == "get" and param.gettable:
                         # Use get command
                         try:
                             val = param.get()
-                        except:
+                        except Exception:
                             val = param.cache.get(get_if_invalid=False)
                     else:
                         # Use cached value (also applicable to non-gettable parameters (last set value))
                         val = param.cache.get(get_if_invalid=False)
 
-                    if not val is None and (type(val) is int or type(val) is float):
-                        if not param.unit is None:
+                    if val is not None and (type(val) is int or type(val) is float):
+                        if param.unit is not None:
                             self.model().setData(terminal_param.index().siblingAtColumn(2), f"{val:.2f} {param.unit}")
                         else:
                             self.model().setData(terminal_param.index().siblingAtColumn(2), f"{val:.2f}")
@@ -162,7 +158,7 @@ class TerminalTreeView(QTreeView):
                 tree.setData(terminal_param.index().siblingAtColumn(1), QBrush(RED), Qt.BackgroundRole)
                 tree.setData(terminal_param.index().siblingAtColumn(1), "")
                 param = self.terminal_parameters[terminal_param.source[0]][terminal_param.source[1]]
-                if not param is None:
+                if param is not None:
                     if isinstance(param, Parameter):
                         param_hash = hash(param)
                         if param_hash in parameter_duplicates:
@@ -199,7 +195,7 @@ class TerminalTreeView(QTreeView):
                     # tree.setData(duplicate.parent().index(), QBrush(PINK), Qt.BackgroundRole)
 
         # any item selected?
-        if not self.selected_terminal_tree_elem is None:
+        if self.selected_terminal_tree_elem is not None:
             self.selected_terminal_tree_elem.setData(QBrush(BLUE), Qt.BackgroundRole)
             # tree.setData(self.selected_terminal_tree_elem, QBrush(BLUE), Qt.BackgroundRole)
 
@@ -263,7 +259,7 @@ class InstrumentTreeView(QTreeView):
                 terminal_tree = child
                 break
 
-        if not terminal_tree.selected_terminal_tree_elem is None:
+        if terminal_tree.selected_terminal_tree_elem is not None:
             terminal_tree.selected_terminal_tree_elem = None
             terminal_tree.update_tree()
 
@@ -278,11 +274,11 @@ class InstrumentTreeView(QTreeView):
 
     def get_perfect_mappings(self, terminal_params: list[str], parent_elem=None) -> list[QStandardItem]:
         """
-        Given a list of terminal_parameters (names) return a list of QStandardItems in InstrumentTree (perfect mapping candidate)
-        that could be mapped perfectly i.e. every terminal_parameter can be mapped uniquely to the list of all children parameters of
-        the perfect mapping candidate.
+        Given a list of terminal_parameters (names) return a list of QStandardItems in InstrumentTree
+        (perfect mapping candidate) that could be mapped perfectly i.e. every terminal_parameter can be
+        mapped uniquely to the list of all children parameters of the perfect mapping candidate.
         """
-        if parent_elem == None:
+        if parent_elem is None:
             parent_elem = self.model().invisibleRootItem()
 
         perfect_elems = []
@@ -327,15 +323,17 @@ class InstrumentTreeView(QTreeView):
         instr_elem: Metadatable | Parameter,
     ) -> bool:
         """
-        For a selected item in terminal_tree (given via terminal_tree_traversal) and selected item in instrument_tree (instr_elem)
-        do the mapping process. Behaviour based on combinations like: direct mapping between parameters, automap to all children etc.
+        For a selected item in terminal_tree (given via terminal_tree_traversal) and selected item in instrument_tree
+        (instr_elem) do the mapping process. Behaviour based on combinations like: direct mapping between parameters,
+        automap to all children etc.
         """
         mapped = False
         if isinstance(terminal_tree_traversal[1], str) and isinstance(instr_elem, Parameter):
             # map directly - should mapping be forbidden if _mapping attribute of Parameter does not fit?
             tree.map_parameter(instr_elem, terminal_tree_traversal)
             mapped = True
-            # self.add_terminal_to_view(parent, row, f"{terminal[0]}.{terminal[1]}")  # maybe later - if used this should be done somewhere else (map_parameter)
+            # maybe later - if used this should be done somewhere else (map_parameter)
+            # self.add_terminal_to_view(parent, row, f"{terminal[0]}.{terminal[1]}")
         elif isinstance(terminal_tree_traversal[1], tuple) and isinstance(instr_elem, (InstrumentModule, Instrument)):
             # map automatically as much as possible
             all_params = filter_flatten_parameters(instr_elem)
@@ -386,8 +384,11 @@ class InstrumentTreeView(QTreeView):
 
     def dropEvent(self, event: QDropEvent) -> None:
         """
-        Start mapping based on selected element in terminal tree (dragged from) and selected element in instrument tree (dropped to)
-        Different mapping behaviour depending on the combination of "types" of elements (see map_given_terminal_instrument_elem_selection)
+        Start mapping based on selected element in terminal tree (dragged from)
+        and selected element in instrument tree (dropped to).
+
+        Different mapping behaviour depending on the combination of "types" of elements
+        (see map_given_terminal_instrument_elem_selection).
         """
         dest_index = self.indexAt(event.pos())
         if not dest_index.isValid():
@@ -403,7 +404,8 @@ class InstrumentTreeView(QTreeView):
         terminal_tree_idx = tree.currentIndex().siblingAtColumn(0)
         terminal_elem = tree.model().itemFromIndex(terminal_tree_idx)
 
-        # communicate selected instrument/terminal to main window. drag_terminal_drop_instr_slot catches this signal and does mapping
+        # communicate selected instrument/terminal to main window.
+        # drag_terminal_drop_instr_slot catches this signal and does mapping
         self.drag_terminal_drop_instr.emit(instr_elem, terminal_elem)
 
     def add_terminal_to_view(self, parent, row, terminal_name):
@@ -441,14 +443,15 @@ class InstrumentTreeView(QTreeView):
                         # Object of some Metadatable type, try to get __dict__ and _filter_flatten_parameters
                         try:
                             value_hash = hash(value)
-                            if not parent is self.model().invisibleRootItem():
+                            if parent is not self.model().invisibleRootItem():
                                 try:
                                     if value in parent.source.ancestors:
                                         continue
 
                                     if len(value.ancestors) >= 2:
                                         if not value.ancestors[1] == parent.source:
-                                            # print(f"{value.full_name} is not a direct decendant of {parent.source.full_name}")
+                                            # print(f"{value.full_name} is not a direct decendant of
+                                            # {parent.source.full_name}")
                                             continue
                                 except AttributeError:
                                     continue
@@ -626,7 +629,9 @@ class MainWindow(QMainWindow):
             if len(items_with_param) != 1:
                 dialog = MessageBox_duplicates(self)
                 answer = dialog.exec()
-                # answer = dialog.question(self, "", "Do you really want to stop the mapping process? Multiple terminal parameters are mapped to the same parameter!",  QMessageBox.Yes | QMessageBox.No)
+                # question = ("Do you really want to stop the mapping process? "
+                #             "Multiple terminal parameters are mapped to the same parameter!")
+                # answer = dialog.question(self, "", question,  QMessageBox.Yes | QMessageBox.No)
                 if not answer == QMessageBox.Yes:
                     ev.ignore()
                     return
@@ -693,15 +698,17 @@ class MainWindow(QMainWindow):
     def map_parameter(self, parameter: Parameter, traverse: tuple[str, str]):
         """
         Maps a instrument parameter to a specific terminal parameter accessed by the given traversal info.
-        Doesn't do much anymore, but I kept this around for slightly better readability (and easier refactoring if necessary)
+        Doesn't do much anymore, but I kept this around for slightly better readability
+        (and easier refactoring if necessary).
         """
         self.terminal_parameters[traverse[0]][traverse[1]] = parameter
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
         """
-        Handles keyboard shortcuts and mapping using enter key. Selecting an instrument in the terminal_tree and pressing enter will switch focus to the
-        instrument_tree and select a suitable mapping candidate. The user can change the selection and press enter again to do the mapping. The focus switches
-        back to the terminal_tree and a new terminal is selected.
+        Handles keyboard shortcuts and mapping using enter key. Selecting an instrument in the terminal_tree and
+        pressing enter will switch focus to the instrument_tree and select a suitable mapping candidate.
+        The user can change the selection and press enter again to do the mapping. The focus switches back to the
+        terminal_tree and a new terminal is selected.
         """
         if event.key() == Qt.Key_Enter or event.key() == Qt.Key_Return:
             sel_idx = []
@@ -748,7 +755,7 @@ class MainWindow(QMainWindow):
                 self.instrument_tree.setCurrentIndex(idx)
             elif (
                 self.instrument_tree.hasFocus()
-                and not self.terminal_tree.selected_terminal_tree_elem is None
+                and self.terminal_tree.selected_terminal_tree_elem is not None
                 and len(self.instrument_tree.selectedIndexes()) == 1
             ):
                 # Element in instrument tree selected. Start mapping
@@ -824,8 +831,9 @@ class MainWindow(QMainWindow):
         instr_elem: Metadatable | Parameter,
     ) -> bool:
         """
-        For a selected item in terminal_tree (given via terminal_tree_traversal) and selected item in instrument_tree (instr_elem)
-        do the mapping process. Behaviour based on combinations like: direct mapping between parameters, automap to all children etc.
+        For a selected item in terminal_tree (given via terminal_tree_traversal) and selected item
+        in instrument_tree (instr_elem) do the mapping process.
+        Behaviour based on combinations like: direct mapping between parameters, automap to all children etc.
         """
         tree = self.terminal_tree
         mapped = False
@@ -900,17 +908,19 @@ class MainWindow(QMainWindow):
 
     def map_automatically(self):
         """
-        Map all terminals automatically. The algorithm used is (almost) equivalent to selecting the first terminal and repeatedly
-        pressing the enter key until the last terminal (in the tree) is mapped. This works best if the terminals are in
-        the same order as the instruments that they should be mapped to. Additionally the terminals mapping to channels of
-        an instrument should be ordered the same as the channels (up to the driver but usually something like 0,1,2,...)
+        Map all terminals automatically. The algorithm used is (almost) equivalent to selecting the first terminal and
+        repeatedly pressing the enter key until the last terminal (in the tree) is mapped. This works best if the
+        terminals are in the same order as the instruments that they should be mapped to. Additionally the terminals
+        mapping to channels of an instrument should be ordered the same as the channels
+        (up to the driver but usually something like 0,1,2,...).
         """
         self.reset_mapping()
         for terminal_name, terminal in self.terminal_parameters.items():
             _perfect_mappings = self.instrument_tree.get_perfect_mappings(terminal.keys())
 
             # filtering out parent channels (instrument) that would also lead to unique mapping
-            # This is an edge case for instruments that have a single channel of some type (then both the channel and the instrument are uniquely mappable)
+            # This is an edge case for instruments that have a single channel of some type
+            # (then both the channel and the instrument are uniquely mappable)
             perfect_mappings = []
             for _perfect_mapping1 in _perfect_mappings:
                 # check if there is a mapping which has _perfect_mapping1 as parent
@@ -931,7 +941,7 @@ class MainWindow(QMainWindow):
                 for _terminal_name, _terminal in self.terminal_parameters.items():
                     all_mapped_to_same_channel = True
                     for terminal_param_name, param in _terminal.items():
-                        if not param is None:
+                        if param is not None:
                             if param.instrument.full_name != perfect_mapping_channel_name:
                                 all_mapped_to_same_channel = False
                                 break
@@ -946,7 +956,7 @@ class MainWindow(QMainWindow):
                 if not instr_mapped:
                     # map to channel
                     terminal_element = (terminal_name, tuple(terminal.keys()))
-                    mapped = self.map_given_terminal_instrument_elem_selection(terminal_element, perfect_mapping.source)
+                    self.map_given_terminal_instrument_elem_selection(terminal_element, perfect_mapping.source)
                     break
 
         self.terminal_tree.update_tree()
@@ -954,8 +964,8 @@ class MainWindow(QMainWindow):
     # Not used anymore. Unique, but algorithm to weak to be useful in practise
     def map_automatically_unique(self):
         """
-        Automatically map all unique terminal_parameter instrument_parameter pairs. If there are multiple terminal_parameters
-        with the same name their unique mapping is impossible.
+        Automatically map all unique terminal_parameter instrument_parameter pairs. If there are multiple
+        terminal_parameters with the same name their unique mapping is impossible.
         """
         # call get_possible_mapping_candidates for each terminal
         terminal_mapping_candidates = {}
@@ -971,7 +981,8 @@ class MainWindow(QMainWindow):
                 else:
                     terminal_parameters_occurances[terminal_param] = 1
 
-        # a terminal parameter can be mapped uniquely if its mapped parameter only appears once in the candidate dictionaries of all terminals
+        # a terminal parameter can be mapped uniquely if its mapped parameter only appears once in the candidate
+        # dictionaries of all terminals
         # For a unique mapping between terminal parameter and instrument parameter:
         #   1. a terminal parameter (name) must only occur a single time for all terminals
         #   2. unique mapping from terminal parameter to instrument_parameter (true if list of candidates has length 1)
@@ -1012,7 +1023,8 @@ def get_possible_mapping_candidates(
     terminal_params: tuple[str], instrument_parameters: Mapping[Any, Parameter]
 ) -> Mapping[Any, list[Parameter]]:
     """
-    For input terminal and collection of instrument_parameters: get dictionary with key: terminal parameter name, value: list(parameters that can be mapped to that terminal parameter)
+    For input terminal and collection of instrument_parameters: get dictionary with key:
+    terminal parameter name, value: list(parameters that can be mapped to that terminal parameter)
     Similar to base.py _map_gate_to_instrument
     """
     mapped_parameters = {
@@ -1058,7 +1070,7 @@ def traverse_tree(root: QStandardItem, traversal_names: list(str)) -> QStandardI
             return parent
 
         child = get_child(parent, names.pop(0))
-        if child == None:
+        if child is None:
             print("problem")
         else:
             return traverse(child, names)
@@ -1105,7 +1117,8 @@ class MessageBox_duplicates(QMessageBox):
         self.setWindowTitle("Warning! Duplicate mapping!")
         self.setIcon(QMessageBox.Warning)
         self.setText(
-            "Do you really want to stop the mapping process? Multiple terminal parameters are mapped to the same parameter!"
+            "Do you really want to stop the mapping process? "
+            "Multiple terminal parameters are mapped to the same parameter!"
         )
         self.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
 
@@ -1133,12 +1146,18 @@ def map_terminals_gui(
 
     Args:
         components (Mapping[Any, Metadatable]): Instruments/Components in QCoDeS
-        terminal_parameters (Mapping[Any, Union[Mapping[Any, Parameter], Parameter]]): Terminals, as defined in the measurement script
-        existing_terminal_parameters (Mapping[Any, Union[Mapping[Any, Parameter], Parameter]] | None): Already existing mapping
-                that is used to automatically create the mapping for already known terminals without user input.
+        terminal_parameters (Mapping[Any, Union[Mapping[Any, Parameter], Parameter]]):
+            Terminals, as defined in the measurement script
+        existing_terminal_parameters (Mapping[Any, Union[Mapping[Any, Parameter], Parameter]] | None):
+            Already existing mapping, that is used to automatically create the mapping
+            for already known terminals without user input.
         metadata (Metadata | None): If provided, add mapping to the metadata object.
-        monitoring: if True the mapped parameters are periodically read out (either by get command (default) or cached value)
-        skip_gui_if_mapped: if True and existing_terminal_parameters completely covers all terminal_parameters, dont open gui and continue
+        monitoring (bool):
+            If True the mapped parameters are periodically read out
+            (either by get command (default) or cached value)
+        skip_gui_if_mapped (bool):
+            If True and existing_terminal_parameters completely covers all terminal_parameters,
+            dont open gui and continue
     """
     if existing_terminal_parameters is None:
         # reset in case there is already some mapping

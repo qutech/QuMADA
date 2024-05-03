@@ -26,6 +26,7 @@ from .generic_measurement import (
     Generic_1D_Sweep_buffered,
     Generic_2D_Sweep_buffered,
     Generic_nD_Sweep,
+    Generic_Pulsed_Measurement,
     Timetrace,
     Timetrace_buffered,
     Timetrace_with_sweeps,
@@ -34,9 +35,11 @@ from .generic_measurement import (
 
 try:
     from .spectrometer import Measure_Spectrum
-except ModuleNotFoundError as ex:
+except ModuleNotFoundError:
     # Only relevant if you want to use spectrometer.
     # Requires access to Bluhm Group GitLab
+    pass
+except ImportError:
     pass
 
 __all__ = [
@@ -47,6 +50,7 @@ __all__ = [
     "Generic_1D_Hysteresis_buffered",
     "Generic_1D_parallel_asymm_Sweep",
     "Generic_2D_Sweep_buffered",
+    "Generic_Pulsed_Measurement",
     "Timetrace",
     "Timetrace_with_sweeps",
     "Timetrace_buffered",

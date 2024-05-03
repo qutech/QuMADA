@@ -39,6 +39,7 @@ class DummyDacMapping(InstrumentMapping):
         start_values: list[float] | None = None,
         end_values: list[float],
         ramp_time: float,
+        **kwargs,
     ) -> None:
         assert len(parameters) == len(end_values)
         if start_values is not None:
