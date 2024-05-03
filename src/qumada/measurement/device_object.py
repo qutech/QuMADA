@@ -30,22 +30,36 @@ def is_measurement_script(o):
 
 
 class QumadaDevice:
-    def __init__(self):
+    def __init__(self,
+                 make_terminals_global=True,
+                 namespace=None,):
+        self.namespace = namespace or globals()
         self.terminals = {}
         self.instrument_parameters = {}
+        self.make_terminals_global = make_terminals_global
 
-    def add_terminal(self, terminal_name: str, type: str | None = None):
+    def add_terminal(self, terminal_name: str, type: str | None = None, terminal_data: dict|None={}):
         if terminal_name not in self.terminals.keys():
             self.__dict__[terminal_name.replace(" ", "_")] = self.terminals[terminal_name] = Terminal(
                 terminal_name, self, type
             )
         else:
             raise Exception(f"Terminal {terminal_name} already exists. Please remove it first!")
+        if self.make_terminals_global:
+            if terminal_name not in self.namespace.keys():
+                # Adding to the global namespace
+                self.namespace[terminal_name] = self.terminals[terminal_name]
+                logger.warning(f"Added {terminal_name} to global namespace!")
+            else:
+                raise Exception(f"Terminal {terminal_name} already exists in global namespace. \
+                        Please remove it first!")
 
     def remove_terminal(self, terminal_name: str):
         if terminal_name in self.terminals.keys():
             del self.__dict__[terminal_name]
             del self.terminals[terminal_name]
+            if terminal_name in self.namespace:
+                del self.namespace[terminal_name]
         else:
             logger.warning(f"{terminal_name} does not exist and could not be deleted")
 
@@ -71,10 +85,10 @@ class QumadaDevice:
                 param.set_default()
 
     @staticmethod
-    def create_from_dict(data: dict):
-        device = QumadaDevice()
+    def create_from_dict(data: dict, make_terminals_global=True, namespace=None):
+        device = QumadaDevice(make_terminals_global=make_terminals_global, namespace=namespace)
         for terminal_name, terminal_data in data.items():
-            device.add_terminal(terminal_name, terminal_data)
+            device.add_terminal(terminal_name, terminal_data=terminal_data)
             for parameter_name, properties in terminal_data.items():
                 device.terminals[terminal_name].add_terminal_parameter(parameter_name, properties=properties)
         return device
@@ -82,7 +96,7 @@ class QumadaDevice:
     def load_from_dict(self, data: dict):
         device = self
         for terminal_name, terminal_data in data.items():
-            device.add_terminal(terminal_name, terminal_data)
+            device.add_terminal(terminal_name, terminal_data=terminal_data)
             for parameter_name, properties in terminal_data.items():
                 device.terminals[terminal_name].add_terminal_parameter(parameter_name, properties=properties)
         return device
@@ -212,13 +226,15 @@ class Terminal_Parameter(ABC):
         self._parent = Terminal
         self.properties: Dict[Any, Any] = properties
         self.type = self.properties.get("type", None)
-        self._stored_value = self.properties.get("value", None)
+        self._stored_value = self.properties.get("value", None) # For storing values for measurements
         self.setpoints = self.properties.get("setpoints", None)
         self.delay = self.properties.get("delay", 0)
         self._value = None
         self.name = name
         self.limits = None
         self.rampable = False
+        self.ramp_rate = self.properties.get("ramp_rate", 0.1)
+        self.group = self.properties.get("group", None)
         self.default_value = None
         self.scaling = 1
         self._instrument_parameter = None
