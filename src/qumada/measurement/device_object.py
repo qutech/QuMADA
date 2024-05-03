@@ -30,15 +30,17 @@ def is_measurement_script(o):
 
 
 class QumadaDevice:
-    def __init__(self,
-                 make_terminals_global=True,
-                 namespace=None,):
+    def __init__(
+        self,
+        make_terminals_global=True,
+        namespace=None,
+    ):
         self.namespace = namespace or globals()
         self.terminals = {}
         self.instrument_parameters = {}
         self.make_terminals_global = make_terminals_global
 
-    def add_terminal(self, terminal_name: str, type: str | None = None, terminal_data: dict|None={}):
+    def add_terminal(self, terminal_name: str, type: str | None = None, terminal_data: dict | None = {}):
         if terminal_name not in self.terminals.keys():
             self.__dict__[terminal_name.replace(" ", "_")] = self.terminals[terminal_name] = Terminal(
                 terminal_name, self, type
@@ -51,8 +53,10 @@ class QumadaDevice:
                 self.namespace[terminal_name] = self.terminals[terminal_name]
                 logger.warning(f"Added {terminal_name} to global namespace!")
             else:
-                raise Exception(f"Terminal {terminal_name} already exists in global namespace. \
-                        Please remove it first!")
+                raise Exception(
+                    f"Terminal {terminal_name} already exists in global namespace. \
+                        Please remove it first!"
+                )
 
     def remove_terminal(self, terminal_name: str):
         if terminal_name in self.terminals.keys():
@@ -226,7 +230,7 @@ class Terminal_Parameter(ABC):
         self._parent = Terminal
         self.properties: Dict[Any, Any] = properties
         self.type = self.properties.get("type", None)
-        self._stored_value = self.properties.get("value", None) # For storing values for measurements
+        self._stored_value = self.properties.get("value", None)  # For storing values for measurements
         self.setpoints = self.properties.get("setpoints", None)
         self.delay = self.properties.get("delay", 0)
         self._value = None
