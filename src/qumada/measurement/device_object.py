@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 import inspect
@@ -25,21 +24,24 @@ from qumada.utils.utils import flatten_array
 
 logger = logging.getLogger(__name__)
 
+
 def is_measurement_script(o):
     return inspect.isclass(o) and issubclass(o, MeasurementScript)
 
 
-class QumadaDevice():
+class QumadaDevice:
     def __init__(self):
         self.terminals = {}
         self.instrument_parameters = {}
-    
-    def add_terminal(self, terminal_name: str, type: str|None = None):
+
+    def add_terminal(self, terminal_name: str, type: str | None = None):
         if terminal_name not in self.terminals.keys():
-            self.__dict__[terminal_name.replace(" ", "_")] = self.terminals[terminal_name] = Terminal(terminal_name, self, type)
+            self.__dict__[terminal_name.replace(" ", "_")] = self.terminals[terminal_name] = Terminal(
+                terminal_name, self, type
+            )
         else:
             raise Exception(f"Terminal {terminal_name} already exists. Please remove it first!")
-    
+
     def remove_terminal(self, terminal_name: str):
         if terminal_name in self.terminals.keys():
             del self.__dict__[terminal_name]
@@ -59,7 +61,7 @@ class QumadaDevice():
         for terminal in self.terminals.values():
             for param in terminal.terminal_parameters.values():
                 param.save_default()
-    
+
     def set_defaults(self):
         """
         Sets all Terminals and their parameters to their default values
@@ -67,7 +69,6 @@ class QumadaDevice():
         for terminal in self.terminals.values():
             for param in terminal.terminal_parameters.values():
                 param.set_default()
-
 
     @staticmethod
     def create_from_dict(data: dict):
@@ -85,10 +86,8 @@ class QumadaDevice():
             for parameter_name, properties in terminal_data.items():
                 device.terminals[terminal_name].add_terminal_parameter(parameter_name, properties=properties)
         return device
-    
-    def save_to_dict(self, dictionary: dict):
-        ...
 
+    def save_to_dict(self, dictionary: dict): ...
 
 
 def create_hook(func, hook):
@@ -143,7 +142,7 @@ class Terminal(ABC):
         "test_parameter",
     }
 
-    def __init__(self, name, parent: QtoolsDevice|None=None, type: str|None=None):
+    def __init__(self, name, parent: QtoolsDevice | None = None, type: str | None = None):
         # Create function hooks for metadata
         # reverse order, so insert metadata is run second
         # self.run = create_hook(self.run, self._insert_metadata_into_db)
@@ -156,7 +155,9 @@ class Terminal(ABC):
         self.type = type
         self.terminal_parameters: dict[Any, dict[Any, Parameter | None] | Parameter | None] = {}
 
-    def add_terminal_parameter(self, parameter_name: str, parameter: Parameter=None, properties: dict|None=None) -> None:
+    def add_terminal_parameter(
+        self, parameter_name: str, parameter: Parameter = None, properties: dict | None = None
+    ) -> None:
         """
         Adds a gate parameter to self.terminal_parameters.
 
@@ -169,13 +170,15 @@ class Terminal(ABC):
         if parameter_name not in Terminal.PARAMETER_NAMES:
             raise NameError(f'parameter_name "{parameter_name}" not in MeasurementScript.PARAMETER_NAMES.')
         if parameter_name not in self.terminal_parameters.keys():
-            self.__dict__[parameter_name] = self.terminal_parameters[parameter_name] = Terminal_Parameter(parameter_name, self, properties=properties)
+            self.__dict__[parameter_name] = self.terminal_parameters[parameter_name] = Terminal_Parameter(
+                parameter_name, self, properties=properties
+            )
             if self.name not in self._parent.instrument_parameters.keys():
                 self._parent.instrument_parameters[self.name] = {}
             self._parent.instrument_parameters[self.name][parameter_name] = parameter
         else:
             raise Exception(f"Parameter{parameter_name} already exists")
-        
+
     def remove_terminal_parameter(self, parameter_name: str) -> None:
         """
         Adds a gate parameter to self.terminal_parameters.
@@ -191,9 +194,11 @@ class Terminal(ABC):
             del self.terminal_parameters[parameter_name]
         else:
             raise Exception(f"Parameter{parameter_name} does not exist!")
-        
-    def update_terminal_parameter(self, parameter_name: str, parameter: Parameter|None=None) -> None:
-        self.terminal_parameters[parameter_name].instrument_parameter = self._parent.instrument_parameters[self.name][parameter_name]
+
+    def update_terminal_parameter(self, parameter_name: str, parameter: Parameter | None = None) -> None:
+        self.terminal_parameters[parameter_name].instrument_parameter = self._parent.instrument_parameters[self.name][
+            parameter_name
+        ]
 
     def __call__(self, value=None):
         if "voltage" in self.terminal_parameters.keys():
@@ -203,7 +208,7 @@ class Terminal(ABC):
 
 
 class Terminal_Parameter(ABC):
-    def __init__(self, name: str, Terminal: Terminal, properties: dict={}) -> None:
+    def __init__(self, name: str, Terminal: Terminal, properties: dict = {}) -> None:
         self._parent = Terminal
         self.properties: Dict[Any, Any] = properties
         self.type = self.properties.get("type", None)
@@ -225,7 +230,7 @@ class Terminal_Parameter(ABC):
     @property
     def value(self):
         return self._value
-    
+
     @value.setter
     def value(self, value):
         if self.locked:
@@ -233,15 +238,15 @@ class Terminal_Parameter(ABC):
             return
         if self.limits == None:
             if type(value) == float:
-                self._value = self.scaling*value
+                self._value = self.scaling * value
                 try:
-                    self.instrument_parameter(self.scaling*value)
+                    self.instrument_parameter(self.scaling * value)
                 except:
                     self._parent._parent.update_terminal_parameters()
-                    self.instrument_parameter(self.scaling*value)
+                    self.instrument_parameter(self.scaling * value)
             else:
                 self._value = value
-                #TODO: Replace Try/Except block, update_terminal_parameters() should be called by mapping function
+                # TODO: Replace Try/Except block, update_terminal_parameters() should be called by mapping function
                 try:
                     self.instrument_parameter(value)
                 except:
@@ -252,17 +257,17 @@ class Terminal_Parameter(ABC):
 
     @value.getter
     def value(self):
-        #TODO: Replace Try/Except block, update_terminal_parameters() should be called by mapping function
+        # TODO: Replace Try/Except block, update_terminal_parameters() should be called by mapping function
         try:
             return self.instrument_parameter()
         except:
             self._parent._parent.update_terminal_parameters()
             return self.instrument_parameter()
-    
+
     @property
     def instrument_parameter(self):
         return self._instrument_parameter
-    
+
     @instrument_parameter.setter
     def instrument_parameter(self, param: Parameter):
         if isinstance(param, Parameter) or param == None:
@@ -270,12 +275,15 @@ class Terminal_Parameter(ABC):
         else:
             raise TypeError(f"{param} is not a QCoDeS parameter!")
 
-    def ramp(self, value, ramp_rate: float=0.1, ramp_time: float=5, setpoint_intervall: float=0.01):
-        ramp_or_set_parameter(self.instrument_parameter, value, 
-                              ramp_rate=ramp_rate, 
-                              ramp_time=ramp_time, 
-                              setpoint_intervall=setpoint_intervall)
-        
+    def ramp(self, value, ramp_rate: float = 0.1, ramp_time: float = 5, setpoint_intervall: float = 0.01):
+        ramp_or_set_parameter(
+            self.instrument_parameter,
+            value,
+            ramp_rate=ramp_rate,
+            ramp_time=ramp_time,
+            setpoint_intervall=setpoint_intervall,
+        )
+
     def save_default(self):
         """
         Saves current value as default value.
@@ -292,18 +300,17 @@ class Terminal_Parameter(ABC):
         """
         if self.default_value is not None:
             try:
-                self.value=self.default_value
+                self.value = self.default_value
             except NotImplementedError as e:
                 logger.debug(f"{e} was raised and ignored")
         else:
             logger.warning(f"No default value set for parameter {self.name}")
-        
 
-    def __call__(self, value = None):
+    def __call__(self, value=None):
         if value == None:
             return self.value
         else:
-            self.value=value
+            self.value = value
+
 
 # class Virtual_Terminal_Parameter(Terminal_Parameter):
-    
