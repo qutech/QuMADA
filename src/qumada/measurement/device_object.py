@@ -18,14 +18,13 @@ from qcodes.dataset.dond.do_nd_utils import ActionsT
 from qcodes.parameters import Parameter, ParameterBase
 
 from qumada.instrument.buffers.buffer import is_bufferable, is_triggerable
+from qumada.instrument.mapping import map_terminals_gui
+from qumada.measurement.scripts import Generic_1D_Sweep
 from qumada.metadata import Metadata
 from qumada.utils.ramp_parameter import ramp_or_set_parameter
 from qumada.utils.utils import flatten_array
-from qumada.measurement.scripts import Generic_1D_Sweep
-from qumada.instrument.mapping import map_terminals_gui
 
 logger = logging.getLogger(__name__)
-
 
 
 class QumadaDevice:
@@ -146,9 +145,9 @@ class QumadaDevice:
                             if param() is not None:
                                 return_dict[terminal.name][param.name]["value"] = param()
                         except Exception as e:
-                            logger.exception(e)  
+                            logger.exception(e)
                     else:
-                        logger.warning(f"Couldn't find value for {terminal_name} {param_name}") 
+                        logger.warning(f"Couldn't find value for {terminal_name} {param_name}")
                 else:
                     try:
                         if param() is not None:
@@ -160,7 +159,7 @@ class QumadaDevice:
                         if hasattr(param, "_stored_value") and getattr(param, "_stored_value") is not None:
                             return_dict[terminal.name][param.name]["value"] = getattr(param, "_stored_value")
                         else:
-                            logger.warning(f"Couldn't find value for {terminal_name} {param_name}")                     
+                            logger.warning(f"Couldn't find value for {terminal_name} {param_name}")
         return return_dict
 
 
@@ -361,25 +360,24 @@ class Terminal_Parameter(ABC):
         )
 
     def measured_ramp(self, station, value, num_points=100, name=None, metadata=None, priorize_stored_value=False):
-        if self.locked: 
+        if self.locked:
             raise Exception(f"{self.name} is locked!")
-        script=Generic_1D_Sweep()
+        script = Generic_1D_Sweep()
         for terminal_name, terminal in self._parent._parent.terminals.items():
             for param_name, param in terminal.terminal_parameters.items():
                 if param.type == "dynamic":
                     param.type = "static"
-        self.type="dynamic"
-        self.setpoints=np.linspace(self(), value, num_points)
+        self.type = "dynamic"
+        self.setpoints = np.linspace(self(), value, num_points)
         script.setup(
             self._parent._parent.save_to_dict(priorize_stored_value=priorize_stored_value),
             metadata=metadata,
             name=name,
         )
-        mapping=self._parent._parent.instrument_parameters
+        mapping = self._parent._parent.instrument_parameters
         map_terminals_gui(station.components, script.gate_parameters, mapping)
-        data=script.run()
+        data = script.run()
         return data
-
 
     def save_default(self):
         """
