@@ -21,12 +21,11 @@ from qumada.instrument.buffers.buffer import is_bufferable, is_triggerable
 from qumada.metadata import Metadata
 from qumada.utils.ramp_parameter import ramp_or_set_parameter
 from qumada.utils.utils import flatten_array
+from qumada.measurement.scripts import Generic_1D_Sweep
+from qumada.instrument.mapping import map_terminals_gui
 
 logger = logging.getLogger(__name__)
 
-
-def is_measurement_script(o):
-    return inspect.isclass(o) and issubclass(o, MeasurementScript)
 
 
 class QumadaDevice:
@@ -89,7 +88,7 @@ class QumadaDevice:
                 param.set_default()
 
     @staticmethod
-    def create_from_dict(data: dict, make_terminals_global=True, namespace=None):
+    def create_from_dict(data: dict, make_terminals_global=False, namespace=None):
         """
         Creates a QumadaDevice object from valid parameter dictionaries as used in Qumada measurement scripts.
         Be aware that the validity is not checked at the moment, so there might be unexpected exceptions!
@@ -147,9 +146,9 @@ class QumadaDevice:
                             if param() is not None:
                                 return_dict[terminal.name][param.name]["value"] = param()
                         except Exception as e:
-                            print(e)
+                            logger.exception(e)  
                     else:
-                        print(f"Couldn't find value for {terminal_name} {param_name}")
+                        logger.warning(f"Couldn't find value for {terminal_name} {param_name}") 
                 else:
                     try:
                         if param() is not None:
@@ -157,11 +156,11 @@ class QumadaDevice:
                         else:
                             raise Exception(f"Calling {param} return None. Trying to use stored value")
                     except Exception as e:
-                        print(e)
+                        logger.exception(e)
                         if hasattr(param, "_stored_value") and getattr(param, "_stored_value") is not None:
                             return_dict[terminal.name][param.name]["value"] = getattr(param, "_stored_value")
                         else:
-                            print(f"Couldn't find value for {terminal_name} {param_name}")
+                            logger.warning(f"Couldn't find value for {terminal_name} {param_name}")                     
         return return_dict
 
 
@@ -217,7 +216,7 @@ class Terminal(ABC):
         "test_parameter",
     }
 
-    def __init__(self, name, parent: QtoolsDevice | None = None, type: str | None = None):
+    def __init__(self, name, parent: QumadaDevice | None = None, type: str | None = None):
         # Create function hooks for metadata
         # reverse order, so insert metadata is run second
         # self.run = create_hook(self.run, self._insert_metadata_into_db)
@@ -285,7 +284,7 @@ class Terminal(ABC):
 class Terminal_Parameter(ABC):
     def __init__(self, name: str, Terminal: Terminal, properties: dict = {}) -> None:
         self._parent = Terminal
-        self.properties: Dict[Any, Any] = properties
+        self.properties: dict[Any, Any] = properties
         self.type = self.properties.get("type", None)
         self._stored_value = self.properties.get("value", None)  # For storing values for measurements
         self.setpoints = self.properties.get("setpoints", None)
@@ -360,6 +359,27 @@ class Terminal_Parameter(ABC):
             ramp_time=ramp_time,
             setpoint_intervall=setpoint_intervall,
         )
+
+    def measured_ramp(self, station, value, num_points=100, name=None, metadata=None, priorize_stored_value=False):
+        if self.locked: 
+            raise Exception(f"{self.name} is locked!")
+        script=Generic_1D_Sweep()
+        for terminal_name, terminal in self._parent._parent.terminals.items():
+            for param_name, param in terminal.terminal_parameters.items():
+                if param.type == "dynamic":
+                    param.type = "static"
+        self.type="dynamic"
+        self.setpoints=np.linspace(self(), value, num_points)
+        script.setup(
+            self._parent._parent.save_to_dict(priorize_stored_value=priorize_stored_value),
+            metadata=metadata,
+            name=name,
+        )
+        mapping=self._parent._parent.instrument_parameters
+        map_terminals_gui(station.components, script.gate_parameters, mapping)
+        data=script.run()
+        return data
+
 
     def save_default(self):
         """
