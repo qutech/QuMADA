@@ -105,7 +105,37 @@ class QumadaDevice:
                 device.terminals[terminal_name].add_terminal_parameter(parameter_name, properties=properties)
         return device
 
-    def save_to_dict(self, dictionary: dict): ...
+    def save_to_dict(self, priorize_stored_value=False):
+        return_dict={}
+        for terminal_name, terminal in self.terminals.items():
+            return_dict[terminal_name]={}
+            for param_name, param in terminal.terminal_parameters.items():
+                return_dict[terminal_name][param_name] = {}
+                for attr_name in ["type", "setpoints", "delay", "start", "stop", "num_points"]:
+                    if hasattr(param, attr_name):
+                        return_dict[terminal.name][param.name][attr_name] = getattr(param, attr_name)
+                    if priorize_stored_value:
+                        if hasattr(param, "_stored_value"):
+                            return_dict[terminal.name][param.name]["value"] = getattr(param, "_stored_value")
+                        elif callable(param):
+                            try:
+                                return_dict[terminal.name][param.name]["value"] = param()
+                            except:
+                                pass
+                        else:
+                            pass
+                    else:
+                        if callable(param):
+                            try:
+                                return_dict[terminal.name][param.name]["value"] = param()
+                            except:
+                                pass
+                        elif hasattr(param, "_stored_value"):
+                            return_dict[terminal.name][param.name]["value"] = getattr(param, "_stored_value")
+                        else:
+                            pass                     
+        
+        return return_dict
 
 
 def create_hook(func, hook):
