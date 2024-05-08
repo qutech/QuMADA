@@ -106,9 +106,9 @@ class QumadaDevice:
         return device
 
     def save_to_dict(self, priorize_stored_value=False):
-        return_dict={}
+        return_dict = {}
         for terminal_name, terminal in self.terminals.items():
-            return_dict[terminal_name]={}
+            return_dict[terminal_name] = {}
             for param_name, param in terminal.terminal_parameters.items():
                 return_dict[terminal_name][param_name] = {}
                 for attr_name in ["type", "setpoints", "delay", "start", "stop", "num_points"]:
@@ -133,8 +133,8 @@ class QumadaDevice:
                         elif hasattr(param, "_stored_value"):
                             return_dict[terminal.name][param.name]["value"] = getattr(param, "_stored_value")
                         else:
-                            pass                     
-        
+                            pass
+
         return return_dict
 
 
