@@ -122,7 +122,7 @@ class QumadaDevice:
         """
         Returns a dict compatible with the qumada measurements scripts.
         Contains type, setpoints, delay, start, stop, num_points and value of the
-        terminal parameters. 
+        terminal parameters.
         For the value, by default the current value of the parameter is used (the parameter is called
         therefore). If the parameter is not callable (e.g. because no mapping was done so far), the
         _stored_value attribute is used.
@@ -147,9 +147,9 @@ class QumadaDevice:
                             if param() is not None:
                                 return_dict[terminal.name][param.name]["value"] = param()
                         except Exception as e:
-                            print(e)   
+                            print(e)
                     else:
-                        print(f"Couldn't find value for {terminal_name} {param_name}") 
+                        print(f"Couldn't find value for {terminal_name} {param_name}")
                 else:
                     try:
                         if param() is not None:
@@ -161,7 +161,7 @@ class QumadaDevice:
                         if hasattr(param, "_stored_value") and getattr(param, "_stored_value") is not None:
                             return_dict[terminal.name][param.name]["value"] = getattr(param, "_stored_value")
                         else:
-                            print(f"Couldn't find value for {terminal_name} {param_name}")                     
+                            print(f"Couldn't find value for {terminal_name} {param_name}")
         return return_dict
 
 
