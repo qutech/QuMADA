@@ -90,6 +90,14 @@ class QumadaDevice:
 
     @staticmethod
     def create_from_dict(data: dict, make_terminals_global=True, namespace=None):
+        """
+        Creates a QumadaDevice object from valid parameter dictionaries as used in Qumada measurement scripts.
+        Be aware that the validity is not checked at the moment, so there might be unexpected exceptions!
+        Parameter values are not set upon initialization for safety reason! They are stored in the _stored_values attribute.
+        By default terminals are added to the namespace provided by the namespace argument.
+        If you set namespace=globals() you can make the terminals available in global namespace.
+        TODO: Remove make_terminals_global parameter and check if namespace is not None
+        """
         device = QumadaDevice(make_terminals_global=make_terminals_global, namespace=namespace)
         for terminal_name, terminal_data in data.items():
             device.add_terminal(terminal_name, terminal_data=terminal_data)
@@ -98,6 +106,11 @@ class QumadaDevice:
         return device
 
     def load_from_dict(self, data: dict):
+        """
+        Adds terminals and corresponding parameters to an existing QumadaDevice.
+        Values are not set automatically for safety reasons, they are stored in the _stored_value attribute.
+        TODO: Check behaviour for existing terminals/parameters
+        """
         device = self
         for terminal_name, terminal_data in data.items():
             device.add_terminal(terminal_name, terminal_data=terminal_data)
@@ -106,7 +119,19 @@ class QumadaDevice:
         return device
 
     def save_to_dict(self, priorize_stored_value=False):
+        """
+        Returns a dict compatible with the qumada measurements scripts.
+        Contains type, setpoints, delay, start, stop, num_points and value of the
+        terminal parameters. 
+        For the value, by default the current value of the parameter is used (the parameter is called
+        therefore). If the parameter is not callable (e.g. because no mapping was done so far), the
+        _stored_value attribute is used.
+        If priorize_stored_values is set to True, the _stored_value attribute will be used if available
+        and the return value of the parameters callable only if _stored_value is not available (or None).
+        None values will be always ignored, the value will not be set in this case.
+        """
         return_dict = {}
+
         for terminal_name, terminal in self.terminals.items():
             return_dict[terminal_name] = {}
             for param_name, param in terminal.terminal_parameters.items():
@@ -114,27 +139,29 @@ class QumadaDevice:
                 for attr_name in ["type", "setpoints", "delay", "start", "stop", "num_points"]:
                     if hasattr(param, attr_name):
                         return_dict[terminal.name][param.name][attr_name] = getattr(param, attr_name)
-                    if priorize_stored_value:
-                        if hasattr(param, "_stored_value"):
-                            return_dict[terminal.name][param.name]["value"] = getattr(param, "_stored_value")
-                        elif callable(param):
-                            try:
+                if priorize_stored_value:
+                    if hasattr(param, "_stored_value") and getattr(param, "_stored_value") is not None:
+                        return_dict[terminal.name][param.name]["value"] = getattr(param, "_stored_value")
+                    elif callable(param):
+                        try:
+                            if param() is not None:
                                 return_dict[terminal.name][param.name]["value"] = param()
-                            except:
-                                pass
-                        else:
-                            pass
+                        except Exception as e:
+                            print(e)   
                     else:
-                        if callable(param):
-                            try:
-                                return_dict[terminal.name][param.name]["value"] = param()
-                            except:
-                                pass
-                        elif hasattr(param, "_stored_value"):
+                        print(f"Couldn't find value for {terminal_name} {param_name}") 
+                else:
+                    try:
+                        if param() is not None:
+                            return_dict[terminal.name][param.name]["value"] = param()
+                        else:
+                            raise Exception(f"Calling {param} return None. Trying to use stored value")
+                    except Exception as e:
+                        print(e)
+                        if hasattr(param, "_stored_value") and getattr(param, "_stored_value") is not None:
                             return_dict[terminal.name][param.name]["value"] = getattr(param, "_stored_value")
                         else:
-                            pass
-
+                            print(f"Couldn't find value for {terminal_name} {param_name}")                     
         return return_dict
 
 
