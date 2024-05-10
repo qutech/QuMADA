@@ -9,6 +9,7 @@ from contextlib import suppress
 from datetime import datetime
 from functools import wraps
 from typing import Any, Callable
+from copy import deepcopy
 
 import numpy as np
 import qcodes as qc
@@ -17,9 +18,9 @@ from qcodes.dataset import AbstractSweep, LinSweep
 from qcodes.dataset.dond.do_nd_utils import ActionsT
 from qcodes.parameters import Parameter, ParameterBase
 
-from qumada.instrument.buffers.buffer import is_bufferable, is_triggerable
+from qumada.instrument.buffers.buffer import is_bufferable, is_triggerable, map_triggers
 from qumada.instrument.mapping import map_terminals_gui
-from qumada.measurement.scripts import Generic_1D_Sweep
+from qumada.measurement.scripts import Generic_1D_Sweep, Timetrace, Timetrace_buffered
 from qumada.metadata import Metadata
 from qumada.utils.ramp_parameter import ramp_or_set_parameter
 from qumada.utils.utils import flatten_array
@@ -47,6 +48,7 @@ class QumadaDevice:
         self.instrument_parameters = {}
         self.make_terminals_global = make_terminals_global
         self.station = station
+        self.buffer_script_setup = {}
 
     def add_terminal(self, terminal_name: str, type: str | None = None, terminal_data: dict | None = {}):
         if terminal_name not in self.terminals.keys():
@@ -87,6 +89,11 @@ class QumadaDevice:
         for terminal in self.terminals.values():
             for param in terminal.terminal_parameters.values():
                 param.save_default()
+
+    def set_stored_values(self):
+        for terminal in self.terminals.values():
+            for param in terminal.terminal_parameters.values():
+                param.set_stored_value()
 
     def set_defaults(self):
         """
@@ -179,6 +186,45 @@ class QumadaDevice:
                         else:
                             logger.warning(f"Couldn't find value for {terminal_name} {param_name}")
         return return_dict
+    
+
+    def timetrace(self, duration: float, timestep: float = 1, name = None, metadata=None, station = None, buffered=False, buffer_settings: dict = {}, priorize_stored_value=False):
+        """
+        """
+        if station is None:
+            station = self.station
+        if type(station) != Station:
+            raise TypeError("No valid station assigned!")
+        temp_buffer_settings=deepcopy(buffer_settings)
+        if buffered==True:
+            logger.warning("Temporarily modifying buffer settings to match function arguments.")
+            temp_buffer_settings["sampling_rate"] = 1/timestep
+            temp_buffer_settings["duration"] = duration
+            temp_buffer_settings["burst_duration"] = duration
+            try:
+                del temp_buffer_settings["num_points"]
+                del temp_buffer_settings["num_bursts"]
+            except KeyError as e:
+                logger.warning(e)
+
+            script = Timetrace_buffered()
+        else:
+            script = Timetrace()
+        script.setup(
+            self.save_to_dict(priorize_stored_value=priorize_stored_value),
+            metadata = metadata,
+            name = name,
+            duration = duration,
+            timestep = timestep,
+            buffer_settings = temp_buffer_settings,
+            **self.buffer_script_setup,
+                        )
+        mapping = self.instrument_parameters
+        map_terminals_gui(station.components, script.gate_parameters, mapping)
+        map_triggers(station.components, script.properties, self.instrument_parameters)
+        data = script.run()
+        return data
+
 
 
 def create_hook(func, hook):
@@ -436,6 +482,18 @@ class Terminal_Parameter(ABC):
                 logger.debug(f"{e} was raised and ignored")
         else:
             logger.warning(f"No default value set for parameter {self.name}")
+
+    def set_stored_value(self):
+        """
+        Sets value to stored value from dict
+        """
+        if self._stored_value is not None:
+            try:
+                self.value = self._stored_value
+            except NotImplementedError as e:
+                logger.debug(f"{e} was raised and ignored")
+        else:
+            logger.warning(f"No stored value set for parameter {self.name}")
 
     def __call__(self, value=None):
         if value == None:
