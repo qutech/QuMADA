@@ -326,7 +326,9 @@ class Timetrace_buffered(MeasurementScript):
             self.gettable_channels.remove(channel)
         for param in del_params:
             self.gettable_parameters.remove(param)
-
+        for parameter, channel in zip(self.dynamic_parameters, self.dynamic_channels):
+            parameter_value = self.properties[parameter["gate"]][parameter["parameter"]]["value"]
+            static_gettables.append((channel, [parameter_value for _ in range(int(self.buffered_num_points))]))
         with meas.run() as datasaver:
             # start = timer.reset_clock()
             self.ready_buffers()
