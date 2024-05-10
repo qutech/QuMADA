@@ -58,7 +58,7 @@ class QumadaDevice:
         if self.make_terminals_global:
             if terminal_name not in self.namespace.keys():
                 # Adding to the global namespace
-                self.namespace[terminal_name] = self.terminals[terminal_name]
+                self.namespace[terminal_name] = self.terminals[terminal_name.replace(" ", "_")]
                 logger.warning(f"Added {terminal_name} to global namespace!")
             else:
                 raise Terminal_Exists_Exception(
@@ -302,6 +302,8 @@ class Terminal_Parameter(ABC):
     def __init__(self, name: str, Terminal: Terminal, properties: dict = {}) -> None:
         self._parent = Terminal
         self._parent_device = Terminal._parent
+        if properties is None:
+            properties = {}
         self.properties: dict[Any, Any] = properties
         self.type = self.properties.get("type", None)
         self._stored_value = self.properties.get("value", None)  # For storing values for measurements
