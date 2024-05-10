@@ -46,6 +46,7 @@ class QumadaDevice:
         self.terminals = {}
         self.instrument_parameters = {}
         self.make_terminals_global = make_terminals_global
+        self.station = station
 
     def add_terminal(self, terminal_name: str, type: str | None = None, terminal_data: dict | None = {}):
         if terminal_name not in self.terminals.keys():
