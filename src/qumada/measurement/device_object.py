@@ -26,12 +26,20 @@ from qumada.utils.utils import flatten_array
 
 logger = logging.getLogger(__name__)
 
+class Terminal_Exists_Exception(Exception):
+    pass
+
+
+class Parameter_Exists_Exception(Exception):
+    pass
+
 
 class QumadaDevice:
     def __init__(
         self,
         make_terminals_global=True,
         namespace=None,
+        station: Station|None = None,
     ):
         self.namespace = namespace or globals()
         self.terminals = {}
@@ -44,14 +52,14 @@ class QumadaDevice:
                 terminal_name, self, type
             )
         else:
-            raise Exception(f"Terminal {terminal_name} already exists. Please remove it first!")
+            raise Terminal_Exists_Exception(f"Terminal {terminal_name} already exists. Please remove it first!")
         if self.make_terminals_global:
             if terminal_name not in self.namespace.keys():
                 # Adding to the global namespace
                 self.namespace[terminal_name] = self.terminals[terminal_name]
                 logger.warning(f"Added {terminal_name} to global namespace!")
             else:
-                raise Exception(
+                raise Terminal_Exists_Exception(
                     f"Terminal {terminal_name} already exists in global namespace. \
                         Please remove it first!"
                 )
@@ -87,7 +95,7 @@ class QumadaDevice:
                 param.set_default()
 
     @staticmethod
-    def create_from_dict(data: dict, make_terminals_global=False, namespace=None):
+    def create_from_dict(data: dict, station: Station|None=None, make_terminals_global=False, namespace=None):
         """
         Creates a QumadaDevice object from valid parameter dictionaries as used in Qumada measurement scripts.
         Be aware that the validity is not checked at the moment, so there might be unexpected exceptions!
@@ -96,7 +104,7 @@ class QumadaDevice:
         If you set namespace=globals() you can make the terminals available in global namespace.
         TODO: Remove make_terminals_global parameter and check if namespace is not None
         """
-        device = QumadaDevice(make_terminals_global=make_terminals_global, namespace=namespace)
+        device = QumadaDevice(station=station, make_terminals_global=make_terminals_global, namespace=namespace)
         for terminal_name, terminal_data in data.items():
             device.add_terminal(terminal_name, terminal_data=terminal_data)
             for parameter_name, properties in terminal_data.items():
@@ -111,9 +119,18 @@ class QumadaDevice:
         """
         device = self
         for terminal_name, terminal_data in data.items():
-            device.add_terminal(terminal_name, terminal_data=terminal_data)
+            try:
+                device.add_terminal(terminal_name, terminal_data=terminal_data)
+            except Terminal_Exists_Exception:
+                pass
             for parameter_name, properties in terminal_data.items():
-                device.terminals[terminal_name].add_terminal_parameter(parameter_name, properties=properties)
+                try:
+                    device.terminals[terminal_name].add_terminal_parameter(parameter_name, properties=properties)
+                except Parameter_Exists_Exception:
+                    device.terminals[terminal_name].terminal_parameters[parameter_name].properties = properties
+                    device.terminals[terminal_name].terminal_parameters[parameter_name]._apply_properties()
+
+
         return device
 
     def save_to_dict(self, priorize_stored_value=False):
@@ -250,7 +267,7 @@ class Terminal(ABC):
                 self._parent.instrument_parameters[self.name] = {}
             self._parent.instrument_parameters[self.name][parameter_name] = parameter
         else:
-            raise Exception(f"Parameter{parameter_name} already exists")
+            raise Parameter_Exists_Exception(f"Parameter{parameter_name} already exists")
 
     def remove_terminal_parameter(self, parameter_name: str) -> None:
         """
@@ -283,6 +300,7 @@ class Terminal(ABC):
 class Terminal_Parameter(ABC):
     def __init__(self, name: str, Terminal: Terminal, properties: dict = {}) -> None:
         self._parent = Terminal
+        self._parent_device= Terminal._parent
         self.properties: dict[Any, Any] = properties
         self.type = self.properties.get("type", None)
         self._stored_value = self.properties.get("value", None)  # For storing values for measurements
@@ -302,6 +320,17 @@ class Terminal_Parameter(ABC):
     def reset(self):
         pass
 
+    def _apply_properties(self):
+        """
+        Make sure changes to the properties are passed on to the object attributes
+        """
+        self.type = self.properties.get("type", self.type)
+        self._stored_value = self.properties.get("value", self._stored_value)  # For storing values for measurements
+        self.setpoints = self.properties.get("setpoints", self.setpoints)
+        self.delay = self.properties.get("delay", self.delay)
+        self.ramp_rate = self.properties.get("ramp_rate", self.ramp_rate)
+        self.group = self.properties.get("group", self.group)
+
     @property
     def value(self):
         return self._value
@@ -317,7 +346,7 @@ class Terminal_Parameter(ABC):
                 try:
                     self.instrument_parameter(self.scaling * value)
                 except:
-                    self._parent._parent.update_terminal_parameters()
+                    self._parent_device.update_terminal_parameters()
                     self.instrument_parameter(self.scaling * value)
             else:
                 self._value = value
@@ -325,7 +354,7 @@ class Terminal_Parameter(ABC):
                 try:
                     self.instrument_parameter(value)
                 except:
-                    self._parent._parent.update_terminal_parameters()
+                    self._parent_device.update_terminal_parameters()
                     self.instrument_parameter(value)
         else:
             raise Exception("Limits are not yet implemented!")
@@ -336,7 +365,7 @@ class Terminal_Parameter(ABC):
         try:
             return self.instrument_parameter()
         except:
-            self._parent._parent.update_terminal_parameters()
+            self._parent_device.update_terminal_parameters()
             return self.instrument_parameter()
 
     @property
@@ -359,22 +388,26 @@ class Terminal_Parameter(ABC):
             setpoint_intervall=setpoint_intervall,
         )
 
-    def measured_ramp(self, station, value, num_points=100, name=None, metadata=None, priorize_stored_value=False):
-        if self.locked:
+    def measured_ramp(self, value, num_points=100, station=None, name=None, metadata=None, priorize_stored_value=False):
+        if station is None:
+            station = self._parent_device.station
+        if type(station)!= Station:
+            raise TypeError("No valid station assigned!")
+        if self.locked: 
             raise Exception(f"{self.name} is locked!")
-        script = Generic_1D_Sweep()
-        for terminal_name, terminal in self._parent._parent.terminals.items():
+        script=Generic_1D_Sweep()
+        for terminal_name, terminal in self._parent_device.terminals.items():
             for param_name, param in terminal.terminal_parameters.items():
                 if param.type == "dynamic":
                     param.type = "static"
         self.type = "dynamic"
         self.setpoints = np.linspace(self(), value, num_points)
         script.setup(
-            self._parent._parent.save_to_dict(priorize_stored_value=priorize_stored_value),
+            self._parent_device.save_to_dict(priorize_stored_value=priorize_stored_value),
             metadata=metadata,
             name=name,
         )
-        mapping = self._parent._parent.instrument_parameters
+        mapping=self._parent_device.instrument_parameters
         map_terminals_gui(station.components, script.gate_parameters, mapping)
         data = script.run()
         return data
