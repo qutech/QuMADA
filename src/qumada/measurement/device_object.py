@@ -26,6 +26,7 @@ from qumada.utils.utils import flatten_array
 
 logger = logging.getLogger(__name__)
 
+
 class Terminal_Exists_Exception(Exception):
     pass
 
@@ -39,7 +40,7 @@ class QumadaDevice:
         self,
         make_terminals_global=True,
         namespace=None,
-        station: Station|None = None,
+        station: Station | None = None,
     ):
         self.namespace = namespace or globals()
         self.terminals = {}
@@ -95,7 +96,7 @@ class QumadaDevice:
                 param.set_default()
 
     @staticmethod
-    def create_from_dict(data: dict, station: Station|None=None, make_terminals_global=False, namespace=None):
+    def create_from_dict(data: dict, station: Station | None = None, make_terminals_global=False, namespace=None):
         """
         Creates a QumadaDevice object from valid parameter dictionaries as used in Qumada measurement scripts.
         Be aware that the validity is not checked at the moment, so there might be unexpected exceptions!
@@ -129,7 +130,6 @@ class QumadaDevice:
                 except Parameter_Exists_Exception:
                     device.terminals[terminal_name].terminal_parameters[parameter_name].properties = properties
                     device.terminals[terminal_name].terminal_parameters[parameter_name]._apply_properties()
-
 
         return device
 
@@ -300,7 +300,7 @@ class Terminal(ABC):
 class Terminal_Parameter(ABC):
     def __init__(self, name: str, Terminal: Terminal, properties: dict = {}) -> None:
         self._parent = Terminal
-        self._parent_device= Terminal._parent
+        self._parent_device = Terminal._parent
         self.properties: dict[Any, Any] = properties
         self.type = self.properties.get("type", None)
         self._stored_value = self.properties.get("value", None)  # For storing values for measurements
@@ -391,11 +391,11 @@ class Terminal_Parameter(ABC):
     def measured_ramp(self, value, num_points=100, station=None, name=None, metadata=None, priorize_stored_value=False):
         if station is None:
             station = self._parent_device.station
-        if type(station)!= Station:
+        if type(station) != Station:
             raise TypeError("No valid station assigned!")
-        if self.locked: 
+        if self.locked:
             raise Exception(f"{self.name} is locked!")
-        script=Generic_1D_Sweep()
+        script = Generic_1D_Sweep()
         for terminal_name, terminal in self._parent_device.terminals.items():
             for param_name, param in terminal.terminal_parameters.items():
                 if param.type == "dynamic":
@@ -407,7 +407,7 @@ class Terminal_Parameter(ABC):
             metadata=metadata,
             name=name,
         )
-        mapping=self._parent_device.instrument_parameters
+        mapping = self._parent_device.instrument_parameters
         map_terminals_gui(station.components, script.gate_parameters, mapping)
         data = script.run()
         return data
