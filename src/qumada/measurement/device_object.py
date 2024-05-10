@@ -6,10 +6,10 @@ import logging
 from abc import ABC, abstractmethod
 from collections.abc import MutableSequence
 from contextlib import suppress
+from copy import deepcopy
 from datetime import datetime
 from functools import wraps
 from typing import Any, Callable
-from copy import deepcopy
 
 import numpy as np
 import qcodes as qc
@@ -186,19 +186,27 @@ class QumadaDevice:
                         else:
                             logger.warning(f"Couldn't find value for {terminal_name} {param_name}")
         return return_dict
-    
 
-    def timetrace(self, duration: float, timestep: float = 1, name = None, metadata=None, station = None, buffered=False, buffer_settings: dict = {}, priorize_stored_value=False):
-        """
-        """
+    def timetrace(
+        self,
+        duration: float,
+        timestep: float = 1,
+        name=None,
+        metadata=None,
+        station=None,
+        buffered=False,
+        buffer_settings: dict = {},
+        priorize_stored_value=False,
+    ):
+        """ """
         if station is None:
             station = self.station
         if type(station) != Station:
             raise TypeError("No valid station assigned!")
-        temp_buffer_settings=deepcopy(buffer_settings)
-        if buffered==True:
+        temp_buffer_settings = deepcopy(buffer_settings)
+        if buffered == True:
             logger.warning("Temporarily modifying buffer settings to match function arguments.")
-            temp_buffer_settings["sampling_rate"] = 1/timestep
+            temp_buffer_settings["sampling_rate"] = 1 / timestep
             temp_buffer_settings["duration"] = duration
             temp_buffer_settings["burst_duration"] = duration
             try:
@@ -212,19 +220,18 @@ class QumadaDevice:
             script = Timetrace()
         script.setup(
             self.save_to_dict(priorize_stored_value=priorize_stored_value),
-            metadata = metadata,
-            name = name,
-            duration = duration,
-            timestep = timestep,
-            buffer_settings = temp_buffer_settings,
+            metadata=metadata,
+            name=name,
+            duration=duration,
+            timestep=timestep,
+            buffer_settings=temp_buffer_settings,
             **self.buffer_script_setup,
-                        )
+        )
         mapping = self.instrument_parameters
         map_terminals_gui(station.components, script.gate_parameters, mapping)
         map_triggers(station.components, script.properties, self.instrument_parameters)
         data = script.run()
         return data
-
 
 
 def create_hook(func, hook):
