@@ -159,7 +159,7 @@ class QumadaDevice:
             return_dict[terminal_name] = {}
             for param_name, param in terminal.terminal_parameters.items():
                 return_dict[terminal_name][param_name] = {}
-                for attr_name in ["type", "setpoints", "delay", "start", "stop", "num_points"]:
+                for attr_name in ["type", "setpoints", "delay", "start", "stop", "num_points", "break_conditions"]:
                     if hasattr(param, attr_name):
                         return_dict[terminal.name][param.name][attr_name] = getattr(param, attr_name)
                 if priorize_stored_value:
@@ -362,6 +362,7 @@ class Terminal_Parameter(ABC):
         self._stored_value = self.properties.get("value", None)  # For storing values for measurements
         self.setpoints = self.properties.get("setpoints", None)
         self.delay = self.properties.get("delay", 0)
+        self.break_conditions = self.properties.get("break_conditions", [])
         self._value = None
         self.name = name
         self.limits = None
