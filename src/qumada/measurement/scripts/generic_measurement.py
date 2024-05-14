@@ -30,7 +30,7 @@ from qcodes.dataset import dond
 from qcodes.dataset.measurements import Measurement
 from qcodes.parameters.specialized_parameters import ElapsedTimeParameter
 
-from qumada.instrument.buffers.buffer import is_bufferable
+from qumada.instrument.buffers import is_bufferable
 from qumada.measurement.doNd_enhanced.doNd_enhanced import (
     _dev_interpret_breaks,
     _interpret_breaks,
@@ -322,6 +322,8 @@ class Timetrace_buffered(MeasurementScript):
                 )
                 parameter_value = self.properties[parameter["gate"]][parameter["parameter"]]["value"]
                 static_gettables.append((channel, [parameter_value for _ in range(int(self.buffered_num_points))]))
+            else:
+                raise Exception(f"{channel} cannot be buffered and is not static gettable")
         for channel in del_channels:
             self.gettable_channels.remove(channel)
         for param in del_params:

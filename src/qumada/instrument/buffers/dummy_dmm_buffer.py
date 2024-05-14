@@ -29,7 +29,7 @@ import numpy as np
 from jsonschema import validate
 from qcodes.parameters import Parameter
 
-from qumada.instrument.buffers.buffer import Buffer, BufferException
+from qumada.instrument.buffers import Buffer, BufferException
 from qumada.instrument.custom_drivers.Dummies.dummy_dmm import DummyDmm
 
 

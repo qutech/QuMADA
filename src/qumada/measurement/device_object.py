@@ -18,7 +18,7 @@ from qcodes.dataset import AbstractSweep, LinSweep
 from qcodes.dataset.dond.do_nd_utils import ActionsT
 from qcodes.parameters import Parameter, ParameterBase
 
-from qumada.instrument.buffers.buffer import is_bufferable, is_triggerable, map_triggers
+from qumada.instrument.buffers.buffer import map_triggers
 from qumada.instrument.mapping import map_terminals_gui
 from qumada.measurement.scripts import Generic_1D_Sweep, Timetrace, Timetrace_buffered
 from qumada.metadata import Metadata
@@ -229,7 +229,7 @@ class QumadaDevice:
         )
         mapping = self.instrument_parameters
         map_terminals_gui(station.components, script.gate_parameters, mapping)
-        map_triggers(station.components, script.properties, self.instrument_parameters)
+        map_triggers(station.components, script.properties, script.gate_parameters)
         data = script.run()
         return data
 
