@@ -21,7 +21,7 @@ from qcodes.validators.validators import Numbers
 
 from qumada.instrument.buffers.buffer import map_triggers
 from qumada.instrument.mapping import map_terminals_gui
-from qumada.measurement.scripts import Generic_1D_Sweep, Timetrace, Timetrace_buffered
+from qumada.measurement.scripts import Generic_1D_Sweep, Timetrace, Timetrace_buffered, Generic_2D_Sweep_buffered, Generic_nD_Sweep
 from qumada.metadata import Metadata
 from qumada.utils.ramp_parameter import ramp_or_set_parameter
 from qumada.utils.utils import flatten_array
@@ -50,6 +50,7 @@ class QumadaDevice:
         self.make_terminals_global = make_terminals_global
         self.station = station
         self.buffer_script_setup = {}
+        self.states = {}
 
     def add_terminal(self, terminal_name: str, type: str | None = None, terminal_data: dict | None = {}):
         if terminal_name not in self.terminals.keys():
@@ -90,6 +91,18 @@ class QumadaDevice:
         for terminal in self.terminals.values():
             for param in terminal.terminal_parameters.values():
                 param.save_default()
+                
+    def save_state(self, name: str):
+        """
+        Saves current state (inclung types, limits etc) as entry in the tuning dict with name as key.
+        """
+        for terminal in self.terminals.values():
+            self.states[name] = self.save_to_dict(priorize_stored_value=False)
+            
+    def set_state(self, name: str):
+        self.load_from_dict(self.states[name])
+        self.set_stored_values()
+
 
     def set_stored_values(self):
         for terminal in self.terminals.values():
@@ -169,6 +182,7 @@ class QumadaDevice:
                     "num_points",
                     "break_conditions",
                     "limits",
+                    "group",
                 ]:
                     if hasattr(param, attr_name):
                         return_dict[terminal.name][param.name][attr_name] = getattr(param, attr_name)
@@ -249,6 +263,70 @@ class QumadaDevice:
         map_terminals_gui(station.components, script.gate_parameters, mapping)
         map_triggers(station.components, script.properties, script.gate_parameters)
         data = script.run()
+        return data
+    
+    def sweep_2D(
+        self,
+        slow_param: Parameter,
+        fast_param: Parameter,
+        slow_param_range: float,
+        fast_param_range: float,
+        slow_num_points: int = 50,
+        fast_num_points: int = 100,
+        name=None,
+        metadata=None,
+        station=None,
+        buffered=False,
+        buffer_settings: dict = {},
+        priorize_stored_value=False,
+    ):
+        """ """
+        if station is None:
+            station = self.station
+        if type(station) != Station:
+            raise TypeError("No valid station assigned!")
+        self.save_state("_temp_2D")
+        try:
+            for terminal in self.terminals.values():
+                for parameter in terminal.terminal_parameters.values():
+                    if parameter.type == "dynamic":
+                        parameter.type = "static"
+            slow_param.type="dynamic"
+            slow_param.setpoints=np.linspace(slow_param.value-slow_param_range, slow_param.value+slow_param_range, slow_num_points)
+            slow_param.group = 1
+            fast_param.type="dynamic"
+            fast_param.group = 2
+            fast_param.setpoints=np.linspace(fast_param.value-fast_param_range, fast_param.value+fast_param_range, fast_num_points)
+            temp_buffer_settings = deepcopy(buffer_settings)
+            if buffered == True:
+                if "num_points" in temp_buffer_settings.keys():
+                    temp_buffer_settings["num_points"] = fast_num_points
+                    logger.warning(f"Temporarily changed buffer settings to match the number of points specified {fast_num_points=}")
+                else:
+                    logger.warning("Num_points not specified in buffer settings! fast_num_points value is ignored and buffer settings are used to specify measurement!")
+                    
+                script = Generic_2D_Sweep_buffered()
+            else:
+                script = Generic_nD_Sweep()
+            script.setup(
+                self.save_to_dict(priorize_stored_value=priorize_stored_value),
+                metadata=metadata,
+                name=name,
+                buffer_settings=temp_buffer_settings,
+                **self.buffer_script_setup,
+            )
+            mapping = self.instrument_parameters
+            map_terminals_gui(station.components, script.gate_parameters, mapping)
+            map_triggers(station.components, script.properties, script.gate_parameters)
+            data = script.run()
+        except Exception as e:
+            print(self.states["_temp_2D"])
+            self.set_state("_temp_2D")
+            raise e
+        finally:
+            print(self.states["_temp_2D"])
+            self.set_state("_temp_2D")
+            del self.states["_temp_2D"]
         return data
 
 

@@ -892,7 +892,7 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
             self.measurement_name += f" {gate_names}"
 
         meas = Measurement(name=self.measurement_name)
-
+      
         if reverse_param_order:
             slow_param = self.dynamic_channels[1]
             slow_sweep = self.dynamic_sweeps[1]
