@@ -196,6 +196,15 @@ class QumadaDevice:
                         else:
                             logger.warning(f"Couldn't find value for {terminal_name} {param_name}")
         return return_dict
+    
+    def mapping(self, instrument_parameters: None|dict = None):
+        if instrument_parameters == None:
+            instrument_parameters = self.instrument_parameters
+        if not isinstance(self.station, Station):
+            raise TypeError("No valid qcodes station found. Make sure you have set the station attribute correctly!")
+        map_terminals_gui(self.station.components, self.instrument_parameters, instrument_parameters)
+        self.update_terminal_parameters()
+        
 
     def timetrace(
         self,
@@ -380,7 +389,7 @@ class Terminal_Parameter(ABC):
         self.ramp_rate = self.properties.get("ramp_rate", 0.1)
         self.group = self.properties.get("group", None)
         self.default_value = None
-        self.scaling = 1
+        self.scaling = 1 #Only relevant for setting values. Not taken into account for measurements!
         self._instrument_parameter = None
         self.locked = False
         self._limit_validator = None
@@ -442,7 +451,7 @@ class Terminal_Parameter(ABC):
     def instrument_parameter(self, param: Parameter):
         if isinstance(param, Parameter) or param == None:
             self._instrument_parameter = param
-            self.set_limits()
+            self._set_limits()
         else:
             raise TypeError(f"{param} is not a QCoDeS parameter!")
 
@@ -484,7 +493,9 @@ class Terminal_Parameter(ABC):
             self._limit_validator = Numbers(min_value=min(self.limits), max_value=max(self.limits))
             param.add_validator(self._limit_validator)
 
-    def ramp(self, value, ramp_rate: float = 0.1, ramp_time: float = 5, setpoint_intervall: float = 0.01):
+    def ramp(self, value, ramp_rate: float|None = None, ramp_time: float = 5, setpoint_intervall: float = 0.01):
+        if ramp_rate is None:
+            ramp_rate = self.ramp_rate
         ramp_or_set_parameter(
             self.instrument_parameter,
             value,
