@@ -21,7 +21,13 @@ from qcodes.validators.validators import Numbers
 
 from qumada.instrument.buffers.buffer import map_triggers
 from qumada.instrument.mapping import map_terminals_gui
-from qumada.measurement.scripts import Generic_1D_Sweep, Timetrace, Timetrace_buffered, Generic_2D_Sweep_buffered, Generic_nD_Sweep
+from qumada.measurement.scripts import (
+    Generic_1D_Sweep,
+    Generic_2D_Sweep_buffered,
+    Generic_nD_Sweep,
+    Timetrace,
+    Timetrace_buffered,
+)
 from qumada.metadata import Metadata
 from qumada.utils.ramp_parameter import ramp_or_set_parameter
 from qumada.utils.utils import flatten_array
@@ -91,18 +97,17 @@ class QumadaDevice:
         for terminal in self.terminals.values():
             for param in terminal.terminal_parameters.values():
                 param.save_default()
-                
+
     def save_state(self, name: str):
         """
         Saves current state (inclung types, limits etc) as entry in the tuning dict with name as key.
         """
         for terminal in self.terminals.values():
             self.states[name] = self.save_to_dict(priorize_stored_value=False)
-            
+
     def set_state(self, name: str):
         self.load_from_dict(self.states[name])
         self.set_stored_values()
-
 
     def set_stored_values(self):
         for terminal in self.terminals.values():
@@ -264,7 +269,7 @@ class QumadaDevice:
         map_triggers(station.components, script.properties, script.gate_parameters)
         data = script.run()
         return data
-    
+
     def sweep_2D(
         self,
         slow_param: Parameter,
@@ -291,20 +296,28 @@ class QumadaDevice:
                 for parameter in terminal.terminal_parameters.values():
                     if parameter.type == "dynamic":
                         parameter.type = "static"
-            slow_param.type="dynamic"
-            slow_param.setpoints=np.linspace(slow_param.value-slow_param_range, slow_param.value+slow_param_range, slow_num_points)
+            slow_param.type = "dynamic"
+            slow_param.setpoints = np.linspace(
+                slow_param.value - slow_param_range, slow_param.value + slow_param_range, slow_num_points
+            )
             slow_param.group = 1
-            fast_param.type="dynamic"
+            fast_param.type = "dynamic"
             fast_param.group = 2
-            fast_param.setpoints=np.linspace(fast_param.value-fast_param_range, fast_param.value+fast_param_range, fast_num_points)
+            fast_param.setpoints = np.linspace(
+                fast_param.value - fast_param_range, fast_param.value + fast_param_range, fast_num_points
+            )
             temp_buffer_settings = deepcopy(buffer_settings)
             if buffered == True:
                 if "num_points" in temp_buffer_settings.keys():
                     temp_buffer_settings["num_points"] = fast_num_points
-                    logger.warning(f"Temporarily changed buffer settings to match the number of points specified {fast_num_points=}")
+                    logger.warning(
+                        f"Temporarily changed buffer settings to match the number of points specified {fast_num_points=}"
+                    )
                 else:
-                    logger.warning("Num_points not specified in buffer settings! fast_num_points value is ignored and buffer settings are used to specify measurement!")
-                    
+                    logger.warning(
+                        "Num_points not specified in buffer settings! fast_num_points value is ignored and buffer settings are used to specify measurement!"
+                    )
+
                 script = Generic_2D_Sweep_buffered()
             else:
                 script = Generic_nD_Sweep()

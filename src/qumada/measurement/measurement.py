@@ -357,8 +357,8 @@ class MeasurementScript(ABC):
                                     delay=self.properties[gate][parameter].setdefault("delay", 0),
                                 )
                             )
-                            
-                    #Only executed for dynamic parameters!
+
+                    # Only executed for dynamic parameters!
                     if "group" in self.properties[gate][parameter].keys():
                         group = self.properties[gate][parameter]["group"]
                         if group not in self.groups.keys():
@@ -382,8 +382,6 @@ class MeasurementScript(ABC):
                                         self.dynamic_parameters[-1]["priority"] = prio
                                 except Exception:
                                     pass
-                
-                         
 
         if self.buffered:
             self.buffers = {
@@ -395,16 +393,11 @@ class MeasurementScript(ABC):
         self.sort_by_priority()
         self._lists_created = True
         self._relabel_instruments()
-        
-    def sort_by_priority(self):
-        combined_lists= list(zip(self.dynamic_parameters, self.dynamic_channels, self.dynamic_sweeps))
-        combined_sorted = sorted(
-                combined_lists,
-                key=lambda x: (x[0].get("priority", float('inf')))
-            )
-        self.dynamic_parameters, self.dynamic_channels, self.dynamic_sweeps = map(list, zip(*combined_sorted))
 
-        
+    def sort_by_priority(self):
+        combined_lists = list(zip(self.dynamic_parameters, self.dynamic_channels, self.dynamic_sweeps))
+        combined_sorted = sorted(combined_lists, key=lambda x: (x[0].get("priority", float("inf"))))
+        self.dynamic_parameters, self.dynamic_channels, self.dynamic_sweeps = map(list, zip(*combined_sorted))
 
     def initialize(self, dyn_ramp_to_val=False, inactive_dyn_channels: list | None = None) -> None:
         """
