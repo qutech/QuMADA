@@ -17,6 +17,7 @@ from qcodes import Station
 from qcodes.dataset import AbstractSweep, LinSweep
 from qcodes.dataset.dond.do_nd_utils import ActionsT
 from qcodes.parameters import Parameter, ParameterBase
+from qcodes.validators.validators import Numbers
 
 from qumada.instrument.buffers.buffer import map_triggers
 from qumada.instrument.mapping import map_terminals_gui
@@ -159,7 +160,7 @@ class QumadaDevice:
             return_dict[terminal_name] = {}
             for param_name, param in terminal.terminal_parameters.items():
                 return_dict[terminal_name][param_name] = {}
-                for attr_name in ["type", "setpoints", "delay", "start", "stop", "num_points", "break_conditions"]:
+                for attr_name in ["type", "setpoints", "delay", "start", "stop", "num_points", "break_conditions", "limits"]:
                     if hasattr(param, attr_name):
                         return_dict[terminal.name][param.name][attr_name] = getattr(param, attr_name)
                 if priorize_stored_value:
@@ -365,7 +366,7 @@ class Terminal_Parameter(ABC):
         self.break_conditions = self.properties.get("break_conditions", [])
         self._value = None
         self.name = name
-        self.limits = None
+        self._limits = self.properties.get("limits", None)
         self.rampable = False
         self.ramp_rate = self.properties.get("ramp_rate", 0.1)
         self.group = self.properties.get("group", None)
@@ -373,6 +374,7 @@ class Terminal_Parameter(ABC):
         self.scaling = 1
         self._instrument_parameter = None
         self.locked = False
+        self._limit_validator = None
 
     def reset(self):
         pass
@@ -397,31 +399,30 @@ class Terminal_Parameter(ABC):
         if self.locked:
             raise Exception(f"Parameter {self.name} of Terminal {self._parent.name} is locked and cannot be set!")
             return
-        if self.limits == None:
-            if type(value) == float:
-                self._value = self.scaling * value
-                try:
-                    self.instrument_parameter(self.scaling * value)
-                except:
-                    self._parent_device.update_terminal_parameters()
-                    self.instrument_parameter(self.scaling * value)
-            else:
-                self._value = value
-                # TODO: Replace Try/Except block, update_terminal_parameters() should be called by mapping function
-                try:
-                    self.instrument_parameter(value)
-                except:
-                    self._parent_device.update_terminal_parameters()
-                    self.instrument_parameter(value)
+
+        if type(value) == float:
+            self._value = self.scaling * value
+            try:
+                self.instrument_parameter(self.scaling * value)
+            except:
+                self._parent_device.update_terminal_parameters()
+                self.instrument_parameter(self.scaling * value)
         else:
-            raise Exception("Limits are not yet implemented!")
+            self._value = value
+            # TODO: Replace Try/Except block, update_terminal_parameters() should be called by mapping function
+            try:
+                self.instrument_parameter(value)
+            except:
+                self._parent_device.update_terminal_parameters()
+                self.instrument_parameter(value)
+
 
     @value.getter
     def value(self):
         # TODO: Replace Try/Except block, update_terminal_parameters() should be called by mapping function
         try:
             return self.instrument_parameter()
-        except:
+        except TypeError:
             self._parent_device.update_terminal_parameters()
             return self.instrument_parameter()
 
@@ -433,8 +434,48 @@ class Terminal_Parameter(ABC):
     def instrument_parameter(self, param: Parameter):
         if isinstance(param, Parameter) or param == None:
             self._instrument_parameter = param
+            self.set_limits()
         else:
             raise TypeError(f"{param} is not a QCoDeS parameter!")
+            
+    @property   
+    def limits(self):
+        return self._limits
+    
+    
+    @limits.setter
+    def limits(self, limits):
+        if type(limits) in (list, tuple) and len(limits) == 2:
+            self._limits = limits
+            self._set_limits()
+        else:
+            raise ValueError("Limits has to be a list|tuple with two entries")
+        
+        
+    def _set_limits(self):
+        """
+        Uses QCoDeS parameter's validators to limit values of parameters with
+        number value to the values set in the limits attribute.
+        Will replace last validator of corresponding parameter, if it was set
+        by this method before! Won't remove validators that existed before 
+        initialization of the parameter. Make sure not to add validators
+        manually to avoid problem (QCoDeS can only remove the last added
+        validator, so it's not possible to just remove the correct one.')
+        """
+        if self.limits is None:
+            return
+        if len(self.limits) != 2:
+            raise ValueError(f"Invalid limits provided for {self._parent.name} {self.name}")
+        param = self.instrument_parameter
+        if not isinstance(param, Parameter):
+            logger.exception(f"Cannot set limits to {self._parent.name} {self.name} \
+                             as no valid instrument parameter was assigned to it!")
+        else:
+            if self._limit_validator in param.validators:
+                param.remove_validator()
+            self._limit_validator = Numbers(min_value = min(self.limits), max_value = max(self.limits))
+            param.add_validator(self._limit_validator)            
+            
 
     def ramp(self, value, ramp_rate: float = 0.1, ramp_time: float = 5, setpoint_intervall: float = 0.01):
         ramp_or_set_parameter(
