@@ -21,6 +21,7 @@ from qumada.instrument.buffers.buffer import (
     Buffer,
     BufferException,
     is_bufferable,
+    is_triggerable,
     map_buffers,
 )
 from qumada.instrument.buffers.dummy_dmm_buffer import DummyDMMBuffer
@@ -33,6 +34,7 @@ __all__ = [
     "BufferException",
     "map_buffers",
     "is_bufferable",
+    "is_triggerable",
     "MFLIBuffer",
     "SR830Buffer",
     "DummyDMMBuffer",

@@ -29,7 +29,7 @@ import numpy as np
 from jsonschema import validate
 from qcodes.parameters import Parameter
 
-from qumada.instrument.buffers.buffer import Buffer, BufferException
+from qumada.instrument.buffers import Buffer, BufferException
 from qumada.instrument.custom_drivers.Dummies.dummy_dmm import DummyDmm
 
 
@@ -117,6 +117,7 @@ class DummyDMMBuffer(Buffer):
             index = self._device.buffer.subscribed_params.index(parameter)
             data[parameter.name] = self._device.buffer.get()[index]
             data[parameter.name] = data[parameter.name][self.delay_data_points : self.num_points]
+        data["timestamps"] = np.linspace(0, self.num_points / self._device.buffer_SR(), self.num_points)
         return data
 
     def read(self) -> dict:

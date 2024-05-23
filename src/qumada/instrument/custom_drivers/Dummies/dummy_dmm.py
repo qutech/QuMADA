@@ -116,7 +116,7 @@ class DummyDmm(Instrument):
             "buffer_SR",
             unit="Sa/s",
             set_cmd=None,
-            vals=vals.Ints(0, 512),
+            vals=vals.Numbers(0, 512),
         )
 
         self.add_parameter(
