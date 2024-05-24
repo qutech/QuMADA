@@ -1,15 +1,37 @@
+import logging
+import multiprocessing as mp
 import sys
 import threading
-import multiprocessing as mp
-import logging
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QTableWidget, QTableWidgetItem, QSpinBox, QPushButton, QLabel
-from PyQt5.QtCore import QThread, pyqtSignal, QTimer, Qt, QObject, QMetaObject, Q_ARG, pyqtSlot
+
+from PyQt5.QtCore import (
+    Q_ARG,
+    QMetaObject,
+    QObject,
+    Qt,
+    QThread,
+    QTimer,
+    pyqtSignal,
+    pyqtSlot,
+)
+from PyQt5.QtWidgets import (
+    QApplication,
+    QLabel,
+    QPushButton,
+    QSpinBox,
+    QTableWidget,
+    QTableWidgetItem,
+    QVBoxLayout,
+    QWidget,
+)
 
 # Set up logging
-logging.basicConfig(level=logging.WARNING, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.WARNING, format="%(asctime)s - %(levelname)s - %(message)s")
+
+
 class Parent:
     def __init__(self, name):
         self.name = name
+
 
 class Parameter:
     def __init__(self, name, parent):
@@ -21,9 +43,6 @@ class Parameter:
 
     def cached_value(self):
         return 42  # Beispielwert
-
-
-
 
 
 class Worker(QObject):
@@ -50,6 +69,7 @@ class Worker(QObject):
         self.running = False
         self.timer.stop()
         logging.debug("Worker stopped")
+
 
 class MeasurementGUI(QWidget):
     def __init__(self, parameters, data_queue):
@@ -84,7 +104,7 @@ class MeasurementGUI(QWidget):
         self.layout.addWidget(self.cached_value_button)
 
         self.setLayout(self.layout)
-        self.setWindowTitle('Messsoftware GUI')
+        self.setWindowTitle("Messsoftware GUI")
         self.show()
 
         self.interval_spinbox.valueChanged.connect(self.update_interval)
@@ -135,7 +155,8 @@ class MeasurementGUI(QWidget):
         self.worker_thread.quit()
         self.worker_thread.wait()
         event.accept()
-        self.data_queue.put('QUIT')
+        self.data_queue.put("QUIT")
+
 
 def start_gui(parameters, data_queue):
     app = QApplication(sys.argv)
@@ -144,10 +165,12 @@ def start_gui(parameters, data_queue):
     logging.debug("GUI started")
     app.exec_()
 
+
 def gui_process_main(parameters, data_queue):
     gui_process = mp.Process(target=start_gui, args=(parameters, data_queue))
     gui_process.start()
     return gui_process
+
 
 def open_gui(parameters):
     data_queue = mp.Queue()
@@ -157,18 +180,19 @@ def open_gui(parameters):
         while True:
             try:
                 data = data_queue.get()
-                if data == 'QUIT':
+                if data == "QUIT":
                     break
                 print("Received data:", data)
             except KeyboardInterrupt:
-                data_queue.put('QUIT')
+                data_queue.put("QUIT")
                 gui_process.join()
                 break
 
     listener_thread = threading.Thread(target=data_listener, daemon=True)
     listener_thread.start()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     parent1 = Parent("Parent1")
     parent2 = Parent("Parent2")
 
@@ -179,15 +203,3 @@ if __name__ == '__main__':
     ]
 
     open_gui(parameters)
-
-
-
-
-
-
-
-
-
-
-
-
