@@ -902,6 +902,7 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
         sync_trigger = self.settings.get("sync_trigger", None)
         reverse_param_order = self.settings.get("reverse_param_order", False)
         reset_time = self.settings.get("reset_time", 0)
+        buffer_timeout_multiplier = self.settings.get("buffer_timeout_multiplier", 20)
         datasets = []
 
         self.generate_lists()
@@ -1059,9 +1060,12 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
                         measurement instruments! Only recommended\
                         for debugging."
                     )
-
+                timer=0
                 while not all(buffer.is_finished() for buffer in list(self.buffers)):
+                    timer+=0.1
                     sleep(0.1)
+                    if timer >= buffer_timeout_multiplier*self._burst_duration:
+                        raise TimeoutError
                 try:
                     trigger_reset()
                 except TypeError:
@@ -1118,6 +1122,7 @@ class Generic_Pulsed_Measurement(MeasurementScript):
             default="software",
             default_key_error="software",
         )
+        buffer_timeout_mulitplier = self.settings.get("buffer_timeout_multiplier", 20)
         include_gate_name = self.settings.get("include_gate_name", True)
         sync_trigger = self.settings.get("sync_trigger", None)
         datasets = []
@@ -1235,7 +1240,10 @@ class Generic_Pulsed_Measurement(MeasurementScript):
                 )
 
             while not all(buffer.is_finished() for buffer in list(self.buffers)):
+                timer+=0.1
                 sleep(0.1)
+                if timer >= buffer_timeout_multiplier*self._burst_duration:
+                    raise TimeoutError
             try:
                 trigger_reset()
             except TypeError:
