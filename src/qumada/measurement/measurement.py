@@ -651,7 +651,7 @@ class MeasurementScript(ABC):
                             for j in range(len(comped_params)):
                                 # Here we create lists/sweeps only containing the difference required for compensation.
                                 # Still has to be substracted from the set value in the measurement script as this can
-                                depend on the measurement script used (e.g. 1D vs 2D sweeps)
+                                # depend on the measurement script used (e.g. 1D vs 2D sweeps)
                                 comping_setpoints = (
                                     -1
                                     * float(comped_leverarms[j])
