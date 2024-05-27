@@ -84,7 +84,7 @@ dac2 = DummyDac("dac2", trigger_event=trigger)
 add_mapping_to_instrument(dac2, mapping=DummyDacMapping())
 station.add_component(dac2)
 # %% Load database for data storage
-load_db)
+load_db()
 # %% Setup measurement
 buffer_settings = {
     # "trigger_threshold": 0.005,
