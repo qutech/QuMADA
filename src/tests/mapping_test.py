@@ -381,7 +381,7 @@ def test_mapping_gui_map_automatically(mocker, qtbot, station_with_instruments, 
     # wanted mapping
     terminal_params = {
         "dmm": {"voltage": station_with_instruments.dmm.voltage, "current": station_with_instruments.dmm.current},
-        "dac": {"voltage": station_with_instruments.dac.voltage},
+        "dac": {"voltage": station_with_instruments.dac.ch01.voltage},
         "T1": {"test_parameter": station_with_instruments.dci.A.temperature},
         "T2": {"test_parameter": station_with_instruments.dci.B.temperature},
     }
