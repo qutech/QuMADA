@@ -101,24 +101,32 @@ parameters = {
         "voltage": {"type": "gettable"},
         "current": {"type": "gettable"},
     },
-    "dac": {"voltage": {"type": "compensating",
-                        "setpoints": np.linspace(0, np.pi, 100), "value": 0,
-                        "compensated_gates": [{"terminal": "dac2", "parameter": "voltage"},
-                                              {"terminal": "dac3", "parameter": "voltage"}],
-                        "leverarms": [0.2, -0.1],
-                        "limits": [-2, 2],
-                        "value": 0.5,
-                        },
+    "dac": {
+        "voltage": {
+            "type": "compensating",
+            "setpoints": np.linspace(0, np.pi, 100),
+            "value": 0,
+            "compensated_gates": [
+                {"terminal": "dac2", "parameter": "voltage"},
+                {"terminal": "dac3", "parameter": "voltage"},
+            ],
+            "leverarms": [0.2, -0.1],
+            "limits": [-2, 2],
+            "value": 0.5,
+        },
     },
     "dac2": {"voltage": {"type": "dynamic", "setpoints": np.linspace(0, np.pi, 200), "value": 0}},
-    "dac3": {"voltage": {"type": "dynamic", "setpoints": [*np.linspace(0, 2, 100),*[0.4 for _ in range(100)]]}},
-    "dac4": {"voltage": {"type": "compensating",
-                         "compensated_gates": [{"terminal": "dac2", "parameter":"voltage"}],
-                         "leverarms": [0.5],
-                         "limits": [-1, 1],
-                         "value": 1},
-                         },
-                        }
+    "dac3": {"voltage": {"type": "dynamic", "setpoints": [*np.linspace(0, 2, 100), *[0.4 for _ in range(100)]]}},
+    "dac4": {
+        "voltage": {
+            "type": "compensating",
+            "compensated_gates": [{"terminal": "dac2", "parameter": "voltage"}],
+            "leverarms": [0.5],
+            "limits": [-1, 1],
+            "value": 1,
+        },
+    },
+}
 # %%
 script = Generic_Pulsed_Measurement()
 script.setup(
