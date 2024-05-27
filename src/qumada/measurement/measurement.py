@@ -682,8 +682,9 @@ class MeasurementScript(ABC):
                                 self.properties[compensating_param["gate"]][compensating_param["parameter"]][
                                     "_is_triggered"
                                 ] = True
-                            # TODO: This part has to be moved into the measurement script, as the final setpoints for the
-                            # comping params are now set at the measurement script. A helper method would be nice to have.
+                            # TODO: This part has to be moved into the measurement script, 
+                            # as the final setpoints for the comping params are now set at
+                            # the measurement script. A helper method would be nice to have.
                             # if min(self.compensating_sweeps[-1].get_setpoints()) < min(*self.compensating_limits[i]) \
                             #  or max(self.compensating_sweeps[-1].get_setpoints()) > max(*self.compensating_limits[i]):
                             #     raise Exception(f"Value for compensating gate {compensating_param} exceeds limits!")
