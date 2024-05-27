@@ -41,12 +41,13 @@ class DummyDacMapping(InstrumentMapping):
         ramp_time: float,
         **kwargs,
     ) -> None:
+        num_points = kwargs.get("num_points", 100 * ramp_time)
         assert len(parameters) == len(end_values)
         if start_values is not None:
             assert len(parameters) == len(start_values)
 
-        if len(parameters) > 1:
-            raise Exception("Maximum length of rampable parameters currently is 1.")
+        if len(parameters) > 4:
+            raise Exception("Maximum length of rampable parameters currently is 4.")
         # TODO: Test delay when ramping multiple parameters in parallel.
         # TODO: Add Trigger option?
         # check, if all parameters are from the same instrument
@@ -59,10 +60,38 @@ class DummyDacMapping(InstrumentMapping):
 
         if not start_values:
             start_values = [param.get() for param in parameters]
-        ramp_times = [ramp_time for _ in end_values]
 
-        for param, start_value, end_value, ramp_time in zip(parameters, start_values, end_values, ramp_times):
-            param._instrument._triggered_ramp(start_value, end_value, ramp_time)
+        instrument._triggered_ramp_channels(
+            [param._instrument for param in parameters], start_values, end_values, ramp_time, num_points
+        )
+
+    def pulse(
+        self,
+        parameters: list[Parameter],
+        *,
+        setpoints: list[list[float]],
+        delay: float,
+        sync_trigger=None,
+        **kwargs,
+    ) -> None:
+        assert len(parameters) == len(setpoints)
+        num_points = len(setpoints[0])
+        for setpoint in setpoints:
+            assert len(setpoint) == num_points
+
+        duration = num_points * delay
+        if len(parameters) > 4:
+            raise Exception("Maximum length of pulsable parameters currently is 4.")
+        # TODO: Test delay when ramping multiple parameters in parallel.
+        # TODO: Add Trigger option?
+        # check, if all parameters are from the same instrument
+        instruments = {parameter.root_instrument for parameter in parameters}
+        if len(instruments) > 1:
+            raise Exception("Parameters are from more than one instrument. This would lead to non synchronized ramps.")
+
+        instrument: DummyDac = instruments.pop()
+        assert isinstance(instrument, DummyDac)
+        instrument._triggered_pulse_channels([param._instrument for param in parameters], setpoints, duration)
 
     def setup_trigger_in():
         pass

@@ -17,7 +17,7 @@
 # Contributors:
 # - Sionludi Lab
 # - Till Huckeman
-
+# %%
 
 import matplotlib
 
@@ -69,7 +69,8 @@ def _handle_overload(*args, output_dimension: int = 1, x_name=None, y_name=None,
                 params[k] = all_params.pop(int(choice))
     return params
 
-    # %%
+
+# %%
 
 
 def plot_2D(x_data, y_data, z_data, *args, **kwargs):
