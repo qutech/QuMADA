@@ -657,9 +657,9 @@ class MeasurementScript(ABC):
                                     * float(comped_leverarms[j])
                                     * (np.array(comped_sweeps[j].get_setpoints()) - comped_sweeps[j].get_setpoints()[0])
                                 )
-                                # This creates an inner list of required setpoint differences only 
+                                # This creates an inner list of required setpoint differences only
                                 # for the param that is currently iterated over!
-                                # The final self.compensating_sweeps list will contain list for each 
+                                # The final self.compensating_sweeps list will contain list for each
                                 # compensating parameters with one sweep per
                                 # parameter that is compensated by this compensating parameters.
                                 comping_sweeps.append(
@@ -682,7 +682,7 @@ class MeasurementScript(ABC):
                                 self.properties[compensating_param["gate"]][compensating_param["parameter"]][
                                     "_is_triggered"
                                 ] = True
-                            # TODO: This part has to be moved into the measurement script, as the final setpoints for the 
+                            # TODO: This part has to be moved into the measurement script, as the final setpoints for the
                             # comping params are now set at the measurement script. A helper method would be nice to have.
                             # if min(self.compensating_sweeps[-1].get_setpoints()) < min(*self.compensating_limits[i]) \
                             #  or max(self.compensating_sweeps[-1].get_setpoints()) > max(*self.compensating_limits[i]):
