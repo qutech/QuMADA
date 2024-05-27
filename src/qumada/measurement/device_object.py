@@ -23,6 +23,7 @@ from qumada.instrument.buffers.buffer import map_triggers
 from qumada.instrument.mapping import map_terminals_gui
 from qumada.measurement.scripts import (
     Generic_1D_Sweep,
+    Generic_1D_Sweep_buffered,
     Generic_2D_Sweep_buffered,
     Generic_nD_Sweep,
     Timetrace,
@@ -68,7 +69,7 @@ class QumadaDevice:
         if self.make_terminals_global:
             if terminal_name not in self.namespace.keys():
                 # Adding to the global namespace
-                self.namespace[terminal_name] = self.terminals[terminal_name.replace(" ", "_")]
+                self.namespace[terminal_name.replace(" ", "_")] = self.terminals[terminal_name]
                 logger.warning(f"Added {terminal_name} to global namespace!")
             else:
                 raise Terminal_Exists_Exception(
@@ -594,27 +595,44 @@ class Terminal_Parameter(ABC):
             setpoint_intervall=setpoint_intervall,
         )
 
-    def measured_ramp(self, value, num_points=100, station=None, name=None, metadata=None, priorize_stored_value=False):
+    def measured_ramp(self, value, num_points=100, station=None, name=None, metadata=None, buffered = False, buffer_settings= {}, priorize_stored_value=False):
         if station is None:
             station = self._parent_device.station
         if type(station) != Station:
             raise TypeError("No valid station assigned!")
         if self.locked:
             raise Exception(f"{self.name} is locked!")
-        script = Generic_1D_Sweep()
+
         for terminal_name, terminal in self._parent_device.terminals.items():
             for param_name, param in terminal.terminal_parameters.items():
                 if param.type == "dynamic":
                     param.type = "static"
         self.type = "dynamic"
         self.setpoints = np.linspace(self(), value, num_points)
+        temp_buffer_settings = deepcopy(buffer_settings)
+        if buffered:
+            if "num_points" in temp_buffer_settings.keys():
+                temp_buffer_settings["num_points"] = num_points
+                logger.warning(
+                    f"Temporarily changed buffer settings to match the number of points specified {num_points=}"
+                )
+            else:
+                logger.warning(
+                    "Num_points not specified in buffer settings! fast_num_points value is ignored and buffer settings are used to specify measurement!"
+                )
+            script = Generic_1D_Sweep_buffered()
+        else:
+            script = Generic_1D_Sweep()
         script.setup(
             self._parent_device.save_to_dict(priorize_stored_value=priorize_stored_value),
             metadata=metadata,
             name=name,
-        )
+            buffer_settings=temp_buffer_settings,
+            **self._parent_device.buffer_script_setup,
+            )
         mapping = self._parent_device.instrument_parameters
         map_terminals_gui(station.components, script.gate_parameters, mapping)
+        map_triggers(station.components, script.properties, script.gate_parameters)
         data = script.run()
         return data
 
