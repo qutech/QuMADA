@@ -277,13 +277,20 @@ class MeasurementScript(ABC):
         self.compensating_leverarms: list[list[float]] = []
         self.compensated_parameters: list[list[str]] = []
         self.compensating_limits: list[list] = []
+        self.abstract_parameters: list[str] = []
+        self.abstract_setpoints: list[list] = []
         self.groups: dict[dict] = {}
         self.buffers: set = set()  # All buffers of gettable parameters
         self.trigger_ins: set = set()  # All trigger inputs that do not belong to buffers
         self.priorities: dict = {}
+        self.loop: int = 0 #For usage with looped measurements
 
         for gate, parameters in self.gate_parameters.items():
             for parameter, channel in parameters.items():
+                if gate == "abstract":
+                    self.abstract_parameters.append()
+                    self.abstract_setpoints.append(self.properties[gate][parameter]["setpoints"])
+
                 if self.properties[gate][parameter]["type"].find("static") >= 0:
                     self.static_parameters.append({"gate": gate, "parameter": parameter})
                     self.static_channels.append(channel)
@@ -302,32 +309,34 @@ class MeasurementScript(ABC):
                     try:
                         self.compensating_parameters_values.append(self.properties[gate][parameter]["value"])
                     except KeyError as e:
-                        print(f"No value assigned for compensating parameter {self.compensating_parameters[-1]}")
+                        print(f"No value assigned for compensating parameter \
+                              {self.compensating_parameters[-1]}")
                         raise e
                     try:
                         leverarms = self.properties[gate][parameter]["leverarms"]
-                        assert type(leverarms) == list
+                        assert isinstance(leverarms, list)
                         self.compensating_leverarms.append(self.properties[gate][parameter]["leverarms"])
                     except KeyError as e:
                         print(f"No leverarm specified for parameters {self.compensating_parameters[-1]}!")
                         raise e
                     try:
-                        comp_list = []
+                        comp_list= []
                         for entry in self.properties[gate][parameter]["compensated_gates"]:
-                            assert type(entry) == dict
-                            comp_list.append({"gate": entry["terminal"], "parameter": entry["parameter"]})
+                            assert isinstance(entry, dict)
+                            comp_list.append({"gate": entry["terminal"], 
+                                                            "parameter": entry["parameter"]})
                         self.compensated_parameters.append(comp_list)
                     except KeyError as e:
-                        print(
-                            f"The terminal to be compensated for with {self.compensating_parameters[-1]} \
-                            is not properly specified! Make sure to define a dictionary with terminal and parameter as keys."
-                        )
+                        print(f"The terminal to be compensated for with {self.compensating_parameters[-1]} \
+                            is not properly specified! Make sure to define a dictionary with \
+                            terminal and parameter as keys.")
                         raise e
                     try:
                         limits = self.properties[gate][parameter]["limits"]
                         self.compensating_limits.append(limits)
                     except KeyError as e:
-                        print(f"No limits assigned to compensating parameter {self.compensating_parameters[-1]}!")
+                        print(f"No limits assigned to compensating parameter \
+                              {self.compensating_parameters[-1]}!")
                         raise e
 
                 elif self.properties[gate][parameter]["type"].find("dynamic") >= 0:
@@ -336,7 +345,8 @@ class MeasurementScript(ABC):
                     if self.properties[gate][parameter].get("_is_triggered", False) and self.buffered:
                         if "num_points" in self.properties[gate][parameter].keys():
                             try:
-                                assert self.properties[gate][parameter]["num_points"] == self.buffered_num_points
+                                assert self.properties[
+                                    gate][parameter]["num_points"] == self.buffered_num_points
                             except AssertionError:
                                 logger.warning(
                                     f"Number of datapoints from buffer_settings\
@@ -346,7 +356,8 @@ class MeasurementScript(ABC):
                                 )
                         elif "setpoints" in self.properties[gate][parameter].keys():
                             try:
-                                assert len(self.properties[gate][parameter]["setpoints"]) == self.buffered_num_points
+                                assert len(
+                                    self.properties[gate][parameter]["setpoints"]) == self.buffered_num_points
                             except AssertionError:
                                 logger.warning(
                                     f"Number of datapoints from buffer_settings\
@@ -412,7 +423,8 @@ class MeasurementScript(ABC):
                             if self.groups[group]["priority"] in self.priorities.keys():
                                 raise Exception("Assigned the same priority to multiple groups")
                             elif self.groups[group]["priority"] is None:
-                                self.groups[group]["priority"] = int(self.properties[gate][parameter]["priority"])
+                                self.groups[group]["priority"] = int(
+                                    self.properties[gate][parameter]["priority"])
                                 self.priorities[int(self.groups[group]["priority"])] = self.groups[group]
                         else:
                             try:
@@ -605,13 +617,11 @@ class MeasurementScript(ABC):
                     try:
                         i = self.compensating_parameters.index({"gate": gate, "parameter": parameter})
                         leverarms = self.compensating_leverarms[i]
-                        comped_params = copy.deepcopy(
-                            self.compensated_parameters[i]
-                        )  # list of parameters compensated by the current parameter
+                        comped_params = copy.deepcopy(self.compensated_parameters[i]) #list of parameters compensated by the current parameter
                         comped_sweeps = []  # Sweeps that are compensated by current param
-                        comped_leverarms = []  # Leverarms of the current param
-                        comping_sweeps = []  # List to store only the sweeps for the current param
-                        k = 0
+                        comped_leverarms = [] # Leverarms of the current param
+                        comping_sweeps = [] # List to store only the sweeps for the current param
+                        k=0
                         for comped_param in comped_params.copy():
                             # Check if the parameter is actually ramped in this part of the measurement
                             if comped_param in inactive_dyn_params:
@@ -621,15 +631,13 @@ class MeasurementScript(ABC):
                                 try:
                                     comped_index = self.dynamic_parameters.index(comped_param)
                                 except ValueError as e:
-                                    logger.exception(
-                                        "Watch out, there is an Exception incoming!"
-                                        + "Did you try to compensate for a not dynamic parameter?"
-                                    )
+                                    logger.exception("Watch out, there is an Exception incoming!" + 
+                                                     "Did you try to compensate for a not dynamic parameter?")
                                     raise e
                                 comped_sweeps.append(self.dynamic_sweeps[comped_index])
                                 comped_leverarms.append(leverarms[k])
                                 self.active_compensated_channels.append(self.dynamic_channels[comped_index])
-                            k += 1
+                            k+=1
                         compensating_param = self.compensating_parameters[i]
                         self.active_compensating_parameters.append(compensating_param)
                         if len(comped_params) > 0:
@@ -638,34 +646,20 @@ class MeasurementScript(ABC):
                                 # Here we create lists/sweeps only containing the difference required for compensation.
                                 # Still has to be substracted from the set value in the measurement script as this can depend
                                 # on the measurement script used (e.g. 1D vs 2D sweeps)
-                                comping_setpoints = (
-                                    -1
-                                    * float(comped_leverarms[j])
-                                    * (np.array(comped_sweeps[j].get_setpoints()) - comped_sweeps[j].get_setpoints()[0])
-                                )
+                                comping_setpoints = -1*float(comped_leverarms[j])*(np.array(comped_sweeps[j].get_setpoints()) - comped_sweeps[j].get_setpoints()[0])
                                 # This creates an inner list of required setpoint differences only for the param that is currently iterated over!
                                 # The final self.compensating_sweeps list will contain list for each compensating parameters with one sweep per
                                 # parameter that is compensated by this compensating parameters.
-                                comping_sweeps.append(
-                                    CustomSweep(
-                                        channel,
-                                        comping_setpoints,
-                                        delay=self.properties[gate][parameter].setdefault("delay", 0),
-                                    )
+                                comping_sweeps.append(CustomSweep(
+                                    channel,
+                                    comping_setpoints,
+                                    delay=self.properties[gate][parameter].setdefault("delay", 0))
                                 )
                             self.compensating_sweeps.append(comping_sweeps)
-                            if (
-                                any(
-                                    [
-                                        self.properties[param["gate"]][param["parameter"]].get("_is_triggered", False)
-                                        for param in comped_params
-                                    ]
-                                )
-                                and self.buffered
-                            ):
-                                self.properties[compensating_param["gate"]][compensating_param["parameter"]][
-                                    "_is_triggered"
-                                ] = True
+                            if any(
+                                [self.properties[param["gate"]][param["parameter"]].get(
+                                    "_is_triggered", False) for param in comped_params]) and self.buffered:
+                                self.properties[compensating_param["gate"]][compensating_param["parameter"]]["_is_triggered"] = True
                             # TODO: This part has to be moved into the measurement script, as the final setpoints for the comping params
                             # are now set at the measurement script. A helper method would be nice to have.
                             # if min(self.compensating_sweeps[-1].get_setpoints()) < min(*self.compensating_limits[i]) or max(
@@ -680,7 +674,7 @@ class MeasurementScript(ABC):
                         )
                     except ValueError as e:
                         raise e
-
+                        
         if self.buffered:
             for gettable_param in list(set(self.gettable_channels) - set(self.static_gettable_channels)):
                 if is_bufferable(gettable_param):
