@@ -69,17 +69,19 @@ def load_db(filepath: str | None = None) -> None:
     None.
     #TODO: Checks only whether provided path is a file but not which type.
     """
-    if not filepath or not path.isfile(filepath):
+    if not filepath:
         filetypes = (("DB Files", "*.db*"), ("All files", "*.*"))
         filepath = browsefiles(filetypes=filetypes)
         if filepath == "":
             return None
-    try:
-        qc.initialise_or_create_database_at(filepath)
-        return None
-    except Exception:
-        print("Please provide a valid path")
-        return load_db(None)
+    elif not path.isfile(filepath):
+        try:
+            qc.initialise_or_create_database_at(filepath)
+            print("Created new Database")
+            return None
+        except Exception as e:
+            print("Please provide a valid path")
+            raise e
 
 
 # %%
