@@ -595,7 +595,17 @@ class Terminal_Parameter(ABC):
             setpoint_intervall=setpoint_intervall,
         )
 
-    def measured_ramp(self, value, num_points=100, station=None, name=None, metadata=None, buffered = False, buffer_settings= {}, priorize_stored_value=False):
+    def measured_ramp(
+        self,
+        value,
+        num_points=100,
+        station=None,
+        name=None,
+        metadata=None,
+        buffered=False,
+        buffer_settings={},
+        priorize_stored_value=False,
+    ):
         if station is None:
             station = self._parent_device.station
         if type(station) != Station:
@@ -629,7 +639,7 @@ class Terminal_Parameter(ABC):
             name=name,
             buffer_settings=temp_buffer_settings,
             **self._parent_device.buffer_script_setup,
-            )
+        )
         mapping = self._parent_device.instrument_parameters
         map_terminals_gui(station.components, script.gate_parameters, mapping)
         map_triggers(station.components, script.properties, script.gate_parameters)
