@@ -650,15 +650,17 @@ class MeasurementScript(ABC):
                             self.active_compensating_channels.append(channel)
                             for j in range(len(comped_params)):
                                 # Here we create lists/sweeps only containing the difference required for compensation.
-                                # Still has to be substracted from the set value in the measurement script as this can depend
-                                # on the measurement script used (e.g. 1D vs 2D sweeps)
+                                # Still has to be substracted from the set value in the measurement script as this can
+                                depend on the measurement script used (e.g. 1D vs 2D sweeps)
                                 comping_setpoints = (
                                     -1
                                     * float(comped_leverarms[j])
                                     * (np.array(comped_sweeps[j].get_setpoints()) - comped_sweeps[j].get_setpoints()[0])
                                 )
-                                # This creates an inner list of required setpoint differences only for the param that is currently iterated over!
-                                # The final self.compensating_sweeps list will contain list for each compensating parameters with one sweep per
+                                # This creates an inner list of required setpoint differences only 
+                                # for the param that is currently iterated over!
+                                # The final self.compensating_sweeps list will contain list for each 
+                                # compensating parameters with one sweep per
                                 # parameter that is compensated by this compensating parameters.
                                 comping_sweeps.append(
                                     CustomSweep(
@@ -680,10 +682,10 @@ class MeasurementScript(ABC):
                                 self.properties[compensating_param["gate"]][compensating_param["parameter"]][
                                     "_is_triggered"
                                 ] = True
-                            # TODO: This part has to be moved into the measurement script, as the final setpoints for the comping params
-                            # are now set at the measurement script. A helper method would be nice to have.
-                            # if min(self.compensating_sweeps[-1].get_setpoints()) < min(*self.compensating_limits[i]) or max(
-                            #     self.compensating_sweeps[-1].get_setpoints()) > max(*self.compensating_limits[i]):
+                            # TODO: This part has to be moved into the measurement script, as the final setpoints for the 
+                            # comping params are now set at the measurement script. A helper method would be nice to have.
+                            # if min(self.compensating_sweeps[-1].get_setpoints()) < min(*self.compensating_limits[i]) \
+                            #  or max(self.compensating_sweeps[-1].get_setpoints()) > max(*self.compensating_limits[i]):
                             #     raise Exception(f"Value for compensating gate {compensating_param} exceeds limits!")
                         ramp_or_set_parameter(
                             channel,
