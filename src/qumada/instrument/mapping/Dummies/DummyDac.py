@@ -41,7 +41,7 @@ class DummyDacMapping(InstrumentMapping):
         ramp_time: float,
         **kwargs,
     ) -> None:
-        num_points = kwargs.get("num_points", 100*ramp_time)
+        num_points = kwargs.get("num_points", 100 * ramp_time)
         assert len(parameters) == len(end_values)
         if start_values is not None:
             assert len(parameters) == len(start_values)
@@ -62,9 +62,10 @@ class DummyDacMapping(InstrumentMapping):
             start_values = [param.get() for param in parameters]
         ramp_times = [ramp_time for _ in end_values]
 
-        instrument._triggered_ramp_channels([param._instrument for param in parameters],
-                                                start_values, end_values, ramp_time, num_points)
-        
+        instrument._triggered_ramp_channels(
+            [param._instrument for param in parameters], start_values, end_values, ramp_time, num_points
+        )
+
     def pulse(
         self,
         parameters: list[Parameter],
@@ -79,7 +80,7 @@ class DummyDacMapping(InstrumentMapping):
         for setpoint in setpoints:
             assert len(setpoint) == num_points
 
-        duration = num_points*delay
+        duration = num_points * delay
         if len(parameters) > 4:
             raise Exception("Maximum length of pulsable parameters currently is 4.")
         # TODO: Test delay when ramping multiple parameters in parallel.
@@ -91,10 +92,7 @@ class DummyDacMapping(InstrumentMapping):
 
         instrument: DummyDac = instruments.pop()
         assert isinstance(instrument, DummyDac)
-        instrument._triggered_pulse_channels([param._instrument for param in parameters],
-                                                setpoints, duration)
-        
-    
+        instrument._triggered_pulse_channels([param._instrument for param in parameters], setpoints, duration)
 
     def setup_trigger_in():
         pass

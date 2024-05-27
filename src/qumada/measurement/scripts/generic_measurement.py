@@ -37,7 +37,7 @@ from qumada.measurement.doNd_enhanced.doNd_enhanced import (
     do1d_parallel,
     do1d_parallel_asym,
 )
-from qumada.measurement.measurement import MeasurementScript, CustomSweep
+from qumada.measurement.measurement import CustomSweep, MeasurementScript
 from qumada.utils.ramp_parameter import ramp_or_set_parameter
 from qumada.utils.utils import _validate_mapping, naming_helper
 
@@ -580,10 +580,12 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
             meas = Measurement(name=self.measurement_name)
             meas.register_parameter(dynamic_param)
             for c_param in self.active_compensating_channels:
-                meas.register_parameter(c_param,
-                              setpoints=[
-                                  dynamic_param,
-                              ])
+                meas.register_parameter(
+                    c_param,
+                    setpoints=[
+                        dynamic_param,
+                    ],
+                )
             static_gettables = []
             for parameter, channel in zip(self.gettable_parameters, self.gettable_channels):
                 if is_bufferable(channel) and channel not in self.static_gettable_channels:
@@ -619,18 +621,21 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
             for j in range(len(self.active_compensating_channels)):
                 index = self.compensating_parameters.index(self.active_compensating_parameters[j])
                 active_comping_setpoints = self.compensating_parameters_values[index] + sum(
-                        [sweep.get_setpoints() for sweep in self.compensating_sweeps[j]])
+                    [sweep.get_setpoints() for sweep in self.compensating_sweeps[j]]
+                )
                 if min(active_comping_setpoints) < min(self.compensating_limits[index]) or max(
-                    active_comping_setpoints) > max(self.compensating_limits[index]):
+                    active_comping_setpoints
+                ) > max(self.compensating_limits[index]):
                     raise Exception(f"Setpoints of {self.compensating_parameters[index]} exceed limits!")
                 sweep_delay = self.compensating_sweeps[j][-1]._delay
-                active_comping_sweeps.append(CustomSweep(
-                    param=self.active_compensating_channels[j],
-                    setpoints=active_comping_setpoints,
-                    delay=sweep_delay
-                ))
+                active_comping_sweeps.append(
+                    CustomSweep(
+                        param=self.active_compensating_channels[j],
+                        setpoints=active_comping_setpoints,
+                        delay=sweep_delay,
+                    )
+                )
 
-                
             meas.write_period = 0.5
 
             with meas.run() as datasaver:
@@ -645,9 +650,10 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                 try:
                     dynamic_param.root_instrument._qumada_ramp(
                         [dynamic_param, *self.active_compensating_channels],
-                        end_values=[dynamic_sweep.get_setpoints()[-1],
-                                    *[sweep.get_setpoints()[-1] for sweep in active_comping_sweeps]
-                                    ],
+                        end_values=[
+                            dynamic_sweep.get_setpoints()[-1],
+                            *[sweep.get_setpoints()[-1] for sweep in active_comping_sweeps],
+                        ],
                         ramp_time=self._burst_duration,
                         sync_trigger=sync_trigger,
                     )
@@ -970,13 +976,15 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
             self.gettable_parameters.remove(param)
         # --------------------------
         self.initialize()
-        #####################Sensor compensation#####################    
+        #####################Sensor compensation#####################
         for c_param in self.active_compensating_channels:
-            meas.register_parameter(c_param,
-                            setpoints=[
-                                slow_channel,
-                                fast_channel,
-                            ])
+            meas.register_parameter(
+                c_param,
+                setpoints=[
+                    slow_channel,
+                    fast_channel,
+                ],
+            )
         try:
             trigger_reset()
         except TypeError:
@@ -999,11 +1007,15 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
                 active_comping_sweeps = []
                 for j in range(len(self.active_compensating_channels)):
                     index = self.compensating_parameters.index(self.active_compensating_parameters[j])
-                    active_comping_setpoints = np.array([self.compensating_parameters_values[index] for _ in range(len(fast_sweep.get_setpoints()))], dtype=float)
+                    active_comping_setpoints = np.array(
+                        [self.compensating_parameters_values[index] for _ in range(len(fast_sweep.get_setpoints()))],
+                        dtype=float,
+                    )
                     try:
                         slow_index = self.compensated_parameters[j].index(slow_param)
-                        active_comping_setpoints -= float(self.compensating_leverarms[j][slow_index])*(
-                            float(setpoint)-float(slow_sweep.get_setpoints()[0]))
+                        active_comping_setpoints -= float(self.compensating_leverarms[j][slow_index]) * (
+                            float(setpoint) - float(slow_sweep.get_setpoints()[0])
+                        )
                     except ValueError:
                         pass
                     try:
@@ -1013,22 +1025,31 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
                         pass
 
                     if min(active_comping_setpoints) < min(self.compensating_limits[index]) or max(
-                        active_comping_setpoints) > max(self.compensating_limits[index]):
+                        active_comping_setpoints
+                    ) > max(self.compensating_limits[index]):
                         raise Exception(f"Setpoints of {self.compensating_parameters[index]} exceed limits!")
                     sweep_delay = self.compensating_sweeps[j][-1]._delay
-                    active_comping_sweeps.append(CustomSweep(
-                        param=self.active_compensating_channels[j],
-                        setpoints=active_comping_setpoints,
-                        delay=sweep_delay
-                    ))
+                    active_comping_sweeps.append(
+                        CustomSweep(
+                            param=self.active_compensating_channels[j],
+                            setpoints=active_comping_setpoints,
+                            delay=sweep_delay,
+                        )
+                    )
                     comping_results.append((self.active_compensating_channels[j], active_comping_setpoints))
 
                 self.ready_buffers()
                 try:
                     fast_channel.root_instrument._qumada_ramp(
                         [fast_channel, *self.active_compensating_channels],
-                        start_values=[fast_sweep.get_setpoints()[0], *[sweep.get_setpoints()[0] for sweep in active_comping_sweeps]],
-                        end_values=[fast_sweep.get_setpoints()[-1], *[sweep.get_setpoints()[-1] for sweep in active_comping_sweeps]],
+                        start_values=[
+                            fast_sweep.get_setpoints()[0],
+                            *[sweep.get_setpoints()[0] for sweep in active_comping_sweeps],
+                        ],
+                        end_values=[
+                            fast_sweep.get_setpoints()[-1],
+                            *[sweep.get_setpoints()[-1] for sweep in active_comping_sweeps],
+                        ],
                         ramp_time=self._burst_duration,
                         sync_trigger=sync_trigger,
                     )
@@ -1060,11 +1081,11 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
                         measurement instruments! Only recommended\
                         for debugging."
                     )
-                timer=0
+                timer = 0
                 while not all(buffer.is_finished() for buffer in list(self.buffers)):
-                    timer+=0.1
+                    timer += 0.1
                     sleep(0.1)
-                    if timer >= buffer_timeout_multiplier*self._burst_duration:
+                    if timer >= buffer_timeout_multiplier * self._burst_duration:
                         raise TimeoutError
                 try:
                     trigger_reset()
@@ -1176,10 +1197,12 @@ class Generic_Pulsed_Measurement(MeasurementScript):
 
         self.initialize()
         for c_param in self.active_compensating_channels:
-            meas.register_parameter(c_param,
-                            setpoints=[
-                                timer,
-                            ])
+            meas.register_parameter(
+                c_param,
+                setpoints=[
+                    timer,
+                ],
+            )
 
         instruments = {param.root_instrument for param in self.dynamic_channels}
         time_setpoints = np.linspace(0, self._burst_duration, int(self.buffered_num_points))
@@ -1190,7 +1213,9 @@ class Generic_Pulsed_Measurement(MeasurementScript):
             active_setpoints = sum([sweep.get_setpoints() for sweep in self.compensating_sweeps[i]])
             active_setpoints += float(self.compensating_parameters_values[index])
             compensating_setpoints.append(active_setpoints)
-            if min(active_setpoints) < min(self.compensating_limits[index]) or max(active_setpoints) > max(self.compensating_limits[index]):
+            if min(active_setpoints) < min(self.compensating_limits[index]) or max(active_setpoints) > max(
+                self.compensating_limits[index]
+            ):
                 raise Exception(f"Setpoints of compensating gate {self.compensating_parameters[index]} exceed limits!")
         try:
             trigger_reset()
@@ -1240,9 +1265,9 @@ class Generic_Pulsed_Measurement(MeasurementScript):
                 )
 
             while not all(buffer.is_finished() for buffer in list(self.buffers)):
-                timer+=0.1
+                timer += 0.1
                 sleep(0.1)
-                if timer >= buffer_timeout_multiplier*self._burst_duration:
+                if timer >= buffer_timeout_multiplier * self._burst_duration:
                     raise TimeoutError
             try:
                 trigger_reset()
@@ -1250,7 +1275,7 @@ class Generic_Pulsed_Measurement(MeasurementScript):
                 logger.info("No method to reset the trigger defined.")
 
             results = self.readout_buffers()
-            
+
             datasaver.add_result(
                 (timer, time_setpoints),
                 *(zip(self.dynamic_channels, setpoints)),
@@ -1351,10 +1376,12 @@ class Generic_Pulsed_Repeated_Measurement(MeasurementScript):
 
         self.initialize()
         for c_param in self.active_compensating_channels:
-            meas.register_parameter(c_param,
-                            setpoints=[
-                                timer,
-                            ])
+            meas.register_parameter(
+                c_param,
+                setpoints=[
+                    timer,
+                ],
+            )
 
         instruments = {param.root_instrument for param in self.dynamic_channels}
         time_setpoints = np.linspace(0, self._burst_duration, int(self.buffered_num_points))
@@ -1365,7 +1392,9 @@ class Generic_Pulsed_Repeated_Measurement(MeasurementScript):
             active_setpoints = sum([sweep.get_setpoints() for sweep in self.compensating_sweeps[i]])
             active_setpoints += float(self.compensating_parameters_values[index])
             compensating_setpoints.append(active_setpoints)
-            if min(active_setpoints) < min(self.compensating_limits[index]) or max(active_setpoints) > max(self.compensating_limits[index]):
+            if min(active_setpoints) < min(self.compensating_limits[index]) or max(active_setpoints) > max(
+                self.compensating_limits[index]
+            ):
                 raise Exception(f"Setpoints of compensating gate {self.compensating_parameters[index]} exceed limits!")
         results = []
         with meas.run() as datasaver:
@@ -1431,7 +1460,7 @@ class Generic_Pulsed_Repeated_Measurement(MeasurementScript):
                     helper_array += meas_results[i][1]
                 helper_array /= self.repetitions
                 average_results.append((meas_results[i][0], helper_array))
-                   
+
             datasaver.add_result(
                 (timer, time_setpoints),
                 *(zip(self.dynamic_channels, setpoints)),

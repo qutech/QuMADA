@@ -26,9 +26,8 @@ import threading
 from time import sleep
 
 import numpy as np
-from qcodes.instrument import Instrument
+from qcodes.instrument import ChannelList, Instrument, InstrumentChannel, VisaInstrument
 from qcodes.validators import validators as vals
-from qcodes.instrument import ChannelList, InstrumentChannel, VisaInstrument
 
 
 # %%
@@ -42,7 +41,7 @@ class DummyDac_Channel(InstrumentChannel):
 
     def ramp(self, start, stop, duration, num_points):
         self.parent.ramp(self, start, stop, duration, num_points)
-        
+
 
 class DummyDac(Instrument):
     def __init__(self, name, trigger_event=threading.Event(), **kwargs):
@@ -51,7 +50,7 @@ class DummyDac(Instrument):
         self._is_triggered = trigger_event
 
         for i in range(1, 5):
-            channel=DummyDac_Channel(self, f"ch{i:02}", i)
+            channel = DummyDac_Channel(self, f"ch{i:02}", i)
             channels.append(channel)
             self.add_submodule(f"ch{i:02}", channel)
         # self.add_parameter("voltage", unit="V", set_cmd=None, vals=vals.Numbers(-10, 10))
@@ -71,9 +70,8 @@ class DummyDac(Instrument):
             daemon=True,
         )
         self.thread.start()
-    
-    def ramp_channels(self, channels: list, start_values: list, stop_values: list,
-                      duration , num_points):
+
+    def ramp_channels(self, channels: list, start_values: list, stop_values: list, duration, num_points):
         self.thread = threading.Thread(
             target=self._run_ramp_channels,
             args=(channels, start_values, stop_values, duration, num_points),
@@ -81,18 +79,17 @@ class DummyDac(Instrument):
         )
         self.thread.start()
 
-    def _run_ramp_channels(self, channels: list, start_values: list, stop_values: list,
-                      duration, num_points):
+    def _run_ramp_channels(self, channels: list, start_values: list, stop_values: list, duration, num_points):
         setpoints = []
         for ch, start, stop in zip(channels, start_values, stop_values):
             setpoints.append(np.linspace(start, stop, num_points))
-        setpoints_inv=[]
+        setpoints_inv = []
         for i in range(num_points):
             setpoints_inv.append([setpoints[j][i] for j in range(len(channels))])
         for setpoint in setpoints_inv:
             for i in range(len(channels)):
                 channels[i].voltage(setpoint[i])
-            sleep(duration/num_points)
+            sleep(duration / num_points)
 
     def _run_triggered_ramp(self, channel, start, stop, duration, stepsize=0.01):
         _ = self._is_triggered.wait()
@@ -101,22 +98,21 @@ class DummyDac(Instrument):
             channel.voltage(setpoint)
             sleep(duration / num_points)
 
-    
     def _run_triggered_ramp_channels(self, channels, start_values, stop_values, duration, num_points):
         setpoints = []
         for start, stop in zip(start_values, stop_values):
             setpoints.append(np.linspace(start, stop, int(num_points)))
-        setpoints_inv=[]
+        setpoints_inv = []
         for i in range(int(num_points)):
             setpoints_inv.append([setpoints[j][i] for j in range(len(channels))])
         _ = self._is_triggered.wait()
         for setpoint in setpoints_inv:
             for i in range(len(channels)):
                 channels[i].voltage(setpoint[i])
-            sleep(duration/num_points)
+            sleep(duration / num_points)
 
     def _run_triggered_pulse_channels(self, channels, setpoints, duration):
-        setpoints_inv=[]
+        setpoints_inv = []
         num_points = len(setpoints[0])
         for i in range(int(len(setpoints[0]))):
             setpoints_inv.append([setpoints[j][i] for j in range(len(channels))])
@@ -124,7 +120,7 @@ class DummyDac(Instrument):
         for setpoint in setpoints_inv:
             for i in range(len(channels)):
                 channels[i].voltage(setpoint[i])
-            sleep(duration/num_points)
+            sleep(duration / num_points)
 
     def _triggered_ramp(self, channel, start, stop, duration, num_points):
         self.thread = threading.Thread(
@@ -134,8 +130,7 @@ class DummyDac(Instrument):
         )
         self.thread.start()
 
-    def _triggered_ramp_channels(self, channels, start_values, 
-                                 stop_values, duration, num_points):
+    def _triggered_ramp_channels(self, channels, start_values, stop_values, duration, num_points):
         self.thread = threading.Thread(
             target=self._run_triggered_ramp_channels,
             args=(channels, start_values, stop_values, duration, num_points),
@@ -151,7 +146,5 @@ class DummyDac(Instrument):
         )
         self.thread.start()
 
-    
-        
 
 # %%

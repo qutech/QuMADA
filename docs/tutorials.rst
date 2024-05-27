@@ -428,27 +428,27 @@ add the parameters to the _subscribed_parameters property of the buffer class.
 Sensor Compensation
 --------------------------
 
-Some Qumada measurements support linear sensor compensation. Currently supported are Generic_2D_buffered_Measurement, Generic_Pulsed_Measurement and Generic_1D_buffered_Measurements. 
+Some Qumada measurements support linear sensor compensation. Currently supported are Generic_2D_buffered_Measurement, Generic_Pulsed_Measurement and Generic_1D_buffered_Measurements.
 All other measurements will ignore parameters of type "compensating". In order to use a parameter to compensate for the changes of another parameter you have to alter the gate parameters accordingly.
 After defining the measurement as explained in the previous sections, set the "type" of the parameter you want to use for compensation (e.g. the Plunger Gate Voltage of an SET) to "comp" (or "compensating").
-Add the keywords 
+Add the keywords
 
 * "compensated_gates" :  [{"terminal1" : "<gate_name>", parameter : "<parameter_name>}", {"terminal2" : "<gate_name>", parameter : "<parameter_name>}" , etc...]
 * "leverarms" : [leverarm1, leverarm2, ....]
-* "limits": [min_val, max_val] and assign a 
+* "limits": [min_val, max_val] and assign a
 * "value" : float
 
 to the parameters dictionary.
 
-The leverarms represent the relative leverarm of the gates, e.g. if you set it to 0.5, 1 V change in the compensated gate will lead to 0.5 V change of the compensating gate. 
-The limits (list with two floats) work as safety measure to avoid unwanted large voltages, an Exception is erased if the measurement would surpass them. 
+The leverarms represent the relative leverarm of the gates, e.g. if you set it to 0.5, 1 V change in the compensated gate will lead to 0.5 V change of the compensating gate.
+The limits (list with two floats) work as safety measure to avoid unwanted large voltages, an Exception is erased if the measurement would surpass them.
 
 .. note::
 
 	The safety limits check has to be done inside the measurement.run() as the actual setpoints of the compensating values depend on the type of measurement.
 	Make sure to consider this when writing your own measurement scripts.
 
-The value is set at the starting point of the compensated gate's sweep, e.g. if your compensated gate is swept lineariliy from 0 to 1 V, the value of the compensating gate is set to 0.5 V and the leverarm is 0.5, your compensating gate will be swept 
+The value is set at the starting point of the compensated gate's sweep, e.g. if your compensated gate is swept lineariliy from 0 to 1 V, the value of the compensating gate is set to 0.5 V and the leverarm is 0.5, your compensating gate will be swept
 from 0.5 to 1.0 V. The formula to calculate the setpoints for the compensating gates is setpoints_comp_gate = value_comp_gate - leverarm \times (setpoints - setpoints[0]).
 If one gate compensated multiple gates, it will add the contributions from the different gates, e.g. setpoints_comp_gate = value_comp_gate - leverarm1 x (setpoints1 - setpoints1[0])- leverarm2 x (setpoints2 - setpoints2[0]) - ...
 
@@ -457,5 +457,5 @@ A working example with dummy instruments "buffered_dummy_example_compensation.py
 Of course, the compensation has to be included in the measurement scripts. Right now, the initialize method of the script will create a list of sweeps for compensation (script.compensating_sweeps) that can be used in the measurement script.run(). Look into the initialize() method for more details.
 
 .. note::
-	For non-linear compensation one can use parameter groups, set the compensating parameters to "dynamic" and provide the corresponding setpoint arrays. 
+	For non-linear compensation one can use parameter groups, set the compensating parameters to "dynamic" and provide the corresponding setpoint arrays.
 	Currently, groups are supported by the basic qumada measurement class and handle in the initialization, but are not used in the generic measurement scripts.

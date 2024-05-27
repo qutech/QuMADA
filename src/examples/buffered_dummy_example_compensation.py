@@ -53,8 +53,8 @@ from qumada.measurement.scripts import (
     Generic_1D_parallel_Sweep,
     Generic_1D_Sweep,
     Generic_1D_Sweep_buffered,
-    Generic_nD_Sweep,
     Generic_2D_Sweep_buffered,
+    Generic_nD_Sweep,
     Generic_Pulsed_Measurement,
     Timetrace,
 )
@@ -101,7 +101,7 @@ parameters = {
         "voltage": {"type": "gettable"},
         "current": {"type": "gettable"},
     },
-    "dac": {"voltage": {"type": "compensating", 
+    "dac": {"voltage": {"type": "compensating",
                         "setpoints": np.linspace(0, np.pi, 100), "value": 0,
                         "compensated_gates": [{"terminal": "dac2", "parameter": "voltage"},
                                               {"terminal": "dac3", "parameter": "voltage"}],
