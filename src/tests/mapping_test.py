@@ -120,7 +120,7 @@ def fixture_unmapped_terminal_parameters():
 def fixture_mapped_terminal_parameters(station_with_instruments):  # valid for given fixture_station_with_instruments
     terminal_params = {
         "dmm": {"voltage": station_with_instruments.dmm.voltage, "current": station_with_instruments.dmm.current},
-        "dac": {"voltage": station_with_instruments.dac.voltage},
+        "dac": {"voltage": station_with_instruments.dac.ch01.voltage},
         "T1": {"test_parameter": station_with_instruments.dci.A.temperature},
         "T2": {"test_parameter": station_with_instruments.dci.B.temperature},
     }
@@ -158,7 +158,7 @@ def valid_mapped_terminal_parameter_data():
             "voltage": "dmm_voltage",
             "current": "dmm_current",
         },
-        "dac": {"voltage": "dac_voltage"},
+        "dac": {"voltage": "dac_ch01_voltage"},
         "T1": {"test_parameter": "dci_ChanA_temperature"},
         "T2": {"test_parameter": "dci_ChanB_temperature"},
     }

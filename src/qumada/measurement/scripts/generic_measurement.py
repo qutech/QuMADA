@@ -976,7 +976,7 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
             self.gettable_parameters.remove(param)
         # --------------------------
         self.initialize()
-        #####################Sensor compensation#####################
+        # ####################Sensor compensation#####################
         for c_param in self.active_compensating_channels:
             meas.register_parameter(
                 c_param,
@@ -1143,7 +1143,7 @@ class Generic_Pulsed_Measurement(MeasurementScript):
             default="software",
             default_key_error="software",
         )
-        buffer_timeout_mulitplier = self.settings.get("buffer_timeout_multiplier", 20)
+        buffer_timeout_multiplier = self.settings.get("buffer_timeout_multiplier", 20)
         include_gate_name = self.settings.get("include_gate_name", True)
         sync_trigger = self.settings.get("sync_trigger", None)
         datasets = []

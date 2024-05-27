@@ -60,7 +60,6 @@ class DummyDacMapping(InstrumentMapping):
 
         if not start_values:
             start_values = [param.get() for param in parameters]
-        ramp_times = [ramp_time for _ in end_values]
 
         instrument._triggered_ramp_channels(
             [param._instrument for param in parameters], start_values, end_values, ramp_time, num_points
