@@ -17,7 +17,7 @@
 # Contributors:
 # - Sionludi Lab
 # - Till Huckeman
-#%%
+# %%
 
 import matplotlib
 
@@ -69,18 +69,19 @@ def _handle_overload(*args, output_dimension: int = 1, x_name=None, y_name=None,
                 params[k] = all_params.pop(int(choice))
     return params
 
+
 # %%
 
 
 def plot_2D(x_data, y_data, z_data, *args, **kwargs):
     """
-        Plots 2D derivatives. Requires tuples of name and 1D arrays corresponding
-        to x, y and z data as input.
-        Works well with QuMADA "get_parameter_data" method found in
-        load_from_sqlite.
+    Plots 2D derivatives. Requires tuples of name and 1D arrays corresponding
+    to x, y and z data as input.
+    Works well with QuMADA "get_parameter_data" method found in
+    load_from_sqlite.
 
-        TODO: Add get_parameter_data method as default to call when no data is provided
-        TODO: Add further image manipulation and line detection functionality
+    TODO: Add get_parameter_data method as default to call when no data is provided
+    TODO: Add further image manipulation and line detection functionality
     """
     if args:
         x_data, y_data, z_data = _handle_overload(x_data, y_data, z_data, *args, output_dimension=3)
@@ -97,14 +98,14 @@ def plot_2D(x_data, y_data, z_data, *args, **kwargs):
 # %%
 def plot_2D_grad(x_data, y_data, z_data, *args, direction="both"):
     """
-        Plots 2D derivatives. Requires tuples of name and 1D arrays corresponding
-        to x, y and z data as input.
-        Works well with QuMADA "get_parameter_data" method found in load_from_sqlite.
-        direction argument can be x, y or z corresponding to the direction of the
-        gradient used. "both" adds the gradients quadratically.
+    Plots 2D derivatives. Requires tuples of name and 1D arrays corresponding
+    to x, y and z data as input.
+    Works well with QuMADA "get_parameter_data" method found in load_from_sqlite.
+    direction argument can be x, y or z corresponding to the direction of the
+    gradient used. "both" adds the gradients quadratically.
 
-        TODO: Add get_parameter_data method as default to call when no data is provided
-        TODO: Add further image manipulation and line detection functionality
+    TODO: Add get_parameter_data method as default to call when no data is provided
+    TODO: Add further image manipulation and line detection functionality
     """
     if args:
         x_data, y_data, z_data = _handle_overload(x_data, y_data, z_data, *args, output_dimension=3)
@@ -128,15 +129,15 @@ def plot_2D_grad(x_data, y_data, z_data, *args, direction="both"):
 # %%
 def plot_2D_sec_derivative(x_data, y_data, z_data, *args):
     """
-        Plots second derivative of data.
-        Requires tuples of name and 1D arrays corresponding
-        to x, y and z data as input.
-        Works well with QuMADA "get_parameter_data" method found in load_from_sqlite.
-        direction argument can be x, y or z corresponding to the direction of the
-        gradient used. "both" adds the gradients quadratically.
+    Plots second derivative of data.
+    Requires tuples of name and 1D arrays corresponding
+    to x, y and z data as input.
+    Works well with QuMADA "get_parameter_data" method found in load_from_sqlite.
+    direction argument can be x, y or z corresponding to the direction of the
+    gradient used. "both" adds the gradients quadratically.
 
-        TODO: Add get_parameter_data method as default to call when no data is provided
-        TODO: Add further image manipulation and line detection functionality
+    TODO: Add get_parameter_data method as default to call when no data is provided
+    TODO: Add further image manipulation and line detection functionality
     """
     if args:
         x_data, y_data, z_data = _handle_overload(x_data, y_data, z_data, *args, output_dimension=3)
