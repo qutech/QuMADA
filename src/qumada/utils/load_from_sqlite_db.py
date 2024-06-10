@@ -94,7 +94,7 @@ def load_db(filepath: str | None = None) -> None:
         except:
             print("The file you want to load is no valid db file!")
             return load_db(None)
-            
+
 
 # %%
 def list_sample_names() -> set[str]:
