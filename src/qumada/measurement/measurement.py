@@ -488,7 +488,7 @@ class MeasurementScript(ABC):
         # for item in self.compensated_parameters:
         #     if item not in self.dynamic_parameters:
         #         raise Exception(f"{item} is not in dynamic parameters and cannot be compensated!")
-        self.dynamic_sweeps = []
+        # self.dynamic_sweeps = []
         self.compensating_sweeps = []
         for gate, parameters in self.gate_parameters.items():
             for parameter, channel in parameters.items():
@@ -531,43 +531,43 @@ class MeasurementScript(ABC):
                                          buffered measurement. The value from \
                                          buffer_settings is used"
                             )
-                        try:
-                            self.dynamic_sweeps.append(
-                                LinSweep(
-                                    channel,
-                                    self.properties[gate][parameter]["start"],
-                                    self.properties[gate][parameter]["stop"],
-                                    int(self.buffered_num_points),
-                                    delay=self.properties[gate][parameter].setdefault("delay", 0),
-                                )
-                            )
-                        except KeyError:
-                            self.dynamic_sweeps.append(
-                                CustomSweep(
-                                    channel,
-                                    self.properties[gate][parameter]["setpoints"],
-                                    delay=self.properties[gate][parameter].setdefault("delay", 0),
-                                )
-                            )
-                    else:
-                        try:
-                            self.dynamic_sweeps.append(
-                                LinSweep(
-                                    channel,
-                                    self.properties[gate][parameter]["start"],
-                                    self.properties[gate][parameter]["stop"],
-                                    int(self.properties[gate][parameter]["num_points"]),
-                                    delay=self.properties[gate][parameter].setdefault("delay", 0),
-                                )
-                            )
-                        except KeyError:
-                            self.dynamic_sweeps.append(
-                                CustomSweep(
-                                    channel,
-                                    self.properties[gate][parameter]["setpoints"],
-                                    delay=self.properties[gate][parameter].setdefault("delay", 0),
-                                )
-                            )
+                    #     try:
+                    #         self.dynamic_sweeps.append(
+                    #             LinSweep(
+                    #                 channel,
+                    #                 self.properties[gate][parameter]["start"],
+                    #                 self.properties[gate][parameter]["stop"],
+                    #                 int(self.buffered_num_points),
+                    #                 delay=self.properties[gate][parameter].setdefault("delay", 0),
+                    #             )
+                    #         )
+                    #     except KeyError:
+                    #         self.dynamic_sweeps.append(
+                    #             CustomSweep(
+                    #                 channel,
+                    #                 self.properties[gate][parameter]["setpoints"],
+                    #                 delay=self.properties[gate][parameter].setdefault("delay", 0),
+                    #             )
+                    #         )
+                    # else:
+                    #     try:
+                    #         self.dynamic_sweeps.append(
+                    #             LinSweep(
+                    #                 channel,
+                    #                 self.properties[gate][parameter]["start"],
+                    #                 self.properties[gate][parameter]["stop"],
+                    #                 int(self.properties[gate][parameter]["num_points"]),
+                    #                 delay=self.properties[gate][parameter].setdefault("delay", 0),
+                    #             )
+                    #         )
+                    #     except KeyError:
+                    #         self.dynamic_sweeps.append(
+                    #             CustomSweep(
+                    #                 channel,
+                    #                 self.properties[gate][parameter]["setpoints"],
+                    #                 delay=self.properties[gate][parameter].setdefault("delay", 0),
+                    #             )
+                    #         )
 
                     # Handle different possibilities for starting points
                     if dyn_ramp_to_val or channel in inactive_dyn_channels:
