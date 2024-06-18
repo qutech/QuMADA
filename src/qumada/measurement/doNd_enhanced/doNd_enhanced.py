@@ -373,7 +373,7 @@ def do1d_parallel_asym(
                     if backsweep_after_break:
                         # tracked_setpoints.reverse()
                         # need nested reverse?
-                        print('Break condition was met. Starting backsweep!')
+                        print("Break condition was met. Starting backsweep!")
                         tracked_setpoints = [setpoints[::-1] for setpoints in tracked_setpoints]
                         time.sleep(wait_after_break)
                         for j in range(len(tracked_setpoints[0])):
@@ -391,8 +391,10 @@ def do1d_parallel_asym(
                         break
                     else:
                         warnings.warn("Break condition was met.")
-                        print('Break condition was met. This meassage pops up alone \
-                               if there is some issue with warning.warn')
+                        print(
+                            "Break condition was met. This meassage pops up alone \
+                               if there is some issue with warning.warn"
+                        )
                         break
 
     param_set[0].post_delay = original_delay
