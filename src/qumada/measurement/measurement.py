@@ -301,8 +301,9 @@ class MeasurementScript(ABC):
                     self.gettable_parameters.append({"gate": gate, "parameter": parameter})
                     self.gettable_channels.append(channel)
                     with suppress(KeyError):
-                        for condition in self.properties[gate][parameter]["break_conditions"]:
-                            self.break_conditions.append({"channel": channel, "break_condition": condition})
+                        if self.properties[gate][parameter]["break_conditions"] is not None:
+                            for condition in self.properties[gate][parameter]["break_conditions"]:
+                                self.break_conditions.append({"channel": channel, "break_condition": condition})
                 if self.properties[gate][parameter]["type"].find("comp") >= 0:
                     self.compensating_parameters.append({"gate": gate, "parameter": parameter})
                     self.compensating_channels.append(channel)
