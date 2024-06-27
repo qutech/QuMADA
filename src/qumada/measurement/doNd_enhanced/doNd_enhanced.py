@@ -41,6 +41,7 @@ from qcodes.dataset.data_set_protocol import DataSetProtocol
 from qcodes.dataset.descriptions.detect_shapes import detect_shape_of_measurement
 from qcodes.dataset.descriptions.versioning.rundescribertypes import Shapes
 from qcodes.dataset.dond.do_nd_utils import (
+    BreakConditionInterrupt,
     _handle_plotting,
     _register_actions,
     _register_parameters,
@@ -373,6 +374,7 @@ def do1d_parallel_asym(
                     if backsweep_after_break:
                         # tracked_setpoints.reverse()
                         # need nested reverse?
+                        print("Break condition was met. Starting backsweep!")
                         tracked_setpoints = [setpoints[::-1] for setpoints in tracked_setpoints]
                         time.sleep(wait_after_break)
                         for j in range(len(tracked_setpoints[0])):
@@ -390,7 +392,11 @@ def do1d_parallel_asym(
                         break
                     else:
                         warnings.warn("Break condition was met.")
-                        break
+                        print(
+                            "Break condition was met. This meassage pops up alone \
+                               if there is some issue with warning.warn"
+                        )
+                        raise BreakConditionInterrupt("Break condition was met.")
 
     param_set[0].post_delay = original_delay
 
@@ -434,13 +440,17 @@ def _interpret_breaks(break_conditions: list, **kwargs) -> Callable[[], bool] | 
         # op1, op2 = float(op1), float(op2)
         return ops[oper](op1, op2)
 
+    def f(cond, ops):
+        return partial(eval_binary_expr, cond["channel"].get_latest(), ops[1], float(ops[2]))()
+
     def check_conditions(conditions: list[Callable[[], bool]]):
         for cond in conditions:
-            if cond():
+            if f(cond[0], cond[1]):
                 return True
         return False
 
     conditions = []
+
     # Create break condition callables
     for cond in break_conditions:
         ops = cond["break_condition"].split(" ")
@@ -448,11 +458,8 @@ def _interpret_breaks(break_conditions: list, **kwargs) -> Callable[[], bool] | 
             raise NotImplementedError(
                 'Only parameter values can be used for breaks in this version. Use "val" for the break condition.'
             )
+        conditions.append([cond, ops])
 
-        def f():
-            return partial(eval_binary_expr, cond["channel"].get(), ops[1], float(ops[2]))()
-
-        conditions.append(f)
     return partial(check_conditions, conditions) if conditions else None
 
 

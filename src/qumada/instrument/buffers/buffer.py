@@ -33,8 +33,9 @@ def is_bufferable(object: Instrument | Parameter):
     """Checks if the instrument or parameter is bufferable using the qumada Buffer definition."""
     if isinstance(object, Parameter):
         object = object.root_instrument
-    return hasattr(object, "_qumada_buffer") and isinstance(object._qumada_buffer, Buffer)
+    return hasattr(object, "_qumada_buffer")  # and isinstance(object._qumada_buffer, Buffer)
     # TODO: check, if parameter can really be buffered
+    # TODO: For some reason checking the type doesn't work all the time. Check again later.
 
 
 def is_triggerable(object: Instrument | Parameter):

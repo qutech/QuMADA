@@ -74,6 +74,12 @@ def load_db(filepath: str | None = None) -> None:
         filepath = browsefiles(filetypes=filetypes)
         if filepath == "":
             return None
+        try:
+            qc.initialise_or_create_database_at(filepath)
+            return None
+        except:
+            print("Please provide a valid path")
+            return load_db(None)
     elif not path.isfile(filepath):
         try:
             qc.initialise_or_create_database_at(filepath)
@@ -82,6 +88,12 @@ def load_db(filepath: str | None = None) -> None:
         except Exception as e:
             print("Please provide a valid path")
             raise e
+    else:
+        try:
+            qc.initialise_or_create_database_at(filepath)
+        except:
+            print("The file you want to load is no valid db file!")
+            return load_db(None)
 
 
 # %%
