@@ -48,7 +48,6 @@ from qcodes.dataset.dond.do_nd_utils import (
     _set_write_period,
 )
 
-
 try:
     from qcodes.dataset.dond.do_nd_utils import _catch_interrupts
 except ImportError:
@@ -443,13 +442,12 @@ def _interpret_breaks(break_conditions: list, **kwargs) -> Callable[[], bool] | 
 
     def f(cond, ops):
         return partial(eval_binary_expr, cond["channel"].get_latest(), ops[1], float(ops[2]))()
-    
+
     def check_conditions(conditions: list[Callable[[], bool]]):
         for cond in conditions:
             if f(cond[0], cond[1]):
                 return True
         return False
-
 
     conditions = []
 
