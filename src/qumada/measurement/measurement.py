@@ -455,7 +455,8 @@ class MeasurementScript(ABC):
     def sort_by_priority(self):
         combined_lists = list(zip(self.dynamic_parameters, self.dynamic_channels, self.dynamic_sweeps))
         combined_sorted = sorted(combined_lists, key=lambda x: (x[0].get("priority", float("inf"))))
-        self.dynamic_parameters, self.dynamic_channels, self.dynamic_sweeps = map(list, zip(*combined_sorted))
+        if len(self.dynamic_parameters) > 0:
+            self.dynamic_parameters, self.dynamic_channels, self.dynamic_sweeps = map(list, zip(*combined_sorted))
 
     def initialize(self, dyn_ramp_to_val=False, inactive_dyn_channels: list | None = None) -> None:
         """
