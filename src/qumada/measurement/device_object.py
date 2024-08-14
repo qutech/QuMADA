@@ -517,11 +517,11 @@ class Terminal_Parameter(ABC):
             raise Exception(f"Parameter {self.name} of Terminal {self._parent.name} is locked and cannot be set!")
             return
 
-        if type(value) == float:
+        if isinstance(value, float):
             self._value = self.scaling * value
             try:
                 self.instrument_parameter(self.scaling * value)
-            except:
+            except TypeError:
                 self._parent_device.update_terminal_parameters()
                 self.instrument_parameter(self.scaling * value)
         else:
@@ -529,7 +529,7 @@ class Terminal_Parameter(ABC):
             # TODO: Replace Try/Except block, update_terminal_parameters() should be called by mapping function
             try:
                 self.instrument_parameter(value)
-            except:
+            except TypeError:
                 self._parent_device.update_terminal_parameters()
                 self.instrument_parameter(value)
 
@@ -548,7 +548,7 @@ class Terminal_Parameter(ABC):
 
     @instrument_parameter.setter
     def instrument_parameter(self, param: Parameter):
-        if isinstance(param, Parameter) or param == None:
+        if isinstance(param, Parameter) or param is None:
             self._instrument_parameter = param
             self._set_limits()
         else:
@@ -616,7 +616,7 @@ class Terminal_Parameter(ABC):
     ):
         if station is None:
             station = self._parent_device.station
-        if type(station) != Station:
+        if isinstance(station, Station):
             raise TypeError("No valid station assigned!")
         if self.locked:
             raise Exception(f"{self.name} is locked!")
