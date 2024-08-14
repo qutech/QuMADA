@@ -122,6 +122,19 @@ class QumadaDevice:
         for terminal in self.terminals.values():
             for param in terminal.terminal_parameters.values():
                 param.set_default()
+                
+    def voltages(self):
+        """
+        Prints all paramters called voltage from all Terminals of the device.
+        """
+        
+        for terminal in self.terminals.values():
+            try:
+                label = terminal.name
+                voltage = terminal.voltage()
+                print(f"{label} {voltage=}")
+            except AttributeError:
+                pass
 
     @staticmethod
     def create_from_dict(data: dict, station: Station | None = None, make_terminals_global=False, namespace=None):
