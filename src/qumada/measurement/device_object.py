@@ -122,12 +122,12 @@ class QumadaDevice:
         for terminal in self.terminals.values():
             for param in terminal.terminal_parameters.values():
                 param.set_default()
-                
+
     def voltages(self):
         """
         Prints all paramters called voltage from all Terminals of the device.
         """
-        
+
         for terminal in self.terminals.values():
             try:
                 label = terminal.name
