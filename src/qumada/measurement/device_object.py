@@ -132,7 +132,7 @@ class QumadaDevice:
         """
         Creates a QumadaDevice object from valid parameter dictionaries as used in Qumada measurement scripts.
         Be aware that the validity is not checked at the moment, so there might be unexpected exceptions!
-        Parameter values are not set upon initialization for safety reason! They are stored in 
+        Parameter values are not set upon initialization for safety reason! They are stored in
         the _stored_values attribute.
         By default terminals are added to the namespace provided by the namespace argument.
         If you set namespace=globals() you can make the terminals available in global namespace.
