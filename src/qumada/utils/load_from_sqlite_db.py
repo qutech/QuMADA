@@ -77,7 +77,7 @@ def load_db(filepath: str | None = None) -> None:
         try:
             qc.initialise_or_create_database_at(filepath)
             return None
-        except:
+        except Exception:
             print("Please provide a valid path")
             return load_db(None)
     elif not path.isfile(filepath):
@@ -91,7 +91,7 @@ def load_db(filepath: str | None = None) -> None:
     else:
         try:
             qc.initialise_or_create_database_at(filepath)
-        except:
+        except Exception:
             print("The file you want to load is no valid db file!")
             return load_db(None)
 

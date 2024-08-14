@@ -1,22 +1,15 @@
 from __future__ import annotations
 
 import inspect
-import json
 import logging
-from abc import ABC, abstractmethod
-from collections.abc import MutableSequence
-from contextlib import suppress
+from abc import ABC
 from copy import deepcopy
-from datetime import datetime
 from functools import wraps
-from typing import Any, Callable
+from typing import Any
 
 import numpy as np
-import qcodes as qc
 from qcodes import Station
-from qcodes.dataset import AbstractSweep, LinSweep
-from qcodes.dataset.dond.do_nd_utils import ActionsT
-from qcodes.parameters import Parameter, ParameterBase
+from qcodes.parameters import Parameter
 from qcodes.validators.validators import Numbers
 
 from qumada.instrument.buffers.buffer import map_triggers
@@ -29,9 +22,7 @@ from qumada.measurement.scripts import (
     Timetrace,
     Timetrace_buffered,
 )
-from qumada.metadata import Metadata
 from qumada.utils.ramp_parameter import ramp_or_set_parameter
-from qumada.utils.utils import flatten_array
 
 logger = logging.getLogger(__name__)
 
@@ -141,7 +132,8 @@ class QumadaDevice:
         """
         Creates a QumadaDevice object from valid parameter dictionaries as used in Qumada measurement scripts.
         Be aware that the validity is not checked at the moment, so there might be unexpected exceptions!
-        Parameter values are not set upon initialization for safety reason! They are stored in the _stored_values attribute.
+        Parameter values are not set upon initialization for safety reason! They are stored in 
+        the _stored_values attribute.
         By default terminals are added to the namespace provided by the namespace argument.
         If you set namespace=globals() you can make the terminals available in global namespace.
         TODO: Remove make_terminals_global parameter and check if namespace is not None
@@ -231,7 +223,7 @@ class QumadaDevice:
         return return_dict
 
     def mapping(self, instrument_parameters: None | dict = None):
-        if instrument_parameters == None:
+        if instrument_parameters is None:
             instrument_parameters = self.instrument_parameters
         if not isinstance(self.station, Station):
             raise TypeError("No valid qcodes station found. Make sure you have set the station attribute correctly!")
@@ -252,10 +244,10 @@ class QumadaDevice:
         """ """
         if station is None:
             station = self.station
-        if type(station) != Station:
+        if not isinstance(station, Station):
             raise TypeError("No valid station assigned!")
         temp_buffer_settings = deepcopy(buffer_settings)
-        if buffered == True:
+        if buffered is True:
             logger.warning("Temporarily modifying buffer settings to match function arguments.")
             temp_buffer_settings["sampling_rate"] = 1 / timestep
             temp_buffer_settings["duration"] = duration
@@ -302,7 +294,7 @@ class QumadaDevice:
         """ """
         if station is None:
             station = self.station
-        if type(station) != Station:
+        if not isinstance(station, Station):
             raise TypeError("No valid station assigned!")
         self.save_state("_temp_2D")
         try:
@@ -321,15 +313,17 @@ class QumadaDevice:
                 fast_param.value - fast_param_range, fast_param.value + fast_param_range, fast_num_points
             )
             temp_buffer_settings = deepcopy(buffer_settings)
-            if buffered == True:
+            if buffered is True:
                 if "num_points" in temp_buffer_settings.keys():
                     temp_buffer_settings["num_points"] = fast_num_points
                     logger.warning(
-                        f"Temporarily changed buffer settings to match the number of points specified {fast_num_points=}"
+                        f"Temporarily changed buffer settings to match the \
+                        number of points specified {fast_num_points=}"
                     )
                 else:
                     logger.warning(
-                        "Num_points not specified in buffer settings! fast_num_points value is ignored and buffer settings are used to specify measurement!"
+                        "Num_points not specified in buffer settings! fast_num_points value is \
+                        ignored and buffer settings are used to specify measurement!"
                     )
 
                 script = Generic_2D_Sweep_buffered()
@@ -360,7 +354,8 @@ class QumadaDevice:
 def create_hook(func, hook):
     """
     Decorator to hook a function onto an existing function.
-    The hook function can use keyword-only arguments, which are omitted prior to execution of the main function.
+    The hook function can use keyword-only arguments, which are omitted prior
+    to execution of the main function.
     """
 
     @wraps(func)
@@ -641,7 +636,8 @@ class Terminal_Parameter(ABC):
                 )
             else:
                 logger.warning(
-                    "Num_points not specified in buffer settings! fast_num_points value is ignored and buffer settings are used to specify measurement!"
+                    "Num_points not specified in buffer settings! fast_num_points value is \
+                        ignored and buffer settings are used to specify measurement!"
                 )
             script = Generic_1D_Sweep_buffered()
         else:
@@ -694,7 +690,7 @@ class Terminal_Parameter(ABC):
             logger.warning(f"No stored value set for parameter {self.name}")
 
     def __call__(self, value=None):
-        if value == None:
+        if value is None:
             return self.value
         else:
             self.value = value
