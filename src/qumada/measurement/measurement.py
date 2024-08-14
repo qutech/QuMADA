@@ -40,7 +40,7 @@ from qcodes.dataset import AbstractSweep, LinSweep
 from qcodes.dataset.dond.do_nd_utils import ActionsT
 from qcodes.parameters import Parameter, ParameterBase
 
-from qumada.instrument.buffers.buffer import is_bufferable, is_triggerable
+from qumada.instrument.buffers import is_bufferable, is_triggerable
 from qumada.metadata import Metadata
 from qumada.utils.ramp_parameter import ramp_or_set_parameter
 from qumada.utils.utils import flatten_array
@@ -301,8 +301,9 @@ class MeasurementScript(ABC):
                     self.gettable_parameters.append({"gate": gate, "parameter": parameter})
                     self.gettable_channels.append(channel)
                     with suppress(KeyError):
-                        for condition in self.properties[gate][parameter]["break_conditions"]:
-                            self.break_conditions.append({"channel": channel, "break_condition": condition})
+                        if self.properties[gate][parameter]["break_conditions"] is not None:
+                            for condition in self.properties[gate][parameter]["break_conditions"]:
+                                self.break_conditions.append({"channel": channel, "break_condition": condition})
                 if self.properties[gate][parameter]["type"].find("comp") >= 0:
                     self.compensating_parameters.append({"gate": gate, "parameter": parameter})
                     self.compensating_channels.append(channel)
@@ -415,27 +416,30 @@ class MeasurementScript(ABC):
                                 )
                             )
 
-                if "group" in self.properties[gate][parameter].keys():
-                    group = self.properties[gate][parameter]["group"]
-                    if group not in self.groups.keys():
-                        self.groups[group] = {"channels": [], "parameters": [], "priority": None}
-                    self.groups[group]["channels"].append(channel)
-                    self.groups[group]["parameters"].append({"gate": gate, "parameter": parameter})
-                    if self.groups[group]["priority"] is None:
-                        if "priority" in self.properties[gate][parameter].keys():
-                            if self.groups[group]["priority"] in self.priorities.keys():
-                                raise Exception("Assigned the same priority to multiple groups")
-                            elif self.groups[group]["priority"] is None:
-                                self.groups[group]["priority"] = int(self.properties[gate][parameter]["priority"])
-                                self.priorities[int(self.groups[group]["priority"])] = self.groups[group]
-                        else:
-                            try:
-                                prio = int(group)
-                                if prio not in self.priorities.keys():
-                                    self.groups[group]["priority"] = prio
-                                    self.priorities[prio] = self.groups[group]
-                            except Exception:
-                                pass
+                    # Only executed for dynamic parameters!
+                    if "group" in self.properties[gate][parameter].keys():
+                        group = self.properties[gate][parameter]["group"]
+                        if group not in self.groups.keys():
+                            self.groups[group] = {"channels": [], "parameters": [], "priority": None}
+                        self.groups[group]["channels"].append(channel)
+                        self.groups[group]["parameters"].append({"gate": gate, "parameter": parameter})
+                        if self.groups[group]["priority"] is None:
+                            if "priority" in self.properties[gate][parameter].keys():
+                                if self.groups[group]["priority"] in self.priorities.keys():
+                                    raise Exception("Assigned the same priority to multiple groups")
+                                elif self.groups[group]["priority"] is None:
+                                    self.groups[group]["priority"] = int(self.properties[gate][parameter]["priority"])
+                                    self.priorities[int(self.groups[group]["priority"])] = self.groups[group]
+                                    self.dynamic_parameters[-1]["priority"] = int(self.groups[group]["priority"])
+                            else:
+                                try:
+                                    prio = int(group)
+                                    if prio not in self.priorities.keys():
+                                        self.groups[group]["priority"] = prio
+                                        self.priorities[prio] = self.groups[group]
+                                        self.dynamic_parameters[-1]["priority"] = prio
+                                except Exception:
+                                    pass
 
         if self.buffered:
             self.buffers = {
@@ -444,8 +448,15 @@ class MeasurementScript(ABC):
             self.trigger_ins = {
                 param.root_instrument._qumada_mapping for param in self.dynamic_channels if is_triggerable(param)
             }
+        self.sort_by_priority()
         self._lists_created = True
         self._relabel_instruments()
+
+    def sort_by_priority(self):
+        combined_lists = list(zip(self.dynamic_parameters, self.dynamic_channels, self.dynamic_sweeps))
+        combined_sorted = sorted(combined_lists, key=lambda x: (x[0].get("priority", float("inf"))))
+        if len(self.dynamic_parameters) > 0:
+            self.dynamic_parameters, self.dynamic_channels, self.dynamic_sweeps = map(list, zip(*combined_sorted))
 
     def initialize(self, dyn_ramp_to_val=False, inactive_dyn_channels: list | None = None) -> None:
         """
@@ -479,7 +490,7 @@ class MeasurementScript(ABC):
         # for item in self.compensated_parameters:
         #     if item not in self.dynamic_parameters:
         #         raise Exception(f"{item} is not in dynamic parameters and cannot be compensated!")
-        self.dynamic_sweeps = []
+        # self.dynamic_sweeps = []
         self.compensating_sweeps = []
         for gate, parameters in self.gate_parameters.items():
             for parameter, channel in parameters.items():
@@ -522,43 +533,43 @@ class MeasurementScript(ABC):
                                          buffered measurement. The value from \
                                          buffer_settings is used"
                             )
-                        try:
-                            self.dynamic_sweeps.append(
-                                LinSweep(
-                                    channel,
-                                    self.properties[gate][parameter]["start"],
-                                    self.properties[gate][parameter]["stop"],
-                                    int(self.buffered_num_points),
-                                    delay=self.properties[gate][parameter].setdefault("delay", 0),
-                                )
-                            )
-                        except KeyError:
-                            self.dynamic_sweeps.append(
-                                CustomSweep(
-                                    channel,
-                                    self.properties[gate][parameter]["setpoints"],
-                                    delay=self.properties[gate][parameter].setdefault("delay", 0),
-                                )
-                            )
-                    else:
-                        try:
-                            self.dynamic_sweeps.append(
-                                LinSweep(
-                                    channel,
-                                    self.properties[gate][parameter]["start"],
-                                    self.properties[gate][parameter]["stop"],
-                                    int(self.properties[gate][parameter]["num_points"]),
-                                    delay=self.properties[gate][parameter].setdefault("delay", 0),
-                                )
-                            )
-                        except KeyError:
-                            self.dynamic_sweeps.append(
-                                CustomSweep(
-                                    channel,
-                                    self.properties[gate][parameter]["setpoints"],
-                                    delay=self.properties[gate][parameter].setdefault("delay", 0),
-                                )
-                            )
+                    #     try:
+                    #         self.dynamic_sweeps.append(
+                    #             LinSweep(
+                    #                 channel,
+                    #                 self.properties[gate][parameter]["start"],
+                    #                 self.properties[gate][parameter]["stop"],
+                    #                 int(self.buffered_num_points),
+                    #                 delay=self.properties[gate][parameter].setdefault("delay", 0),
+                    #             )
+                    #         )
+                    #     except KeyError:
+                    #         self.dynamic_sweeps.append(
+                    #             CustomSweep(
+                    #                 channel,
+                    #                 self.properties[gate][parameter]["setpoints"],
+                    #                 delay=self.properties[gate][parameter].setdefault("delay", 0),
+                    #             )
+                    #         )
+                    # else:
+                    #     try:
+                    #         self.dynamic_sweeps.append(
+                    #             LinSweep(
+                    #                 channel,
+                    #                 self.properties[gate][parameter]["start"],
+                    #                 self.properties[gate][parameter]["stop"],
+                    #                 int(self.properties[gate][parameter]["num_points"]),
+                    #                 delay=self.properties[gate][parameter].setdefault("delay", 0),
+                    #             )
+                    #         )
+                    #     except KeyError:
+                    #         self.dynamic_sweeps.append(
+                    #             CustomSweep(
+                    #                 channel,
+                    #                 self.properties[gate][parameter]["setpoints"],
+                    #                 delay=self.properties[gate][parameter].setdefault("delay", 0),
+                    #             )
+                    #         )
 
                     # Handle different possibilities for starting points
                     if dyn_ramp_to_val or channel in inactive_dyn_channels:
