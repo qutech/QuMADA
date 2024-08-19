@@ -616,7 +616,7 @@ class Terminal_Parameter(ABC):
     ):
         if station is None:
             station = self._parent_device.station
-        if isinstance(station, Station):
+        if not isinstance(station, Station):
             raise TypeError("No valid station assigned!")
         if self.locked:
             raise Exception(f"{self.name} is locked!")
