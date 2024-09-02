@@ -94,8 +94,7 @@ class QumadaDevice:
         """
         Saves current state (inclung types, limits etc) as entry in the tuning dict with name as key.
         """
-        for terminal in self.terminals.values():
-            self.states[name] = self.save_to_dict(priorize_stored_value=False)
+        self.states[name] = self.save_to_dict(priorize_stored_value=False)
 
     def set_state(self, name: str):
         self.load_from_dict(self.states[name])
@@ -291,6 +290,7 @@ class QumadaDevice:
         buffered=False,
         buffer_settings: dict = {},
         priorize_stored_value=False,
+        restore_state = True,
     ):
         """ """
         if station is None:
