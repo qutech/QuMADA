@@ -290,7 +290,7 @@ class QumadaDevice:
         buffered=False,
         buffer_settings: dict = {},
         priorize_stored_value=False,
-        restore_state = True,
+        restore_state=True,
     ):
         """ """
         if station is None:
@@ -305,13 +305,13 @@ class QumadaDevice:
                         parameter.type = "static"
             slow_param.type = "dynamic"
             slow_param.setpoints = np.linspace(
-                slow_param.value - slow_param_range/2., slow_param.value + slow_param_range/2., slow_num_points
+                slow_param.value - slow_param_range / 2.0, slow_param.value + slow_param_range / 2.0, slow_num_points
             )
             slow_param.group = 1
             fast_param.type = "dynamic"
             fast_param.group = 2
             fast_param.setpoints = np.linspace(
-                fast_param.value - fast_param_range/2., fast_param.value + fast_param_range/2., fast_num_points
+                fast_param.value - fast_param_range / 2.0, fast_param.value + fast_param_range / 2.0, fast_num_points
             )
             temp_buffer_settings = deepcopy(buffer_settings)
             if buffered is True:
@@ -609,7 +609,7 @@ class Terminal_Parameter(ABC):
         self,
         value,
         num_points=100,
-        start = None,
+        start=None,
         station=None,
         name=None,
         metadata=None,
