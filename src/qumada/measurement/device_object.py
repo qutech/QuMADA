@@ -94,8 +94,7 @@ class QumadaDevice:
         """
         Saves current state (inclung types, limits etc) as entry in the tuning dict with name as key.
         """
-        for terminal in self.terminals.values():
-            self.states[name] = self.save_to_dict(priorize_stored_value=False)
+        self.states[name] = self.save_to_dict(priorize_stored_value=False)
 
     def set_state(self, name: str):
         self.load_from_dict(self.states[name])
@@ -272,7 +271,8 @@ class QumadaDevice:
         )
         mapping = self.instrument_parameters
         map_terminals_gui(station.components, script.gate_parameters, mapping)
-        map_triggers(station.components, script.properties, script.gate_parameters)
+        if buffered is True:
+            map_triggers(station.components, script.properties, script.gate_parameters)
         data = script.run()
         return data
 
@@ -290,6 +290,7 @@ class QumadaDevice:
         buffered=False,
         buffer_settings: dict = {},
         priorize_stored_value=False,
+        restore_state=True,
     ):
         """ """
         if station is None:
@@ -304,13 +305,13 @@ class QumadaDevice:
                         parameter.type = "static"
             slow_param.type = "dynamic"
             slow_param.setpoints = np.linspace(
-                slow_param.value - slow_param_range, slow_param.value + slow_param_range, slow_num_points
+                slow_param.value - slow_param_range / 2.0, slow_param.value + slow_param_range / 2.0, slow_num_points
             )
             slow_param.group = 1
             fast_param.type = "dynamic"
             fast_param.group = 2
             fast_param.setpoints = np.linspace(
-                fast_param.value - fast_param_range, fast_param.value + fast_param_range, fast_num_points
+                fast_param.value - fast_param_range / 2.0, fast_param.value + fast_param_range / 2.0, fast_num_points
             )
             temp_buffer_settings = deepcopy(buffer_settings)
             if buffered is True:
@@ -338,7 +339,8 @@ class QumadaDevice:
             )
             mapping = self.instrument_parameters
             map_terminals_gui(station.components, script.gate_parameters, mapping)
-            map_triggers(station.components, script.properties, script.gate_parameters)
+            if buffered is True:
+                map_triggers(station.components, script.properties, script.gate_parameters)
             data = script.run()
         except Exception as e:
             print(self.states["_temp_2D"])
@@ -607,9 +609,11 @@ class Terminal_Parameter(ABC):
         self,
         value,
         num_points=100,
+        start=None,
         station=None,
         name=None,
         metadata=None,
+        backsweep=False,
         buffered=False,
         buffer_settings={},
         priorize_stored_value=False,
@@ -626,7 +630,16 @@ class Terminal_Parameter(ABC):
                 if param.type == "dynamic":
                     param.type = "static"
         self.type = "dynamic"
-        self.setpoints = np.linspace(self(), value, num_points)
+        if start is None:
+            start = self()
+        if backsweep is True:
+            if buffered is False:
+                self.setpoints = [*np.linspace(start, value, num_points), *np.linspace(value, start, num_points)]
+            else:
+                logger.warning("Cannot do backsweep for buffered measurements")
+                self.setpoints = np.linspace(start, value, num_points)
+        else:
+            self.setpoints = np.linspace(start, value, num_points)
         temp_buffer_settings = deepcopy(buffer_settings)
         if buffered:
             if "num_points" in temp_buffer_settings.keys():
@@ -651,7 +664,8 @@ class Terminal_Parameter(ABC):
         )
         mapping = self._parent_device.instrument_parameters
         map_terminals_gui(station.components, script.gate_parameters, mapping)
-        map_triggers(station.components, script.properties, script.gate_parameters)
+        if buffered is True:
+            map_triggers(station.components, script.properties, script.gate_parameters)
         data = script.run()
         return data
 
