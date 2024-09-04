@@ -1267,11 +1267,11 @@ class Generic_Pulsed_Measurement(MeasurementScript):
                     measurement instruments! Only recommended\
                     for debugging."
                 )
-
+            timeout_timer = 0
             while not all(buffer.is_finished() for buffer in list(self.buffers)):
-                timer += 0.1
+                timeout_timer += 0.1
                 sleep(0.1)
-                if timer >= buffer_timeout_multiplier * self._burst_duration:
+                if timeout_timer >= buffer_timeout_multiplier * self._burst_duration:
                     raise TimeoutError
             try:
                 trigger_reset()
