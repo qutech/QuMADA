@@ -97,11 +97,11 @@ Adding the mapping is easily done by using the "add_mapping_to_instrument" comma
 		min_val=-10,
 		max_val=10,
 		terminator="\n")
-	add_mapping_to_instrument(dac, path = DECADAC_MAPPING)
+	add_mapping_to_instrument(dac, mapping = DECADAC_MAPPING)
 	station.add_component(dac)
 
 	lockin = SR830("lockin", "GPIB1::12::INSTR")
-	add_mapping_to_instrument(lockin, path = SR830_MAPPING)
+	add_mapping_to_instrument(lockin, mapping = SR830_MAPPING)
 	station.add_component(lockin)
 
 	qdac = QDac("qdac", "ASRL5::INSTR")
@@ -109,17 +109,10 @@ Adding the mapping is easily done by using the "add_mapping_to_instrument" comma
 	station.add_component(qdac)
 
 	keithley = Keithley_2400("keithley", "GPIB1::27::INSTR")
-	add_mapping_to_instrument(keithley, path = KEITHLEY_2400_MAPPING)
+	add_mapping_to_instrument(keithley, mapping = KEITHLEY_2400_MAPPING)
 	station.add_component(keithley)
 
 In this sample we just add a couple of real instruments. Of course you can add QCoDeS dummy instruments as well and provide mappings for them.
-
-.. note::
-
-	There is a known bug that requires the instrument's name to be the same as the name found in the corresponding mapping file.
-	This is especcially relevant when you want to use two instruments of the same type. We are working on a fix for this issue.
-	As a workaround, you can create a second mapping file for the second instrument and alter the instrument name on the left side of
-	the mapping file to the name of the second instrument.
 
 #############
 Metadata
@@ -144,13 +137,15 @@ The easiest way to create the metadata-object is by entering the data into the m
 .. note::
 
 	There are currently some issues with the metadatabase, e.g. communication with the database can take very long in some cases. You can pass "insert_metadata_into_db=False" into the run-method of the script
-	when you do not want to save the measurement into the metadatabase.
+	when you do not want to save the measurement into the metadatabase and otherwise ignore the metadata-db related parts of this tutorial. There might be some warnings popping up when you run the measurement,
+	feel free to ignore them.
 
 The connection to the metadabase is required for loading information of already existing samples and measurements (so you do not have to enter them again) and
 - of course - for storing the data. Right now, we are only interested in creating the metadata object for usage in our measurements.
 
 In case you have not already initialized a QCoDeS database you can easily do so by using the load_db(path_to_db [optional) method, which either takes the path to the database you want to use or, when no argument is supplied,
-opens an open-file prompt allowing you to simply pick the database you want to use (be aware that the prompt might pop up behind other windows).
+opens an open-file prompt allowing you to simply pick the database you want to use (be aware that the prompt might pop up behind other windows). Alternatively, you can provide a valid path and a filename as input argument
+to create a new database.
 
 At this point we have taken care of all preliminary steps required before defining the measurement.
 Except for changing the measurement name in the metadata object, you will have to do those steps only when exchanging the sample or altering the setup.
@@ -231,7 +226,8 @@ manually before the measurement or include them into the parameters. In the latt
 .. note::
 
 	It is planned to move those mere "settings" which are only changed on rare occasions into some default setup files; the corresponding settings are then applied automatically before the
-	measurement starts. Only when the required settings deviate from those defaults they have to be specified explicitely in the parameters.
+	measurement starts. Only when the required settings deviate from those defaults they have to be specified explicitely in the parameters. So far it is recommended to check instruments settings
+	manually or set them automatically with your own code.
 
 Each of those parameters has a specific type: "dynamic", "static" and/or "gettable".
 
@@ -263,20 +259,20 @@ the details about how the measurement has to be performed and some metadata such
 
 .. code-block:: python
 
-	script = Generic_1D_parallel_Sweep()
+	script = Generic_1D_parallel_asymmetric_Sweep()
 	script.setup(parameters, metadata, ramp_rate = 0.3, backsweep_after_break = True)
 
 For our first measurement we use the Generic_1D_parallel_Sweep method, which ramps all dynamic parameter in parallel.
 
 .. note::
 
-	This measurement script uses the setpoints of the first gate_parameter to define the sweeps, the other parameter's setpoints are ignored at the current state.
-	It is not trivial to merge arbitrary setpoint arrays with different delays into one sweep, we might improve the script in the future.
+	Parallel sweeps require the same number of setpoints for all dynamic parameters.
 
 
 Note that we do not directly pass the arguments when creating the object but use the built-in "setup" method. It is required to pass the parameters and a metadata object.
 All measurement_script objects have an initialize and a reset method, which take care of ramping/setting all parameters to the correct values and furthermore create a couple of attributes,
-like lists of all sweeps, different parameters and so on. Furthermore, they will automatically relabel the parameters in the QCoDeS datasets to match the gate names you specified.
+like lists of all sweeps, different parameters and so on. Furthermore, they will automatically relabel the parameters in the QCoDeS datasets to match the gate names you specified. If your plotting tool uses the 
+"label" attribute of parameters for its plot, the axis will thus be labeled correctly.
 When using the predefined measurement scripts that come with QuMADA those steps are automatically performed whenever you run the measurement. In case you define your own measurement scripts, you are free to use those built-in methods as you need them.
 Furthermore, measurement scripts can have keyword arguments specifying details of how the measurement is performed. In this case we set the ramp_rate, which is again built-in into all measurement script objects and defines the ramp_speed used to ramp all parameters
 to their starting value as well as the back_after_break parameter, which automatically adds a backsweep to the measurement once a break condition is fulfilled. This is particulary handy for accumulation curves including hysteresis investigations.
@@ -289,7 +285,7 @@ Mapping terminals to instruments
 ##################################
 
 Assigning the terminals to their correspoing instruments channels can be either done manually or by passing an already existing gate mapping object. The gate mapping is stored inside the measurement script and can be accessed via measurement_scipt.gate_parameter.
-The gate mapping can be performed either per function or using a GUI:
+The gate mapping can be performed either per function or using a GUI (it is strongly recommend to use the latter):
 
 .. autofunction:: qumada.instrument.mapping.base.map_gates_to_instruments
 
@@ -300,15 +296,10 @@ capable of handling existing mappings with different parameters than the current
 
 .. code-block:: python
 
-	map_gates_to_instruments(station.components, measurement_script.gate_parameter)
+	map_terminals_gui(station.components, measurement_script.gate_parameters)
 
-You are now asked for each registered gate/terminal to specify an instrument (or instrument channel) to map to. All available instruments are listed, you simply have to type in the number corresponding to the correct instrument.
-As QuMADA' :ref:`gate mapping<Station and Instruments>` has well defined parameter names the parameters are mapped automatically once the correct measurement instrument is specified.
-
-.. note::
-
-	Right now there are some issues with multichannel instruments such as the DecaDac. The different channels are all part of the same instrument, whenever you assign a parameter to the instrument the first unassigned channel will be mapped.
-	In general this means that the channels are assigned in the order of their numbers (first parameter mapped to Channel 1, second parameter mapped to Channel 2, etc.) Make sure to add the parameters to the gate_parameters.yaml in the corresponding order.
+You are now asked for each registered gate/terminal to specify an instrument (or instrument channel) to map to. You can use drag and drop to map the parameters to their corresponding channels.
+Check the section regarding the mapping GUI for more information.
 
 
 ########################################
@@ -320,6 +311,13 @@ For recurring measurements with the same terminals and instruments, it is possib
 .. autofunction:: qumada.instrument.mapping.base.save_mapped_terminal_parameters
 
 .. autofunction:: qumada.instrument.mapping.base.load_mapped_terminal_parameters
+
+.. note: 
+
+	The loading feature is currently only functional if the parameters you want to load match the ones in the saved mapping exactly. Otherwise an exception will occur. In case you want to add terminals or parameters, you can work around that
+	issue by first loading the mapping for the original, unchanged parameters. Once you have loaded the mapping to a script or device object, alter the parameters dictionary and update the script or device object.
+	If you now run the mapping GUI again, add the mapping (script.gate_parameters for scripts) as third input argument, you only have to map the new terminals/parameters instead of all of them. You can then save the mapped terminal parameters to a new file for 
+	usage with the new parameters.
 
 
 ###################
