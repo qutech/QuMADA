@@ -25,6 +25,8 @@ from __future__ import annotations
 import logging
 import time
 
+from math import isclose
+
 from qumada.utils.generate_sweeps import generate_sweep
 
 LOG = logging.getLogger(__name__)
@@ -41,6 +43,7 @@ def ramp_parameter(
     ramp_time: float | None = None,
     setpoint_intervall: float = 0.1,
     valid_units: str = "all",
+    tolerance: float = 1e-5,
     **kwargs,
 ):
     """
@@ -68,6 +71,9 @@ def ramp_parameter(
         The default is 0.1.
     valid_units : str, optional
         Not used yet. The default is "all".
+    tolerance: float, optional
+        If abs(current_value- target_value) < tolerance*max(current_value, target_value)
+        no ramp is done. Default 1e-5. 
     **kwargs : TYPE
         DESCRIPTION.
 
@@ -82,18 +88,21 @@ def ramp_parameter(
         True if sweep was completed, False if it failed.
 
     """
-    # time.sleep(0.1)
     if parameter._settable is False:
         LOG.warning(f"{parameter} is not _settable and cannot be ramped!")
         return False
-    LOG.debug(f"parameter: {parameter}")
     current_value = parameter.get()
+    LOG.debug(f"parameter: {parameter}")
     LOG.debug(f"current value: {current_value}")
     LOG.debug(f"ramp rate: {ramp_rate}")
     LOG.debug(f"ramp time: {ramp_time}")
 
     if isinstance(current_value, float):
         LOG.debug(f"target: {target}")
+        if isclose(current_value, target, rel_tol = tolerance):
+            LOG.debug("Target value is sufficiently close to current_value, no need to ramp")
+            return True
+
         if not ramp_rate:
             if not ramp_time:
                 print("Please specify either ramp_time or ramp_speed")
