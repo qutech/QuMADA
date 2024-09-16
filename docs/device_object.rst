@@ -143,8 +143,11 @@ in the function call of measurement scripts, you can set the argument priorize_s
 Another important feature is the possibility to save and load device working points. To store a certain configuration as your default working point,
 use device.save_defaults. This stores all parameter values (of parameters that can be set). With device.set_defaults() you can reset it to the stored
 configuration. Alternatively you can use "device.save_state(name)" and "device.set_state(name)" to store and set multiple working points with
-custom names. They can also be accessed via "device.states" in case you forgot the name. Be aware that the set commands currently set the
-parameters instead of ramping to them, which can endanger your device if it is sensitive to voltage jumps.
+custom names. They can also be accessed via "device.states" in case you forgot the name. 
+For all of those methods the parameters are ramped to the final state by default (with the default QuMada ramp rate). You can use the argument "ramp = False" to avoid this, or use keyword
+arguments (ramp_rate, duration) to adjust the ramp speed when calling the methods. Alternatively, you can set the parameter "device.ramp" to True or False in order to control the behaviour
+for the complete device.
+
 
 
 ###############
