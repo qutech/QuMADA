@@ -83,9 +83,14 @@ def ramp_parameter(
 
     """
     # time.sleep(0.1)
+    if parameter._settable is False:
+        LOG.warning(f"{parameter} is not _settable and cannot be ramped!")
+        return False
     LOG.debug(f"parameter: {parameter}")
     current_value = parameter.get()
     LOG.debug(f"current value: {current_value}")
+    LOG.debug(f"ramp rate: {ramp_rate}")
+    LOG.debug(f"ramp time: {ramp_time}")
 
     if isinstance(current_value, float):
         LOG.debug(f"target: {target}")
@@ -99,7 +104,7 @@ def ramp_parameter(
         num_points = int(abs(current_value - float(target)) / (ramp_rate * setpoint_intervall)) + 2
         if ramp_time is not None and ramp_time < abs(current_value - float(target)) / ramp_rate:
             print(
-                "Ramp rate is to low to reach target value in specified"
+                "Ramp rate of is to low to reach target value in specified"
                 "max ramp time. Adapting ramp rate to match ramp time"
             )
             return ramp_parameter(

@@ -49,6 +49,7 @@ class QumadaDevice:
         self.station = station
         self.buffer_script_setup = {}
         self.states = {}
+        self.ramp: bool = True
 
     def add_terminal(self, terminal_name: str, type: str | None = None, terminal_data: dict | None = {}):
         if terminal_name not in self.terminals.keys():
@@ -82,7 +83,7 @@ class QumadaDevice:
             for param in mapping.keys():
                 self.terminals[terminal].update_terminal_parameter(param)
 
-    def save_defaults(self):
+    def save_defaults(self, ramp = None, **kwargs):
         """
         Saves current values as default for all Terminals and their parameters
         """
@@ -96,22 +97,28 @@ class QumadaDevice:
         """
         self.states[name] = self.save_to_dict(priorize_stored_value=False)
 
-    def set_state(self, name: str):
+    def set_state(self, name: str, ramp = None, **kwargs):
+        if ramp is None:
+            ramp = self.ramp
         self.load_from_dict(self.states[name])
-        self.set_stored_values()
+        self.set_stored_values(ramp = ramp, **kwargs)
 
-    def set_stored_values(self):
+    def set_stored_values(self, ramp = None, **kwargs):
+        if ramp is None:
+            ramp = self.ramp
         for terminal in self.terminals.values():
             for param in terminal.terminal_parameters.values():
                 param.set_stored_value()
 
-    def set_defaults(self):
+    def set_defaults(self, ramp = None, **kwargs):
         """
         Sets all Terminals and their parameters to their default values
         """
+        if ramp is None:
+            ramp = self.ramp
         for terminal in self.terminals.values():
             for param in terminal.terminal_parameters.values():
-                param.set_default()
+                param.set_default(ramp = ramp, **kwargs)
 
     def voltages(self):
         """
@@ -515,7 +522,7 @@ class Terminal_Parameter(ABC):
 
     @value.setter
     def value(self, value):
-        if self.locked:
+        if self.locked is True:
             raise Exception(f"Parameter {self.name} of Terminal {self._parent.name} is locked and cannot be set!")
             return
 
@@ -679,31 +686,37 @@ class Terminal_Parameter(ABC):
             logger.warning(f"{e} was raised when trying to save default value of {self.name}")
             pass
 
-    def set_default(self):
+    def set_default(self, ramp = True, **kwargs):
         """
         Sets value to default value
         """
         if self.default_value is not None:
             try:
-                self.value = self.default_value
+                if ramp is True:
+                    self.ramp(self.default_value, **kwargs)
+                else:
+                    self.value = self.default_value
             except NotImplementedError as e:
                 logger.debug(f"{e} was raised and ignored")
         else:
             logger.warning(f"No default value set for parameter {self.name}")
 
-    def set_stored_value(self):
+    def set_stored_value(self, ramp = True, **kwargs):
         """
         Sets value to stored value from dict
         """
         if self._stored_value is not None:
             try:
-                self.value = self._stored_value
+                if ramp is True:
+                    self.ramp(self._stored_value, **kwargs)
+                else:
+                    self.value = self._stored_value
             except NotImplementedError as e:
                 logger.debug(f"{e} was raised and ignored")
         else:
             logger.warning(f"No stored value set for parameter {self.name}")
 
-    def __call__(self, value=None):
+    def __call__(self, value=None, ramp = None):
         if value is None:
             return self.value
         else:
