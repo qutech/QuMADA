@@ -47,6 +47,7 @@ class QumadaDevice:
         self.instrument_parameters = {}
         self.make_terminals_global = make_terminals_global
         self.station = station
+        self.buffer_settings = {}
         self.buffer_script_setup = {}
         self.states = {}
         self.ramp: bool = True
@@ -252,6 +253,8 @@ class QumadaDevice:
             station = self.station
         if not isinstance(station, Station):
             raise TypeError("No valid station assigned!")
+        if buffer_settings == {}:
+            buffer_settings = self.buffer_settings
         temp_buffer_settings = deepcopy(buffer_settings)
         if buffered is True:
             logger.warning("Temporarily modifying buffer settings to match function arguments.")
@@ -320,6 +323,8 @@ class QumadaDevice:
             fast_param.setpoints = np.linspace(
                 fast_param.value - fast_param_range / 2.0, fast_param.value + fast_param_range / 2.0, fast_num_points
             )
+            if buffer_settings == {}:
+                 buffer_settings = self.buffer_settings
             temp_buffer_settings = deepcopy(buffer_settings)
             if buffered is True:
                 if "num_points" in temp_buffer_settings.keys():
@@ -647,10 +652,13 @@ class Terminal_Parameter(ABC):
             if buffered is False:
                 self.setpoints = [*np.linspace(start, value, num_points), *np.linspace(value, start, num_points)]
             else:
+
                 logger.warning("Cannot do backsweep for buffered measurements")
                 self.setpoints = np.linspace(start, value, num_points)
         else:
             self.setpoints = np.linspace(start, value, num_points)
+        if buffer_settings == {}:
+            buffer_settings = self._parent_device.buffer_settings
         temp_buffer_settings = deepcopy(buffer_settings)
         if buffered:
             if "num_points" in temp_buffer_settings.keys():
