@@ -596,8 +596,12 @@ class Terminal_Parameter(ABC):
                              as no valid instrument parameter was assigned to it!"
             )
         else:
-            if self._limit_validator in param.validators:
-                param.remove_validator()
+            try:
+                if self._limit_validator in param.validators:
+                    param.remove_validator()
+            except AttributeError as e:
+                logger.warning(e)
+                pass
             self._limit_validator = Numbers(min_value=min(self.limits), max_value=max(self.limits))
             param.add_validator(self._limit_validator)
 
