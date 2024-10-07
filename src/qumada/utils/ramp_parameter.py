@@ -24,7 +24,6 @@ from __future__ import annotations
 
 import logging
 import time
-
 from math import isclose
 
 from qumada.utils.generate_sweeps import generate_sweep
@@ -73,7 +72,7 @@ def ramp_parameter(
         Not used yet. The default is "all".
     tolerance: float, optional
         If abs(current_value- target_value) < tolerance*max(current_value, target_value)
-        no ramp is done. Default 1e-5. 
+        no ramp is done. Default 1e-5.
     **kwargs : TYPE
         DESCRIPTION.
 
@@ -99,7 +98,7 @@ def ramp_parameter(
 
     if isinstance(current_value, float):
         LOG.debug(f"target: {target}")
-        if isclose(current_value, target, rel_tol = tolerance):
+        if isclose(current_value, target, rel_tol=tolerance):
             LOG.debug("Target value is sufficiently close to current_value, no need to ramp")
             return True
 

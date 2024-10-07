@@ -83,7 +83,7 @@ class QumadaDevice:
             for param in mapping.keys():
                 self.terminals[terminal].update_terminal_parameter(param)
 
-    def save_defaults(self, ramp = None, **kwargs):
+    def save_defaults(self, ramp=None, **kwargs):
         """
         Saves current values as default for all Terminals and their parameters
         """
@@ -97,20 +97,20 @@ class QumadaDevice:
         """
         self.states[name] = self.save_to_dict(priorize_stored_value=False)
 
-    def set_state(self, name: str, ramp = None, **kwargs):
+    def set_state(self, name: str, ramp=None, **kwargs):
         if ramp is None:
             ramp = self.ramp
         self.load_from_dict(self.states[name])
-        self.set_stored_values(ramp = ramp, **kwargs)
+        self.set_stored_values(ramp=ramp, **kwargs)
 
-    def set_stored_values(self, ramp = None, **kwargs):
+    def set_stored_values(self, ramp=None, **kwargs):
         if ramp is None:
             ramp = self.ramp
         for terminal in self.terminals.values():
             for param in terminal.terminal_parameters.values():
                 param.set_stored_value()
 
-    def set_defaults(self, ramp = None, **kwargs):
+    def set_defaults(self, ramp=None, **kwargs):
         """
         Sets all Terminals and their parameters to their default values
         """
@@ -118,7 +118,7 @@ class QumadaDevice:
             ramp = self.ramp
         for terminal in self.terminals.values():
             for param in terminal.terminal_parameters.values():
-                param.set_default(ramp = ramp, **kwargs)
+                param.set_default(ramp=ramp, **kwargs)
 
     def voltages(self):
         """
@@ -686,7 +686,7 @@ class Terminal_Parameter(ABC):
             logger.warning(f"{e} was raised when trying to save default value of {self.name}")
             pass
 
-    def set_default(self, ramp = True, **kwargs):
+    def set_default(self, ramp=True, **kwargs):
         """
         Sets value to default value
         """
@@ -701,7 +701,7 @@ class Terminal_Parameter(ABC):
         else:
             logger.warning(f"No default value set for parameter {self.name}")
 
-    def set_stored_value(self, ramp = True, **kwargs):
+    def set_stored_value(self, ramp=True, **kwargs):
         """
         Sets value to stored value from dict
         """
@@ -716,7 +716,7 @@ class Terminal_Parameter(ABC):
         else:
             logger.warning(f"No stored value set for parameter {self.name}")
 
-    def __call__(self, value=None, ramp = None):
+    def __call__(self, value=None, ramp=None):
         if value is None:
             return self.value
         else:
