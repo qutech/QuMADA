@@ -245,7 +245,7 @@ class QumadaDevice:
         metadata=None,
         station=None,
         buffered=False,
-        buffer_settings: dict = {},
+        buffer_settings: dict|None = None,
         priorize_stored_value=False,
     ):
         """ """
@@ -253,7 +253,7 @@ class QumadaDevice:
             station = self.station
         if not isinstance(station, Station):
             raise TypeError("No valid station assigned!")
-        if buffer_settings == {}:
+        if buffer_settings is None:
             buffer_settings = self.buffer_settings
         temp_buffer_settings = deepcopy(buffer_settings)
         if buffered is True:
@@ -298,7 +298,7 @@ class QumadaDevice:
         metadata=None,
         station=None,
         buffered=False,
-        buffer_settings: dict = {},
+        buffer_settings: dict|None = None,
         priorize_stored_value=False,
         restore_state=True,
     ):
@@ -323,7 +323,7 @@ class QumadaDevice:
             fast_param.setpoints = np.linspace(
                 fast_param.value - fast_param_range / 2.0, fast_param.value + fast_param_range / 2.0, fast_num_points
             )
-            if buffer_settings == {}:
+            if buffer_settings is None:
                  buffer_settings = self.buffer_settings
             temp_buffer_settings = deepcopy(buffer_settings)
             if buffered is True:
@@ -631,7 +631,7 @@ class Terminal_Parameter(ABC):
         metadata=None,
         backsweep=False,
         buffered=False,
-        buffer_settings={},
+        buffer_settings: dict|None = None,
         priorize_stored_value=False,
     ):
         if station is None:
@@ -655,7 +655,7 @@ class Terminal_Parameter(ABC):
                 self.setpoints = np.linspace(start, value, num_points)
         else:
             self.setpoints = np.linspace(start, value, num_points)
-        if buffer_settings == {}:
+        if buffer_settings is None:
             buffer_settings = self._parent_device.buffer_settings
         temp_buffer_settings = deepcopy(buffer_settings)
         if buffered:
