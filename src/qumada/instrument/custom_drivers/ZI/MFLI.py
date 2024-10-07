@@ -84,7 +84,7 @@ class MFLI(Instrument):
             unit="V",
             get_cmd=lambda: demod0.sample()["y"],
             get_parser=float,
-            set_cmd=None,
+            set_cmd=False,
             docstring="X component of sample measured by demod1",
         )
         self.voltage_y_component.signal_name = ("demod0", "y")
@@ -95,7 +95,7 @@ class MFLI(Instrument):
             unit="V",
             get_cmd=lambda: demod0.sample()["y"],
             get_parser=float,
-            set_cmd=None,
+            set_cmd=False,
             docstring="X component of sample measured by demod1",
         )
         self.voltage_x_component.signal_name = ("demod0", "x")
@@ -106,7 +106,7 @@ class MFLI(Instrument):
             unit="A",
             get_cmd=lambda: np.sqrt(demod0.sample()["x"] ** 2 + demod0.sample()["y"] ** 2),
             get_parser=float,
-            set_cmd=None,
+            set_cmd=False,
             docstring="Absolute current as measured by demod0",
         )
         self.current.signal_name = ("demod0", "r")
@@ -116,7 +116,7 @@ class MFLI(Instrument):
             unit="A",
             get_cmd=lambda: demod0.sample()["x"],
             get_parser=float,
-            set_cmd=None,
+            set_cmd=False,
             docstring="X component of sample measured by demod1",
         )
         self.current_x_component.signal_name = ("demod0", "x")
@@ -127,7 +127,7 @@ class MFLI(Instrument):
             unit="rad",
             get_cmd=lambda: demod0.sample()["phase"],
             get_parser=float,
-            set_cmd=None,
+            set_cmd=False,
             docstring="Phase of the measured current in radians",
         )
         self.phase.signal_name = ("demod0", "phase")
@@ -137,7 +137,7 @@ class MFLI(Instrument):
             unit="A",
             get_cmd=lambda: demod0.sample()["y"],
             get_parser=float,
-            set_cmd=None,
+            set_cmd=False,
             docstring="X component of sample measured by demod1",
         )
         self.current_y_component.signal_name = ("demod0", "y")
@@ -205,7 +205,7 @@ class MFLI(Instrument):
             name="demod0_aux_in_1",
             label="Demod0 AuxIn 1",
             get_cmd=lambda: demod0.sample()["auxin0"],
-            set_cmd=None,
+            set_cmd=False,
             get_parser=float,
             docstring="Aux In 1 of demod0",
         )
@@ -215,7 +215,7 @@ class MFLI(Instrument):
             name="demod0_aux_in_2",
             label="Demod0 AuxIn 2",
             get_cmd=lambda: demod0.sample()["auxin1"],
-            set_cmd=None,
+            set_cmd=False,
             get_parser=float,
             docstring="Aux In 2 of demod0",
         )
