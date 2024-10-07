@@ -652,8 +652,6 @@ class Terminal_Parameter(ABC):
             if buffered is False:
                 self.setpoints = [*np.linspace(start, value, num_points), *np.linspace(value, start, num_points)]
             else:
-
-                logger.warning("Cannot do backsweep for buffered measurements")
                 self.setpoints = np.linspace(start, value, num_points)
         else:
             self.setpoints = np.linspace(start, value, num_points)
@@ -671,13 +669,17 @@ class Terminal_Parameter(ABC):
                     "Num_points not specified in buffer settings! fast_num_points value is \
                         ignored and buffer settings are used to specify measurement!"
                 )
-            script = Generic_1D_Sweep_buffered()
+            if backsweep is True:
+                script = Generic_1D_Hysteresis_buffered()
+            else:
+                script = Generic_1D_Sweep_buffered()
         else:
             script = Generic_1D_Sweep()
         script.setup(
             self._parent_device.save_to_dict(priorize_stored_value=priorize_stored_value),
             metadata=metadata,
             name=name,
+            iterations = 1,
             buffer_settings=temp_buffer_settings,
             **self._parent_device.buffer_script_setup,
         )
