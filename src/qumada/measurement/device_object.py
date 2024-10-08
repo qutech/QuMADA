@@ -17,6 +17,7 @@ from qumada.instrument.mapping import map_terminals_gui
 from qumada.measurement.scripts import (
     Generic_1D_Sweep,
     Generic_1D_Sweep_buffered,
+    Generic_1D_Hysteresis_buffered,
     Generic_2D_Sweep_buffered,
     Generic_nD_Sweep,
     Timetrace,
@@ -312,7 +313,7 @@ class QumadaDevice:
             for terminal in self.terminals.values():
                 for parameter in terminal.terminal_parameters.values():
                     if parameter.type == "dynamic":
-                        parameter.type = "static"
+                        parameter.type = "static gettable"
             slow_param.type = "dynamic"
             slow_param.setpoints = np.linspace(
                 slow_param.value - slow_param_range / 2.0, slow_param.value + slow_param_range / 2.0, slow_num_points
@@ -644,7 +645,7 @@ class Terminal_Parameter(ABC):
         for terminal_name, terminal in self._parent_device.terminals.items():
             for param_name, param in terminal.terminal_parameters.items():
                 if param.type == "dynamic":
-                    param.type = "static"
+                    param.type = "static gettable"
         self.type = "dynamic"
         if start is None:
             start = self()
