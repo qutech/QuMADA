@@ -22,7 +22,7 @@
 import logging
 
 from qcodes.parameters import Parameter
-from qcodes_contrib_drivers.drivers.QDevil.QDAC2 import QDac2
+from qumada.instrument.custom_drivers.QDevil.QDAC2 import QDac2
 
 from qumada.instrument.mapping import QDAC2_MAPPING
 from qumada.instrument.mapping.base import InstrumentMapping
@@ -156,15 +156,16 @@ class QDac2Mapping(InstrumentMapping):
         if delay < 1e-6:
             raise Exception("Delay for QDacII pulse is to small (<1 us)")
         channels = [param._instrument for param in parameters]
-        for channel, points in zip(channels, setpoints):
-            dc_list = channel.dc_list(
+        self.dc_lists = [
+            channel.dc_list(
                 voltages=points,
                 dwell_s=delay,
-            )
+            ) for channel, points in zip(channels, setpoints)
+        ]
 
         if sync_trigger is not None:
             if sync_trigger in range(1, 6):
-                trigger = dc_list.start_marker()
+                trigger = self.dc_lists[0].start_marker()
                 qdac.external_triggers[sync_trigger - 1].width_s(trigger_width)
                 qdac.external_triggers[sync_trigger - 1].polarity(trigger_polarity)
                 qdac.external_triggers[sync_trigger - 1].source_from_trigger(trigger)
@@ -180,3 +181,22 @@ class QDac2Mapping(InstrumentMapping):
             "QDac2 does not have a trigger input \
             not yet supported!"
         )
+
+    def clean_generators(self):
+        for dc_list in self.dc_lists:
+            dc_list.abort()
+        self.dc_lists = []
+    
+    @staticmethod
+    def query_instrument(parameters: list[Parameter]):
+        """ Check if all parameters are from the same instrument """
+        instruments = {parameter.root_instrument for parameter in parameters}
+        if len(instruments) > 1:
+            raise Exception(
+                "Parameters are from more than one instrument. \
+                This would lead to non synchronized ramps."
+            )
+        qdac: QDac2 = instruments.pop()
+        assert isinstance(qdac, QDac2)
+        return qdac
+        

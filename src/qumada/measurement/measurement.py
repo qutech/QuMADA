@@ -113,9 +113,9 @@ class MeasurementScript(ABC):
     def __init__(self):
         # Create function hooks for metadata
         # reverse order, so insert metadata is run second
-        self.run = create_hook(self.run, self._insert_metadata_into_db)
-        self.run = create_hook(self.run, self._add_data_to_metadata)
-        self.run = create_hook(self.run, self._add_current_datetime_to_metadata)
+        # self.run = create_hook(self.run, self._insert_metadata_into_db)
+        # self.run = create_hook(self.run, self._add_data_to_metadata)
+        # self.run = create_hook(self.run, self._add_current_datetime_to_metadata)
 
         self.properties: dict[Any, Any] = {}
         self.gate_parameters: dict[Any, dict[Any, Parameter | None] | Parameter | None] = {}
@@ -630,6 +630,11 @@ class MeasurementScript(ABC):
                 # This iterates over all compensating parameters
                 if self.properties[gate][parameter]["type"].find("comp") >= 0:
                     try:
+                        for i in range(len(self.compensating_parameters)):
+                            if self.compensating_parameters[i]["gate"] == gate and self.compensating_parameters[i][
+                                "parameter"
+                            ] == parameter:
+                                break
                         i = self.compensating_parameters.index({"gate": gate, "parameter": parameter})
                         leverarms = self.compensating_leverarms[i]
                         comped_params = copy.deepcopy(
@@ -646,7 +651,12 @@ class MeasurementScript(ABC):
                             else:
                                 # Get only the relevant list entries for the current parameter
                                 try:
-                                    comped_index = self.dynamic_parameters.index(comped_param)
+                                    for i in range(len(self.dynamic_parameters)):
+                                        if self.dynamic_parameters[i]["gate"] == comped_param["gate"] and self.dynamic_parameters[i][
+                                            "parameter"] == comped_param["parameter"]:
+                                            comped_index = i
+                                            break
+                                    # comped_index = self.dynamic_parameters.index(comped_param)
                                 except ValueError as e:
                                     logger.exception(
                                         "Watch out, there is an Exception incoming!"

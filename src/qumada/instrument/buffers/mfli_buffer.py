@@ -136,7 +136,7 @@ class MFLIBuffer(Buffer):
 
     @num_points.setter
     def num_points(self, num_points) -> None:
-        if num_points > 8388608:
+        if num_points > 8_388_608:
             raise BufferException(
                 "Buffer is to small for this measurement. \
                                   Please reduce the number of data points"
