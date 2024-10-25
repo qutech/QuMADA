@@ -617,6 +617,7 @@ class Terminal_Parameter(ABC):
         self.name = name
         self._limits = self.properties.get("limits", None)
         self.leverarms = self.properties.get("leverarms", None)
+        self.compensated_gates = self.properties.get("compensated_gates")
         self.rampable = False
         self.ramp_rate = self.properties.get("ramp_rate", 0.1)
         self.group = self.properties.get("group", None)
@@ -640,6 +641,7 @@ class Terminal_Parameter(ABC):
         self.ramp_rate = self.properties.get("ramp_rate", self.ramp_rate)
         self.group = self.properties.get("group", self.group)
         self.leverarms = self.properties.get("leverarms", self.leverarms)
+        self.compensated_gates = self.properties.get("compensated_gates")
 
     @property
     def value(self):
