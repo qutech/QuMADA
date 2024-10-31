@@ -18,7 +18,7 @@ dynamic = ["version"]
 
 requires-python = ">=3.9"
 dependencies = [
-    "qcodes >= 0.48.0",
+    "qcodes >= 0.46.0",
     "qcodes_contrib_drivers >= 0.18.0",
     "matplotlib",
     "jsonschema",
