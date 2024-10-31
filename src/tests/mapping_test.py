@@ -34,7 +34,7 @@ from PyQt5.QtWidgets import QApplication, QMessageBox
 from pytest_cases import fixture_ref, parametrize
 from pytest_mock import MockerFixture
 from qcodes.station import Station
-from qcodes.tests.instrument_mocks import DummyChannelInstrument, DummyInstrument
+from qcodes.instrument_drivers.mock_instruments import DummyChannelInstrument, DummyInstrument
 
 import qumada.instrument.mapping as mapping
 from qumada.instrument.custom_drivers.Dummies.dummy_dac import DummyDac
