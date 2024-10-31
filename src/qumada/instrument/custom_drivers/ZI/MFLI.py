@@ -184,6 +184,14 @@ class MFLI(Instrument):
         )
 
         self.add_parameter(
+            name="output_enabled",
+            label="Output Enabled",
+            get_cmd=lambda: self.instr.sigouts[0].on(),
+            set_cmd=lambda x: self.instr.sigouts[0].on(x),
+            docstring="Turns Output1 on or off",
+        )
+
+        self.add_parameter(
             name="demod0_time_constant",
             label="Time constant",
             unit="s",
@@ -227,3 +235,10 @@ class MFLI(Instrument):
             set_cmd=None,
             docstring="Gets/Sets the order of the demod 0 filter.",
         )
+
+    def get_idn(self):
+        # TODO: Implement this function!
+        # /dev..../features/devtype
+        # /dev..../features/serial
+        # /dev..../features/options
+        return {}

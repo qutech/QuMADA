@@ -179,7 +179,7 @@ class MeasurementScript(ABC):
         *,
         add_script_to_metadata: bool = True,
         add_parameters_to_metadata: bool = True,
-        buffer_settings: dict = {},
+        buffer_settings: dict | None = None,
         measurement_name: str | None = None,
         **settings: dict,
     ) -> None:
@@ -209,14 +209,16 @@ class MeasurementScript(ABC):
         self.measurement_name = measurement_name
         cls = type(self)
         try:
-            self.buffer_settings.update(buffer_settings)
-        except Exception:
-            self.buffer_settings = buffer_settings
+            self.buffer_settings.update(buffer_settings or {})
+        except Exception as e:
+            logger.warning(f"Ex={e}")
+            self.buffer_settings = buffer_settings or {}
         self._set_buffered_num_points()
 
         try:
             self.settings.update(settings)
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Ex={e}")
             self.settings = settings
 
         # Add script and parameters to metadata
@@ -224,15 +226,15 @@ class MeasurementScript(ABC):
             try:
                 metadata.add_script_to_metadata(inspect.getsource(cls), language="python", name=cls.__name__)
             except OSError as err:
-                print(f"Source of MeasurementScript could not be acquired: {err}")
+                logger.warning(f"Source of MeasurementScript could not be acquired: {err}")
             except Exception as ex:
-                print(f"Script could not be added to metadata: {ex}")
+                logger.warning(f"Script could not be added to metadata: {ex}")
 
         if add_parameters_to_metadata:
             try:
                 metadata.add_parameters_to_metadata(json.dumps(parameters), name=f"{cls.__name__}Settings")
             except Exception as ex:
-                print(f"Parameters could not be added to metadata: {ex}")
+                logger.warning(f"Parameters could not be added to metadata: {ex}")
 
         # Add gate parameters
         for gate, vals in parameters.items():
@@ -628,6 +630,12 @@ class MeasurementScript(ABC):
                 # This iterates over all compensating parameters
                 if self.properties[gate][parameter]["type"].find("comp") >= 0:
                     try:
+                        for i in range(len(self.compensating_parameters)):
+                            if (
+                                self.compensating_parameters[i]["gate"] == gate
+                                and self.compensating_parameters[i]["parameter"] == parameter
+                            ):
+                                break
                         i = self.compensating_parameters.index({"gate": gate, "parameter": parameter})
                         leverarms = self.compensating_leverarms[i]
                         comped_params = copy.deepcopy(
@@ -644,7 +652,14 @@ class MeasurementScript(ABC):
                             else:
                                 # Get only the relevant list entries for the current parameter
                                 try:
-                                    comped_index = self.dynamic_parameters.index(comped_param)
+                                    for i in range(len(self.dynamic_parameters)):
+                                        if (
+                                            self.dynamic_parameters[i]["gate"] == comped_param["gate"]
+                                            and self.dynamic_parameters[i]["parameter"] == comped_param["parameter"]
+                                        ):
+                                            comped_index = i
+                                            break
+                                    # comped_index = self.dynamic_parameters.index(comped_param)
                                 except ValueError as e:
                                     logger.exception(
                                         "Watch out, there is an Exception incoming!"

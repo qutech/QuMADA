@@ -40,7 +40,11 @@ from qcodes.dataset import (
 from qcodes.station import Station
 
 from qumada.instrument.buffered_instruments import BufferedDummyDMM as DummyDmm
-from qumada.instrument.buffers.buffer import map_buffers
+from qumada.instrument.buffers.buffer import (
+    load_trigger_mapping,
+    map_triggers,
+    save_trigger_mapping,
+)
 from qumada.instrument.custom_drivers.Dummies.dummy_dac import DummyDac
 from qumada.instrument.mapping import (
     DUMMY_DMM_MAPPING,
@@ -87,7 +91,7 @@ load_db()
 buffer_settings = {
     # "trigger_threshold": 0.005,
     # "trigger_mode": "digital",
-    "sampling_rate": 10,
+    "sampling_rate": 20,
     "duration": 5,
     "burst_duration": 5,
     "delay": 0,
@@ -95,12 +99,12 @@ buffer_settings = {
 
 # %% Measurement Setup
 parameters = {
-    "dmm": {
+    "ohmic": {
         "voltage": {"type": "gettable"},
         "current": {"type": "gettable"},
     },
-    "dac": {"voltage": {"type": "dynamic", "setpoints": np.linspace(0, np.pi, 100), "value": 0}},
-    "dac2": {"voltage": {"type": "dynamic", "setpoints": np.linspace(0, np.pi, 100), "value": 0}},
+    "gate1": {"voltage": {"type": "dynamic", "setpoints": np.linspace(0, np.pi, 100), "value": 0}},
+    "gate2": {"voltage": {"type": "dynamic", "setpoints": np.linspace(0, np.pi, 100), "value": 0}},
 }
 # %%
 script = Generic_1D_Sweep_buffered()
@@ -114,7 +118,7 @@ script.setup(
 )
 
 map_terminals_gui(station.components, script.gate_parameters)
-map_buffers(station.components, script.properties, script.gate_parameters)
+map_triggers(station.components)
 
 # %% Run measurement
-script.run(insert_metadata_into_db=False)
+script.run()
