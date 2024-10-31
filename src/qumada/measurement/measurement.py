@@ -179,7 +179,7 @@ class MeasurementScript(ABC):
         *,
         add_script_to_metadata: bool = True,
         add_parameters_to_metadata: bool = True,
-        buffer_settings: dict|None = None,
+        buffer_settings: dict | None = None,
         measurement_name: str | None = None,
         **settings: dict,
     ) -> None:
@@ -631,9 +631,10 @@ class MeasurementScript(ABC):
                 if self.properties[gate][parameter]["type"].find("comp") >= 0:
                     try:
                         for i in range(len(self.compensating_parameters)):
-                            if self.compensating_parameters[i]["gate"] == gate and self.compensating_parameters[i][
-                                "parameter"
-                            ] == parameter:
+                            if (
+                                self.compensating_parameters[i]["gate"] == gate
+                                and self.compensating_parameters[i]["parameter"] == parameter
+                            ):
                                 break
                         i = self.compensating_parameters.index({"gate": gate, "parameter": parameter})
                         leverarms = self.compensating_leverarms[i]
@@ -652,8 +653,10 @@ class MeasurementScript(ABC):
                                 # Get only the relevant list entries for the current parameter
                                 try:
                                     for i in range(len(self.dynamic_parameters)):
-                                        if self.dynamic_parameters[i]["gate"] == comped_param["gate"] and self.dynamic_parameters[i][
-                                            "parameter"] == comped_param["parameter"]:
+                                        if (
+                                            self.dynamic_parameters[i]["gate"] == comped_param["gate"]
+                                            and self.dynamic_parameters[i]["parameter"] == comped_param["parameter"]
+                                        ):
                                             comped_index = i
                                             break
                                     # comped_index = self.dynamic_parameters.index(comped_param)

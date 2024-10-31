@@ -182,13 +182,13 @@ class MFLI(Instrument):
             set_cmd=lambda x: self.instr.sigouts[0].range(x),
             docstring="Range of the output",
         )
-        
+
         self.add_parameter(
-            name = "output_enabled",
-            label = "Output Enabled",
-            get_cmd = lambda: self.instr.sigouts[0].on(),
-            set_cmd = lambda x: self.instr.sigouts[0].on(x),
-            docstring = "Turns Output1 on or off"
+            name="output_enabled",
+            label="Output Enabled",
+            get_cmd=lambda: self.instr.sigouts[0].on(),
+            set_cmd=lambda x: self.instr.sigouts[0].on(x),
+            docstring="Turns Output1 on or off",
         )
 
         self.add_parameter(
@@ -237,8 +237,8 @@ class MFLI(Instrument):
         )
 
     def get_idn(self):
-        #TODO: Implement this function!
-        # /dev..../features/devtype 
+        # TODO: Implement this function!
+        # /dev..../features/devtype
         # /dev..../features/serial
         # /dev..../features/options
         return {}

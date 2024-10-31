@@ -6,7 +6,7 @@ def shuttle_setpoints(offsets, amplitudes, num_periods, phases, sampling_rate, b
   def shuttling_sin(x, offset, amplitude, phase, reverse = False):
       if reverse:
           sign = -1
-      else: 
+      else:
           sign = 1
       return amplitude*np.sin(sign*x+phase)+offset
   for i in range(0, 4):
@@ -16,7 +16,7 @@ def shuttle_setpoints(offsets, amplitudes, num_periods, phases, sampling_rate, b
       )
   for i in range(5, 7):
       pulses.append([barrier_voltages[i-5] for _ in range(int(sampling_rate*duration))])
-  return pulses    
+  return pulses
 
 def ramping_setpoints(starts, stops, duration, sampling_rate):
   setpoints = []
@@ -229,5 +229,3 @@ def Generic_Pulsed_Measurement_w_parameter(device, add_parameter, add_parameter_
         datasets.append(datasaver.dataset)
         self.clean_up()
         return datasets
-
-

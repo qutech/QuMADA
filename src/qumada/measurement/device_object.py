@@ -15,16 +15,16 @@ from qcodes.validators.validators import Numbers
 from qumada.instrument.buffers.buffer import map_triggers
 from qumada.instrument.mapping import map_terminals_gui
 from qumada.measurement.scripts import (
+    Generic_1D_Hysteresis_buffered,
+    Generic_1D_parallel_asymm_Sweep,
     Generic_1D_Sweep,
     Generic_1D_Sweep_buffered,
-    Generic_1D_parallel_asymm_Sweep,
-    Generic_1D_Hysteresis_buffered,
     Generic_2D_Sweep_buffered,
     Generic_nD_Sweep,
-    Timetrace,
-    Timetrace_buffered,
     Generic_Pulsed_Measurement,
     Generic_Pulsed_Repeated_Measurement,
+    Timetrace,
+    Timetrace_buffered,
 )
 from qumada.utils.ramp_parameter import ramp_or_set_parameter
 
@@ -251,7 +251,7 @@ class QumadaDevice:
         metadata=None,
         station=None,
         buffered=False,
-        buffer_settings: dict|None = None,
+        buffer_settings: dict | None = None,
         priorize_stored_value=False,
     ):
         """ """
@@ -304,7 +304,7 @@ class QumadaDevice:
         metadata=None,
         station=None,
         buffered=False,
-        buffer_settings: dict|None = None,
+        buffer_settings: dict | None = None,
         priorize_stored_value=False,
         restore_state=True,
     ):
@@ -330,7 +330,7 @@ class QumadaDevice:
                 fast_param.value - fast_param_range / 2.0, fast_param.value + fast_param_range / 2.0, fast_num_points
             )
             if buffer_settings is None:
-                 buffer_settings = self.buffer_settings
+                buffer_settings = self.buffer_settings
             temp_buffer_settings = deepcopy(buffer_settings)
             if buffered is True:
                 if "num_points" in temp_buffer_settings.keys():
@@ -370,17 +370,18 @@ class QumadaDevice:
             del self.states["_temp_2D"]
         return data
 
-    def sweep_parallel(self,
-                    params: list[Parameter],
-                    setpoints: list[list[float]]|None = None,
-                    target_values: list[float]|None = None,
-                    num_points: int = 100,
-                    name = None,
-                    metadata = None,
-                    station = None,
-                    priorize_stored_value = False,
-                    **kwargs
-                    ):
+    def sweep_parallel(
+        self,
+        params: list[Parameter],
+        setpoints: list[list[float]] | None = None,
+        target_values: list[float] | None = None,
+        num_points: int = 100,
+        name=None,
+        metadata=None,
+        station=None,
+        priorize_stored_value=False,
+        **kwargs,
+    ):
         """
         Sweep multiple parameters in parallel.
         Provide either setpoints or target_values. Setpoints have to have the same length for all parameters.
@@ -395,15 +396,14 @@ class QumadaDevice:
         if not isinstance(station, Station):
             raise TypeError("No valid station assigned!")
         if setpoints is None and target_values is None:
-            raise(Exception("Either setpoints or target_values have to be provided!"))
+            raise (Exception("Either setpoints or target_values have to be provided!"))
         if target_values is not None and setpoints is not None:
-            raise(Exception("Either setpoints or target_values have to be provided, not both!"))
+            raise (Exception("Either setpoints or target_values have to be provided, not both!"))
         if setpoints is None:
             assert len(params) == len(target_values)
             setpoints = [np.linspace(param(), target, num_points) for param, target in zip(params, target_values)]
         assert len(params) == len(setpoints)
         assert all([len(setpoint) == len(setpoints[0]) for setpoint in setpoints])
-        
 
         for terminal in self.terminals.values():
             for parameter in terminal.terminal_parameters.values():
@@ -414,36 +414,34 @@ class QumadaDevice:
                     parameter.setpoints = setpoints[params.index(parameter)]
         script = Generic_1D_parallel_asymm_Sweep()
         script.setup(
-            self.save_to_dict(priorize_stored_value=priorize_stored_value),
-            metadata=metadata,
-            name=name,
-            **kwargs
+            self.save_to_dict(priorize_stored_value=priorize_stored_value), metadata=metadata, name=name, **kwargs
         )
         mapping = self.instrument_parameters
         map_terminals_gui(station.components, script.gate_parameters, mapping)
         data = script.run()
         return data
 
-    def pulsed_measurement(self,
-                        params: list[Parameter],
-                        setpoints: list[list[float]],
-                        repetitions: int = 1,
-                        name = None,
-                        metadata = None,
-                        station = None,
-                        buffer_settings: dict|None = None,
-                        priorize_stored_value = False,
-                        **kwargs,
-                        ):
+    def pulsed_measurement(
+        self,
+        params: list[Parameter],
+        setpoints: list[list[float]],
+        repetitions: int = 1,
+        name=None,
+        metadata=None,
+        station=None,
+        buffer_settings: dict | None = None,
+        priorize_stored_value=False,
+        **kwargs,
+    ):
         if station is None:
             station = self.station
         if not isinstance(station, Station):
             raise TypeError("No valid station assigned!")
         assert len(params) == len(setpoints)
         assert all([len(setpoint) == len(setpoints[0]) for setpoint in setpoints])
-        assert repetitions  >= 1
+        assert repetitions >= 1
         if buffer_settings is None:
-                    buffer_settings = self.buffer_settings
+            buffer_settings = self.buffer_settings
         temp_buffer_settings = deepcopy(buffer_settings)
 
         if "num_points" in temp_buffer_settings.keys():
@@ -470,7 +468,7 @@ class QumadaDevice:
         script.setup(
             self.save_to_dict(priorize_stored_value=priorize_stored_value),
             metadata=metadata,
-            measurement_name=name, # achtung geändert!
+            measurement_name=name,  # achtung geändert!
             repetitions=repetitions,
             buffer_settings=temp_buffer_settings,
             **self.buffer_script_setup,
@@ -482,7 +480,7 @@ class QumadaDevice:
         data = script.run()
         return data
 
-    
+
 def create_hook(func, hook):
     """
     Decorator to hook a function onto an existing function.
@@ -753,7 +751,7 @@ class Terminal_Parameter(ABC):
         metadata=None,
         backsweep=False,
         buffered=False,
-        buffer_settings: dict|None = None,
+        buffer_settings: dict | None = None,
         priorize_stored_value=False,
     ):
         if station is None:
@@ -800,7 +798,7 @@ class Terminal_Parameter(ABC):
             self._parent_device.save_to_dict(priorize_stored_value=priorize_stored_value),
             metadata=metadata,
             name=name,
-            iterations = 1,
+            iterations=1,
             buffer_settings=temp_buffer_settings,
             **self._parent_device.buffer_script_setup,
         )
@@ -856,7 +854,7 @@ class Terminal_Parameter(ABC):
             return self.value
         else:
             if ramp is True:
-                self.ramp(value)     
+                self.ramp(value)
             else:
                 self.value = value
 

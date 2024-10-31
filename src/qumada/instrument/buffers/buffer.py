@@ -20,6 +20,7 @@
 
 from __future__ import annotations
 
+import logging
 from abc import ABC, abstractmethod
 from collections.abc import Mapping
 from typing import Any
@@ -28,7 +29,6 @@ from qcodes.instrument import Instrument
 from qcodes.metadatable import Metadatable
 from qcodes.parameters import Parameter
 
-import logging
 logger = logging.getLogger(__name__)
 
 import json
@@ -78,7 +78,7 @@ def map_buffers(
         print("Available trigger inputs:")
         print("[0]: None")
         for idx, trigger in enumerate(buffer.AVAILABLE_TRIGGERS, 1):
-            print(f"[{idx}]: {trigger}")      
+            print(f"[{idx}]: {trigger}")
         chosen = int(input(f"Choose the trigger input for {instrument.name}: "))
         if chosen == 0:
             trigger = None
@@ -120,12 +120,12 @@ def _map_triggers(
 def map_triggers(
     components: Mapping[Any, Metadatable],
     skip_mapped=True,
-    path: None|str=None,
+    path: None | str = None,
     **kwargs,
 ) -> None:
     """
-    Maps the triggers of triggerable or bufferable components. 
-    Ignores already mapped triggers by default. 
+    Maps the triggers of triggerable or bufferable components.
+    Ignores already mapped triggers by default.
 
     Parameters
     ----------
@@ -136,7 +136,7 @@ def map_triggers(
         buffered instruments.
         TODO: Remove!
     gate_parameters : Mapping[Any, Mapping[Any, Parameter] | Parameter]
-        Parameters of measurement script/device. Currently only required for 
+        Parameters of measurement script/device. Currently only required for
         buffered instruments.
         TODO: Remove!
     skip_mapped : Bool, optional
@@ -158,20 +158,16 @@ def map_triggers(
         skip_mapped,
         **kwargs,
     )
-    _map_triggers(
-        components,
-        skip_mapped,
-        **kwargs
-    )
-    
+    _map_triggers(components, skip_mapped, **kwargs)
+
+
 def save_trigger_mapping(components: Mapping[Any, Metadatable], path: str):
     """
     Saves mapped triggers from components to json file.
     Components should be station.components, path is the path to the file.
     """
     trigger_dict = {}
-    triggered_instruments = filter(
-        lambda x: any((is_triggerable(x), is_bufferable(x))), components.values())
+    triggered_instruments = filter(lambda x: any((is_triggerable(x), is_bufferable(x))), components.values())
     for instrument in triggered_instruments:
         try:
             trigger_dict[instrument.full_name] = instrument._qumada_mapping.trigger_in
@@ -179,6 +175,7 @@ def save_trigger_mapping(components: Mapping[Any, Metadatable], path: str):
             trigger_dict[instrument.full_name] = instrument._qumada_buffer.trigger
     with open(path, mode="w") as file:
         json.dump(trigger_dict, file)
+
 
 def load_trigger_mapping(components: Mapping[Any, Metadatable], path: str):
     """
@@ -195,8 +192,8 @@ def load_trigger_mapping(components: Mapping[Any, Metadatable], path: str):
                     instrument._qumada_buffer.trigger = trigger
                 elif is_triggerable(instrument) is True:
                     instrument._qumada_mapping.trigger_in = trigger
-                
-        
+
+
 class Buffer(ABC):
     """Base class for a general buffer interface for an instrument."""
 

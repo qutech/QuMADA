@@ -22,8 +22,8 @@
 import logging
 
 from qcodes.parameters import Parameter
-from qumada.instrument.custom_drivers.QDevil.QDAC2 import QDac2
 
+from qumada.instrument.custom_drivers.QDevil.QDAC2 import QDac2
 from qumada.instrument.mapping import QDAC2_MAPPING
 from qumada.instrument.mapping.base import InstrumentMapping
 
@@ -160,7 +160,8 @@ class QDac2Mapping(InstrumentMapping):
             channel.dc_list(
                 voltages=points,
                 dwell_s=delay,
-            ) for channel, points in zip(channels, setpoints)
+            )
+            for channel, points in zip(channels, setpoints)
         ]
 
         if sync_trigger is not None:
@@ -186,10 +187,10 @@ class QDac2Mapping(InstrumentMapping):
         for dc_list in self.dc_lists:
             dc_list.abort()
         self.dc_lists = []
-    
+
     @staticmethod
     def query_instrument(parameters: list[Parameter]):
-        """ Check if all parameters are from the same instrument """
+        """Check if all parameters are from the same instrument"""
         instruments = {parameter.root_instrument for parameter in parameters}
         if len(instruments) > 1:
             raise Exception(
@@ -199,4 +200,3 @@ class QDac2Mapping(InstrumentMapping):
         qdac: QDac2 = instruments.pop()
         assert isinstance(qdac, QDac2)
         return qdac
-        
