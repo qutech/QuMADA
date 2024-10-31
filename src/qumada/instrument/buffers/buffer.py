@@ -59,26 +59,15 @@ class BufferException(Exception):
 
 def map_buffers(
     components: Mapping[Any, Metadatable],
-    properties: dict,
-    gate_parameters: Mapping[Any, Mapping[Any, Parameter] | Parameter],
-    overwrite_trigger=None,
     skip_mapped=True,
+    **kwargs,
 ) -> None:
     """
     Maps the bufferable instruments of gate parameters.
 
     Args:
         components (Mapping[Any, Metadatable]): Instruments/Components in QCoDeS
-        gate_parameters (Mapping[Any, Union[Mapping[Any, Parameter], Parameter]]):
-            Gates, as defined in the measurement script
     """
-    # subscribe to gettable parameters with buffer
-    for gate, parameters in gate_parameters.items():
-        for parameter, channel in parameters.items():
-            if properties[gate][parameter]["type"] == "gettable":
-                if is_bufferable(channel):
-                    buffer: Buffer = channel.root_instrument._qumada_buffer
-                    buffer.subscribe([channel])
 
     buffered_instruments = filter(is_bufferable, components.values())
     for instrument in buffered_instruments:
@@ -101,18 +90,14 @@ def map_buffers(
 
 def _map_triggers(
     components: Mapping[Any, Metadatable],
-    properties: dict,
-    gate_parameters: Mapping[Any, Mapping[Any, Parameter] | Parameter],
-    overwrite_trigger=None,
     skip_mapped=True,
+    **kwargs,
 ) -> None:
     """
     Maps the bufferable instruments of gate parameters.
 
     Args:
         components (Mapping[Any, Metadatable]): Instruments/Components in QCoDeS
-        gate_parameters (Mapping[Any, Union[Mapping[Any, Parameter], Parameter]]):
-            Gates, as defined in the measurement script
     """
     triggered_instruments = filter(is_triggerable, components.values())
     for instrument in triggered_instruments:
@@ -134,11 +119,9 @@ def _map_triggers(
 
 def map_triggers(
     components: Mapping[Any, Metadatable],
-    properties: dict,
-    gate_parameters: Mapping[Any, Mapping[Any, Parameter] | Parameter],
-    overwrite_trigger=None,
     skip_mapped=True,
     path: None|str=None,
+    **kwargs,
 ) -> None:
     """
     Maps the triggers of triggerable or bufferable components. 
@@ -172,17 +155,13 @@ def map_triggers(
             logger.warning(f"Exception when loadig trigger mapping from file: {e}")
     map_buffers(
         components,
-        properties,
-        gate_parameters,
-        overwrite_trigger,
         skip_mapped,
+        **kwargs,
     )
     _map_triggers(
         components,
-        properties,
-        gate_parameters,
-        overwrite_trigger,
         skip_mapped,
+        **kwargs
     )
     
 def save_trigger_mapping(components: Mapping[Any, Metadatable], path: str):
