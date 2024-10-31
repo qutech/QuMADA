@@ -33,8 +33,6 @@ from qcodes.parameters import Parameter
 logger = logging.getLogger(__name__)
 
 
-
-
 def is_bufferable(object: Instrument | Parameter):
     """Checks if the instrument or parameter is bufferable using the qumada Buffer definition."""
     if isinstance(object, Parameter):
