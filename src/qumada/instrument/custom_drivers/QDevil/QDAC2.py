@@ -3,10 +3,10 @@ import itertools
 import uuid
 from collections.abc import Sequence
 from time import sleep as sleep_s
-from typing import Dict, List, NewType, Optional, Tuple
+from typing import NewType, Optional
 
 import numpy as np
-from packaging.version import Version, parse
+from packaging.version import parse
 from pyvisa.errors import VisaIOError
 from qcodes.instrument.channel import ChannelList, InstrumentChannel
 from qcodes.instrument.visa import VisaInstrument
@@ -1163,7 +1163,7 @@ class QDac2Channel(InstrumentChannel):
         )
         self.add_parameter(
             name="measurement_delay_s",
-            label=f"delay",
+            label="delay",
             unit="s",
             set_cmd="sens{1}:del {0}".format("{}", channum),
             get_cmd=f"sens{channum}:del?",
@@ -1234,7 +1234,7 @@ class QDac2Channel(InstrumentChannel):
         )
         self.add_parameter(
             name="output_filter",
-            label=f"low-pass cut-off",
+            label="low-pass cut-off",
             unit="Hz",
             set_cmd="sour{1}:filt {0}".format("{}", channum),
             get_cmd=f"sour{channum}:filt?",
@@ -1287,7 +1287,7 @@ class QDac2Channel(InstrumentChannel):
         )
         self.add_parameter(
             name="dc_mode",
-            label=f"DC mode",
+            label="DC mode",
             set_cmd="sour{1}:volt:mode {0}".format("{}", channum),
             get_cmd=f"sour{channum}:volt:mode?",
             vals=validators.Enum("fixed", "list", "sweep"),

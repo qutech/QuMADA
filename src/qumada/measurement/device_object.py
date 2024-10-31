@@ -388,8 +388,8 @@ class QumadaDevice:
         If no setpoints are provided, the target_values will be used to create the setpoints. Ramps will start from
         the current value of the parameters then.
         Gettable parameters and break conditions will be set according to their state in the device object.
-        You can pass backsweep_after_break as a kwarg. If set to True, the sweep will continue in the opposite direction after
-        a break condition is reached.
+        You can pass backsweep_after_break as a kwarg. If set to True, the sweep will continue in the opposite
+        direction after a break condition is reached.
         """
         if station is None:
             station = self.station
@@ -447,7 +447,7 @@ class QumadaDevice:
         if "num_points" in temp_buffer_settings.keys():
             temp_buffer_settings["num_points"] = len(setpoints[0])
             logger.warning(
-                f"Temporarily changed buffer settings to match the \
+                "Temporarily changed buffer settings to match the \
                 number of points specified in the setpoints"
             )
         else:

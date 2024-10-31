@@ -20,6 +20,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 from abc import ABC, abstractmethod
 from collections.abc import Mapping
@@ -31,7 +32,7 @@ from qcodes.parameters import Parameter
 
 logger = logging.getLogger(__name__)
 
-import json
+
 
 
 def is_bufferable(object: Instrument | Parameter):
