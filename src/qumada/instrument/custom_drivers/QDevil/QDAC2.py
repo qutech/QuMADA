@@ -1,17 +1,3 @@
-import abc
-import itertools
-import uuid
-from collections.abc import Sequence
-from time import sleep as sleep_s
-from typing import NewType, Optional
-
-import numpy as np
-from packaging.version import parse
-from pyvisa.errors import VisaIOError
-from qcodes.instrument.channel import ChannelList, InstrumentChannel
-from qcodes.instrument.visa import VisaInstrument
-from qcodes.utils import validators
-
 # Version 1.2.0
 #
 # Guiding principles for this driver for QDevil QDAC-II
@@ -46,6 +32,22 @@ from qcodes.utils import validators
 #
 # - Detect and handle mixing of internal and external triggers (_trigger).
 #
+
+
+import abc
+import itertools
+import uuid
+from collections.abc import Sequence
+from time import sleep as sleep_s
+from typing import NewType, Optional
+
+import numpy as np
+from packaging.version import parse
+from pyvisa.errors import VisaIOError
+from qcodes.instrument.channel import ChannelList, InstrumentChannel
+from qcodes.instrument.visa import VisaInstrument
+from qcodes.utils import validators
+
 
 error_ambiguous_wave = "Only one of frequency_Hz or period_s can be " "specified for a wave form"
 
