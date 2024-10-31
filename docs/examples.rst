@@ -476,7 +476,7 @@ The measurement script is then setup in almost the same way as for normal, unbuf
 				  sync_trigger = dac.channels[19].volt)
 
 	map_gates_to_instruments(station.components, script.gate_parameters)
-	map_triggers(station.components, script.properties, script.gate_parameters)
+	map_triggers(station.components)
 
 Instead of the Generic_1D_Sweep we are now using the buffed version. It requires the buffer_settings as input argument as well as the trigger_type.
 The trigger type defines, how the measurement is started, it can be either "manual", meaning the script does not care about triggers and just starts the sweep once the script.run is executed,

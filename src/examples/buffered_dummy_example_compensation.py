@@ -40,7 +40,7 @@ from qcodes.dataset import (
 from qcodes.station import Station
 
 from qumada.instrument.buffered_instruments import BufferedDummyDMM as DummyDmm
-from qumada.instrument.buffers.buffer import map_buffers
+from qumada.instrument.buffers.buffer import map_triggers
 from qumada.instrument.custom_drivers.Dummies.dummy_dac import DummyDac
 from qumada.instrument.mapping import (
     DUMMY_DMM_MAPPING,
@@ -139,7 +139,7 @@ script.setup(
 )
 
 map_terminals_gui(station.components, script.gate_parameters)
-map_buffers(station.components, script.properties, script.gate_parameters)
+map_triggers(station.components, script.properties, script.gate_parameters)
 
 # %% Run measurement
 script.run(insert_metadata_into_db=False)
