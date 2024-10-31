@@ -15,10 +15,14 @@ from qcodes.validators.validators import Numbers
 from qumada.instrument.buffers.buffer import map_triggers
 from qumada.instrument.mapping import map_terminals_gui
 from qumada.measurement.scripts import (
+    Generic_1D_Hysteresis_buffered,
+    Generic_1D_parallel_asymm_Sweep,
     Generic_1D_Sweep,
     Generic_1D_Sweep_buffered,
     Generic_2D_Sweep_buffered,
     Generic_nD_Sweep,
+    Generic_Pulsed_Measurement,
+    Generic_Pulsed_Repeated_Measurement,
     Timetrace,
     Timetrace_buffered,
 )
@@ -47,8 +51,10 @@ class QumadaDevice:
         self.instrument_parameters = {}
         self.make_terminals_global = make_terminals_global
         self.station = station
+        self.buffer_settings = {}
         self.buffer_script_setup = {}
         self.states = {}
+        self.ramp: bool = True
 
     def add_terminal(self, terminal_name: str, type: str | None = None, terminal_data: dict | None = {}):
         if terminal_name not in self.terminals.keys():
@@ -82,7 +88,7 @@ class QumadaDevice:
             for param in mapping.keys():
                 self.terminals[terminal].update_terminal_parameter(param)
 
-    def save_defaults(self):
+    def save_defaults(self, ramp=None, **kwargs):
         """
         Saves current values as default for all Terminals and their parameters
         """
@@ -96,22 +102,28 @@ class QumadaDevice:
         """
         self.states[name] = self.save_to_dict(priorize_stored_value=False)
 
-    def set_state(self, name: str):
+    def set_state(self, name: str, ramp=None, **kwargs):
+        if ramp is None:
+            ramp = self.ramp
         self.load_from_dict(self.states[name])
-        self.set_stored_values()
+        self.set_stored_values(ramp=ramp, **kwargs)
 
-    def set_stored_values(self):
+    def set_stored_values(self, ramp=None, **kwargs):
+        if ramp is None:
+            ramp = self.ramp
         for terminal in self.terminals.values():
             for param in terminal.terminal_parameters.values():
                 param.set_stored_value()
 
-    def set_defaults(self):
+    def set_defaults(self, ramp=None, **kwargs):
         """
         Sets all Terminals and their parameters to their default values
         """
+        if ramp is None:
+            ramp = self.ramp
         for terminal in self.terminals.values():
             for param in terminal.terminal_parameters.values():
-                param.set_default()
+                param.set_default(ramp=ramp, **kwargs)
 
     def voltages(self):
         """
@@ -193,6 +205,8 @@ class QumadaDevice:
                     "break_conditions",
                     "limits",
                     "group",
+                    "leverarms",
+                    "compensated_gates",
                 ]:
                     if hasattr(param, attr_name):
                         return_dict[terminal.name][param.name][attr_name] = getattr(param, attr_name)
@@ -237,7 +251,7 @@ class QumadaDevice:
         metadata=None,
         station=None,
         buffered=False,
-        buffer_settings: dict = {},
+        buffer_settings: dict | None = None,
         priorize_stored_value=False,
     ):
         """ """
@@ -245,6 +259,8 @@ class QumadaDevice:
             station = self.station
         if not isinstance(station, Station):
             raise TypeError("No valid station assigned!")
+        if buffer_settings is None:
+            buffer_settings = self.buffer_settings
         temp_buffer_settings = deepcopy(buffer_settings)
         if buffered is True:
             logger.warning("Temporarily modifying buffer settings to match function arguments.")
@@ -288,7 +304,7 @@ class QumadaDevice:
         metadata=None,
         station=None,
         buffered=False,
-        buffer_settings: dict = {},
+        buffer_settings: dict | None = None,
         priorize_stored_value=False,
         restore_state=True,
     ):
@@ -302,7 +318,7 @@ class QumadaDevice:
             for terminal in self.terminals.values():
                 for parameter in terminal.terminal_parameters.values():
                     if parameter.type == "dynamic":
-                        parameter.type = "static"
+                        parameter.type = "static gettable"
             slow_param.type = "dynamic"
             slow_param.setpoints = np.linspace(
                 slow_param.value - slow_param_range / 2.0, slow_param.value + slow_param_range / 2.0, slow_num_points
@@ -313,6 +329,8 @@ class QumadaDevice:
             fast_param.setpoints = np.linspace(
                 fast_param.value - fast_param_range / 2.0, fast_param.value + fast_param_range / 2.0, fast_num_points
             )
+            if buffer_settings is None:
+                buffer_settings = self.buffer_settings
             temp_buffer_settings = deepcopy(buffer_settings)
             if buffered is True:
                 if "num_points" in temp_buffer_settings.keys():
@@ -350,6 +368,116 @@ class QumadaDevice:
             print(self.states["_temp_2D"])
             self.set_state("_temp_2D")
             del self.states["_temp_2D"]
+        return data
+
+    def sweep_parallel(
+        self,
+        params: list[Parameter],
+        setpoints: list[list[float]] | None = None,
+        target_values: list[float] | None = None,
+        num_points: int = 100,
+        name=None,
+        metadata=None,
+        station=None,
+        priorize_stored_value=False,
+        **kwargs,
+    ):
+        """
+        Sweep multiple parameters in parallel.
+        Provide either setpoints or target_values. Setpoints have to have the same length for all parameters.
+        If no setpoints are provided, the target_values will be used to create the setpoints. Ramps will start from
+        the current value of the parameters then.
+        Gettable parameters and break conditions will be set according to their state in the device object.
+        You can pass backsweep_after_break as a kwarg. If set to True, the sweep will continue in the opposite
+        direction after a break condition is reached.
+        """
+        if station is None:
+            station = self.station
+        if not isinstance(station, Station):
+            raise TypeError("No valid station assigned!")
+        if setpoints is None and target_values is None:
+            raise (Exception("Either setpoints or target_values have to be provided!"))
+        if target_values is not None and setpoints is not None:
+            raise (Exception("Either setpoints or target_values have to be provided, not both!"))
+        if setpoints is None:
+            assert len(params) == len(target_values)
+            setpoints = [np.linspace(param(), target, num_points) for param, target in zip(params, target_values)]
+        assert len(params) == len(setpoints)
+        assert all([len(setpoint) == len(setpoints[0]) for setpoint in setpoints])
+
+        for terminal in self.terminals.values():
+            for parameter in terminal.terminal_parameters.values():
+                if parameter not in params and parameter.type == "dynamic":
+                    parameter.type = "static gettable"
+                if parameter in params:
+                    parameter.type = "dynamic"
+                    parameter.setpoints = setpoints[params.index(parameter)]
+        script = Generic_1D_parallel_asymm_Sweep()
+        script.setup(
+            self.save_to_dict(priorize_stored_value=priorize_stored_value), metadata=metadata, name=name, **kwargs
+        )
+        mapping = self.instrument_parameters
+        map_terminals_gui(station.components, script.gate_parameters, mapping)
+        data = script.run()
+        return data
+
+    def pulsed_measurement(
+        self,
+        params: list[Parameter],
+        setpoints: list[list[float]],
+        repetitions: int = 1,
+        name=None,
+        metadata=None,
+        station=None,
+        buffer_settings: dict | None = None,
+        priorize_stored_value=False,
+        **kwargs,
+    ):
+        if station is None:
+            station = self.station
+        if not isinstance(station, Station):
+            raise TypeError("No valid station assigned!")
+        assert len(params) == len(setpoints)
+        assert all([len(setpoint) == len(setpoints[0]) for setpoint in setpoints])
+        assert repetitions >= 1
+        if buffer_settings is None:
+            buffer_settings = self.buffer_settings
+        temp_buffer_settings = deepcopy(buffer_settings)
+
+        if "num_points" in temp_buffer_settings.keys():
+            temp_buffer_settings["num_points"] = len(setpoints[0])
+            logger.warning(
+                "Temporarily changed buffer settings to match the \
+                number of points specified in the setpoints"
+            )
+        else:
+            raise Exception(
+                "For this kind of measurement, you have to specify the number of points in the buffer settings!"
+            )
+        for terminal in self.terminals.values():
+            for parameter in terminal.terminal_parameters.values():
+                if parameter not in params and parameter.type == "dynamic":
+                    parameter.type = "static gettable"
+                if parameter in params:
+                    parameter.type = "dynamic"
+                    parameter.setpoints = setpoints[params.index(parameter)]
+        if repetitions == 1:
+            script = Generic_Pulsed_Measurement()
+        elif repetitions > 1:
+            script = Generic_Pulsed_Repeated_Measurement()
+        script.setup(
+            self.save_to_dict(priorize_stored_value=priorize_stored_value),
+            metadata=metadata,
+            measurement_name=name,  # achtung geändert!
+            repetitions=repetitions,
+            buffer_settings=temp_buffer_settings,
+            **self.buffer_script_setup,
+            **kwargs,
+        )
+        mapping = self.instrument_parameters
+        map_terminals_gui(station.components, script.gate_parameters, mapping)
+        map_triggers(station.components, script.properties, script.gate_parameters)
+        data = script.run()
         return data
 
 
@@ -486,6 +614,8 @@ class Terminal_Parameter(ABC):
         self._value = None
         self.name = name
         self._limits = self.properties.get("limits", None)
+        self.leverarms = self.properties.get("leverarms", None)
+        self.compensated_gates = self.properties.get("compensated_gates")
         self.rampable = False
         self.ramp_rate = self.properties.get("ramp_rate", 0.1)
         self.group = self.properties.get("group", None)
@@ -508,6 +638,8 @@ class Terminal_Parameter(ABC):
         self.delay = self.properties.get("delay", self.delay)
         self.ramp_rate = self.properties.get("ramp_rate", self.ramp_rate)
         self.group = self.properties.get("group", self.group)
+        self.leverarms = self.properties.get("leverarms", self.leverarms)
+        self.compensated_gates = self.properties.get("compensated_gates")
 
     @property
     def value(self):
@@ -515,7 +647,7 @@ class Terminal_Parameter(ABC):
 
     @value.setter
     def value(self, value):
-        if self.locked:
+        if self.locked is True:
             raise Exception(f"Parameter {self.name} of Terminal {self._parent.name} is locked and cannot be set!")
             return
 
@@ -589,8 +721,12 @@ class Terminal_Parameter(ABC):
                              as no valid instrument parameter was assigned to it!"
             )
         else:
-            if self._limit_validator in param.validators:
-                param.remove_validator()
+            try:
+                if self._limit_validator in param.validators:
+                    param.remove_validator()
+            except AttributeError as e:
+                logger.warning(e)
+                pass
             self._limit_validator = Numbers(min_value=min(self.limits), max_value=max(self.limits))
             param.add_validator(self._limit_validator)
 
@@ -615,7 +751,7 @@ class Terminal_Parameter(ABC):
         metadata=None,
         backsweep=False,
         buffered=False,
-        buffer_settings={},
+        buffer_settings: dict | None = None,
         priorize_stored_value=False,
     ):
         if station is None:
@@ -628,7 +764,7 @@ class Terminal_Parameter(ABC):
         for terminal_name, terminal in self._parent_device.terminals.items():
             for param_name, param in terminal.terminal_parameters.items():
                 if param.type == "dynamic":
-                    param.type = "static"
+                    param.type = "static gettable"
         self.type = "dynamic"
         if start is None:
             start = self()
@@ -636,11 +772,11 @@ class Terminal_Parameter(ABC):
             if buffered is False:
                 self.setpoints = [*np.linspace(start, value, num_points), *np.linspace(value, start, num_points)]
             else:
-                logger.warning("Cannot do backsweep for buffered measurements")
                 self.setpoints = np.linspace(start, value, num_points)
         else:
             self.setpoints = np.linspace(start, value, num_points)
-        temp_buffer_settings = deepcopy(buffer_settings)
+        temp_buffer_settings = deepcopy(self._parent_device.buffer_settings)
+        temp_buffer_settings.update(buffer_settings or {})
         if buffered:
             if "num_points" in temp_buffer_settings.keys():
                 temp_buffer_settings["num_points"] = num_points
@@ -652,13 +788,17 @@ class Terminal_Parameter(ABC):
                     "Num_points not specified in buffer settings! fast_num_points value is \
                         ignored and buffer settings are used to specify measurement!"
                 )
-            script = Generic_1D_Sweep_buffered()
+            if backsweep is True:
+                script = Generic_1D_Hysteresis_buffered()
+            else:
+                script = Generic_1D_Sweep_buffered()
         else:
             script = Generic_1D_Sweep()
         script.setup(
             self._parent_device.save_to_dict(priorize_stored_value=priorize_stored_value),
             metadata=metadata,
             name=name,
+            iterations=1,
             buffer_settings=temp_buffer_settings,
             **self._parent_device.buffer_script_setup,
         )
@@ -679,35 +819,44 @@ class Terminal_Parameter(ABC):
             logger.warning(f"{e} was raised when trying to save default value of {self.name}")
             pass
 
-    def set_default(self):
+    def set_default(self, ramp=True, **kwargs):
         """
         Sets value to default value
         """
         if self.default_value is not None:
             try:
-                self.value = self.default_value
+                if ramp is True:
+                    self.ramp(self.default_value, **kwargs)
+                else:
+                    self.value = self.default_value
             except NotImplementedError as e:
                 logger.debug(f"{e} was raised and ignored")
         else:
             logger.warning(f"No default value set for parameter {self.name}")
 
-    def set_stored_value(self):
+    def set_stored_value(self, ramp=True, **kwargs):
         """
         Sets value to stored value from dict
         """
         if self._stored_value is not None:
             try:
-                self.value = self._stored_value
+                if ramp is True:
+                    self.ramp(self._stored_value, **kwargs)
+                else:
+                    self.value = self._stored_value
             except NotImplementedError as e:
                 logger.debug(f"{e} was raised and ignored")
         else:
             logger.warning(f"No stored value set for parameter {self.name}")
 
-    def __call__(self, value=None):
+    def __call__(self, value=None, ramp=None):
         if value is None:
             return self.value
         else:
-            self.value = value
+            if ramp is True:
+                self.ramp(value)
+            else:
+                self.value = value
 
 
 # class Virtual_Terminal_Parameter(Terminal_Parameter):

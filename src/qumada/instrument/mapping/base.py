@@ -183,6 +183,7 @@ def add_mapping_to_instrument(
         except TypeError:
             pass
         instrument._is_triggerable = mapping._is_triggerable
+        mapping._instrument = instrument
         instrument._qumada_mapping = mapping
         try:
             instrument._qumada_trigger = mapping.trigger
