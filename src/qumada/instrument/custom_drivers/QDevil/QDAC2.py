@@ -1,3 +1,17 @@
+import abc
+import itertools
+import uuid
+from collections.abc import Sequence
+from time import sleep as sleep_s
+from typing import NewType, Optional
+
+import numpy as np
+from packaging.version import parse
+from pyvisa.errors import VisaIOError
+from qcodes.instrument.channel import ChannelList, InstrumentChannel
+from qcodes.instrument.visa import VisaInstrument
+from qcodes.utils import validators
+
 # Version 1.2.0
 #
 # Guiding principles for this driver for QDevil QDAC-II
@@ -34,19 +48,6 @@
 #
 
 
-import abc
-import itertools
-import uuid
-from collections.abc import Sequence
-from time import sleep as sleep_s
-from typing import NewType, Optional
-
-import numpy as np
-from packaging.version import parse
-from pyvisa.errors import VisaIOError
-from qcodes.instrument.channel import ChannelList, InstrumentChannel
-from qcodes.instrument.visa import VisaInstrument
-from qcodes.utils import validators
 
 error_ambiguous_wave = "Only one of frequency_Hz or period_s can be " "specified for a wave form"
 
@@ -82,11 +83,11 @@ def split_version_string_into_components(version: str) -> list[str]:
     return version.split("-")
 
 
-"""
-External input trigger
 
-There are four 3V3 non-isolated triggers on the back (1, 2, 3, 4).
-"""
+# External input trigger
+
+# There are four 3V3 non-isolated triggers on the back (1, 2, 3, 4).
+
 ExternalInput = NewType("ExternalInput", int)
 
 
