@@ -1,4 +1,5 @@
 Examples
+Examples
 ==============
 
 Measurement Scripts
@@ -376,7 +377,7 @@ to the used instruments. This requires a few changes to the way the measurement 
 	station.add_component(dac)
 
 	mfli = MFLI("mfli", "DEV4121", "169.254.40.160")
-	add_mapping_to_instrument(mfli, path = MFLI_MAPPING)
+	add_mapping_to_instrument(mfli, mappint = MFLI_MAPPING)
 	station.add_component(mfli)
 
 (This tutorial expects you to do the basic qcodes and QuMADA imports on your own)
@@ -386,13 +387,10 @@ The QuMADA buffer has methods to setup the buffer and triggers as well as to sta
 to the QuMADA ones. Currently, QuMADA supports the MFLI and the SR830 (more to come), how to add additional instruments by yourself will be covered in a different section.
 
 The DecaDac's is required to do a smooth ramp, which requires usage of the built in ramp method. As this cannot be mapped by using the normal QuMADA mapping.json file, we use the DecadacMapping class and pass it as the mapping-kwarg
-(instead of "path") to "add_mapping_to_instrument". This does not only add the normal mapping but includes the _qumada_ramp() method which is used in QuMADA' buffered measurement scripts for ramping channels. This method makes use of the
+to "add_mapping_to_instrument". This does not only add the normal mapping but includes the _qumada_ramp() method which is used in QuMADA' buffered measurement scripts for ramping channels. This method makes use of the
 built-in ramp method, but standardizes the input parameters so that different instruments can be used with the same measurement script. Note that instruments without built-in ramps can be used for the buffered measurements as well, but then require communication at
 each setpoint, which slows down the measurement and can lead to asynchronicity. It is strongly adviced to use this feature only for debugging.
 
-.. note::
-
-	In some cases it is possible to add trigger channels to the _qumada_ramp method. Those are triggered as soon as the ramp starts. However, this feature is still WIP and can lead to significat offsets due to time delays.
 
 Setting up the buffer in QuMADA is done via a settings dict (which can also be serialized into a yaml or json file). The parameters are:
 
@@ -478,7 +476,7 @@ The measurement script is then setup in almost the same way as for normal, unbuf
 				  sync_trigger = dac.channels[19].volt)
 
 	map_gates_to_instruments(station.components, script.gate_parameters)
-	map_buffers(station.components, script.properties, script.gate_parameters)
+	map_triggers(station.components, script.properties, script.gate_parameters)
 
 Instead of the Generic_1D_Sweep we are now using the buffed version. It requires the buffer_settings as input argument as well as the trigger_type.
 The trigger type defines, how the measurement is started, it can be either "manual", meaning the script does not care about triggers and just starts the sweep once the script.run is executed,
@@ -496,7 +494,7 @@ The latter tells the measurement script how to start the measurement.
 You can specify a sync_trigger in the script.setup() which is then passed on to the ramp method (if supported by the instrument) and will automatically raise the trigger once the measurement is started in "manual" mode.
 In this example the Dac's last channel will be used to trigger the measurement.
 
-In addition to the familiar map_gates_to_instruments, we have to execute map_buffers() as well.
+In addition to the familiar map_gates_to_instruments, we have to execute map_triggers() as well.
 It is used to specify the trigger inputs used to trigger the available buffers.
 
 .. code-block::
@@ -513,6 +511,10 @@ It is used to specify the trigger inputs used to trigger the available buffers.
 
 If required the buffer settings are changed to allow usage of the chosen trigger input. In our example, choosing the trigger_in_1 for the MFLI will change the trigger_mode from "edge" to "digital",
 as the MFLI's trigger inputs require this setting and would raise an exception during the measurement.
+
+It is also possible to save and load trigger mappings to/from json files. You can simply use "save_trigger_mapping" and "load_trigger_mapping" from qumada.instrument.buffers.buffer and provide
+station.components and a file path. Alternatively, you can call map_triggers with the "path" argument and provide the path to your mapping-json. The mapping prompt will only open up, if not all instruments can be
+mapped from the file.
 
 .. code-block:: python
 
