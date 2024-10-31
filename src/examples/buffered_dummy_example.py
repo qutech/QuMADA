@@ -118,7 +118,7 @@ script.setup(
 )
 
 map_terminals_gui(station.components, script.gate_parameters)
-map_triggers(station.components, path=r"C:\Users\till3\Documents\PythonScripts\tm.json")
+map_triggers(station.components)
 
 # %% Run measurement
 script.run()
