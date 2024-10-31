@@ -21,8 +21,8 @@
 # pylint: disable=missing-function-docstring
 import pytest
 from qcodes.instrument import Instrument, VisaInstrument
-from qcodes.parameters import Parameter
 from qcodes.instrument_drivers.mock_instruments import DummyInstrument
+from qcodes.parameters import Parameter
 
 from qumada.instrument.instrument import is_instrument_class
 
