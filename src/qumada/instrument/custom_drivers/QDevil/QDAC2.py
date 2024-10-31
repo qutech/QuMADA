@@ -48,7 +48,6 @@ from qcodes.instrument.channel import ChannelList, InstrumentChannel
 from qcodes.instrument.visa import VisaInstrument
 from qcodes.utils import validators
 
-
 error_ambiguous_wave = "Only one of frequency_Hz or period_s can be " "specified for a wave form"
 
 
