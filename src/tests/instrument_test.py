@@ -22,7 +22,7 @@
 import pytest
 from qcodes.instrument import Instrument, VisaInstrument
 from qcodes.parameters import Parameter
-from qcodes.tests.instrument_mocks import DummyInstrument
+from qcodes.instrument_drivers.mock_instruments import DummyInstrument
 
 from qumada.instrument.instrument import is_instrument_class
 
