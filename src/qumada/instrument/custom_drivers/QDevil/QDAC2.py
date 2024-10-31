@@ -48,7 +48,6 @@ from qcodes.utils import validators
 #
 
 
-
 error_ambiguous_wave = "Only one of frequency_Hz or period_s can be " "specified for a wave form"
 
 
@@ -81,7 +80,6 @@ def diff_matrix(initial: Sequence[float], measurements: Sequence[Sequence[float]
 
 def split_version_string_into_components(version: str) -> list[str]:
     return version.split("-")
-
 
 
 # External input trigger
