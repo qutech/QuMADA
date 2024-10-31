@@ -271,7 +271,7 @@ For our first measurement we use the Generic_1D_parallel_Sweep method, which ram
 
 Note that we do not directly pass the arguments when creating the object but use the built-in "setup" method. It is required to pass the parameters and a metadata object.
 All measurement_script objects have an initialize and a reset method, which take care of ramping/setting all parameters to the correct values and furthermore create a couple of attributes,
-like lists of all sweeps, different parameters and so on. Furthermore, they will automatically relabel the parameters in the QCoDeS datasets to match the gate names you specified. If your plotting tool uses the 
+like lists of all sweeps, different parameters and so on. Furthermore, they will automatically relabel the parameters in the QCoDeS datasets to match the gate names you specified. If your plotting tool uses the
 "label" attribute of parameters for its plot, the axis will thus be labeled correctly.
 When using the predefined measurement scripts that come with QuMADA those steps are automatically performed whenever you run the measurement. In case you define your own measurement scripts, you are free to use those built-in methods as you need them.
 Furthermore, measurement scripts can have keyword arguments specifying details of how the measurement is performed. In this case we set the ramp_rate, which is again built-in into all measurement script objects and defines the ramp_speed used to ramp all parameters
@@ -312,11 +312,11 @@ For recurring measurements with the same terminals and instruments, it is possib
 
 .. autofunction:: qumada.instrument.mapping.base.load_mapped_terminal_parameters
 
-.. note: 
+.. note:
 
 	The loading feature is currently only functional if the parameters you want to load match the ones in the saved mapping exactly. Otherwise an exception will occur. In case you want to add terminals or parameters, you can work around that
 	issue by first loading the mapping for the original, unchanged parameters. Once you have loaded the mapping to a script or device object, alter the parameters dictionary and update the script or device object.
-	If you now run the mapping GUI again, add the mapping (script.gate_parameters for scripts) as third input argument, you only have to map the new terminals/parameters instead of all of them. You can then save the mapped terminal parameters to a new file for 
+	If you now run the mapping GUI again, add the mapping (script.gate_parameters for scripts) as third input argument, you only have to map the new terminals/parameters instead of all of them. You can then save the mapped terminal parameters to a new file for
 	usage with the new parameters.
 
 
