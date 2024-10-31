@@ -81,7 +81,8 @@ def split_version_string_into_components(version: str) -> list[str]:
     return version.split("-")
 
 
-"""External input trigger
+"""
+External input trigger
 
 There are four 3V3 non-isolated triggers on the back (1, 2, 3, 4).
 """
