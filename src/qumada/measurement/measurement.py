@@ -113,9 +113,9 @@ class MeasurementScript(ABC):
     def __init__(self):
         # Create function hooks for metadata
         # reverse order, so insert metadata is run second
-        # self.run = create_hook(self.run, self._insert_metadata_into_db)
-        # self.run = create_hook(self.run, self._add_data_to_metadata)
-        # self.run = create_hook(self.run, self._add_current_datetime_to_metadata)
+        self.run = create_hook(self.run, self._insert_metadata_into_db)
+        self.run = create_hook(self.run, self._add_data_to_metadata)
+        self.run = create_hook(self.run, self._add_current_datetime_to_metadata)
 
         self.properties: dict[Any, Any] = {}
         self.gate_parameters: dict[Any, dict[Any, Parameter | None] | Parameter | None] = {}
