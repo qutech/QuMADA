@@ -28,6 +28,11 @@ from qcodes.instrument import Instrument
 from qcodes.metadatable import Metadatable
 from qcodes.parameters import Parameter
 
+import logging
+logger = logging.getLogger(__name__)
+
+import json
+
 
 def is_bufferable(object: Instrument | Parameter):
     """Checks if the instrument or parameter is bufferable using the qumada Buffer definition."""
@@ -84,15 +89,8 @@ def map_buffers(
         print("Available trigger inputs:")
         print("[0]: None")
         for idx, trigger in enumerate(buffer.AVAILABLE_TRIGGERS, 1):
-            print(f"[{idx}]: {trigger}")
-        # TODO: Just a workaround, fix this!
-        if overwrite_trigger is not None:
-            try:
-                chosen = int(overwrite_trigger)
-            except Exception:
-                chosen = int(input(f"Choose the trigger input for {instrument.name}: "))
-        else:
-            chosen = int(input(f"Choose the trigger input for {instrument.name}: "))
+            print(f"[{idx}]: {trigger}")      
+        chosen = int(input(f"Choose the trigger input for {instrument.name}: "))
         if chosen == 0:
             trigger = None
         else:
@@ -125,14 +123,7 @@ def _map_triggers(
         print("[0]: None")
         for idx, trigger in enumerate(instrument._qumada_mapping.AVAILABLE_TRIGGERS, 1):
             print(f"[{idx}]: {trigger}")
-        # TODO: Just a workaround, fix this!
-        if overwrite_trigger is not None:
-            try:
-                chosen = int(overwrite_trigger)
-            except Exception:
-                chosen = int(input(f"Choose the trigger input for {instrument.name}: "))
-        else:
-            chosen = int(input(f"Choose the trigger input for {instrument.name}: "))
+        chosen = int(input(f"Choose the trigger input for {instrument.name}: "))
         if chosen == 0:
             trigger = None
         else:
@@ -147,7 +138,38 @@ def map_triggers(
     gate_parameters: Mapping[Any, Mapping[Any, Parameter] | Parameter],
     overwrite_trigger=None,
     skip_mapped=True,
+    path: None|str=None,
 ) -> None:
+    """
+    Maps the triggers of triggerable or bufferable components. 
+    Ignores already mapped triggers by default. 
+
+    Parameters
+    ----------
+    components : Mapping[Any, Metadatable]
+        Components of QCoDeS station (containing instruments to be mapped).
+    properties : dict
+        Properties of measurement script/device. Currently only required for
+        buffered instruments.
+        TODO: Remove!
+    gate_parameters : Mapping[Any, Mapping[Any, Parameter] | Parameter]
+        Parameters of measurement script/device. Currently only required for 
+        buffered instruments.
+        TODO: Remove!
+    skip_mapped : Bool, optional
+        If true already mapped parameters are skipped
+        Set to false if you want to remap something. The default is True.
+    path : None|str, optional
+        Provide path to a json file with trigger mapping. If not all instruments
+        are covered in the file, you will be asked to map those. Works only if
+        names in file match instrument.full_name of your current instruments.
+        The default is None.
+    """
+    if path is not None:
+        try:
+            load_trigger_mapping(components, path)
+        except Exception as e:
+            logger.warning(f"Exception when loadig trigger mapping from file: {e}")
     map_buffers(
         components,
         properties,
@@ -162,8 +184,40 @@ def map_triggers(
         overwrite_trigger,
         skip_mapped,
     )
+    
+def save_trigger_mapping(components: Mapping[Any, Metadatable], path: str):
+    """
+    Saves mapped triggers from components to json file.
+    Components should be station.components, path is the path to the file.
+    """
+    trigger_dict = {}
+    triggered_instruments = filter(
+        lambda x: any((is_triggerable(x), is_bufferable(x))), components.values())
+    for instrument in triggered_instruments:
+        try:
+            trigger_dict[instrument.full_name] = instrument._qumada_mapping.trigger_in
+        except AttributeError:
+            trigger_dict[instrument.full_name] = instrument._qumada_buffer.trigger
+    with open(path, mode="w") as file:
+        json.dump(trigger_dict, file)
 
-
+def load_trigger_mapping(components: Mapping[Any, Metadatable], path: str):
+    """
+    Loads json file with trigger mappings and tries to apply them to instruments
+    in the components. Works only if the instruments have the same full_name
+    as in the saved file!
+    """
+    with open(path) as file:
+        trigger_dict: Mapping[str, Mapping[str, str] | str] = json.load(file)
+    for instrument_name, trigger in trigger_dict.items():
+        for instrument in components.values():
+            if instrument.full_name == instrument_name:
+                if is_bufferable(instrument) is True:
+                    instrument._qumada_buffer.trigger = trigger
+                elif is_triggerable(instrument) is True:
+                    instrument._qumada_mapping.trigger_in = trigger
+                
+        
 class Buffer(ABC):
     """Base class for a general buffer interface for an instrument."""
 
