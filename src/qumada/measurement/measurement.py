@@ -440,7 +440,7 @@ class MeasurementScript(ABC):
                                         self.groups[group]["priority"] = prio
                                         self.priorities[prio] = self.groups[group]
                                         self.dynamic_parameters[-1]["priority"] = prio
-                                except Exception:
+                                except ValueError:
                                     pass
 
         if self.buffered:
@@ -459,6 +459,11 @@ class MeasurementScript(ABC):
         combined_sorted = sorted(combined_lists, key=lambda x: (x[0].get("priority", float("inf"))))
         if len(self.dynamic_parameters) > 0:
             self.dynamic_parameters, self.dynamic_channels, self.dynamic_sweeps = map(list, zip(*combined_sorted))
+            for param in self.dynamic_parameters:
+                try:
+                    del param["priority"]
+                except KeyError:
+                    pass
 
     def initialize(self, dyn_ramp_to_val=False, inactive_dyn_channels: list | None = None) -> None:
         """
