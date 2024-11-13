@@ -442,6 +442,8 @@ class MeasurementScript(ABC):
                                         self.dynamic_parameters[-1]["priority"] = prio
                                 except ValueError:
                                     pass
+                                except TypeError:
+                                    pass
 
         if self.buffered:
             self.buffers = {
