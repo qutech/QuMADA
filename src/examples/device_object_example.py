@@ -40,14 +40,13 @@ from qumada.instrument.buffers.buffer import (
     save_trigger_mapping,
 )
 from qumada.instrument.custom_drivers.Dummies.dummy_dac import DummyDac
-from qumada.instrument.mapping.Dummies.DummyDac import DummyDacMapping
-
 from qumada.instrument.mapping import (
     DUMMY_DMM_MAPPING,
     add_mapping_to_instrument,
     map_terminals_gui,
 )
-
+from qumada.instrument.mapping.Dummies.DummyDac import DummyDacMapping
+from qumada.measurement.device_object import *
 from qumada.measurement.scripts import (
     Generic_1D_parallel_asymm_Sweep,
     Generic_1D_parallel_Sweep,
@@ -56,9 +55,9 @@ from qumada.measurement.scripts import (
     Generic_nD_Sweep,
     Timetrace,
 )
-from qumada.measurement.device_object import *
 from qumada.utils.generate_sweeps import generate_sweep
 from qumada.utils.load_from_sqlite_db import load_db
+
 # %% Only required to simulate buffered instruments
 # As we have only dummy instruments that are not connected, we have to use a global
 # trigger event for triggering.
@@ -84,16 +83,16 @@ station.add_component(dac1)
 dac2 = DummyDac("dac2", trigger_event=trigger)
 add_mapping_to_instrument(dac2, mapping=DummyDacMapping())
 station.add_component(dac2)
-# %% Load database for data storage. This will open a window. 
+# %% Load database for data storage. This will open a window.
 # Alternatively, you can use initialise_or_create_database_at from QCoDeS
 load_db()
 # We need to create an experiment in the QCoDeS database
 load_or_create_experiment("test", "dummy_sample")
-# %% Setup buffers (only need for buffered measurements). 
+# %% Setup buffers (only need for buffered measurements).
 # Those buffer settings specify how the triggers are setup and how the data is recorded.
 buffer_settings = {
     # We don't have to specify threshold and mode for our dummy instruments
-    # "trigger_threshold": 0.005, 
+    # "trigger_threshold": 0.005,
     # "trigger_mode": "digital",
     "sampling_rate": 20,
     "num_points": 100,
@@ -117,7 +116,7 @@ buffer_script_settings = {
 # %% Parameters
 # This dictionary defines your device. "ohmic", "gate1" and "gate2" are terminals, representing parts of your
 # device.
-# Each terminal can have multiple parameters that represent values of the terminals 
+# Each terminal can have multiple parameters that represent values of the terminals
 # (here "current" and "voltage"). A real Ohmic connected to a lockin-amplifier could for example have
 # additional parameters such as "amplitude" or "frequency". As our dummy_dmm doesn't have those parameters,
 # we cannot use them here. Each parameter has to be mapped to a parameter of a QCoDeS instrument later.
@@ -141,7 +140,7 @@ parameters = {
 # You can also load and save parameter
 # and trigger mappings to from/to files (see documentation).
 
-device = QumadaDevice.create_from_dict(parameters, station = station, make_terminals_global=True, namespace=globals())
+device = QumadaDevice.create_from_dict(parameters, station=station, make_terminals_global=True, namespace=globals())
 device.mapping()
 device.buffer_script_setup = buffer_script_settings
 device.buffer_settings = buffer_settings
@@ -168,34 +167,34 @@ device.voltages()
 print(ohmic.current.type)
 print(gate2.voltage.type)
 
-gate1.voltage.measured_ramp(0.4, buffered = True)
+gate1.voltage.measured_ramp(0.4, buffered=True)
 
-# %% This will also record gate2.voltage. As the dummy dac has no buffer, we cannot record 
+# %% This will also record gate2.voltage. As the dummy dac has no buffer, we cannot record
 # a buffered measurement if we want to measure the voltage. The "start" argument can be used to
 # start from a different position than the current voltage of gate1. QuMada will by default ramp
-# gate1.voltage to the starting point before starting the measurement to avoid artifacts from 
+# gate1.voltage to the starting point before starting the measurement to avoid artifacts from
 # a voltage jump prior to the measurement.
 # QuMada measurement scripts will automatically name your measurement unless you explicitely provide
 # a name.
 
 gate2.voltage.type = "gettable"
-gate1.voltage.measured_ramp(0.4, start = -0.3, name = "mymeasurement", buffered = False)
+gate1.voltage.measured_ramp(0.4, start=-0.3, name="mymeasurement", buffered=False)
 
-gate2.voltage.type = "" # Don't record it in future measurements.
+gate2.voltage.type = ""  # Don't record it in future measurements.
 
 # %% Save setpoints
 
 print("State 1:")
-device.voltages() #Current state
+device.voltages()  # Current state
 
-device.save_state("state1") # Save current configuration
+device.save_state("state1")  # Save current configuration
 
 gate2(0.19)
 
 print("State 2:")
-device.voltages() #New state
+device.voltages()  # New state
 
-device.set_state("state1") #Reset to stored state
+device.set_state("state1")  # Reset to stored state
 print("Reset to State 1:")
 device.voltages()
 
@@ -211,14 +210,14 @@ gate2(0)
 print("Before measurement:")
 device.voltages()
 
-device.sweep_2D(gate1.voltage, gate2.voltage, 0.2, 0.3, buffered = True)
+device.sweep_2D(gate1.voltage, gate2.voltage, 0.2, 0.3, buffered=True)
 
 print("After measurement:")
 device.voltages()
 
 # %% Timetraces are recorded at the current setpoint. All measurements return a list of QCoDeS datasets.
 
-data = device.timetrace(duration = 10, timestep = 0.3, buffered = True)
+data = device.timetrace(duration=10, timestep=0.3, buffered=True)
 
 # If you provide measurement settings such as the timestep or num_points that do not
 # match the buffer settings, the buffer settings will be (temporarily) altered to.
@@ -237,12 +236,10 @@ print(device.save_to_dict())
 script = Generic_1D_parallel_asymm_Sweep()
 script.setup(
     device.save_to_dict(),
-    metadata = None,
+    metadata=None,
 )
 
 # We can provide the mapping from the device object as argument to skip the mapping
 map_terminals_gui(station.components, script.gate_parameters, device.instrument_parameters)
 
 script.run()
-
-
