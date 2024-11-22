@@ -49,8 +49,10 @@ from qumada.utils.utils import flatten_array
 logger = logging.getLogger(__name__)
 
 
-def load_param_whitelist(folder_path=r"src\qumada\instrument\parameter_whitelists"):
+def load_param_whitelist(folder_path=None):
     combined_params = set()
+    if folder_path is None:
+        folder_path = os.path.join(os.path.dirname(__file__), "../instrument/parameter_whitelists")
     for filename in os.listdir(folder_path):
         if filename.endswith(".json"):  # Nur JSON-Dateien laden
             file_path = os.path.join(folder_path, filename)
