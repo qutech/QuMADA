@@ -1,0 +1,24 @@
+{
+  "parameters": [
+           "voltage",
+           "voltage_x_component",
+           "voltage_y_component",
+           "voltage_offset",
+           "current",
+           "current_x_component",
+           "current_y_component",
+           "current_compliance",
+           "amplitude",
+           "frequency",
+           "output_enabled",
+           "time_constant",
+           "phase",
+           "count",
+           "aux_voltage_1",
+           "aux_voltage_2",
+           "temperature",
+           "test_parameter",
+           "demod0_aux_in_1",
+           "demod0_aux_in_2"
+  ]
+}
