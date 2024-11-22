@@ -1,5 +1,5 @@
 {
-  "params": [
+  "parameters": [
            "voltage",
            "voltage_x_component",
            "voltage_y_component",

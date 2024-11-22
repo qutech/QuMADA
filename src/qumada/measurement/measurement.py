@@ -57,7 +57,8 @@ def load_param_whitelist(folder_path=r"src\qumada\instrument\parameter_whitelist
             file_path = os.path.join(folder_path, filename)
             with open(file_path, "r") as file:
                 data = json.load(file)
-                combined_params.update(data.get("params", []))
+                for key in data.keys():
+                    combined_params.update(data.get(key, []))
     return combined_params
 
 def is_measurement_script(o):
