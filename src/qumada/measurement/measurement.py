@@ -26,6 +26,7 @@ import copy
 import inspect
 import json
 import logging
+import os
 from abc import ABC, abstractmethod
 from collections.abc import MutableSequence
 from contextlib import suppress
@@ -47,6 +48,17 @@ from qumada.utils.utils import flatten_array
 
 logger = logging.getLogger(__name__)
 
+
+
+def load_param_whitelist(folder_path=r"src\qumada\instrument\parameter_whitelists"):
+    combined_params = set()
+    for filename in os.listdir(folder_path):
+        if filename.endswith(".json"):  # Nur JSON-Dateien laden
+            file_path = os.path.join(folder_path, filename)
+            with open(file_path, "r") as file:
+                data = json.load(file)
+                combined_params.update(data.get("params", []))
+    return combined_params
 
 def is_measurement_script(o):
     return inspect.isclass(o) and issubclass(o, MeasurementScript)
@@ -87,28 +99,7 @@ class MeasurementScript(ABC):
     """
 
     # TODO: Put list elsewhere! Remove names that were added as workarounds (e.g. aux_voltage) as soon as possible
-    PARAMETER_NAMES: set[str] = {
-        "voltage",
-        "voltage_x_component",
-        "voltage_y_component",
-        "voltage_offset",
-        "current",
-        "current_x_component",
-        "current_y_component",
-        "current_compliance",
-        "amplitude",
-        "frequency",
-        "output_enabled",
-        "time_constant",
-        "phase",
-        "count",
-        "aux_voltage_1",
-        "aux_voltage_2",
-        "temperature",
-        "test_parameter",
-        "demod0_aux_in_1",
-        "demod0_aux_in_2",
-    }
+    PARAMETER_NAMES: set[str] = load_param_whitelist()
 
     def __init__(self):
         # Create function hooks for metadata
@@ -132,7 +123,8 @@ class MeasurementScript(ABC):
             parameter (Parameter): Custom parameter. Set this, if you want to set a custom parameter. Defaults to None.
         """
         if parameter_name not in MeasurementScript.PARAMETER_NAMES:
-            raise NameError(f'parameter_name "{parameter_name}" not in MeasurementScript.PARAMETER_NAMES.')
+            raise NameError(f'parameter_name "{parameter_name}" not in MeasurementScript.PARAMETER_NAMES. \
+                            Allowed parameters are listed in qumada.instrument.parameter_whitelists')
         if not gate_name:
             self.gate_parameters[parameter_name] = parameter
         else:

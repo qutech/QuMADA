@@ -14,6 +14,7 @@ from qcodes.validators.validators import Numbers
 
 from qumada.instrument.buffers.buffer import map_triggers
 from qumada.instrument.mapping import map_terminals_gui
+from qumada.measurement.measurement import load_param_whitelist
 from qumada.measurement.scripts import (
     Generic_1D_Hysteresis_buffered,
     Generic_1D_parallel_asymm_Sweep,
@@ -513,27 +514,7 @@ class Terminal(ABC):
     """
 
     # TODO: Put list elsewhere! Remove names that were added as workarounds (e.g. aux_voltage) as soon as possible
-    PARAMETER_NAMES: set[str] = {
-        "voltage",
-        "voltage_x_component",
-        "voltage_y_component",
-        "voltage_offset",
-        "current",
-        "current_x_component",
-        "current_y_component",
-        "current_compliance",
-        "amplitude",
-        "frequency",
-        "output_enabled",
-        "time_constant",
-        "phase",
-        "count",
-        "aux_voltage_1",
-        "aux_voltage_2",
-        "temperature",
-        "test_parameter",
-    }
-
+    PARAMETER_NAMES: set[str] = load_param_whitelist()
     def __init__(self, name, parent: QumadaDevice | None = None, type: str | None = None):
         # Create function hooks for metadata
         # reverse order, so insert metadata is run second
