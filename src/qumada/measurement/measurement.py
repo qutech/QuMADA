@@ -49,17 +49,17 @@ from qumada.utils.utils import flatten_array
 logger = logging.getLogger(__name__)
 
 
-
 def load_param_whitelist(folder_path=r"src\qumada\instrument\parameter_whitelists"):
     combined_params = set()
     for filename in os.listdir(folder_path):
         if filename.endswith(".json"):  # Nur JSON-Dateien laden
             file_path = os.path.join(folder_path, filename)
-            with open(file_path, "r") as file:
+            with open(file_path) as file:
                 data = json.load(file)
                 for key in data.keys():
                     combined_params.update(data.get(key, []))
     return combined_params
+
 
 def is_measurement_script(o):
     return inspect.isclass(o) and issubclass(o, MeasurementScript)
@@ -124,8 +124,10 @@ class MeasurementScript(ABC):
             parameter (Parameter): Custom parameter. Set this, if you want to set a custom parameter. Defaults to None.
         """
         if parameter_name not in MeasurementScript.PARAMETER_NAMES:
-            raise NameError(f'parameter_name "{parameter_name}" not in MeasurementScript.PARAMETER_NAMES. \
-                            Allowed parameters are listed in qumada.instrument.parameter_whitelists')
+            raise NameError(
+                f'parameter_name "{parameter_name}" not in MeasurementScript.PARAMETER_NAMES. \
+                            Allowed parameters are listed in qumada.instrument.parameter_whitelists'
+            )
         if not gate_name:
             self.gate_parameters[parameter_name] = parameter
         else:

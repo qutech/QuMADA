@@ -515,6 +515,7 @@ class Terminal(ABC):
 
     # TODO: Put list elsewhere! Remove names that were added as workarounds (e.g. aux_voltage) as soon as possible
     PARAMETER_NAMES: set[str] = load_param_whitelist()
+
     def __init__(self, name, parent: QumadaDevice | None = None, type: str | None = None):
         # Create function hooks for metadata
         # reverse order, so insert metadata is run second
