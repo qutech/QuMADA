@@ -80,7 +80,7 @@ Adding the mapping is easily done by using the "add_mapping_to_instrument" comma
 	Applies the mapping specified to the instrument
 
    :instrument: Instrument
-   :mapping: Mapping, has to be imported from qumada.instrument.mapping and be listed in the corresponding __init__ file. 
+   :mapping: Mapping, has to be imported from qumada.instrument.mapping and be listed in the corresponding __init__ file.
 	Can be either an instance of the InstrumentMapping class or a string pointing to an mapping json-file.
    :return: None
 
@@ -195,15 +195,15 @@ In a first step we want to ramp all the gates in parallel to check whether we ca
 Furthermore, we want to apply a bias voltage between the source and drain contact and measure the current flowing through them using our Dummy Dmm.
 (in a reality you would probably apply a bias voltage. You can do that by simply adding a "voltage" parameter to the ohmic and set it to "static". Our simple Dummy Dmm does not have a voltage output).
 
-Each terminal or gate in QuMADA can have one or more parameters corresponding to physical properties such as voltage or current. 
+Each terminal or gate in QuMADA can have one or more parameters corresponding to physical properties such as voltage or current.
 
-.. note:: 
+.. note::
 	It is still necessary to think about the capabilities and parameters of you instrument. Many instruments are have specific settings that are not properly mapped and not in the list of allowed parameters as they
 	are not frequently used. You can either change them manually using the QCoDeS parameter or add them to the list of allowed parameters. Keep in mind that adding parameters like "output_enabled" to all terminals might
 	make the dictionary much harder to read and it might be advisable to have separate functions to setup all instruments properly.
-	
+
 All parameters defined as "static" or "dynamic" will be ramped to their value or the first setpoint, respectively, before a measurement starts by QuMada!
-Parameters that cannot be ramped (e.g. because they have booleans as values) are set. 
+Parameters that cannot be ramped (e.g. because they have booleans as values) are set.
 
 
 Each parameter has a specific type: "dynamic", "static" and/or "gettable".
@@ -224,7 +224,7 @@ be separated by blanks.
 	Note that parameters can be both, gettable and static ("type": "static gettable"). This might be counter intuitive at first as you always know the value of static parameters. However, static parameters are not recorded
 	in the QCoDeS database but only stored in the metadata (and the station snapshot) and it might be handy to have the corresponding values together with the measurement data instead of having to search for it elswhere.
 	Static gettable parameters are not actually recorded, but instead it is assumed that they are just constantly at their "value". This speeds up unbuffered measurements significantly due to the reduced communication between PC
-	and measurement instrument and also allows to add the values of not bufferable parameters (e.g. DAC voltages) in buffered measurements. 
+	and measurement instrument and also allows to add the values of not bufferable parameters (e.g. DAC voltages) in buffered measurements.
 
 In our case we added a maximum current as we want to stop the measurement when the current becomes to large.
 
