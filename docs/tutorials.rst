@@ -12,7 +12,7 @@ In this tutorial we assume that you already set up a QCoDeS database and created
 
 This tutorial will show you how to setup basic measurements in QuMada. It roughly follows the example_main_1.py in src/examples.
 It contains a couple of blocks for the steps you have to do in order to set up the measurement and run it. This tutorial focuses on running measurements based on measurement scripts and
-a parameter dictionary. Whereas this is not the most comfortable way to use QuMada it helps to understand the underlying mechanics. Make sure to go through the :ref:`DeviceObject` documentation 
+a parameter dictionary. Whereas this is not the most comfortable way to use QuMada it helps to understand the underlying mechanics. Make sure to go through the :ref:`DeviceObject` documentation
 to make the best use of QuMada.
 
 We start by setting up the usual imports (including some QCoDeS imports for handling the measurement data and the instruments.
@@ -78,7 +78,7 @@ Adding the mapping is easily done by using the "add_mapping_to_instrument" comma
 
    :instrument: Instrument
 
-   :mapping: Mapping, has to be imported from qumada.instrument.mapping and be listed in the corresponding __init__ file. 
+   :mapping: Mapping, has to be imported from qumada.instrument.mapping and be listed in the corresponding __init__ file.
 	Can be either an instance of the InstrumentMapping class or a string pointing to a mapping json-file.
 
    :return: None
@@ -192,11 +192,11 @@ The Terminal_parameters can also be loaded from a yaml-file (or json-file if you
 	}
 
 In our example the SET consists source and drain contact, a global topgate and interconnected barriers controlled by only one voltage.
-In a first step, we want to ramp all the gates in parallel to check whether we can accumulate charges and open a current path through the quantum well by 
+In a first step, we want to ramp all the gates in parallel to check whether we can accumulate charges and open a current path through the quantum well by
 measuring the current flowing through the ohmics using our Dummy Dmm.
 (in a reality you would probably apply a bias voltage. You can do that by simply adding a "voltage" parameter to the ohmic and set it to "static". Our simple Dummy Dmm does not have a voltage output).
 
-Each terminal or gate in QuMADA can have one or more parameters corresponding to physical properties such as a voltage or current. 
+Each terminal or gate in QuMADA can have one or more parameters corresponding to physical properties such as a voltage or current.
 
 
 .. note::
@@ -361,12 +361,12 @@ This can be uncomfortable for more complex devices with many gates, so QuMada pr
 	}
 
 In comparison to the original parameters we removed the break condition (we do not need it anymore), the delay (to keep things simple, it is 0 by default and the communication time between PC and instruments is usually so large, that delays are not required),
-and added values to the topgate and the barriers. 
-Instead of using the Generic_1D_parallel_asymmetric_Sweep we now use the Generic_1D_Sweep. 
+and added values to the topgate and the barriers.
+Instead of using the Generic_1D_parallel_asymmetric_Sweep we now use the Generic_1D_Sweep.
 
 
 .. code-block:: python
-		
+
 	mapping = script.gate_parameters  # We can reuse the already existing mapping. It is stored in script.gate_parameters
 	script = Generic_1D_Sweep()
 	script.setup(parameters, metadata = None)
@@ -375,8 +375,8 @@ Instead of using the Generic_1D_parallel_asymmetric_Sweep we now use the Generic
 
 Note, that we first store the mapping from the last measurement to a different variable, as we are overwriting the first script. We can pass the existing mapping on to the new script as 3rd argument of map_terminals_gui, so we do not have to do it again.
 
-The Generic_1D_Sweep start one measurement for each dynamic parameters, so we will end up with two measurements in this case. In each measurement, one of the dynamic parameters is ramped (or more precisely set to its setpoints, one could use arbitrary setpoints here) while all other 
-dynamic parameters are treated as "static gettable" and thus keep constant. As usual, QuMada will ramp all of those parameters to their "value" at the beginning of each measurement. 
+The Generic_1D_Sweep start one measurement for each dynamic parameters, so we will end up with two measurements in this case. In each measurement, one of the dynamic parameters is ramped (or more precisely set to its setpoints, one could use arbitrary setpoints here) while all other
+dynamic parameters are treated as "static gettable" and thus keep constant. As usual, QuMada will ramp all of those parameters to their "value" at the beginning of each measurement.
 In the first measurement, the topgate is ramped and the barriers are kept at 0.4 V. In the second measurement, the barrier are ramped from 0 V to 0.4 V and the topgate is kept constant at 0.5 V.
 
 ###########################
@@ -422,12 +422,12 @@ Note that we did not delete the setpoints for the topgate. They are not evaluate
 often faster not to delete all unrequired parameters.
 This time, we are using the Generic_nD_Sweep(). Instead of ramping all parameters individually, it goes through all combinations of setpoints. In our case this will result in the desired barrier-barrier scan.
 While higher dimensions are possible by simply adding more dynamic parameters, be aware that plotting them with the plotter-inspector might not work.
-By default, the first occuring dynamic is the "fast" parameter ("sweep"-parameter, inner loop) while the out one is the "slow" parameter ("step"-parameter, outer loop). For details on how to change that without 
+By default, the first occuring dynamic is the "fast" parameter ("sweep"-parameter, inner loop) while the out one is the "slow" parameter ("step"-parameter, outer loop). For details on how to change that without
 altering the order of the parameters, check the sections about groups and priorities (REF MISSING).
 
 
 .. code-block:: python
-		
+
 	script = Generic_nD_Sweep()
 	script.setup(parameters, metadata = None)
 	map_terminals_gui(station.components, script.gate_parameters, mapping)
@@ -440,7 +440,7 @@ Running the script should then start the desired measurement.
 
 You are now able run simple measurements with QuMada. Again, we want to point out that this is not the most comfortable to run measurements in QuMada, we highly recommend that you have a look at the :ref:`DeviceObject`.
 
-Other insteresting sections to follow up are the ones regarding :ref:`BufferedMeasurements` and a more detailed documentation of the different :ref:`MeasurementScripts`. 
+Other insteresting sections to follow up are the ones regarding :ref:`BufferedMeasurements` and a more detailed documentation of the different :ref:`MeasurementScripts`.
 
 
 
