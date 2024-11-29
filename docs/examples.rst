@@ -1,6 +1,4 @@
-Examples
-Examples
-==============
+.. _MeasurementScripts:
 
 Measurement Scripts
 --------------------
@@ -340,6 +338,7 @@ Therefore, we included some useful method in the "utils" section of QuMADA.
 
 
 
+.. _BufferedMeasurements:
 Buffered Measurements
 ----------------------
 

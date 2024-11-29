@@ -1,12 +1,9 @@
-#%% Imports
-import json
-import yaml
+# %% Experiment Setup
 
-from qcodes.station import Station
-from qcodes.instrument_drivers.Harvard.Decadac import Decadac
-from qcodes.instrument_drivers.stanford_research.SR830 import SR830
-from qcodes.instrument_drivers.tektronix.Keithley_2400 import Keithley_2400
-from qcodes_contrib_drivers.drivers.QDevil.QDAC1 import QDac
+import threading
+
+import numpy as np
+import yaml
 from qcodes.dataset import (
     Measurement,
     experiments,
@@ -14,51 +11,62 @@ from qcodes.dataset import (
     load_by_run_spec,
     load_or_create_experiment,
 )
+from qcodes.station import Station
 
-import qtools_metadata.db as db
+from qumada.instrument.buffered_instruments import BufferedDummyDMM as DummyDmm
+from qumada.instrument.buffers.buffer import (
+    load_trigger_mapping,
+    map_triggers,
+    save_trigger_mapping,
+)
+from qumada.instrument.custom_drivers.Dummies.dummy_dac import DummyDac
 from qumada.instrument.mapping import (
+    DUMMY_DMM_MAPPING,
     add_mapping_to_instrument,
-    DECADAC_MAPPING,
-    SR830_MAPPING,
-    KEITHLEY_2400_MAPPING,
-    QDAC_MAPPING)
-from qumada.instrument.mapping.base import map_gates_to_instruments
+    map_terminals_gui,
+)
+from qumada.instrument.mapping.Dummies.DummyDac import DummyDacMapping
+from qumada.measurement.device_object import *
 from qumada.measurement.scripts import (
-    Generic_1D_Sweep,
-    Generic_nD_Sweep,
+    Generic_1D_parallel_asymm_Sweep,
     Generic_1D_parallel_Sweep,
-    Timetrace)
+    Generic_1D_Sweep,
+    Generic_1D_Sweep_buffered,
+    Generic_nD_Sweep,
+    Timetrace,
+)
+from qumada.utils.generate_sweeps import generate_sweep
 from qumada.utils.load_from_sqlite_db import load_db
-from qumada.utils.generate_sweeps import generate_sweep, replace_parameter_settings
-from qumada.utils.ramp_parameter import *
 
-#%% Experiment Setup
+# %% Only required to simulate buffered instruments
+# As we have only dummy instruments that are not connected, we have to use a global
+# trigger event for triggering.
 
-# Setup qcodes station
+# Setup qcodes station and load instruments
 station = Station()
 
-# Setup instruments
-# Call add_mapping_to_instrument(instrument, mapping) to map the instrument's parameters to QuMADA-specific names.
-dac = Decadac(
-    "dac",
-    "ASRL3::INSTR",
-    min_val=-10,
-    max_val=10,
-    terminator="\n")
-add_mapping_to_instrument(dac, DECADAC_MAPPING)
-station.add_component(dac)
+# The dummy instruments have a trigger_event attribute as replacement for
+# the trigger inputs of real instruments.
 
-lockin = SR830("lockin", "GPIB1::12::INSTR")
-add_mapping_to_instrument(lockin, SR830_MAPPING)
-station.add_component(lockin)
+# Creating QCoDeS Instrument. For buffered instruments we have to use the QuMada buffered version.
+dmm = DummyDmm("dmm")
+# Adding the QuMada mapping
+add_mapping_to_instrument(dmm, mapping=DUMMY_DMM_MAPPING)
+# Add QCoDes Instrument to station
+station.add_component(dmm)
 
-qdac = QDac("qdac", "ASRL5::INSTR")
-add_mapping_to_instrument(qdac, QDAC_MAPPING)
-station.add_component(qdac)
+dac1 = DummyDac("dac1")
+add_mapping_to_instrument(dac1, mapping=DummyDacMapping())
+station.add_component(dac1)
 
-keithley = Keithley_2400("keithley", "GPIB1::27::INSTR")
-add_mapping_to_instrument(keithley, KEITHLEY_2400_MAPPING)
-station.add_component(keithley)
+dac2 = DummyDac("dac2")
+add_mapping_to_instrument(dac2, mapping=DummyDacMapping())
+station.add_component(dac2)
+# %% Load database for data storage. This will open a window.
+# Alternatively, you can use initialise_or_create_database_at from QCoDeS
+load_db()
+# We need to create an experiment in the QCoDeS database
+load_or_create_experiment("test", "dummy_sample")
 
 #%% Metadata Setup
 from qtools_metadata.metadata import create_metadata, save_metadata_object_to_db
@@ -73,15 +81,43 @@ metadata = create_metadata()
 load_db()
 # load_db("path/to/measurements.db")
 
-# Load parameters
-with open("parameters.yaml", "r") as file:
-    parameters = yaml.safe_load(file)
+# %% Parameters
+# This dictionary defines your device. "ohmic", "gate1" and "gate2" are terminals, representing parts of your
+# device.
+# Each terminal can have multiple parameters that represent values of the terminals
+# (here "current" and "voltage"). A real Ohmic connected to a lockin-amplifier could for example have
+# additional parameters such as "amplitude" or "frequency". As our dummy_dmm doesn't have those parameters,
+# we cannot use them here. Each parameter has to be mapped to a parameter of a QCoDeS instrument later.
 
-script = Generic_1D_Sweep()
-script.setup(parameters, metadata)
+parameters = {
+   		"ohmic": {
+   			"current": {
+   				"type": "gettable",
+   				"break_conditions": ["val > 0.9"],
+   			},
+   		},
+   		"topgate": {
+   			"voltage": {
+   				"type": "dynamic",
+   				"setpoints": np.linspace(0, 0.5, 100),
+   				"delay": 0.01,
+   			}
+   		},
+   		"barriers": {
+   			"voltage": {
+   				"type": "dynamic",
+   				"setpoints": np.linspace(0, 0.4, 100),
+   				"delay": 0.01,
+   			},
+   		},
+   	}
+
+#%%
+script = Generic_1D_parallel_asymm_Sweep()
+script.setup(parameters, metadata = None)
 
 # map measurement gates to instrument gates
-map_gates_to_instruments(station.components, script.gate_parameters)
+map_terminals_gui(station.components, script.gate_parameters)
 
 # run script
 script.run()
