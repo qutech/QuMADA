@@ -4,16 +4,16 @@ Tutorials
 First steps: Example Measurements
 ---------------------------------
 
-QuMada is a QCoDeS based measurement framework that helps you performing measurements easily and furthermore supports the QTools metadata-database (not public) for easy metadata storage.
+QuMada is a QCoDeS based measurement framework that helps you to perform measurements easily and furthermore supports the QTools metadata-database (not public) for easy metadata storage.
 Note that it is not required to use the metadata-db at all to use most of the QuMada features.
 Before you start with this basic tutorial make sure to get familiar with QCoDeS, we recommend to work through the 15-Minute-To-QCoDeS tutorial to learn about setting up
 a database for the measurement data, Experiment containers, the measurement context manager and the station object.
 In this tutorial we assume that you already set up a QCoDeS database and created an experiment.
 
 This tutorial will show you how to setup basic measurements in QuMada. It roughly follows the example_main_1.py in src/examples.
-It contains a couple of blocks for the steps you have to do in order to set up the measurement and run it. This tutorial does focus on running measurements based on measurement scripts and
-a parameter dictionary. Whereas this is not the most comfortable way to use QuMada it helps to understand the underlying mechanics. Make sure to go through :ref:`DeviceObject` to make the best use
-of QuMada.
+It contains a couple of blocks for the steps you have to do in order to set up the measurement and run it. This tutorial focuses on running measurements based on measurement scripts and
+a parameter dictionary. Whereas this is not the most comfortable way to use QuMada it helps to understand the underlying mechanics. Make sure to go through the :ref:`DeviceObject` documentation 
+to make the best use of QuMada.
 
 We start by setting up the usual imports (including some QCoDeS imports for handling the measurement data and the instruments.
 This example runs with Dummy Instruments.
@@ -42,12 +42,9 @@ This example runs with Dummy Instruments.
 		map_terminals_gui,
 	)
 	from qumada.instrument.mapping.Dummies.DummyDac import DummyDacMapping
-	from qumada.measurement.device_object import *
 	from qumada.measurement.scripts import (
 		Generic_1D_parallel_asymm_Sweep,
-		Generic_1D_parallel_Sweep,
 		Generic_1D_Sweep,
-		Generic_1D_Sweep_buffered,
 		Generic_nD_Sweep,
 		Timetrace,
 	)
@@ -59,10 +56,10 @@ Station and Instruments
 #################
 
 
-After importing everything necessary we can start with setting up the QCoDeS station object and the measurement instruments.
+Now we can start with setting up the QCoDeS station object and the measurement instruments.
 In difference to QCoDeS measurements, QuMADA measurements scripts are largely independend from the instruments used. Nonetheless, it is still required to create a QCoDeS station
-object and specify the instruments used, which is done by providing name and the address of the instrument using the corresponding QCoDeS methods. You can use custom instrument drivers (such as our Dummy Instruments)
-if you like as long as they follow the QCoDeS standards.
+object and specify the instruments used, which is done by providing name and the address of the instrument using the corresponding QCoDeS methods. One can use custom instrument drivers (such as our Dummy Instruments)
+as long as they follow the QCoDeS standards.
 In addition to this, we want to add an instrument mapping to each instrument. As QCoDeS drivers are supplied by many different people, the parameters of instruments are named
 inconsistently. The voltage parameter of a Keithley 2400 DMM is addressed via Keithley.volt, the parameter of a Keithley 2450 via Keithley.source.voltage and the
 voltage of a QDevil QDac channel via QDac.Ch01.v. When using QCoDeS, it is necessary to alter the measurement script accordingly whenever a different instrument is used. QuMADA deals with this issue
@@ -80,8 +77,10 @@ Adding the mapping is easily done by using the "add_mapping_to_instrument" comma
 	Applies the mapping specified to the instrument
 
    :instrument: Instrument
-   :mapping: Mapping, has to be imported from qumada.instrument.mapping and be listed in the corresponding __init__ file.
-	Can be either an instance of the InstrumentMapping class or a string pointing to an mapping json-file.
+
+   :mapping: Mapping, has to be imported from qumada.instrument.mapping and be listed in the corresponding __init__ file. 
+	Can be either an instance of the InstrumentMapping class or a string pointing to a mapping json-file.
+
    :return: None
 
 .. code-block:: python
@@ -104,10 +103,11 @@ Adding the mapping is easily done by using the "add_mapping_to_instrument" comma
 	add_mapping_to_instrument(dac2, mapping=DummyDacMapping())
 	station.add_component(dac2)
 
-In this sample we just add a couple of real instruments. Of course you can add QCoDeS dummy instruments as well and provide mappings for them.
+In this sample we just add a couple of dummy instrument that come with QuMada. Be aware, that the Dummy Dmm only returns random values between
+0 and 1.
 
 #############
-Metadata (Optional)
+Metadata (Optional, WIP)
 #############
 
 
@@ -115,7 +115,7 @@ In the next step, we want to create a metadata object. The object contains all t
 the metadata for the measurement script and the QCoDeS-database. Thus, you have to provide sample name and measurement name even if you do not intend to use
 the metadatabase.
 
-The easiest way to create the metadata-object is by entering the data into the metadata.yaml found in the QuMADA directory and create the object from this file.
+The easiest way to create the metadata-object is by entering the data into the metadata web-ui.
 
 .. code-block:: python
 
@@ -137,18 +137,19 @@ The connection to the metadabase is required for loading information of already 
 
 
 ###########################################
-Specifying database for storing the data
+Specifying the database for storing the data
 ###########################################
 
 In case you have not already initialized a QCoDeS database you can easily do so by using the load_db(path_to_db [optional) method, which either takes the path to the database you want to use or, when no argument is supplied,
 opens an open-file prompt allowing you to simply pick the database you want to use (be aware that the prompt might pop up behind other windows). Alternatively, you can provide a valid path and a filename as input argument
-to create a new database.
+to create a new database. Feel free to use the initialise_or_create_database_at method from QCoDeS and do not forget to setup an experiment
+container in case you created a new database (more details in the QCoDeS documentation).
 
 At this point we have taken care of all preliminary steps required before defining the measurement.
 Except for changing the measurement name in the metadata object, you will have to do those steps only when exchanging the sample or altering the setup.
 
 From now on, we will go through a typical workflow for characterizing a gate-defined Single Electron Transistor (SET) in a semiconductor heterostructure such as Si/SiGe or Si MOS.
-Measurements in QuMADA are mainly defined by two things: The gate_parameters and the measurement script used.
+Measurements in QuMADA are mainly defined by two things: The terminal_parameters and the measurement script used.
 
 
 ###############################
@@ -171,7 +172,7 @@ The Terminal_parameters can also be loaded from a yaml-file (or json-file if you
 		"ohmic": {
 			"current": {
 				"type": "gettable",
-				"break_conditions": ["val > 0.9"],
+				"break_conditions": ["val > 0.95"],
 			},
 		},
 		"topgate": {
@@ -190,12 +191,13 @@ The Terminal_parameters can also be loaded from a yaml-file (or json-file if you
 		},
 	}
 
-In our example the SET consists source and drain contact, a global topgate and interconnected barriers controlled by only on voltage.
-In a first step we want to ramp all the gates in parallel to check whether we can accumulate charges and open a current path through the quantum well.
-Furthermore, we want to apply a bias voltage between the source and drain contact and measure the current flowing through them using our Dummy Dmm.
+In our example the SET consists source and drain contact, a global topgate and interconnected barriers controlled by only one voltage.
+In a first step, we want to ramp all the gates in parallel to check whether we can accumulate charges and open a current path through the quantum well by 
+measuring the current flowing through the ohmics using our Dummy Dmm.
 (in a reality you would probably apply a bias voltage. You can do that by simply adding a "voltage" parameter to the ohmic and set it to "static". Our simple Dummy Dmm does not have a voltage output).
 
-Each terminal or gate in QuMADA can have one or more parameters corresponding to physical properties such as voltage or current.
+Each terminal or gate in QuMADA can have one or more parameters corresponding to physical properties such as a voltage or current. 
+
 
 .. note::
 	It is still necessary to think about the capabilities and parameters of you instrument. Many instruments are have specific settings that are not properly mapped and not in the list of allowed parameters as they
@@ -208,11 +210,12 @@ Parameters that cannot be ramped (e.g. because they have booleans as values) are
 
 Each parameter has a specific type: "dynamic", "static" and/or "gettable".
 
-Dynamic parameters are ramped during the measurement, they require an array of setpoints or case a start, stop and num_points value specifying a linear sweep as well as delay representing the delay (in sec, 0 by default)
-inbetween two measurement points. Dynamic parameters are automatically recorded during the measurement.
+Dynamic parameters are ramped during the measurement, they require either an array of (arbitrary) setpoints or "start", "stop" and "num_points" values specifying a linear sweep.
+Here we also provide a delay representing a wait time between setpoints (in sec, 0 by default).
+Dynamic parameters are automatically recorded during the measurement.
 
 Static parametes are kept constant during the measurement, they only require a "value" to be set to. Float-valued parameters are ramped to their corresponding starting point at the beginning of a measurement, other parameters are simple set.
-Static paramters usually correspond to settings or static gates.
+Static parameters usually correspond to settings or static gates.
 
 Gettable parameters do not require any additional settings, their value is recorded at each setpoint during the measurement. Nonetheless, you can add "break_conditions" to gettable parameters, which are checked at each setpoint and
 will raise an exception and (in most cases) stop the measurement when fulfilled. At the moment only break conditions checking whether the value of a parameters is larger or smaller than the value specified are supported. Break conditions are added
@@ -222,11 +225,12 @@ be separated by blanks.
 .. note::
 
 	Note that parameters can be both, gettable and static ("type": "static gettable"). This might be counter intuitive at first as you always know the value of static parameters. However, static parameters are not recorded
-	in the QCoDeS database but only stored in the metadata (and the station snapshot) and it might be handy to have the corresponding values together with the measurement data instead of having to search for it elswhere.
+	in the QCoDeS database but only stored in the metadata (and the station snapshot) and it might be handy to have the corresponding values together with the measurement data instead of having to search for them elsewhere.
 	Static gettable parameters are not actually recorded, but instead it is assumed that they are just constantly at their "value". This speeds up unbuffered measurements significantly due to the reduced communication between PC
 	and measurement instrument and also allows to add the values of not bufferable parameters (e.g. DAC voltages) in buffered measurements.
 
-In our case we added a maximum current as we want to stop the measurement when the current becomes to large.
+In our case we added a maximum current as we want to stop the measurement when the current becomes to large (e.g. we want to stop once we see accumulation).
+For the Dummy DMM and its random values the measurement will stop at a random point of course.
 
 In case you want to ignore a parameter during a measurement, simply make its type an empty string "".
 
@@ -243,7 +247,7 @@ QuMada will automatically name your measurement, if neither metadata nor a measu
 .. code-block:: python
 
 	script = Generic_1D_parallel_asymmetric_Sweep()
-	script.setup(parameters, metadata = None)
+	script.setup(parameters, metadata = None, ramp_rate = 0.5, back_after_break = True)
 
 For our first measurement we use the Generic_1D_parallel_asymmetric_Sweep method, which ramps all dynamic parameter in parallel.
 
@@ -257,7 +261,7 @@ All measurement_script objects have an initialize method, which takes care of ra
 like lists of all sweeps, different parameters and so on. Furthermore, they will automatically relabel the parameters in the QCoDeS datasets to match the gate names you specified. If your plotting tool uses the
 "label" attribute of parameters for its plot, the axis will thus be labeled correctly.
 When using the predefined measurement scripts that come with QuMADA those steps are automatically performed whenever you run the measurement. In case you define your own measurement scripts, you are free to use those built-in methods as you need them.
-Furthermore, measurement scripts can have keyword arguments specifying details of how the measurement is performed. In this case we set the ramp_rate, which is again built-in into all measurement script objects and defines the ramp_speed used to ramp all parameters
+Furthermore, measurement scripts can have keyword arguments specifying details on how the measurement is performed. In this case we set the ramp_rate, which is again built-in into all measurement script objects and defines the ramp_speed used to ramp all parameters
 to their starting value as well as the back_after_break parameter, which automatically adds a backsweep to the measurement once a break condition is fulfilled. This is particulary handy for accumulation curves including hysteresis investigations.
 
 At this point we have a well defined measurement script that has a list terminals and parameters and knows what to do with them. The last step is now to assign the terminals to their corresponding instrument channels.
@@ -267,7 +271,7 @@ At this point we have a well defined measurement script that has a list terminal
 Mapping terminals to instruments
 ##################################
 
-Assigning the terminals to their correspoing instruments channels can be either done manually or by passing an already existing gate mapping object. The gate mapping is stored inside the measurement script and can be accessed via measurement_scipt.gate_parameter.
+Assigning the terminals to their correspoing instruments channels can be either done manually or by passing an already existing terminal mapping. The terminal mapping is stored inside the measurement script and can be accessed via measurement_scipt.gate_parameter.
 The gate mapping can be performed either per function or using a GUI (it is strongly recommend to use the latter):
 
 .. autofunction:: qumada.instrument.mapping.base.map_gates_to_instruments
@@ -279,7 +283,7 @@ capable of handling existing mappings with different parameters than the current
 
 .. code-block:: python
 
-	map_terminals_gui(station.components, measurement_script.gate_parameters)
+	map_terminals_gui(station.components, script.gate_parameters) #script.gate_parameters will be renamed to terminal_parameters in a coming update
 
 You are now asked for each registered gate/terminal to specify an instrument (or instrument channel) to map to. You can use drag and drop to map the parameters (or complete terminals) to their corresponding channels.
 Check the section regarding the mapping GUI for more information (:ref:`MappingGui`).
@@ -309,7 +313,7 @@ Run the measurement
 
 Finally you can use
 
-.. py:function:: measurement_script.run()
+.. py:function:: script.run()
 
 to start the measurement.
 
@@ -322,9 +326,128 @@ However, the "utils section" has a couple of tools that make working with the QC
 
 
 
+##########################
+2nd Measurement: 1D-Sweeps
+##########################
+
+As a second example measurement and to understand the concept of QuMada measurements better let us perform 1D sweeps with the two gates separately.
+While we sweep one of the gates, the other one should remain at a voltage at which it is still accumulating, otherwise we cannot see any signal.
+Obviously, we could simply create two new parameter dictionaries. In the first one, we set the topgate to "dynamic" and the barriers to "static" with some "value" (let's say 0.4 V) and in the second we swap the types.
+
+This can be uncomfortable for more complex devices with many gates, so QuMada provides a simpler solution. We can define the parameters as follows:
+
+.. code-block:: python
+
+	parameters = {
+		"ohmic": {
+			"current": {
+				"type": "gettable",
+			},
+		},
+		"topgate": {
+			"voltage": {
+				"type": "dynamic",
+				"setpoints": np.linspace(0, 0.5, 100),
+				"value": 0.5
+			}
+		},
+		"barriers": {
+			"voltage": {
+				"type": "dynamic",
+				"setpoints": np.linspace(0, 0.4, 100),
+				"value": 0.4
+			},
+		},
+	}
+
+In comparison to the original parameters we removed the break condition (we do not need it anymore), the delay (to keep things simple, it is 0 by default and the communication time between PC and instruments is usually so large, that delays are not required),
+and added values to the topgate and the barriers. 
+Instead of using the Generic_1D_parallel_asymmetric_Sweep we now use the Generic_1D_Sweep. 
+
+
+.. code-block:: python
+		
+	mapping = script.gate_parameters  # We can reuse the already existing mapping. It is stored in script.gate_parameters
+	script = Generic_1D_Sweep()
+	script.setup(parameters, metadata = None)
+	map_terminals_gui(station.components, script.gate_parameters, mapping)
+	script.run()
+
+Note, that we first store the mapping from the last measurement to a different variable, as we are overwriting the first script. We can pass the existing mapping on to the new script as 3rd argument of map_terminals_gui, so we do not have to do it again.
+
+The Generic_1D_Sweep start one measurement for each dynamic parameters, so we will end up with two measurements in this case. In each measurement, one of the dynamic parameters is ramped (or more precisely set to its setpoints, one could use arbitrary setpoints here) while all other 
+dynamic parameters are treated as "static gettable" and thus keep constant. As usual, QuMada will ramp all of those parameters to their "value" at the beginning of each measurement. 
+In the first measurement, the topgate is ramped and the barriers are kept at 0.4 V. In the second measurement, the barrier are ramped from 0 V to 0.4 V and the topgate is kept constant at 0.5 V.
+
+###########################
+3rd Measurement 2D-Sweep
+###########################
+
+As last measurement in this tutorial, we will create a 2D barrier-barrier scan. For this purpose, we assume that we now have two individually controllable barriers.
+Our parameters dictionary could look like this.
+
+
+
+.. code-block:: python
+
+	parameters = {
+		"ohmic": {
+			"current": {
+				"type": "gettable",
+			},
+		},
+		"topgate": {
+			"voltage": {
+				"type": "static gettable",
+				"setpoints": np.linspace(0, 0.5, 100), #The setpoints are ignored if a parameter is not dynamic
+				"value": 0.5
+			}
+		},
+		"barrier 1": {
+			"voltage": {
+				"type": "dynamic",
+				"setpoints": np.linspace(0, 0.4, 100),
+			},
+		},
+		"barrier 2": {
+			"voltage": {
+				"type": "dynamic",
+				"setpoints": np.linspace(0, 0.4, 100),
+			},
+		},
+	}
+
+We set the topgate to static gettable, as we want to keep it constant, but might want to easily check its voltage at a later time after the measurement. "static gettable" will add its value to the measurement data.
+Note that we did not delete the setpoints for the topgate. They are not evaluated for parameters that are not dynamic. It is often convenient to copy&paste or simply alter parameter dictionaries and it is
+often faster not to delete all unrequired parameters.
+This time, we are using the Generic_nD_Sweep(). Instead of ramping all parameters individually, it goes through all combinations of setpoints. In our case this will result in the desired barrier-barrier scan.
+While higher dimensions are possible by simply adding more dynamic parameters, be aware that plotting them with the plotter-inspector might not work.
+By default, the first occuring dynamic is the "fast" parameter ("sweep"-parameter, inner loop) while the out one is the "slow" parameter ("step"-parameter, outer loop). For details on how to change that without 
+altering the order of the parameters, check the sections about groups and priorities (REF MISSING).
+
+
+.. code-block:: python
+		
+	script = Generic_nD_Sweep()
+	script.setup(parameters, metadata = None)
+	map_terminals_gui(station.components, script.gate_parameters, mapping)
+	script.run()
+
+Again, we used the existing mapping to make the mapping process easier. As we changed the parameters dictionary this time -we removed the barriers and added barrier 1 and barrier 2- the mapping GUI will open up.
+Note that the unaltered parameters from the topgate and the ohmics are still mapped, we only have to map the two new parameters.
+
+Running the script should then start the desired measurement.
+
+You are now able run simple measurements with QuMada. Again, we want to point out that this is not the most comfortable to run measurements in QuMada, we highly recommend that you have a look at the :ref:`DeviceObject`.
+
+Other insteresting sections to follow up are the ones regarding :ref:`BufferedMeasurements` and a more detailed documentation of the different :ref:`MeasurementScripts`. 
+
+
+
+
 
 Adding the QuMADA Buffer Class to Instruments (WIP)
------------------------------------------------
+-----------------------------------------------------------------------
 
 Using QuMADA for doing buffered measurements requires the measurement instruments to have a QuMADA "Buffered" Class.
 In analogy to the gate mapping it will map the instrument's buffer's properties and functions to a common QuMADA interface.
