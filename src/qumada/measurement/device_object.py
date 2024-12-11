@@ -280,7 +280,7 @@ class QumadaDevice:
         script.setup(
             self.save_to_dict(priorize_stored_value=priorize_stored_value),
             metadata=metadata,
-            name=name,
+            measurement_name=name,
             duration=duration,
             timestep=timestep,
             buffer_settings=temp_buffer_settings,
@@ -352,7 +352,7 @@ class QumadaDevice:
             script.setup(
                 self.save_to_dict(priorize_stored_value=priorize_stored_value),
                 metadata=metadata,
-                name=name,
+                measurement_name=name,
                 buffer_settings=temp_buffer_settings,
                 **self.buffer_script_setup,
             )
@@ -415,7 +415,10 @@ class QumadaDevice:
                     parameter.setpoints = setpoints[params.index(parameter)]
         script = Generic_1D_parallel_asymm_Sweep()
         script.setup(
-            self.save_to_dict(priorize_stored_value=priorize_stored_value), metadata=metadata, name=name, **kwargs
+            self.save_to_dict(priorize_stored_value=priorize_stored_value), 
+            metadata=metadata, 
+            measurement_name=name, 
+            **kwargs
         )
         mapping = self.instrument_parameters
         map_terminals_gui(station.components, script.gate_parameters, mapping)
