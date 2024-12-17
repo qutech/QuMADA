@@ -24,6 +24,7 @@ import matplotlib
 # from qumada.instrument.mapping.base import flatten_list
 import numpy as np
 from matplotlib import pyplot as plt
+import matplotlib.ticker as ticker
 from qcodes.dataset.data_export import reshape_2D_data
 
 from qumada.utils.load_from_sqlite_db import (
@@ -70,10 +71,32 @@ def _handle_overload(*args, output_dimension: int = 1, x_name=None, y_name=None,
     return params
 
 
+def _get_scaled_unit_and_factor(unit: str, values: list):
+    """
+    Determines the best scaling factor and prefix for the given values.
+    """
+    prefixes = {
+        -12: 'p', -9: 'n', -6: 'µ', -3: 'm', 0: '', 3: 'k', 6: 'M', 9: 'G'
+    }
+    abs_max_value = max(abs(min(values)), abs(max(values)))
+    exponent = int(np.floor(np.log10(abs_max_value)) // 3 * 3) if abs_max_value != 0 else 0
+    prefix = prefixes.get(exponent, '')
+    scaling_factor = 10 ** (-exponent)
+    return scaling_factor, f"{prefix}{unit}"
+
+def _rescale_axis(axis, data, unit, axis_type="x"):
+    """
+    Rescales the axis ticks to avoid scientific notation and sets appropriate labels.
+    """
+    factor, scaled_unit = _get_scaled_unit_and_factor(unit, data)
+    axis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f"{x * factor:.0f}"))
+    return factor, scaled_unit
+
+
 # %%
 
 
-def plot_2D(x_data, y_data, z_data, *args, **kwargs):
+def plot_2D(x_data, y_data, z_data, fig = None, ax = None, *args, **kwargs):
     """
     Plots 2D derivatives. Requires tuples of name and 1D arrays corresponding
     to x, y and z data as input.
@@ -85,7 +108,8 @@ def plot_2D(x_data, y_data, z_data, *args, **kwargs):
     """
     if args:
         x_data, y_data, z_data = _handle_overload(x_data, y_data, z_data, *args, output_dimension=3)
-    fig, ax = plt.subplots()
+    if ax is None or fig is None:
+        fig, ax = plt.subplots()
     x, y, z = reshape_2D_data(x_data[1], y_data[1], z_data[1])
     im = plt.pcolormesh(x, y, z)
     fig.colorbar(im, ax=ax, label=f"{x_data[0]} in {z_data[2]}")
@@ -179,8 +203,6 @@ def plot_hysteresis(dataset, x_name, y_name):
 
 
 # %%
-
-
 def plot_hysteresis_new(x_data, y_data):
     fig, ax = plt.subplots()
     grad = np.gradient(x_data[1])
@@ -206,57 +228,85 @@ def plot_hysteresis_new(x_data, y_data):
     return fig, ax
 
 
-# %%
+#%%
+
 def plot_multiple_datasets(
     datasets: list = None,
     x_axis_parameters_name: str = None,
     y_axis_parameters_name: str = None,
     plot_hysteresis: bool = True,
+    ax=None,
+    fig=None,
+    scale_axis=True,
     **kwargs,
 ):
+    
     """
-    Allows plotting of multiple datasets from a qcodes database into one plot.
-    So far, only 2D plotting is supported. Takes care of labels and legend.
-
+    Plot multiple datasets from a QCoDeS database into a single figure.
+    
+    This function supports 2D plotting and can handle multiple datasets.
+    It automatically manages axis labels, legends, and optionally rescales the axes
+    to use appropriate SI prefixes (e.g., µA, mV) instead of scientific notation.
+    
     Parameters
     ----------
     datasets : list, optional
-        List of QuMADA datasets. If set to None, you can pick measurements from
-        the currently loaded QuMADA database. Default is None.
+        List of QCoDeS datasets to plot. If None, the function allows you to pick
+        measurements from the currently loaded QCoDeS database. Default is None.
     x_axis_parameters_name : str, optional
-        Pass the namestring of the parameter you want to plot on the x-axis.
-        If none, you will be asked to set it individually for every chosen
-        dataset, if more than two parameters are in the dataset.
-        The default is None.
+        The name of the parameter to use for the x-axis. If None, you will be prompted
+        to select it individually for each dataset if more than one parameter exists.
+        Default is None.
     y_axis_parameters_name : str, optional
-        Pass the namestring of the parameter you want to plot on the y-axis.
-        If none, you will be asked to set it individually for every chosen
-        dataset, if more than two parameters are in the dataset.
-        The default is None.
+        The name of the parameter to use for the y-axis. If None, you will be prompted
+        to select it individually for each dataset if more than one parameter exists.
+        Default is None.
     plot_hysteresis : bool, optional
-        Will separate datasets that contain multiple sweeps into multiple
-        graphs, based on the monotony of the x-axis parameters data.
-        The default is True.
-    **kwargs : TYPE
-        DESCRIPTION.
-
+        If True, separates datasets with multiple sweeps into different curves based 
+        on the monotonicity of the x-axis data. For example, foresweep and backsweep 
+        can be plotted with distinct markers. Default is True.
+    ax : matplotlib.axes._axes.Axes, optional
+        Matplotlib axis to plot on. If None, a new figure and axis will be created.
+        Default is None.
+    fig : matplotlib.figure.Figure, optional
+        Matplotlib figure object. Required if `ax` is provided. Default is None.
+    scale_axis : bool, optional
+        If True, rescales the x- and y-axes to use SI prefixes (e.g., µ, m, k) instead 
+        of scientific notation for better readability. Default is True.
+    **kwargs : dict
+        Additional keyword arguments for customizing the plot. For example:
+            - font: int, font size for the plot.
+            - marker: str, marker style for the data points.
+            - markersize: int, size of the markers.
+            - legend_fontsize: int, font size for the legend.
+            - legend_markerscale: float, scale factor for legend markers.
+    
     Returns
     -------
-    fig : pyplot Figure object.
-    ax : pyplot axis objects.
-
-    TODO: Move pyplot plot settings into kwargs.
+    ax : matplotlib.axes._axes.Axes
+        The axis object containing the plotted data.
+    
+    Notes
+    -----
+    - This function assumes the input datasets are from QCoDeS and compatible with 
+      the `get_parameter_data` function.
+    - Axis scaling is applied only when `scale_axis` is True, and the scaling factor
+      is calculated based on the data range.
+    - Monotonicity of the x-axis is used to detect and separate hysteresis loops.
+    
     """
+
+
     if not datasets:
-        print("hello, I am empty")
         datasets = pick_measurements()
     x_data = list()
     y_data = list()
-    signs = list()
     x_units = list()
     y_units = list()
-    matplotlib.rc("font", size=35)
-    fig, ax = plt.subplots(figsize=(30, 30))
+    if kwargs.get("font", None) is not None:
+        matplotlib.rc("font", size=35)
+    if ax is None or fig is None:
+        fig, ax = plt.subplots(figsize=(30, 30))
     x_labels = []
     y_labels = []
     p = []
@@ -268,12 +318,12 @@ def plot_multiple_datasets(
             y_name=y_axis_parameters_name,
             output_dimension=2,
         )
-        x_data.append(x[1])  # This is the x_data
-        y_data.append(y[1])  # This is the y_data
-        x_labels.append(x[3])  # Labels of x_data
-        y_labels.append(y[3])  # Labels of y_data
-        x_units.append(x[2])  # Units of x_data
-        y_units.append(y[2])  # Units of y_data
+        x_data.append(x[1])
+        y_data.append(y[1])
+        x_labels.append(x[3])
+        y_labels.append(y[3])
+        x_units.append(x[2])
+        y_units.append(y[2])
 
         if plot_hysteresis:
             x_s, y_s, signs = separate_up_down(x_data[i], y_data[i])
@@ -281,22 +331,16 @@ def plot_multiple_datasets(
                 if signs[j] == 1:
                     marker = "^"
                     f_label = f"{label} foresweep"
-                    f_label = f_label.replace("Gate ", "")
                 else:
                     marker = "v"
                     f_label = f"{label} backsweep"
-                    f_label = f_label.replace("Gate ", "")
-                if j > 0:
-                    p = plt.plot(
-                        x_s[j],
-                        y_s[j],
-                        marker,
-                        color=p[-1].get_color(),
-                        label=f_label,
-                        markersize=kwargs.get("markersize", 15),
-                    )
-                else:
-                    p = plt.plot(x_s[j], y_s[j], marker, label=f_label, markersize=kwargs.get("markersize", 15))
+                p = plt.plot(
+                    x_s[j],
+                    y_s[j],
+                    marker,
+                    label=f_label,
+                    markersize=kwargs.get("markersize", 15),
+                )
         else:
             p = plt.plot(
                 x_data[i],
@@ -305,14 +349,20 @@ def plot_multiple_datasets(
                 label=label,
                 markersize=kwargs.get("markersize", 15),
             )
+
+    # Scale axes and update labels
+    if scale_axis is True:
+        x_scaling_factor, x_units[0] = _rescale_axis(ax.xaxis, np.concatenate(x_data), x_units[0], "x")
+        y_scaling_factor, y_units[0] = _rescale_axis(ax.yaxis, np.concatenate(y_data), y_units[0], "y")
     plt.xlabel(f"{x_labels[0]} ({x_units[0]})")
     plt.ylabel(f"{y_labels[0]} ({y_units[0]})")
+    # Update x and y labels
     plt.legend(
         loc="upper left", fontsize=kwargs.get("legend_fontsize", 15), markerscale=kwargs.get("legend_markerscale", 1)
     )
     plt.tight_layout()
 
-    return fig, ax
+    return ax
 
 
 # %%

@@ -57,7 +57,7 @@ Station and Instruments
 
 
 Now we can start with setting up the QCoDeS station object and the measurement instruments.
-In difference to QCoDeS measurements, QuMADA measurements scripts are largely independend from the instruments used. Nonetheless, it is still required to create a QCoDeS station
+In difference to QCoDeS measurements, QuMADA measurements scripts are largely independent of the instruments used. Nonetheless, it is still required to create a QCoDeS station
 object and specify the instruments used, which is done by providing name and the address of the instrument using the corresponding QCoDeS methods. One can use custom instrument drivers (such as our Dummy Instruments)
 as long as they follow the QCoDeS standards.
 In addition to this, we want to add an instrument mapping to each instrument. As QCoDeS drivers are supplied by many different people, the parameters of instruments are named
