@@ -20,11 +20,11 @@
 # %%
 
 import matplotlib
+import matplotlib.ticker as ticker
 
 # from qumada.instrument.mapping.base import flatten_list
 import numpy as np
 from matplotlib import pyplot as plt
-import matplotlib.ticker as ticker
 from qcodes.dataset.data_export import reshape_2D_data
 
 from qumada.utils.load_from_sqlite_db import (
@@ -75,14 +75,13 @@ def _get_scaled_unit_and_factor(unit: str, values: list):
     """
     Determines the best scaling factor and prefix for the given values.
     """
-    prefixes = {
-        -12: 'p', -9: 'n', -6: 'µ', -3: 'm', 0: '', 3: 'k', 6: 'M', 9: 'G'
-    }
+    prefixes = {-12: "p", -9: "n", -6: "µ", -3: "m", 0: "", 3: "k", 6: "M", 9: "G"}
     abs_max_value = max(abs(min(values)), abs(max(values)))
     exponent = int(np.floor(np.log10(abs_max_value)) // 3 * 3) if abs_max_value != 0 else 0
-    prefix = prefixes.get(exponent, '')
+    prefix = prefixes.get(exponent, "")
     scaling_factor = 10 ** (-exponent)
     return scaling_factor, f"{prefix}{unit}"
+
 
 def _rescale_axis(axis, data, unit, axis_type="x"):
     """
@@ -96,7 +95,7 @@ def _rescale_axis(axis, data, unit, axis_type="x"):
 # %%
 
 
-def plot_2D(x_data, y_data, z_data, fig = None, ax = None, *args, **kwargs):
+def plot_2D(x_data, y_data, z_data, fig=None, ax=None, *args, **kwargs):
     """
     Plots 2D derivatives. Requires tuples of name and 1D arrays corresponding
     to x, y and z data as input.
@@ -228,7 +227,8 @@ def plot_hysteresis_new(x_data, y_data):
     return fig, ax
 
 
-#%%
+# %%
+
 
 def plot_multiple_datasets(
     datasets: list = None,
@@ -240,14 +240,13 @@ def plot_multiple_datasets(
     scale_axis=True,
     **kwargs,
 ):
-    
     """
     Plot multiple datasets from a QCoDeS database into a single figure.
-    
+
     This function supports 2D plotting and can handle multiple datasets.
     It automatically manages axis labels, legends, and optionally rescales the axes
     to use appropriate SI prefixes (e.g., µA, mV) instead of scientific notation.
-    
+
     Parameters
     ----------
     datasets : list, optional
@@ -262,8 +261,8 @@ def plot_multiple_datasets(
         to select it individually for each dataset if more than one parameter exists.
         Default is None.
     plot_hysteresis : bool, optional
-        If True, separates datasets with multiple sweeps into different curves based 
-        on the monotonicity of the x-axis data. For example, foresweep and backsweep 
+        If True, separates datasets with multiple sweeps into different curves based
+        on the monotonicity of the x-axis data. For example, foresweep and backsweep
         can be plotted with distinct markers. Default is True.
     ax : matplotlib.axes._axes.Axes, optional
         Matplotlib axis to plot on. If None, a new figure and axis will be created.
@@ -271,7 +270,7 @@ def plot_multiple_datasets(
     fig : matplotlib.figure.Figure, optional
         Matplotlib figure object. Required if `ax` is provided. Default is None.
     scale_axis : bool, optional
-        If True, rescales the x- and y-axes to use SI prefixes (e.g., µ, m, k) instead 
+        If True, rescales the x- and y-axes to use SI prefixes (e.g., µ, m, k) instead
         of scientific notation for better readability. Default is True.
     **kwargs : dict
         Additional keyword arguments for customizing the plot. For example:
@@ -280,22 +279,21 @@ def plot_multiple_datasets(
             - markersize: int, size of the markers.
             - legend_fontsize: int, font size for the legend.
             - legend_markerscale: float, scale factor for legend markers.
-    
+
     Returns
     -------
     ax : matplotlib.axes._axes.Axes
         The axis object containing the plotted data.
-    
+
     Notes
     -----
-    - This function assumes the input datasets are from QCoDeS and compatible with 
+    - This function assumes the input datasets are from QCoDeS and compatible with
       the `get_parameter_data` function.
     - Axis scaling is applied only when `scale_axis` is True, and the scaling factor
       is calculated based on the data range.
     - Monotonicity of the x-axis is used to detect and separate hysteresis loops.
-    
-    """
 
+    """
 
     if not datasets:
         datasets = pick_measurements()
