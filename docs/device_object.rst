@@ -1,3 +1,5 @@
+.. _DeviceObject:
+
 Device Object
 ===============
 

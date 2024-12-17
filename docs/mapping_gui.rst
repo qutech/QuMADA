@@ -1,3 +1,5 @@
+.. _MappingGui:
+
 Mapping GUI
 ===========
 
