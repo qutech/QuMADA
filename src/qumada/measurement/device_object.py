@@ -621,7 +621,7 @@ class QumadaDevice:
         script.setup(
             self.save_to_dict(priorize_stored_value=priorize_stored_value),
             metadata=metadata,
-            name=name,
+            measurement_name=name,
             buffer_settings=temp_buffer_settings,
             **self.buffer_script_setup,
             **kwargs,
