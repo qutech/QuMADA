@@ -439,26 +439,25 @@ class Timetrace_with_Sweeps_buffered(MeasurementScript):
         )
         self.buffered = True
         datasets = []
-
         self.generate_lists()
         naming_helper(self, default_name="Timetrace with sweeps")
         meas = Measurement(name=self.measurement_name)
-
         meas.register_parameter(timer)
-        assert len(self.dynamic_channels) == 1
-        dyn_channel = self.dynamic_channels[0]
-        dynamic_parameter = self.dynamic_parameters[0]
-        self.properties[dynamic_parameter["gate"]][dynamic_parameter["parameter"]]["_is_triggered"] = True
-        meas.register_parameter(dyn_channel)
+        
+        for dynamic_param in self.dynamic_parameters:
+            self.properties[dynamic_param["gate"]][
+                dynamic_param["parameter"]]["_is_triggered"] = True
+        for dyn_channel in self.dynamic_channels:
+            meas.register_parameter(dyn_channel)
 
         # Block required to log gettable and static parameters that are not
         # buffarable (e.g. Dac Channels)
         static_gettables = []
         for parameter, channel in zip(self.gettable_parameters, self.gettable_channels):
             if is_bufferable(channel) and channel not in self.static_gettable_channels:
-                meas.register_parameter(channel, setpoints=[timer, dyn_channel])
+                meas.register_parameter(channel, setpoints=[timer, *self.dynamic_channels])
             elif channel in self.static_gettable_channels:
-                meas.register_parameter(channel, setpoints=[timer, dyn_channel])
+                meas.register_parameter(channel, setpoints=[timer, *self.dynamic_channels])
                 parameter_value = self.properties[parameter["gate"]][parameter["parameter"]]["value"]
                 static_gettables.append((channel, [parameter_value for _ in range(int(self.buffered_num_points))]))
         start = time()
@@ -469,13 +468,12 @@ class Timetrace_with_Sweeps_buffered(MeasurementScript):
                 logger.info("No method to reset the trigger defined.")
             while time() - start < duration:
                 self.initialize()
-                # start = timer.reset_clock()
                 self.ready_buffers()
                 t = time() - start
                 try:
-                    dyn_channel.root_instrument._qtools_ramp(
-                        [dyn_channel],
-                        end_values=[self.dynamic_sweeps[0].get_setpoints()[-1]],
+                    self.dynamic_channels[0].root_instrument._qumada_ramp(
+                        self.dynamic_channels,
+                        end_values=[sweep.get_setpoints()[-1] for sweep in self.dynamic_sweeps],
                         ramp_time=self._burst_duration,
                         sync_trigger=sync_trigger,
                     )
@@ -513,15 +511,13 @@ class Timetrace_with_Sweeps_buffered(MeasurementScript):
                 except TypeError:
                     logger.info("No method to reset the trigger defined.")
                 results = self.readout_buffers(timestamps=True)
-                # TODO: Append values from other dynamic parameters
-                # datasaver.add_result((dyn_channel, self.dynamic_sweeps[0].get_setpoints()),
-                #                      (timer, [ti+t for ti in results.pop(-1)]),
-                #                      *results,
-                #                      *static_gettables,)
-                results.pop(-1)
+                dynamic_param_results = [
+                    (dyn_channel, sweep.get_setpoints()) for dyn_channel, sweep in zip(
+                        self.dynamic_channels, self.dynamic_sweeps)]
+                results.pop(-1) #removes timestamps from results
                 datasaver.add_result(
                     (timer, t),
-                    (dyn_channel, self.dynamic_sweeps[0].get_setpoints()),
+                    *dynamic_param_results,
                     *results,
                     *static_gettables,
                 )
