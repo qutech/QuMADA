@@ -40,7 +40,7 @@ are compatible with any measurement scripts are valid.
 	}
 
 
-	device = QumadaDevice.create_from_dict(parameters, station=station, make_terminals_global = True, namespace = globals())
+	device = QumadaDevice.create_from_dict(parameters, station=station, namespace = globals())
 
 
 This code will create a device with two terminals, "ohmic" and "gate". The "ohmic" has one parameter "current" and
@@ -49,7 +49,7 @@ and be in the whitelist for valid parameter names. Additional attributes such as
 when creating the object but are stored and can be accessed later e.g. for running measurements. In particular "values" are NOT directly
 set for parameters for safety reason. Creating a device has no direct influence on any instrument settings or applied values.
 
-The argument "make_terminals_global" adds all created terminals to the namespace provided in the "namespace" argument for easier access.
+If the "namespace" argument is not None, all created terminals are added to the provided namespace for easier access.
 In this example, all terminals are added to the global namespace, such that it is possible to for example directly access the ohmic's current
 by calling "ohmic.current()" instead of "device.ohmic.current()". Be aware, that automatically adding variables to the global namespace is not
 always a safe practice, make sure you are familiar with possible issues arising from this before you use the feature. To minimize the risks,
@@ -113,20 +113,27 @@ Parameters and simple measurements
 
 With the mapping done it is now possible to use the device, its terminals and parameters.
 "device.terminal_name.parameter_name()" calls the get command of the mapped instrument parameter, "device.terminal_name.parameter_name(value)" sets
-it to the value. If the terminals were added to global namespace, they can be called without the device. As QuMada is tailored for experiments with
+it to the value. If the terminals were added to global namespace, they can be called without "device". As QuMada is tailored for experiments with
 gated quantum dots where the most accessed parameters are gate voltages, the voltage parameter can be directly accessed by just calling its terminal,
 e.g. "gate_1()" will return "gate_1.voltage()" and "gate_1(1)" will set the voltage of gate 1 to 1 V. For all other parameters (even if there is only
 one parameter for a certain terminal) it is required to access the parameters explicitely. Also, this works only for calling the terminal.
 If you try to access other attributes or methods of the voltage parameter you still have to call it explicitely. E.g. "gate_1.setpoints" will not return
 return the setpoints of the voltage!
 
-It is possible to print all voltages of the device by calling "device.voltages" for a quick overview.
+It is possible to print all voltages of the device by calling "device.voltages()" for a quick overview.
 
 "gate_1.voltage.ramp(target, ramp_speed)" can be used to ramp to a certain value, "gate_1.voltage.measured_ramp(target)" will automatically
 start a new measurement (in the currently active QCoDeS database and for the currently active experiment container) ramping from the current value
 to the target. This offers a very quick and intuitive way to record measurements based on the current device working point.
+
 Note that there are a couple of optional arguments for the measured_ramp method to specify the starting point, the number of points, if the measurement
-should be buffered and its name. For details look into TBD.
+should be buffered and its name.
+
+In case you want to set a parameter with a numeric value (such as a voltage), e.g gate1.voltage(1), it is ramped to the provided value and not instantly set.
+This behaviour can be changed globally by setting "device.ramp = False" (default is true) or for each parameter individually by setting "device.parameter.rampable" to True or False.
+The ramp rate of each parameter can be adjusted via "device.parameter.ramp_rate". By default, the maximum time a ramp can take is limited to 5 sec, if the ramp_rate is to low it will
+be changed to ensure a smooth ramp to the target value within this time. The ramp_time parameter can be set via the "ramp_time" argument of ramp-method of parameters.
+
 
 To quickly benchmark a devices stability it is possible to record a timetrace with device.timetrace(duration), 2D scans centered at the current working point
 can be recorded with device.sweep_2D(slow_param, fast_param, slow_param_range, fast_param_range). Again, both feature multiple additional arguments and can
@@ -137,7 +144,7 @@ Values and setpoints defined in the parameter dictionary are not used for measur
 type "gettable" are recorded in those measurements. All other parameters are temporarily set to "static" except for the parameters that are to be ramped
 in the 1D or 2D sweeps, those are temporarily set to dynamic. To record a value that was not specified to be "gettable" when the device was created can simply
 be set to "gettable" by changing its type:
-"device.terminal.parameter.type = 'gettable'". If you do not want to record a parameter set it to "".
+"device.terminal.parameter.type = 'gettable'". If you do not want to record nor explicitely set a parameter set it to "".
 Values from the parameters dictionary are stored in device.terminal.parameter._stored_value to distinguish them from device.terminal.parameter.value which is
 the current value of the parameter. However, in case you want to use the values and setpoints from the parameter dictionary instead of the one specified
 in the function call of measurement scripts, you can set the argument priorize_stored_values to True.
@@ -146,9 +153,10 @@ Another important feature is the possibility to save and load device working poi
 use device.save_defaults. This stores all parameter values (of parameters that can be set). With device.set_defaults() you can reset it to the stored
 configuration. Alternatively you can use "device.save_state(name)" and "device.set_state(name)" to store and set multiple working points with
 custom names. They can also be accessed via "device.states" in case you forgot the name.
-For all of those methods the parameters are ramped to the final state by default (with the default QuMada ramp rate). You can use the argument "ramp = False" to avoid this, or use keyword
-arguments (ramp_rate, duration) to adjust the ramp speed when calling the methods. Alternatively, you can set the parameter "device.ramp" to True or False in order to control the behaviour
-for the complete device.
+For all of those methods the parameters are ramped to the final state by default (with the default QuMada ramp rate).
+
+To get a quick overview over the device_object's capabilities we recommend to go through the device_object_example.py, which can be found in qumada\src\examples.
+It provides a couple of examples and wors with dummy instruments.
 
 
 
