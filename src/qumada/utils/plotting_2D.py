@@ -91,32 +91,111 @@ def _rescale_axis(axis, data, unit, axis_type="x"):
     axis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f"{x * factor:.0f}"))
     return factor, scaled_unit
 
+def get_parameter_name_by_label(dataset, label):
+    """
+    Returns the parameter name for a given parameter label in a QCoDeS dataset.
 
-# %%
+    Parameters
+    ----------
+    dataset : qcodes.dataset
+        The QCoDeS dataset containing the parameters.
+    label : str
+        The label of the parameter for which to find the name.
+
+    Returns
+    -------
+    str
+        The name of the parameter corresponding to the provided label.
+
+    Raises
+    ------
+    ValueError
+        If no parameter matches the label or if multiple parameters share the same label.
+    """
+    matching_parameters = []
+
+    # Iterate over all parameters in the dataset and compare labels
+    for parameter in dataset.get_parameters():
+        if parameter.label == label:
+            matching_parameters.append(parameter.name)
+
+    # Handle different cases
+    if not matching_parameters:
+        raise ValueError(f"No parameter found with label '{label}'.")
+    elif len(matching_parameters) > 1:
+        raise ValueError(f"Multiple parameters found with label '{label}': {matching_parameters}")
+    else:
+        return matching_parameters[0]
 
 
-def plot_2D(x_data, y_data, z_data, fig=None, ax=None, *args, **kwargs):
+def plot_2D(x_data, y_data, z_data, fig=None, ax=None, 
+            x_label=None, y_label=None, z_label=None,
+            scale_axis=True,
+            *args, **kwargs):
     """
     Plots 2D derivatives. Requires tuples of name and 1D arrays corresponding
-    to x, y and z data as input.
-    Works well with QuMADA "get_parameter_data" method found in
-    load_from_sqlite.
+    to x, y, and z data as input. Supports axis and colorbar scaling.
 
-    TODO: Add get_parameter_data method as default to call when no data is provided
-    TODO: Add further image manipulation and line detection functionality
+    Parameters
+    ----------
+    x_data, y_data, z_data : tuple
+        Tuples containing name, values, units, and labels of x, y, and z axes.
+    fig : matplotlib.figure.Figure, optional
+        The figure object. Default is None.
+    ax : matplotlib.axes.Axes, optional
+        The axis object. Default is None.
+    x_label, y_label, z_label : str, optional
+        Custom axis labels. Default is None.
+    scale_axis : bool, optional
+        If True, rescales axes and colorbar to use SI prefixes. Default is True.
+    *args, **kwargs
+        Additional arguments for flexibility.
+
+    Returns
+    -------
+    fig, ax : tuple
+        The figure and axis objects for further customization.
     """
     if args:
         x_data, y_data, z_data = _handle_overload(x_data, y_data, z_data, *args, output_dimension=3)
     if ax is None or fig is None:
         fig, ax = plt.subplots()
-    x, y, z = reshape_2D_data(x_data[1], y_data[1], z_data[1])
-    im = plt.pcolormesh(x, y, z)
-    fig.colorbar(im, ax=ax, label=f"{x_data[0]} in {z_data[2]}")
-    plt.xlabel(f"{x_data[0]} in {x_data[2]}")
-    plt.ylabel(f"{y_data[0]} in {y_data[2]}")
+
+    # Skalierung der Achsendaten und Einheiten
+    x_values, y_values, z_values = x_data[1], y_data[1], z_data[1]
+    x_unit, y_unit, z_unit = x_data[2], y_data[2], z_data[2]
+
+    if scale_axis:
+        x_scale, scaled_x_unit = _get_scaled_unit_and_factor(x_unit, x_values)
+        y_scale, scaled_y_unit = _get_scaled_unit_and_factor(y_unit, y_values)
+        z_scale, scaled_z_unit = _get_scaled_unit_and_factor(z_unit, z_values)
+
+        # Skaliere die Daten
+        x_values = np.array(x_values) * x_scale
+        y_values = np.array(y_values) * y_scale
+        z_values = np.array(z_values) * z_scale
+
+        # Aktualisiere die Einheiten
+        x_unit, y_unit, z_unit = scaled_x_unit, scaled_y_unit, scaled_z_unit
+
+    # Reshape der Daten für 2D-Darstellung
+    x, y, z = reshape_2D_data(x_values, y_values, z_values)
+
+    # Plotten der 2D-Daten
+    im = ax.pcolormesh(x, y, z, shading='auto')
+    cbar = fig.colorbar(im, ax=ax)
+    cbar.set_label(f"{z_data[3]} ({z_unit})")
+
+    # Achsentitel aktualisieren
+    x_label = x_label or f"{x_data[3]} ({x_unit})"
+    y_label = y_label or f"{y_data[3]} ({y_unit})"
+
+    ax.set_xlabel(x_label)
+    ax.set_ylabel(y_label)
+
+    plt.tight_layout()
     plt.show()
     return fig, ax
-
 
 # %%
 def plot_2D_grad(x_data, y_data, z_data, *args, direction="both"):
@@ -238,6 +317,8 @@ def plot_multiple_datasets(
     ax=None,
     fig=None,
     scale_axis=True,
+    legend=True,
+    exclude_string_from_legend: list = [],
     **kwargs,
 ):
     """
@@ -310,6 +391,8 @@ def plot_multiple_datasets(
     p = []
     for i in range(len(datasets)):
         label = datasets[i].name
+        for string in exclude_string_from_legend:
+            label = label.strip(string)
         x, y = _handle_overload(
             *get_parameter_data(datasets[i], y_axis_parameters_name),
             x_name=x_axis_parameters_name,
@@ -355,9 +438,10 @@ def plot_multiple_datasets(
     plt.xlabel(f"{x_labels[0]} ({x_units[0]})")
     plt.ylabel(f"{y_labels[0]} ({y_units[0]})")
     # Update x and y labels
-    plt.legend(
-        loc="upper left", fontsize=kwargs.get("legend_fontsize", 15), markerscale=kwargs.get("legend_markerscale", 1)
-    )
+    if legend is True:
+        plt.legend(
+            loc=kwargs.get("legend_position", "upper left"), fontsize=kwargs.get("legend_fontsize", 15), markerscale=kwargs.get("legend_markerscale", 1)
+        )
     plt.tight_layout()
 
     return ax
