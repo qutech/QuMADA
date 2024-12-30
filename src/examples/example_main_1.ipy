@@ -73,13 +73,6 @@ from qtools_metadata.metadata import create_metadata, save_metadata_object_to_db
 db.api_url = "http://134.61.7.48:9124"
 metadata = create_metadata()
 
-
-#%% Measurement Setup
-
-# Set path for measurement data db
-load_db()
-# load_db("path/to/measurements.db")
-
 # %% Parameters
 # This dictionary defines your device. "ohmic", "gate1" and "gate2" are terminals, representing parts of your
 # device.
