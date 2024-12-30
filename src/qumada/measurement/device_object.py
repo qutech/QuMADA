@@ -482,30 +482,6 @@ class QumadaDevice:
         return data
 
 
-def create_hook(func, hook):
-    """
-    Decorator to hook a function onto an existing function.
-    The hook function can use keyword-only arguments, which are omitted prior
-    to execution of the main function.
-    """
-
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        hook(*args, **kwargs)
-        # remove arguments used in hook from kwargs
-        sig = inspect.signature(hook)
-        varkw = next(
-            filter(
-                lambda p: p.kind is inspect.Parameter.VAR_KEYWORD,
-                sig.parameters.values(),
-            )
-        ).name
-        unused_kwargs = sig.bind(*args, **kwargs).arguments.get(varkw) or {}
-        return func(*args, **unused_kwargs)
-
-    return wrapper
-
-
 class Terminal(ABC):
     """
     Base class for Terminals scripts.
@@ -513,16 +489,9 @@ class Terminal(ABC):
     The abstract functions "reset" has to be implemented.
     """
 
-    # TODO: Put list elsewhere! Remove names that were added as workarounds (e.g. aux_voltage) as soon as possible
     PARAMETER_NAMES: set[str] = load_param_whitelist()
 
     def __init__(self, name, parent: QumadaDevice | None = None, type: str | None = None):
-        # Create function hooks for metadata
-        # reverse order, so insert metadata is run second
-        # self.run = create_hook(self.run, self._insert_metadata_into_db)
-        # self.run = create_hook(self.run, self._add_data_to_metadata)
-        # self.run = create_hook(self.run, self._add_current_datetime_to_metadata)
-
         self.properties: dict[Any, Any] = {}
         self.name = name
         self._parent = parent
