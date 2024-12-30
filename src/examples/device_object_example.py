@@ -140,7 +140,7 @@ parameters = {
 # You can also load and save parameter
 # and trigger mappings to from/to files (see documentation).
 
-device = QumadaDevice.create_from_dict(parameters, station=station, make_terminals_global=True, namespace=globals())
+device = QumadaDevice.create_from_dict(parameters, station=station, namespace=globals())
 device.mapping()
 device.buffer_script_setup = buffer_script_settings
 device.buffer_settings = buffer_settings

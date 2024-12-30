@@ -43,14 +43,12 @@ class Parameter_Exists_Exception(Exception):
 class QumadaDevice:
     def __init__(
         self,
-        make_terminals_global=True,
         namespace=None,
         station: Station | None = None,
     ):
-        self.namespace = namespace or globals()
+        self.namespace = namespace
         self.terminals = {}
         self.instrument_parameters = {}
-        self.make_terminals_global = make_terminals_global
         self.station = station
         self.buffer_settings = {}
         self.buffer_script_setup = {}
@@ -64,7 +62,7 @@ class QumadaDevice:
             )
         else:
             raise Terminal_Exists_Exception(f"Terminal {terminal_name} already exists. Please remove it first!")
-        if self.make_terminals_global:
+        if self.namespace is not None:
             if terminal_name not in self.namespace.keys():
                 # Adding to the global namespace
                 self.namespace[terminal_name.replace(" ", "_")] = self.terminals[terminal_name]
@@ -140,7 +138,7 @@ class QumadaDevice:
                 pass
 
     @staticmethod
-    def create_from_dict(data: dict, station: Station | None = None, make_terminals_global=False, namespace=None):
+    def create_from_dict(data: dict, station: Station | None = None, namespace=None):
         """
         Creates a QumadaDevice object from valid parameter dictionaries as used in Qumada measurement scripts.
         Be aware that the validity is not checked at the moment, so there might be unexpected exceptions!
@@ -150,7 +148,7 @@ class QumadaDevice:
         If you set namespace=globals() you can make the terminals available in global namespace.
         TODO: Remove make_terminals_global parameter and check if namespace is not None
         """
-        device = QumadaDevice(station=station, make_terminals_global=make_terminals_global, namespace=namespace)
+        device = QumadaDevice(station=station, namespace=namespace)
         for terminal_name, terminal_data in data.items():
             device.add_terminal(terminal_name, terminal_data=terminal_data)
             for parameter_name, properties in terminal_data.items():
