@@ -605,7 +605,7 @@ class QumadaDevice:
                         parameter.value = dynamic_values[dynamic_params.index(parameter)]
                 if static_params is not None and parameter in static_params:
                     parameter.type = "static"
-                    if parameter in gettable_params:
+                    if gettable_params is not None and parameter in gettable_params:
                         parameter.type = "static gettable"
                     if static_values is not None:
                         parameter.value = static_values[static_params.index(parameter)]
