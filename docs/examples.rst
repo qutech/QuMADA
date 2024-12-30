@@ -26,54 +26,63 @@ is provided, the parameters will kept at the starting point of their sweep.
 
 Example:
 
-.. code-block:: yaml
+.. code-block:: python
 
-	source drain:
-	  amplitude:
-		type: static
-		value: 0.0001
-	  frequency:
-		type: static
-		value: 173
-	  output_enabled:
-		type: static
-		value: 1
-	  current:
-		type: gettable
-		break_conditions:
-		- val > 1e-9
-	  phase:
-		type: gettable
-	Accumulation Gate:
-	  voltage:
-		type: dynamic
-		start: 0
-		stop: 2
-		num_points: 250
-		delay: 0.025
-		value: 1.5
-	Left Barrier Gate:
-	  voltage:
-		type: dynamic
-		start: 0
-		stop: 2
-		num_points: 200
-		delay: 0.025
-	Right Barrier Gate:
-	  voltage:
-		type: dynamic
-		start: 0
-		stop: 2
-		num_points: 200
-		delay: 0.025
-	Plunger Gate:
-	  voltage:
-		type: static
-		value: 1.3
+	parameters = {
+		"source drain": {
+			"amplitude": {
+				"type": "static",
+				"value": 0.0001
+			},
+			"frequency": {
+				"type": "static",
+				"value": 173
+			},
+			"current": {
+				"type": "gettable",
+				"break_conditions": [
+					"val > 1e-9"
+				]
+			},
+			"phase": {
+				"type": "gettable"
+			}
+		},
+		"Accumulation Gate": {
+			"voltage": {
+				"type": "dynamic",
+				"setpoints": np.linspace(0, 2, 250),
+				"delay": 0.025,
+				"value": 1.5
+			}
+		},
+		"Left Barrier Gate": {
+			"voltage": {
+				"type": "dynamic",
+				"setpoints": np.linspace(0, 1, 200),
+				"delay": 0.025,
+				"value": 0
+			}
+		},
+		"Right Barrier Gate": {
+			"voltage": {
+				"type": "dynamic",
+				"setpoints": np.linspace(0, 1, 250),
+				"delay": 0.025
+				"value": 0
+			}
+		},
+		"Plunger Gate": {
+			"voltage": {
+				"type": "static",
+				"value": 1.3
+			}
+		}
+	}
 
 Those example gate parameters in combination with the Generic_1D_Sweep will perform three 1D sweeps for the Accumulation Gate voltage,
 the Left Barrier Gate voltage and the Right Barrier Gate voltage. The Accumulation Gate voltage will be kept at 1.5 V during the
-measurements of the barrier gates whereas the Barrier gates will be set to 0 V during the Accumulation Gate sweep.
+measurements of the barrier gates whereas the Barrier gates will be set to 0 V during the Accumulation Gate sweep.
 
 The 1D_Generic sweep is very useful for performing pinchoff measurements of many gates.
 
@@ -85,11 +94,8 @@ Generic_1D_parallel_Sweep()
 
 The Generic_1D_parallel_Sweep is very similar to the "normal" Generic_1D_Sweep and behaves in the same way when only one dynamic
 parameter is provided. If more than one dynamic parameter is passed, however, it will not perform multiple sweeps but only one ramping
-all dynamic parameters in parallel. In the current version it will use the setpoints of the first dynamic parameter for all dynamic parameters.
+all dynamic parameters in parallel.
 
-.. note::
-
-	We plan to add the possibility to specify factors for all parameters in order to make this measurement script more flexible
 
 As the Generic_1D_Sweep is has a wait_time argument to set the wait time between the initialization and the start of the measurement
 and additionally the backsweep_after_break: bool [optional][False] parameter. When set to True triggering a break condition will
@@ -104,53 +110,62 @@ This feature was implemented to allow for easy accumulation measurements in Si/S
 
 Example:
 
-.. code-block:: yaml
+.. code-block:: python
 
-	source drain:
-	  amplitude:
-		type: static
-		value: 0.0001
-	  frequency:
-		type: static
-		value: 173
-	  output_enabled:
-		type: static
-		value: 1
-	  current:
-		type: gettable
-		break_conditions:
-		- val > 1e-9
-	  phase:
-		type: gettable
-	Accumulation Gate:
-	  voltage:
-		type: dynamic
-		start: 0
-		stop: 2
-		num_points: 250
-		delay: 0.025
-		value: 1.5
-	Left Barrier Gate:
-	  voltage:
-		type: dynamic
-		start: 0
-		stop: 2
-		num_points: 200
-		delay: 0.025
-	Right Barrier Gate:
-	  voltage:
-		type: dynamic
-		start: 0
-		stop: 2
-		num_points: 200
-		delay: 0.025
-	Plunger Gate:
-	  voltage:
-		type: static
-		value: 1.3
+	parameters = {
+		"source drain": {
+			"amplitude": {
+				"type": "static",
+				"value": 0.0001
+			},
+			"frequency": {
+				"type": "static",
+				"value": 173
+			},
+			"current": {
+				"type": "gettable",
+				"break_conditions": [
+					"val > 1e-9"
+				]
+			},
+			"phase": {
+				"type": "gettable"
+			}
+		},
+		"Accumulation Gate": {
+			"voltage": {
+				"type": "dynamic",
+				"setpoints": np.linspace(0, 2, 250),
+				"delay": 0.025,
+				"value": 1.5
+			}
+		},
+		"Left Barrier Gate": {
+			"voltage": {
+				"type": "dynamic",
+				"setpoints": np.linspace(0, 1, 250),
+				"delay": 0.025,
+				"value": 0
+			}
+		},
+		"Right Barrier Gate": {
+			"voltage": {
+				"type": "dynamic",
+				"setpoints": np.linspace(0, 1, 250),
+				"delay": 0.025
+				"value": 0
+			}
+		},
+		"Plunger Gate": {
+			"voltage": {
+				"type": "static",
+				"value": 1.3
+			}
+		}
+	}
 
-Consequently, the same example gate parameters will start a measurement where the Accumulation Gate and the Barrier Gates are swept at the same time from 0 to 2 V (in 250 steps).
-Unused parameters such as "value" for the Accumulation Gate are simply ignored.
+Consequently, the same example gate parameters will start a measurement where the Accumulation Gate is swept from 0 to 2 V and the Barrier Gates are swept at the same time from 0 to 1 V (in 250 steps).
+Unused parameters such as "value" for the Accumulation Gate are simply ignored. While individual setpoints are possible for the parameters, all of them have to have the same length.
 
 
 ################
@@ -162,50 +177,56 @@ Generic_nD_Sweep
 This measurement script can be used for arbitrary n-dimensional sweeps. For n dynamic parameters an n-dimensional array of setpoints is created containing all combinations of parameter values.
 The setpoint arrays, delays etc. can be chosen individually for each parameter. Our example gate parameters
 
-.. code-block:: yaml
+.. code-block:: python
 
-	source drain:
-	  amplitude:
-		type: static
-		value: 0.0001
-	  frequency:
-		type: static
-		value: 173
-	  output_enabled:
-		type: static
-		value: 1
-	  current:
-		type: gettable
-		break_conditions:
-		- val > 1e-9
-	  phase:
-		type: gettable
-	Accumulation Gate:
-	  voltage:
-		type: dynamic
-		start: 0
-		stop: 2
-		num_points: 250
-		delay: 0.025
-		value: 1.5
-	Left Barrier Gate:
-	  voltage:
-		type: dynamic
-		start: 0
-		stop: 2
-		num_points: 200
-		delay: 0.025
-	Right Barrier Gate:
-	  voltage:
-		type: dynamic
-		start: 0
-		stop: 2
-		num_points: 200
-		delay: 0.025
-	Plunger Gate:
-	  voltage:
-		type: static
-		value: 1.3
+	parameters = {
+		"source drain": {
+			"amplitude": {
+				"type": "static",
+				"value": 0.0001
+			},
+			"frequency": {
+				"type": "static",
+				"value": 173
+			},
+			"current": {
+				"type": "gettable",
+			},
+			"phase": {
+				"type": "gettable"
+			}
+		},
+		"Accumulation Gate": {
+			"voltage": {
+				"type": "dynamic",
+				"setpoints": np.linspace(0, 2, 250),
+				"delay": 0.025,
+				"value": 1.5
+			}
+		},
+		"Left Barrier Gate": {
+			"voltage": {
+				"type": "dynamic",
+				"setpoints": np.linspace(0, 1, 200),
+				"delay": 0.025,
+				"value": 0
+			}
+		},
+		"Right Barrier Gate": {
+			"voltage": {
+				"type": "dynamic",
+				"setpoints": np.linspace(0, 1, 250),
+				"delay": 0.025
+				"value": 0
+			}
+		},
+		"Plunger Gate": {
+			"voltage": {
+				"type": "static",
+				"value": 1.3
+			}
+		}
+	}
 
 will create a 3-dimensional sweep ramping the Accumulation gate from 0 to 2 V and then creating a 2D sweep of the Barrier Gates at each setpoint.
 Keep in mind that sweeps with more than two dynamic parameters can take a lot of time. Furthermore, the built-in QCoDeS plotting script (plot_dataset from qcodes.dataset.plotting) cannot handle
@@ -342,7 +363,6 @@ Therefore, we included some useful method in the "utils" section of QuMADA.
 Buffered Measurements
 ----------------------
 
-Currently, QuMADA supports only basic buffered measurements with simple 1D Sweeps and data acquisition with either the SR 830 or the Zurich Instruments MFLI lockins.
 
 #############################
 Buffered 1D Measurements

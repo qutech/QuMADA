@@ -48,7 +48,6 @@ from qumada.instrument.mapping import (
 from qumada.instrument.mapping.Dummies.DummyDac import DummyDacMapping
 from qumada.measurement.device_object import *
 from qumada.measurement.scripts import (
-    Generic_1D_parallel_asymm_Sweep,
     Generic_1D_parallel_Sweep,
     Generic_1D_Sweep,
     Generic_1D_Sweep_buffered,
@@ -233,7 +232,7 @@ gate2.voltage.type = "dynamic"
 print(device.save_to_dict())
 
 # You can feed it back into any measurement script as parameters:
-script = Generic_1D_parallel_asymm_Sweep()
+script = Generic_1D_parallel_Sweep()
 script.setup(
     device.save_to_dict(),
     metadata=None,
