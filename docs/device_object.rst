@@ -66,12 +66,12 @@ An existing QCoDeS station (cf. QCoDeS documentation and QuMada tutorial on meas
 (or later via "device.station = station") to make its components available for the mapping process.
 
 .. note::
-	
-	It is possible to create a device object by first creating an instance of the device_object (e.g. "device = QumadaDevice()") and then adding terminals and parameters using 
-	"device.add_terminal(terminal_name)" and  "device.terminal_name.add_terminal_parameter(parameter_name)". However, this is rather inconvenient and it is strongly recommended to 
+
+	It is possible to create a device object by first creating an instance of the device_object (e.g. "device = QumadaDevice()") and then adding terminals and parameters using
+	"device.add_terminal(terminal_name)" and  "device.terminal_name.add_terminal_parameter(parameter_name)". However, this is rather inconvenient and it is strongly recommended to
 	use dictionaries.
 
-	
+
 
 ###########################
 Updating an existing device
