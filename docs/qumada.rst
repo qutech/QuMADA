@@ -1,3 +1,5 @@
+.. _API_DOC:
+
 QuMADA API Documentation
 =========================
 

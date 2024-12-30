@@ -4,6 +4,7 @@ Measurement Scripts
 --------------------
 
 QuMADA comes with a couple of "generic" measurement scripts suitable for most basic applications.
+For more details check the measurement section of the Qumada API Documentation :ref:`API_DOC`
 
 #####################
 Generic_1D_Sweep()
