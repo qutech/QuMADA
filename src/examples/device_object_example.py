@@ -17,6 +17,7 @@
 # Contributors:
 # - Till Huckeman
 
+# flake8: noqa: F405
 
 # %% Experiment Setup
 
@@ -53,6 +54,7 @@ from qumada.measurement.scripts import (
     Generic_1D_Sweep_buffered,
     Generic_nD_Sweep,
     Timetrace,
+    Timetrace_with_Sweeps_buffered,
 )
 from qumada.utils.generate_sweeps import generate_sweep
 from qumada.utils.load_from_sqlite_db import load_db
@@ -177,9 +179,9 @@ gate1.voltage.measured_ramp(0.4, buffered=True)
 # a name.
 
 gate2.voltage.type = "gettable"
-gate1.voltage.measured_ramp(0.4, start=-0.3, name="mymeasurement", buffered=False)
+gate1.voltage.measured_ramp(0.4, start=-0.3, name="mymeasurement", buffered=False) # noqa: F405
 
-gate2.voltage.type = ""  # Don't record it in future measurements.
+gate2.voltage.type = "" # Don't record it in future measurements.
 
 # %% Save setpoints
 
@@ -242,3 +244,30 @@ script.setup(
 map_terminals_gui(station.components, script.gate_parameters, device.instrument_parameters)
 
 script.run()
+
+
+# %%
+# A more convenient way to run arbitrary measurement scripts, is to use 
+# device.run_measurement, as this uses the advantages of the device.
+# Lets for example run a timetrace with sweeps
+
+device.run_measurement(script = Timetrace_with_Sweeps_buffered,
+                       dynamic_params = [gate1.voltage],
+                       setpoints = [np.linspace(-0.1, 0.1, 100)],
+                       static_params = [gate2.voltage],
+                       static_values = [0.3],
+                       buffered = True,
+                       name = "Timetrace with sweeps",
+                       duration = 20)
+
+
+# The duration is a keyword argument that is passed on to the used measurement
+# script.
+# It is possible to only provide the script, in this case current settings
+# of the device object are used.
+
+ 
+
+
+
+
