@@ -14,7 +14,7 @@ from qcodes.validators.validators import Numbers
 
 from qumada.instrument.buffers.buffer import map_triggers
 from qumada.instrument.mapping import map_terminals_gui
-from qumada.measurement.measurement import load_param_whitelist
+from qumada.measurement.measurement import load_param_whitelist, MeasurementScript
 from qumada.measurement.scripts import (
     Generic_1D_Hysteresis_buffered,
     Generic_1D_parallel_asymm_Sweep,
@@ -280,7 +280,7 @@ class QumadaDevice:
         script.setup(
             self.save_to_dict(priorize_stored_value=priorize_stored_value),
             metadata=metadata,
-            name=name,
+            measurement_name=name,
             duration=duration,
             timestep=timestep,
             buffer_settings=temp_buffer_settings,
@@ -289,7 +289,7 @@ class QumadaDevice:
         mapping = self.instrument_parameters
         map_terminals_gui(station.components, script.gate_parameters, mapping)
         if buffered is True:
-            map_triggers(station.components, script.properties, script.gate_parameters)
+            map_triggers(station.components)
         data = script.run()
         return data
 
@@ -352,14 +352,14 @@ class QumadaDevice:
             script.setup(
                 self.save_to_dict(priorize_stored_value=priorize_stored_value),
                 metadata=metadata,
-                name=name,
+                measurement_name=name,
                 buffer_settings=temp_buffer_settings,
                 **self.buffer_script_setup,
             )
             mapping = self.instrument_parameters
             map_terminals_gui(station.components, script.gate_parameters, mapping)
             if buffered is True:
-                map_triggers(station.components, script.properties, script.gate_parameters)
+                map_triggers(station.components)
             data = script.run()
         except Exception as e:
             print(self.states["_temp_2D"])
@@ -415,7 +415,10 @@ class QumadaDevice:
                     parameter.setpoints = setpoints[params.index(parameter)]
         script = Generic_1D_parallel_asymm_Sweep()
         script.setup(
-            self.save_to_dict(priorize_stored_value=priorize_stored_value), metadata=metadata, name=name, **kwargs
+            self.save_to_dict(priorize_stored_value=priorize_stored_value), 
+            metadata=metadata, 
+            measurement_name=name, 
+            **kwargs
         )
         mapping = self.instrument_parameters
         map_terminals_gui(station.components, script.gate_parameters, mapping)
@@ -480,7 +483,156 @@ class QumadaDevice:
         map_triggers(station.components, script.properties, script.gate_parameters)
         data = script.run()
         return data
+    
+    
+    def run_measurement(
+            self,
+            script: MeasurementScript,
+            dynamic_params: list,
+            setpoints: list,
+            dynamic_values: list|None = None,
+            static_params: list|None = None,
+            static_values: list|None = None,
+            gettable_params: list|None = None,
+            break_conditions: list|None = None,
+            name=None,
+            metadata=None,
+            station=None,
+            buffered = False,
+            buffer_settings: dict | None = None,
+            priorize_stored_value=False,
+            **kwargs,
+        ):
+        """
+        Runs any Qumada Measurement Script. Alters parameter attributes of device
+        according to their type.
+        
 
+        Parameters
+        ----------
+        script : MeasurementScript
+            The script you want to use. Has to be of type MeasurementScript.
+        dynamic_params : list
+            List of parameters that should be set to dynamic. Parameters that
+            already are of the type "dynamic", but not listed here, will be set
+            to "static gettable" to avoid user errors.
+        setpoints : list
+            Setpoints for the parameters listed before.
+        dynamic_values : list|None, optional
+            Values for the dynamic parameters (if required). Same length as dynamic
+            parameters or None. The default is None.
+        static_params : list|None, optional
+            Parameters to set to static. Parameters that are already static will
+            stay that way even if not listed here. For static gettable parameters
+            add the parameter to the gettable list as well.The default is None.
+        static_values : list|None, optional
+            Values for the static params listed above explicitely. Same lenght as
+            static params. The default is None.
+        gettable_params : list|None, optional
+            Parameters in this list are set to gettable. Parameters that are already
+            gettable but not in this list, will stay gettable. The default is None.
+        break_conditions : list|None, optional
+            Break conditions for gettable parameters listed explicitely in the
+            gettable_params above. Same lenght as gettable_params. The default is None.
+        name : str|None, optional
+            Custom name if required. If None name is generated by QuMada. 
+            The default is None.
+        metadata : metadata object|None, optional
+            Metadata Object to store. The default is None.
+        station : QCoDeS Station, optional
+            QCoDeS station. Overwrites device.station if not None. If None the 
+            device.station will be used. The default is None.
+        buffered : Bool, optional
+            Set to true for buffered measurements. Otherwise buffer settings etc
+            are not passed on (measurements might still work though if everything
+            was already defined in device. The default is False.
+        buffer_settings : dict | None, optional
+            Buffer settings. Overwrites settings stored in device if not None. 
+            The default is None.
+        priorize_stored_value : Bool, optional
+            Use values from dictionionary used to create device object instead
+            of current values of the parameters if available. The default is False.
+            
+        **kwargs : dict|None
+            Additional params, possibly depending on the measurement script.
+            (e.g. duration for timetraces)
+
+
+        Raises
+        ------
+        TypeError
+            If no valid station available.
+        Exception
+            Read output, related to buffer settings.
+
+        Returns
+        -------
+        data : list[Dataset]
+            List of Datasets with measurement reuslts.
+
+        """
+        if station is None:
+            station = self.station
+        if not isinstance(station, Station):
+            raise TypeError("No valid station assigned!")
+        assert len(dynamic_params) == len(setpoints)
+        if dynamic_values is not None:
+            assert len(dynamic_values) == len(dynamic_params)
+        if static_values is not None:
+            assert len(static_params) == len(static_values)
+        if break_conditions is not None:
+            assert len(gettable_params) == len(break_conditions)
+        
+        if buffer_settings is None:
+            buffer_settings = self.buffer_settings
+        temp_buffer_settings = deepcopy(buffer_settings)
+
+        if "num_points" in temp_buffer_settings.keys():
+            temp_buffer_settings["num_points"] = len(setpoints[0])
+            logger.warning(
+                "Temporarily changed buffer settings to match the \
+                number of points specified in the setpoints"
+            )
+        else:
+            raise Exception(
+                "For this kind of measurement, you have to specify the number of points in the buffer settings!"
+            )
+        for terminal in self.terminals.values():
+            for parameter in terminal.terminal_parameters.values():
+                if dynamic_params is not None and parameter not in dynamic_params and parameter.type == "dynamic":
+                    parameter.type = "static gettable"
+                if dynamic_params is not None and parameter in dynamic_params:
+                    parameter.type = "dynamic"
+                    parameter.setpoints = setpoints[dynamic_params.index(parameter)]
+                    if dynamic_values is not None:
+                        parameter.value = dynamic_values[dynamic_params.index(parameter)]
+                if static_params is not None and parameter in static_params:
+                    parameter.type = "static"
+                    if parameter in gettable_params:
+                        parameter.type = "static gettable"
+                    if static_values is not None:
+                        parameter.value = static_values[static_params.index(parameter)]
+                elif gettable_params is not None and parameter in gettable_params:
+                    parameter.type = "gettable"
+                    if break_conditions is not None:
+                        parameter.break_conditions = break_conditions[gettable_params.index(parameter)]
+                        
+        script = script()
+        script.setup(
+            self.save_to_dict(priorize_stored_value=priorize_stored_value),
+            metadata=metadata,
+            measurement_name=name,
+            buffer_settings=temp_buffer_settings,
+            **self.buffer_script_setup,
+            **kwargs,
+        )
+        mapping = self.instrument_parameters
+        map_terminals_gui(station.components, script.gate_parameters, mapping)
+        if buffered is True:
+            map_triggers(station.components)
+        data = script.run()
+        return data
+                        
 
 class Terminal(ABC):
     """
@@ -492,6 +644,7 @@ class Terminal(ABC):
     PARAMETER_NAMES: set[str] = load_param_whitelist()
 
     def __init__(self, name, parent: QumadaDevice | None = None, type: str | None = None):
+
         self.properties: dict[Any, Any] = {}
         self.name = name
         self._parent = parent
