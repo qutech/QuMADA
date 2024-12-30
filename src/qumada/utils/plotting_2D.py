@@ -91,6 +91,7 @@ def _rescale_axis(axis, data, unit, axis_type="x"):
     axis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f"{x * factor:.0f}"))
     return factor, scaled_unit
 
+
 def get_parameter_name_by_label(dataset, label):
     """
     Returns the parameter name for a given parameter label in a QCoDeS dataset.
@@ -128,10 +129,19 @@ def get_parameter_name_by_label(dataset, label):
         return matching_parameters[0]
 
 
-def plot_2D(x_data, y_data, z_data, fig=None, ax=None, 
-            x_label=None, y_label=None, z_label=None,
-            scale_axis=True,
-            *args, **kwargs):
+def plot_2D(
+    x_data,
+    y_data,
+    z_data,
+    fig=None,
+    ax=None,
+    x_label=None,
+    y_label=None,
+    z_label=None,
+    scale_axis=True,
+    *args,
+    **kwargs,
+):
     """
     Plots 2D derivatives. Requires tuples of name and 1D arrays corresponding
     to x, y, and z data as input. Supports axis and colorbar scaling.
@@ -182,7 +192,7 @@ def plot_2D(x_data, y_data, z_data, fig=None, ax=None,
     x, y, z = reshape_2D_data(x_values, y_values, z_values)
 
     # Plotten der 2D-Daten
-    im = ax.pcolormesh(x, y, z, shading='auto')
+    im = ax.pcolormesh(x, y, z, shading="auto")
     cbar = fig.colorbar(im, ax=ax)
     cbar.set_label(f"{z_data[3]} ({z_unit})")
 
@@ -196,6 +206,7 @@ def plot_2D(x_data, y_data, z_data, fig=None, ax=None,
     plt.tight_layout()
     plt.show()
     return fig, ax
+
 
 # %%
 def plot_2D_grad(x_data, y_data, z_data, *args, direction="both"):
@@ -440,7 +451,9 @@ def plot_multiple_datasets(
     # Update x and y labels
     if legend is True:
         plt.legend(
-            loc=kwargs.get("legend_position", "upper left"), fontsize=kwargs.get("legend_fontsize", 15), markerscale=kwargs.get("legend_markerscale", 1)
+            loc=kwargs.get("legend_position", "upper left"),
+            fontsize=kwargs.get("legend_fontsize", 15),
+            markerscale=kwargs.get("legend_markerscale", 1),
         )
     plt.tight_layout()
 
