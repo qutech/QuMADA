@@ -159,20 +159,21 @@ class Generic_nD_Sweep(MeasurementScript):
 
 class Generic_1D_parallel_asymm_Sweep(MeasurementScript):
     def run(self):
-        raise Exception("This script was renamed to Generic_1D_parallel_Sweep \
+        raise Exception(
+            "This script was renamed to Generic_1D_parallel_Sweep \
                         and is no longer available. \
                         Please use  Generic_1D_parallel_Sweep instead! \
-                        No measurement was started.")
-
+                        No measurement was started."
+        )
 
 
 class Generic_1D_parallel_Sweep(MeasurementScript):
     """
-    Sweeps all dynamic parameters in parallel. Supports different sweep 
+    Sweeps all dynamic parameters in parallel. Supports different sweep
     rates/setpoints for different parameters, they have to have the same length
-    however. 
+    however.
     kwargs:
-        backsweep_after_break: Sweeps backwards after a break_condition was 
+        backsweep_after_break: Sweeps backwards after a break_condition was
             triggered.
     """
 
