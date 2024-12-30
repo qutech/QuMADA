@@ -17,7 +17,7 @@ from qumada.instrument.mapping import map_terminals_gui
 from qumada.measurement.measurement import MeasurementScript, load_param_whitelist
 from qumada.measurement.scripts import (
     Generic_1D_Hysteresis_buffered,
-    Generic_1D_parallel_asymm_Sweep,
+    Generic_1D_parallel_Sweep,
     Generic_1D_Sweep,
     Generic_1D_Sweep_buffered,
     Generic_2D_Sweep_buffered,
@@ -411,7 +411,7 @@ class QumadaDevice:
                 if parameter in params:
                     parameter.type = "dynamic"
                     parameter.setpoints = setpoints[params.index(parameter)]
-        script = Generic_1D_parallel_asymm_Sweep()
+        script = Generic_1D_parallel_Sweep()
         script.setup(
             self.save_to_dict(priorize_stored_value=priorize_stored_value),
             metadata=metadata,

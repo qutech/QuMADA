@@ -158,9 +158,22 @@ class Generic_nD_Sweep(MeasurementScript):
 
 
 class Generic_1D_parallel_asymm_Sweep(MeasurementScript):
+    def run(self):
+        raise Exception("This script was renamed to Generic_1D_parallel_Sweep \
+                        and is no longer available. \
+                        Please use  Generic_1D_parallel_Sweep instead! \
+                        No measurement was started.")
+
+
+
+class Generic_1D_parallel_Sweep(MeasurementScript):
     """
-    Sweeps all dynamic parameters in parallel, setpoints of first parameter are
-    used for all parameters.
+    Sweeps all dynamic parameters in parallel. Supports different sweep 
+    rates/setpoints for different parameters, they have to have the same length
+    however. 
+    kwargs:
+        backsweep_after_break: Sweeps backwards after a break_condition was 
+            triggered.
     """
 
     def run(self, **do1d_kwargs):
@@ -170,7 +183,6 @@ class Generic_1D_parallel_asymm_Sweep(MeasurementScript):
         wait_time = self.settings.get("wait_time", 5)
         dynamic_params = list()
         for sweep in self.dynamic_sweeps:
-            ramp_or_set_parameter(sweep._param, sweep.get_setpoints()[0])
             dynamic_params.append(sweep.param)
         sleep(wait_time)
         data = do1d_parallel_asym(
@@ -180,36 +192,6 @@ class Generic_1D_parallel_asymm_Sweep(MeasurementScript):
             delay=self.dynamic_sweeps[0]._delay,
             measurement_name=self.measurement_name,
             break_condition=_interpret_breaks(self.break_conditions),
-            backsweep_after_break=backsweep_after_break,
-            **do1d_kwargs,
-        )
-        self.clean_up()
-        return data
-
-
-class Generic_1D_parallel_Sweep(MeasurementScript):
-    """
-    Sweeps all dynamic parameters in parallel, setpoints of first parameter are
-    used for all parameters.
-    """
-
-    def run(self, **do1d_kwargs):
-        self.initialize()
-        naming_helper(self, default_name="Parallel 1D Sweep")
-        backsweep_after_break = self.settings.get("backsweep_after_break", False)
-        wait_time = self.settings.get("wait_time", 5)
-        dynamic_params = list()
-        for sweep in self.dynamic_sweeps:
-            ramp_or_set_parameter(sweep._param, sweep.get_setpoints()[0])
-            dynamic_params.append(sweep.param)
-        sleep(wait_time)
-        data = do1d_parallel(
-            *tuple(self.gettable_channels),
-            param_set=dynamic_params,
-            setpoints=self.dynamic_sweeps[0].get_setpoints(),
-            delay=self.dynamic_sweeps[0]._delay,
-            measurement_name=self.measurement_name,
-            break_condition=lambda x: _dev_interpret_breaks(self.break_conditions, x),
             backsweep_after_break=backsweep_after_break,
             **do1d_kwargs,
         )
