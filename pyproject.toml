@@ -46,6 +46,7 @@ build-backend = "setuptools.build_meta"
 qumada = [
     "*.json",
     "instrument/parameter_whitelists/*"
+	]
 
 [tool.versioningit]
 default-version = "0.0"
