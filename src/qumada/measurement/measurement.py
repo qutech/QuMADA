@@ -52,9 +52,7 @@ logger = logging.getLogger(__name__)
 def load_param_whitelist(folder_path=None):
     combined_params = set()
     if folder_path is None:
-        folder_path = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "../instrument/parameter_whitelists")
-        )
+        folder_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../instrument/parameter_whitelists"))
         if not os.path.exists(folder_path):
             raise FileNotFoundError(f"Whitelist folder not found: {folder_path}")
     for filename in os.listdir(folder_path):
