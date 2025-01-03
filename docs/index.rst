@@ -8,9 +8,10 @@ Welcome to QuMADA's documentation!
 
    installation
    tutorials
-   examples
    device_object
+   examples
    mapping_gui
+   utils
    metadata
    qumada
 

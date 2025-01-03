@@ -32,9 +32,7 @@ from qcodes.parameters.specialized_parameters import ElapsedTimeParameter
 
 from qumada.instrument.buffers import is_bufferable
 from qumada.measurement.doNd_enhanced.doNd_enhanced import (
-    _dev_interpret_breaks,
     _interpret_breaks,
-    do1d_parallel,
     do1d_parallel_asym,
 )
 from qumada.measurement.measurement import CustomSweep, MeasurementScript
@@ -47,32 +45,38 @@ logger = logging.getLogger(__name__)
 class Generic_1D_Sweep(MeasurementScript):
     def run(self, **dond_kwargs) -> list:
         """
-        Peform 1D sweeps for all dynamic parameters, one after another. Dynamic
-        parameters that are not currently active are kept at their "value" value.
+        Perform 1D sweeps for all dynamic parameters, one after another.
+
+        Dynamic parameters that are not currently active are kept at their
+        "value" value.
 
         Parameters
         ----------
-        **dond_kwargs : Kwargs to pass to the dond method when it is called.
-        **settings[dict]: Kwargs passed during setup(). Details below:
-                wait_time[float]: Wait time between initialization and each measurement,
-                                    default = 5 sek
-                include_gate_name[Bool]: Append name of ramped gate to measurement
-                                    name. Default True.
-                ramp_speed[float]: Speed at which parameters are ramped during
-                                    initialization in units. Default = 0.3
-                ramp_time[float]: Amount of time in s ramping of each parameter during
-                                    initialization may take. If the ramp_speed is
-                                    too small it will be increased to match the
-                                    ramp_time. Default = 10
-                log_idle_params[bool]: Record dynamic parameters that are kept constant
-                                    during the sweeps of other parameters as gettable
-                                    params. Default True.
+        **dond_kwargs : dict
+            Additional keyword arguments passed to the `dond` method.
+
+        Attributes (via settings)
+        -------------------------
+        wait_time : float, optional
+            Wait time (in seconds) between initialization and each measurement.
+            Default is 5.
+        include_gate_name : bool, optional
+            If True, append the name of the ramped gate to the measurement name.
+            Default is True.
+        ramp_speed : float, optional
+            Speed at which parameters are ramped during initialization.
+            Default is 0.3.
+        ramp_time : float, optional
+            Maximum time (in seconds) allowed for ramping each parameter during
+            initialization. Default is 10.
+        log_idle_params : bool, optional
+            If True, record dynamic parameters kept constant during sweeps.
+            Default is True.
 
         Returns
         -------
         list
-            List with all QCoDeS Datasets.
-
+            A list of QCoDeS datasets for each sweep.
         """
         wait_time = self.settings.get("wait_time", 5)
         include_gate_name = self.settings.get("include_gate_name", True)
@@ -108,26 +112,32 @@ class Generic_1D_Sweep(MeasurementScript):
 class Generic_nD_Sweep(MeasurementScript):
     def run(self, **dond_kwargs):
         """
-        Perform n-dimensional sweep for n dynamic parameters.
+        Perform an n-dimensional sweep for n dynamic parameters.
 
         Parameters
         ----------
-        **dond_kwargs : Kwargs to pass to the dond method when it is called.
-        **settings[dict]: Kwargs passed during setup(). Details below:
-                wait_time[float]: Wait time between initialization and each measurement,
-                                    default = 5 sek
-                include_gate_name[Bool]: Append name of ramped gates to measurement
-                                    name. Default True.
-                ramp_speed[float]: Speed at which parameters are ramped during
-                                    initialization in units. Default = 0.3
-                ramp_time[float]: Amount of time in s ramping of each parameter during
-                                    initialization may take. If the ramp_speed is
-                                    too small it will be increased to match the
-                                    ramp_time. Default = 10
+        **dond_kwargs : dict
+            Additional keyword arguments passed to the `dond` method.
+
+        Attributes (via settings)
+        -------------------------
+        wait_time : float, optional
+            Wait time (in seconds) between initialization and each measurement.
+            Default is 5.
+        include_gate_name : bool, optional
+            If True, append the names of the ramped gates to the measurement name.
+            Default is True.
+        ramp_speed : float, optional
+            Speed at which parameters are ramped during initialization.
+            Default is 0.3.
+        ramp_time : float, optional
+            Maximum time (in seconds) allowed for ramping each parameter during
+            initialization. Default is 10.
 
         Returns
         -------
-        data : QCoDeS dataset with measurement data
+        QCoDeS dataset
+            Dataset containing measurement data.
         """
         self.buffered = False
         self.initialize()
@@ -158,9 +168,34 @@ class Generic_nD_Sweep(MeasurementScript):
 
 
 class Generic_1D_parallel_asymm_Sweep(MeasurementScript):
+    def run(self):
+        raise Exception(
+            "This script was renamed to Generic_1D_parallel_Sweep \
+                        and is no longer available. \
+                        Please use  Generic_1D_parallel_Sweep instead! \
+                        No measurement was started."
+        )
+
+
+class Generic_1D_parallel_Sweep(MeasurementScript):
     """
-    Sweeps all dynamic parameters in parallel, setpoints of first parameter are
-    used for all parameters.
+    Sweeps all dynamic parameters in parallel.
+
+    Supports different sweep rates and setpoints for different parameters.
+    All parameters must have the same length.
+
+    Parameters
+    ----------
+    **kwargs : dict
+        Additional keyword arguments:
+        - `backsweep_after_break` (bool): Sweeps backwards after a break condition
+          is triggered. Default is `False`.
+        - `wait_time` (float): Wait time in seconds before starting the sweep. Default is `5`.
+
+    Returns
+    -------
+    data : Any
+        The collected data from the parallel sweep.
     """
 
     def run(self, **do1d_kwargs):
@@ -170,7 +205,6 @@ class Generic_1D_parallel_asymm_Sweep(MeasurementScript):
         wait_time = self.settings.get("wait_time", 5)
         dynamic_params = list()
         for sweep in self.dynamic_sweeps:
-            ramp_or_set_parameter(sweep._param, sweep.get_setpoints()[0])
             dynamic_params.append(sweep.param)
         sleep(wait_time)
         data = do1d_parallel_asym(
@@ -187,46 +221,26 @@ class Generic_1D_parallel_asymm_Sweep(MeasurementScript):
         return data
 
 
-class Generic_1D_parallel_Sweep(MeasurementScript):
-    """
-    Sweeps all dynamic parameters in parallel, setpoints of first parameter are
-    used for all parameters.
-    """
-
-    def run(self, **do1d_kwargs):
-        self.initialize()
-        naming_helper(self, default_name="Parallel 1D Sweep")
-        backsweep_after_break = self.settings.get("backsweep_after_break", False)
-        wait_time = self.settings.get("wait_time", 5)
-        dynamic_params = list()
-        for sweep in self.dynamic_sweeps:
-            ramp_or_set_parameter(sweep._param, sweep.get_setpoints()[0])
-            dynamic_params.append(sweep.param)
-        sleep(wait_time)
-        data = do1d_parallel(
-            *tuple(self.gettable_channels),
-            param_set=dynamic_params,
-            setpoints=self.dynamic_sweeps[0].get_setpoints(),
-            delay=self.dynamic_sweeps[0]._delay,
-            measurement_name=self.measurement_name,
-            break_condition=lambda x: _dev_interpret_breaks(self.break_conditions, x),
-            backsweep_after_break=backsweep_after_break,
-            **do1d_kwargs,
-        )
-        self.clean_up()
-        return data
-
-
 class Timetrace(MeasurementScript):
     """
-    Timetrace measurement, duration and timestep can be set as keyword-arguments,
-    both in seconds.
-    Be aware that the timesteps can vary as the time it takes to record a
-    datapoint is not constant, the argument only sets the wait time. However,
-    the recorded "elapsed time" is accurate.
-    kwargs:
-        auto_naming: Renames measurement automatically to Timetrace if True.
+    Timetrace measurement.
 
+    Records data over a specified duration with a given timestep. Note that
+    the actual timesteps can vary as the recording time for each datapoint
+    is not constant. However, the elapsed time recorded is accurate.
+
+    Parameters
+    ----------
+    **kwargs : dict
+        Additional keyword arguments:
+        - `duration` (float): Duration of the measurement in seconds. Default is `300`.
+        - `timestep` (float): Time interval between measurements in seconds. Default is `1`.
+        - `auto_naming` (bool): If `True`, renames the measurement automatically to "Timetrace". Default is `False`.
+
+    Returns
+    -------
+    dataset : qcodes.dataset.measurements.Measurement
+        The collected dataset containing the recorded measurements.
     """
 
     def run(self):
@@ -258,14 +272,44 @@ class Timetrace(MeasurementScript):
 
 class Timetrace_buffered(MeasurementScript):
     """
-    Timetrace measurement, duration and timestep are set via the buffer settings.
-    Does currently not work with dynamic parameters.
-    Furthermore, you cannot use "manual" triggering mode as now ramp is started.
-    It is fine to use software triggering here, as long as only one buffered
-    instrument is used, else you should use "hardware".
+    Performs a buffered timetrace measurement.
 
-    kwargs:
-        auto_naming: Renames measurement automatically to Timetrace if True.
+    The measurement duration and timestep are determined via the buffer settings.
+    Dynamic parameters are currently not supported.
+    The method does not support "manual" triggering mode, as no ramp is started.
+    Using "software" triggering is fine if only one buffered instrument is used;
+    otherwise, "hardware" triggering is recommended.
+    TODO: Add duration arg
+
+    Parameters
+    ----------
+    dyn_ramp_to_val : bool, optional
+        If True, dynamic parameters are ramped to their respective values during initialization.
+    trigger_start : str, optional
+        Specifies the trigger start method. Default is "software".
+    trigger_reset : callable, optional
+        Function to reset the trigger after measurement. Default is None.
+    trigger_type : str, optional
+        Specifies the type of trigger to use. Can be "software" or "hardware".
+        Default is "software".
+    auto_naming : bool, optional
+        Renames measurement automatically to "Timetrace" if True.
+
+    Returns
+    -------
+    datasets : list
+        A list of QCoDeS datasets containing the measurement results.
+
+    Raises
+    ------
+    Exception
+        If unsupported triggering mode is selected or if a channel cannot be buffered and is not static gettable.
+
+    Notes
+    -----
+    - Ensure that the buffer settings are properly configured before running the measurement.
+    - For "hardware" triggering, the `trigger_start` method must be defined.
+    - Dynamic parameters are treated as "static gettable"
 
     """
 
@@ -370,11 +414,28 @@ class Timetrace_buffered(MeasurementScript):
 
 class Timetrace_with_sweeps(MeasurementScript):
     """
-    Timetrace measurement, duration and timestep can be set as keyword-arguments,
-    both in seconds.
-    Be aware that the timesteps can vary as the time it takes to record a
-    datapoint is not constant, the argument only sets the wait time. However,
-    the recorded "elapsed time" is accurate.
+    Performs a timetrace measurement with dynamic sweeps.
+
+    Duration and timestep can be set as keyword arguments, both in seconds.
+    Note that the timesteps may vary due to variable recording times per data point.
+    The elapsed time recorded is accurate.
+
+    Parameters
+    ----------
+    duration : int, optional
+        Total duration of the measurement in seconds. Default is 300.
+    timestep : int, optional
+        Time between sweeps in seconds. Default is 1.
+
+    Returns
+    -------
+    dataset : qcodes.dataset.data_set.DataSet
+        A QCoDeS dataset containing the measurement results.
+
+    Notes
+    -----
+    - Dynamic sweeps are executed at each timestep during the measurement.
+
     """
 
     def run(self):
@@ -411,15 +472,40 @@ class Timetrace_with_sweeps(MeasurementScript):
 
 class Timetrace_with_Sweeps_buffered(MeasurementScript):
     """
-    Timetrace measurement, duration and timestep are set via the buffer settings.
-    Does currently not work with dynamic parameters.
-    Furthermore, you cannot use "manual" triggering mode as now ramp is started.
-    It is fine to use software triggering here, as long as only one buffered
-    instrument is used, else you should use "hardware".
+    Performs a buffered timetrace measurement with dynamic sweeps.
 
-    kwargs:
-        auto_naming: Renames measurement automatically to Timetrace if True.
+    Duration and timestep are determined via buffer settings.
+    This method does not support dynamic parameters and cannot use
+    "manual" triggering mode. Use "software" or "hardware" triggers.
 
+    Parameters
+    ----------
+    duration : int, optional
+        Total duration of the measurement in seconds. Default is 300.
+    trigger_start : str, optional
+        Trigger start method. Default is "software".
+    trigger_reset : callable, optional
+        Function to reset the trigger after measurement. Default is None.
+    sync_trigger : int, optional
+        Number of the used sync trigger (QDacs only). Default is None.
+    trigger_type : str, optional
+        Type of trigger to use ("software", "hardware", "manual"). Default is "software".
+
+    Returns
+    -------
+    datasets : list
+        A list of QCoDeS datasets containing the measurement results.
+
+    Raises
+    ------
+    AttributeError
+        If the required methods for triggering or ramping are not defined.
+    TypeError
+        If no reset method for the trigger is defined.
+
+    Notes
+    -----
+    - Dynamic sweeps are executed at each timestep during the measurement.
     """
 
     def run(self):
@@ -439,26 +525,24 @@ class Timetrace_with_Sweeps_buffered(MeasurementScript):
         )
         self.buffered = True
         datasets = []
-
         self.generate_lists()
         naming_helper(self, default_name="Timetrace with sweeps")
         meas = Measurement(name=self.measurement_name)
-
         meas.register_parameter(timer)
-        assert len(self.dynamic_channels) == 1
-        dyn_channel = self.dynamic_channels[0]
-        dynamic_parameter = self.dynamic_parameters[0]
-        self.properties[dynamic_parameter["gate"]][dynamic_parameter["parameter"]]["_is_triggered"] = True
-        meas.register_parameter(dyn_channel)
+
+        for dynamic_param in self.dynamic_parameters:
+            self.properties[dynamic_param["gate"]][dynamic_param["parameter"]]["_is_triggered"] = True
+        for dyn_channel in self.dynamic_channels:
+            meas.register_parameter(dyn_channel)
 
         # Block required to log gettable and static parameters that are not
         # buffarable (e.g. Dac Channels)
         static_gettables = []
         for parameter, channel in zip(self.gettable_parameters, self.gettable_channels):
             if is_bufferable(channel) and channel not in self.static_gettable_channels:
-                meas.register_parameter(channel, setpoints=[timer, dyn_channel])
+                meas.register_parameter(channel, setpoints=[timer, *self.dynamic_channels])
             elif channel in self.static_gettable_channels:
-                meas.register_parameter(channel, setpoints=[timer, dyn_channel])
+                meas.register_parameter(channel, setpoints=[timer, *self.dynamic_channels])
                 parameter_value = self.properties[parameter["gate"]][parameter["parameter"]]["value"]
                 static_gettables.append((channel, [parameter_value for _ in range(int(self.buffered_num_points))]))
         start = time()
@@ -469,13 +553,12 @@ class Timetrace_with_Sweeps_buffered(MeasurementScript):
                 logger.info("No method to reset the trigger defined.")
             while time() - start < duration:
                 self.initialize()
-                # start = timer.reset_clock()
                 self.ready_buffers()
                 t = time() - start
                 try:
-                    dyn_channel.root_instrument._qtools_ramp(
-                        [dyn_channel],
-                        end_values=[self.dynamic_sweeps[0].get_setpoints()[-1]],
+                    self.dynamic_channels[0].root_instrument._qumada_ramp(
+                        self.dynamic_channels,
+                        end_values=[sweep.get_setpoints()[-1] for sweep in self.dynamic_sweeps],
                         ramp_time=self._burst_duration,
                         sync_trigger=sync_trigger,
                     )
@@ -513,15 +596,14 @@ class Timetrace_with_Sweeps_buffered(MeasurementScript):
                 except TypeError:
                     logger.info("No method to reset the trigger defined.")
                 results = self.readout_buffers(timestamps=True)
-                # TODO: Append values from other dynamic parameters
-                # datasaver.add_result((dyn_channel, self.dynamic_sweeps[0].get_setpoints()),
-                #                      (timer, [ti+t for ti in results.pop(-1)]),
-                #                      *results,
-                #                      *static_gettables,)
-                results.pop(-1)
+                dynamic_param_results = [
+                    (dyn_channel, sweep.get_setpoints())
+                    for dyn_channel, sweep in zip(self.dynamic_channels, self.dynamic_sweeps)
+                ]
+                results.pop(-1)  # removes timestamps from results
                 datasaver.add_result(
                     (timer, t),
-                    (dyn_channel, self.dynamic_sweeps[0].get_setpoints()),
+                    *dynamic_param_results,
                     *results,
                     *static_gettables,
                 )
@@ -532,23 +614,46 @@ class Timetrace_with_Sweeps_buffered(MeasurementScript):
 
 class Generic_1D_Sweep_buffered(MeasurementScript):
     """
-    WIP Buffer measurement script
-    Trigger Types:
-            "software": Sends a software command to each buffer and dynamic parameters
-                        in order to start data acquisition and ramping. Timing
-                        might be off slightly
-            "hardware": Expects a trigger command for each setpoint. Can be used
-                        with a preconfigured hardware trigger (Todo), a method,
-                        that starts a manually adjusted hardware trigger
-                        (has to be passed as trigger_start() method to
-                         measurement script) or a manual trigger.
-            "manual"  : The trigger setup is done by the user. The measurent script will
-                        just start the first ramp. Usefull for synchronized trigger outputs
-                        as in the QDac.
-    trigger_start: A callable that triggers the trigger (called to start the measurement)
-                    or the keyword "manual" when triggering is done by user. Defauls is manual.
-    trigger_reset (optional): Callable to reset the trigger. Default is NONE.
-    include_gate_name (optional): Appends name of ramped gates to measurement name. Default is TRUE.
+    Executes a buffered 1D sweep measurement. Works only with ramps (no pulses). Supports compensation.
+
+    - "software": Sends a software command to each buffer and dynamic parameter to start data acquisition.
+                   Timing might have slight offsets.
+    - "hardware": Runs trigger_start to start the measurement., either preconfigured or started manually.
+    - "manual"  : User-controlled trigger setup, useful for synchronized trigger outputs (e.g., with QDac).
+
+    Parameters
+    ----------
+    trigger_start : str or callable, optional
+        A callable to start the measurement or the keyword "manual" for user-triggered setup.
+        Default is "manual".
+    trigger_reset : callable, optional
+        A callable to reset the trigger after measurement. Default is None.
+    trigger_type : str, optional
+        Type of trigger to use ("software", "hardware", "manual"). Default is "software".
+    include_gate_name : bool, optional
+        If True, appends the name of the ramped gates to the measurement name. Default is True.
+    sync_trigger : int, optional
+        Number of the used sync trigger (QDacs only). Default is None.
+
+    Returns
+    -------
+    datasets : list of qcodes.dataset.data_set.DataSet
+        A list of datasets containing the measurement results.
+
+    Raises
+    ------
+    AttributeError
+        If a required method (e.g., for ramping) is missing.
+    TypeError
+        If no reset method for the trigger is defined.
+    Exception
+        If setpoints of a parameter exceed defined limits.
+
+    Notes
+    -----
+    - This script supports buffered measurements, with dynamic and static parameters.
+    - It ensures that all setpoints and compensating channels remain within their defined limits.
+    - Proper configuration of buffers and triggers is essential for accurate results.
     """
 
     def run(self):
@@ -713,24 +818,52 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
 
 class Generic_1D_Hysteresis_buffered(MeasurementScript):
     """
-    WIP Buffer Hysteresis measurement script
-    Malte Neul / 09.01.2023
-    Trigger Types:
-            "software": Sends a software command to each buffer and dynamic parameters
-                        in order to start data acquisition and ramping. Timing
-                        might be off slightly
-            "hardware": Expects a trigger command for each setpoint. Can be used
-                        with a preconfigured hardware trigger (Todo), a method,
-                        that starts a manually adjusted hardware trigger
-                        (has to be passed as trigger_start() method to
-                         measurement script) or a manual trigger.
-            "manual"  : The trigger setup is done by the user. The measurent script will
-                        just start the first ramp. Usefull for synchronized trigger outputs
-                        as in the QDac.
-    trigger_start: A callable that triggers the trigger (called to start the measurement)
-                    or the keyword "manual" when triggering is done by user. Defauls is manual.
-    trigger_reset (optional): Callable to reset the trigger. Default is NONE.
-    include_gate_name (optional): Appends name of ramped gates to measurement name. Default is TRUE.
+    Performs a buffered 1D hysteresis measurement (back and foresweeps).
+    Each iteration corresponds to one fore- and one backsweep.
+
+    This measurement supports dynamic and static parameters and handles multiple
+    triggering methods:
+
+    - "software": Sends a software command to each buffer and dynamic parameters
+                   to start data acquisition and ramping. Timing might be slightly off.
+    - "hardware": Runs trigger_start to start the measurement.. Can be preconfigured
+                   or manually adjusted (requires `trigger_start` callable).
+    - "manual": Trigger setup is user-defined, useful for synchronized trigger outputs.
+
+    Parameters
+    ----------
+    iterations : int
+        Defines how many sweeps are done. Each iteration corresponds to one fore- and one backsweep.
+    trigger_start : str or callable, optional
+        A callable to start the measurement or "manual" for user-triggered setup.
+        Default is "manual".
+    trigger_reset : callable, optional
+        A callable to reset the trigger after measurement. Default is None.
+    trigger_type : str, optional
+        Type of trigger to use ("software", "hardware", "manual"). Default is "software".
+    sync_trigger : int, optional
+        Number of the used sync trigger (QDacs only). Default is None.
+    include_gate_name : bool, optional
+        If True, appends the name of the ramped gates to the measurement name. Default is True.
+
+    Returns
+    -------
+    datasets : list of qcodes.dataset.data_set.DataSet
+        A list of datasets containing the measurement results.
+
+    Raises
+    ------
+    AttributeError
+        If a required method (e.g., for ramping) is missing.
+    TypeError
+        If no reset method for the trigger is defined.
+    Exception
+        If static or dynamic parameters have invalid configurations.
+
+    Notes
+    -----
+    - This script performs back-and-forth sweeps (hysteresis) for dynamic parameters.
+    - Proper configuration of buffers and triggers is required for accurate results.
     """
 
     def run(self):
@@ -876,25 +1009,52 @@ class Generic_1D_Hysteresis_buffered(MeasurementScript):
 
 class Generic_2D_Sweep_buffered(MeasurementScript):
     """
-    WIP Buffer measurement script
-    Trigger Types:
-            "software": Sends a software command to each buffer and dynamic parameters
-                        in order to start data acquisition and ramping. Timing
-                        might be off slightly
-            "hardware": Expects a trigger command for each setpoint. Can be used
-                        with a preconfigured hardware trigger (Todo), a method,
-                        that starts a manually adjusted hardware trigger
-                        (has to be passed as trigger_start() method to
-                         measurement script) or a manual trigger.
-            "manual"  : The trigger setup is done by the user. The measurent script will
-                        just start the first ramp. Usefull for synchronized trigger outputs
-                        as in the QDac.
-    trigger_start: A callable that triggers the trigger (called to start the measurement)
-                    or the keyword "manual" when triggering is done by user. Defauls is manual.
-    trigger_reset (optional): Callable to reset the trigger. Default is NONE.
-    include_gate_name (optional): Appends name of ramped gates to measurement name. Default is TRUE.
-    reset_time: Time for ramping fast param back to the start value.
-    reverse_param_order: Switch slow and fast param.
+    Executes a buffered 2D sweep measurement. Supports compensation.
+    By default fist dynamic parameter is stepped (unbuffered) and the second one
+    ramped.
+
+    This script supports two dynamic parameters and multiple triggering methods:
+
+    - "software": Sends a software command to each buffer and dynamic parameters
+                   to start data acquisition and ramping. Timing might be slightly off.
+    - "hardware": Runs trigger_start to start the measurement.. Can be preconfigured
+                   or manually adjusted (requires `trigger_start` callable).
+    - "manual": Trigger setup is user-defined, useful for synchronized trigger outputs.
+
+    Parameters
+    ----------
+    trigger_start : str or callable, optional
+        A callable to start the measurement.
+    trigger_reset : callable, optional
+        A callable to reset the trigger after measurement. Default is None.
+    trigger_type : str, optional
+        Type of trigger to use ("software", "hardware", "manual"). Default is "software".
+    include_gate_name : bool, optional
+        If True, appends the names of the ramped gates to the measurement name. Default is True.
+    reset_time : float, optional
+        Time to ramp the fast parameter back to the start value. Default is 0.
+    reverse_param_order : bool, optional
+        If True, switches the order of slow and fast parameters. Default is False.
+    buffer_timeout_multiplier : int, optional
+        Multiplier for buffer timeout duration relative to burst duration. Default is 20.
+
+    Returns
+    -------
+    datasets : list of qcodes.dataset.data_set.DataSet
+        A list of datasets containing the measurement results.
+
+    Raises
+    ------
+    AttributeError
+        If a required method (e.g., for ramping) is missing.
+    TimeoutError
+        If buffers fail to finish within the timeout duration.
+    Exception
+        If static or dynamic parameters have invalid configurations.
+
+    Notes
+    -----
+    - Proper configuration of buffers and triggers is required for accurate results.
     """
 
     def run(self):
@@ -1115,25 +1275,47 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
 
 class Generic_Pulsed_Measurement(MeasurementScript):
     """
-    Measurement script for buffered measurements with abritary setpoints.
-    Trigger Types:
-            "software": Sends a software command to each buffer and dynamic parameters
-                        in order to start data acquisition and ramping. Timing
-                        might be off slightly
-            "hardware": Expects a trigger command for each setpoint. Can be used
-                        with a preconfigured hardware trigger (Todo), a method,
-                        that starts a manually adjusted hardware trigger
-                        (has to be passed as trigger_start() method to
-                         measurement script) or a manual trigger.
-            "manual"  : The trigger setup is done by the user. The measurent script will
-                        just start the first ramp. Usefull for synchronized trigger outputs
-                        as in the QDac.
-    trigger_start: A callable that triggers the trigger (called to start the measurement)
-                    or the keyword "manual" when triggering is done by user. Defauls is manual.
-    trigger_reset (optional): Callable to reset the trigger. Default is NONE.
-    include_gate_name (optional): Appends name of ramped gates to measurement name. Default is TRUE.
-    reset_time: Time for ramping fast param back to the start value.
-    TODO: Add Time!
+    Executes a buffered pulsed measurement with arbitrary setpoints.
+    All setpoint arrays have to have the same length!
+
+    Triggering methods:
+
+    - "software": Sends a software command to each buffer and dynamic parameters
+                   to start data acquisition and ramping. Timing might be slightly off.
+    - "hardware": Runs trigger_start to start the measurement.. Can be preconfigured
+                   or manually adjusted (requires `trigger_start` callable).
+    - "manual": Trigger setup is user-defined, useful for synchronized trigger outputs.
+
+    Parameters
+    ----------
+    trigger_start : str or callable, optional
+        A callable to start the measurement or "manual" for user-triggered setup.
+        Default is "manual".
+    trigger_reset : callable, optional
+        A callable to reset the trigger after measurement. Default is None.
+    trigger_type : str, optional
+        Type of trigger to use ("software", "hardware", "manual"). Default is "software".
+    include_gate_name : bool, optional
+        If True, appends the name of the ramped gates to the measurement name. Default is True.
+    buffer_timeout_multiplier : int, optional
+        Multiplier for buffer timeout duration relative to burst duration. Default is 20.
+    sync_trigger : callable, optional
+        Method for synchronized triggering. Default is None.
+
+    Returns
+    -------
+    datasets : list of qcodes.dataset.data_set.DataSet
+        A list of datasets containing the measurement results.
+
+    Raises
+    ------
+    AttributeError
+        If a required method (e.g., for pulsing) is missing.
+    TimeoutError
+        If buffers fail to finish within the timeout duration.
+    Exception
+        If static or dynamic parameters have invalid configurations.
+
     """
 
     def run(self):
@@ -1294,25 +1476,49 @@ class Generic_Pulsed_Measurement(MeasurementScript):
 
 class Generic_Pulsed_Repeated_Measurement(MeasurementScript):
     """
-    Measurement script for buffered measurements with abritary setpoints.
-    Trigger Types:
-            "software": Sends a software command to each buffer and dynamic parameters
-                        in order to start data acquisition and ramping. Timing
-                        might be off slightly
-            "hardware": Expects a trigger command for each setpoint. Can be used
-                        with a preconfigured hardware trigger (Todo), a method,
-                        that starts a manually adjusted hardware trigger
-                        (has to be passed as trigger_start() method to
-                         measurement script) or a manual trigger.
-            "manual"  : The trigger setup is done by the user. The measurent script will
-                        just start the first ramp. Usefull for synchronized trigger outputs
-                        as in the QDac.
-    trigger_start: A callable that triggers the trigger (called to start the measurement)
-                    or the keyword "manual" when triggering is done by user. Defauls is manual.
-    trigger_reset (optional): Callable to reset the trigger. Default is NONE.
-    include_gate_name (optional): Appends name of ramped gates to measurement name. Default is TRUE.
-    reset_time: Time for ramping fast param back to the start value.
-    TODO: Add Time!
+    Executes a buffered pulsed measurement with repeated acquisitions.
+    Results of the acquisitions are averaged. All setpoint arrays need to have
+    the same length.
+
+    Triggering methods:
+
+    - "software": Sends a software command to each buffer and dynamic parameters
+                   to start data acquisition and ramping. Timing might be slightly off.
+    - "hardware": Runs trigger_start to start the measurement. Can be preconfigured
+                   or manually adjusted (requires `trigger_start` callable).
+    - "manual": Trigger setup is user-defined, useful for synchronized trigger outputs.
+
+    Parameters
+    ----------
+    trigger_start : str or callable, optional
+        A callable to start the measurement or "manual" for user-triggered setup.
+        Default is "manual".
+    trigger_reset : callable, optional
+        A callable to reset the trigger after measurement. Default is None.
+    trigger_type : str, optional
+        Type of trigger to use ("software", "hardware", "manual"). Default is "software".
+    include_gate_name : bool, optional
+        If True, appends the name of the ramped gates to the measurement name. Default is True.
+    repetitions : int, optional
+        Number of repeated measurements to perform. Default is 1.
+    sync_trigger : callable, optional
+        Method for synchronized triggering. Default is None.
+
+    Returns
+    -------
+    datasets : list of qcodes.dataset.data_set.DataSet
+        A list of datasets containing the measurement results.
+
+    Raises
+    ------
+    AttributeError
+        If a required method (e.g., for pulsing) is missing.
+    Exception
+        If static or dynamic parameters have invalid configurations.
+
+    Notes
+    -----
+    - Results are averaged across repetitions.s<
     """
 
     def run(self):

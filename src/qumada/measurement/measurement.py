@@ -52,9 +52,11 @@ logger = logging.getLogger(__name__)
 def load_param_whitelist(folder_path=None):
     combined_params = set()
     if folder_path is None:
-        folder_path = os.path.join(os.path.dirname(__file__), "../instrument/parameter_whitelists")
+        folder_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../instrument/parameter_whitelists"))
+        if not os.path.exists(folder_path):
+            raise FileNotFoundError(f"Whitelist folder not found: {folder_path}")
     for filename in os.listdir(folder_path):
-        if filename.endswith(".json"):  # Nur JSON-Dateien laden
+        if filename.endswith(".json"):  # Load all json
             file_path = os.path.join(folder_path, filename)
             with open(file_path) as file:
                 data = json.load(file)
@@ -101,7 +103,6 @@ class MeasurementScript(ABC):
     The abstract function "run" has to be implemented.
     """
 
-    # TODO: Put list elsewhere! Remove names that were added as workarounds (e.g. aux_voltage) as soon as possible
     PARAMETER_NAMES: set[str] = load_param_whitelist()
 
     def __init__(self):

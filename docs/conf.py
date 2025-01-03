@@ -47,9 +47,9 @@ extensions = [
 
 # autodoc settings
 autodoc_default_options = {
-    "members": None,
-    "show-inheritance": None,
-    "undoc-members": None,
+    "members": True,
+    "show-inheritance": True,
+    "undoc-members": True,
 }
 
 autodoc_mock_imports = ["qutil"]

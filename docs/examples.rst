@@ -1,11 +1,10 @@
-Examples
-Examples
-==============
+.. _MeasurementScripts:
 
 Measurement Scripts
 --------------------
 
 QuMADA comes with a couple of "generic" measurement scripts suitable for most basic applications.
+For more details check the measurement section of the Qumada API Documentation :ref:`API_DOC`
 
 #####################
 Generic_1D_Sweep()
@@ -28,70 +27,76 @@ is provided, the parameters will kept at the starting point of their sweep.
 
 Example:
 
-.. code-block:: yaml
+.. code-block:: python
 
-	source drain:
-	  amplitude:
-		type: static
-		value: 0.0001
-	  frequency:
-		type: static
-		value: 173
-	  output_enabled:
-		type: static
-		value: 1
-	  current:
-		type: gettable
-		break_conditions:
-		- val > 1e-9
-	  phase:
-		type: gettable
-	Accumulation Gate:
-	  voltage:
-		type: dynamic
-		start: 0
-		stop: 2
-		num_points: 250
-		delay: 0.025
-		value: 1.5
-	Left Barrier Gate:
-	  voltage:
-		type: dynamic
-		start: 0
-		stop: 2
-		num_points: 200
-		delay: 0.025
-	Right Barrier Gate:
-	  voltage:
-		type: dynamic
-		start: 0
-		stop: 2
-		num_points: 200
-		delay: 0.025
-	Plunger Gate:
-	  voltage:
-		type: static
-		value: 1.3
+	parameters = {
+		"source drain": {
+			"amplitude": {
+				"type": "static",
+				"value": 0.0001
+			},
+			"frequency": {
+				"type": "static",
+				"value": 173
+			},
+			"current": {
+				"type": "gettable",
+				"break_conditions": [
+					"val > 1e-9"
+				]
+			},
+			"phase": {
+				"type": "gettable"
+			}
+		},
+		"Accumulation Gate": {
+			"voltage": {
+				"type": "dynamic",
+				"setpoints": np.linspace(0, 2, 250),
+				"delay": 0.025,
+				"value": 1.5
+			}
+		},
+		"Left Barrier Gate": {
+			"voltage": {
+				"type": "dynamic",
+				"setpoints": np.linspace(0, 1, 200),
+				"delay": 0.025,
+				"value": 0
+			}
+		},
+		"Right Barrier Gate": {
+			"voltage": {
+				"type": "dynamic",
+				"setpoints": np.linspace(0, 1, 250),
+				"delay": 0.025
+				"value": 0
+			}
+		},
+		"Plunger Gate": {
+			"voltage": {
+				"type": "static",
+				"value": 1.3
+			}
+		}
+	}
 
 Those example gate parameters in combination with the Generic_1D_Sweep will perform three 1D sweeps for the Accumulation Gate voltage,
 the Left Barrier Gate voltage and the Right Barrier Gate voltage. The Accumulation Gate voltage will be kept at 1.5 V during the
-measurements of the barrier gates whereas the Barrier gates will be set to 0 V during the Accumulation Gate sweep.
+measurements of the barrier gates whereas the Barrier gates will be set to 0 V during the Accumulation Gate sweep.
 
 The 1D_Generic sweep is very useful for performing pinchoff measurements of many gates.
 
-#########################
+##################################
 Generic_1D_parallel_Sweep()
-#########################
+##################################
 
 .. py:class:: Generic_1D_parallel_Sweep(MeasurementScript)
 
 The Generic_1D_parallel_Sweep is very similar to the "normal" Generic_1D_Sweep and behaves in the same way when only one dynamic
 parameter is provided. If more than one dynamic parameter is passed, however, it will not perform multiple sweeps but only one ramping
-all dynamic parameters in parallel. In the current version it will use the setpoints of the first dynamic parameter for all dynamic parameters.
+all dynamic parameters in parallel.
 
-.. note::
-
-	We plan to add the possibility to specify factors for all parameters in order to make this measurement script more flexible
 
 As the Generic_1D_Sweep is has a wait_time argument to set the wait time between the initialization and the start of the measurement
 and additionally the backsweep_after_break: bool [optional][False] parameter. When set to True triggering a break condition will
@@ -106,53 +111,62 @@ This feature was implemented to allow for easy accumulation measurements in Si/S
 
 Example:
 
-.. code-block:: yaml
+.. code-block:: python
 
-	source drain:
-	  amplitude:
-		type: static
-		value: 0.0001
-	  frequency:
-		type: static
-		value: 173
-	  output_enabled:
-		type: static
-		value: 1
-	  current:
-		type: gettable
-		break_conditions:
-		- val > 1e-9
-	  phase:
-		type: gettable
-	Accumulation Gate:
-	  voltage:
-		type: dynamic
-		start: 0
-		stop: 2
-		num_points: 250
-		delay: 0.025
-		value: 1.5
-	Left Barrier Gate:
-	  voltage:
-		type: dynamic
-		start: 0
-		stop: 2
-		num_points: 200
-		delay: 0.025
-	Right Barrier Gate:
-	  voltage:
-		type: dynamic
-		start: 0
-		stop: 2
-		num_points: 200
-		delay: 0.025
-	Plunger Gate:
-	  voltage:
-		type: static
-		value: 1.3
+	parameters = {
+		"source drain": {
+			"amplitude": {
+				"type": "static",
+				"value": 0.0001
+			},
+			"frequency": {
+				"type": "static",
+				"value": 173
+			},
+			"current": {
+				"type": "gettable",
+				"break_conditions": [
+					"val > 1e-9"
+				]
+			},
+			"phase": {
+				"type": "gettable"
+			}
+		},
+		"Accumulation Gate": {
+			"voltage": {
+				"type": "dynamic",
+				"setpoints": np.linspace(0, 2, 250),
+				"delay": 0.025,
+				"value": 1.5
+			}
+		},
+		"Left Barrier Gate": {
+			"voltage": {
+				"type": "dynamic",
+				"setpoints": np.linspace(0, 1, 250),
+				"delay": 0.025,
+				"value": 0
+			}
+		},
+		"Right Barrier Gate": {
+			"voltage": {
+				"type": "dynamic",
+				"setpoints": np.linspace(0, 1, 250),
+				"delay": 0.025
+				"value": 0
+			}
+		},
+		"Plunger Gate": {
+			"voltage": {
+				"type": "static",
+				"value": 1.3
+			}
+		}
+	}
 
-Consequently, the same example gate parameters will start a measurement where the Accumulation Gate and the Barrier Gates are swept at the same time from 0 to 2 V (in 250 steps).
-Unused parameters such as "value" for the Accumulation Gate are simply ignored.
+Consequently, the same example gate parameters will start a measurement where the Accumulation Gate is swept from 0 to 2 V and the Barrier Gates are swept at the same time from 0 to 1 V (in 250 steps).
+Unused parameters such as "value" for the Accumulation Gate are simply ignored. While individual setpoints are possible for the parameters, all of them have to have the same length.
 
 
 ################
@@ -164,50 +178,56 @@ Generic_nD_Sweep
 This measurement script can be used for arbitrary n-dimensional sweeps. For n dynamic parameters an n-dimensional array of setpoints is created containing all combinations of parameter values.
 The setpoint arrays, delays etc. can be chosen individually for each parameter. Our example gate parameters
 
-.. code-block:: yaml
+.. code-block:: python
 
-	source drain:
-	  amplitude:
-		type: static
-		value: 0.0001
-	  frequency:
-		type: static
-		value: 173
-	  output_enabled:
-		type: static
-		value: 1
-	  current:
-		type: gettable
-		break_conditions:
-		- val > 1e-9
-	  phase:
-		type: gettable
-	Accumulation Gate:
-	  voltage:
-		type: dynamic
-		start: 0
-		stop: 2
-		num_points: 250
-		delay: 0.025
-		value: 1.5
-	Left Barrier Gate:
-	  voltage:
-		type: dynamic
-		start: 0
-		stop: 2
-		num_points: 200
-		delay: 0.025
-	Right Barrier Gate:
-	  voltage:
-		type: dynamic
-		start: 0
-		stop: 2
-		num_points: 200
-		delay: 0.025
-	Plunger Gate:
-	  voltage:
-		type: static
-		value: 1.3
+	parameters = {
+		"source drain": {
+			"amplitude": {
+				"type": "static",
+				"value": 0.0001
+			},
+			"frequency": {
+				"type": "static",
+				"value": 173
+			},
+			"current": {
+				"type": "gettable",
+			},
+			"phase": {
+				"type": "gettable"
+			}
+		},
+		"Accumulation Gate": {
+			"voltage": {
+				"type": "dynamic",
+				"setpoints": np.linspace(0, 2, 250),
+				"delay": 0.025,
+				"value": 1.5
+			}
+		},
+		"Left Barrier Gate": {
+			"voltage": {
+				"type": "dynamic",
+				"setpoints": np.linspace(0, 1, 200),
+				"delay": 0.025,
+				"value": 0
+			}
+		},
+		"Right Barrier Gate": {
+			"voltage": {
+				"type": "dynamic",
+				"setpoints": np.linspace(0, 1, 250),
+				"delay": 0.025
+				"value": 0
+			}
+		},
+		"Plunger Gate": {
+			"voltage": {
+				"type": "static",
+				"value": 1.3
+			}
+		}
+	}
 
 will create a 3-dimensional sweep ramping the Accumulation gate from 0 to 2 V and then creating a 2D sweep of the Barrier Gates at each setpoint.
 Keep in mind that sweeps with more than two dynamic parameters can take a lot of time. Furthermore, the built-in QCoDeS plotting script (plot_dataset from qcodes.dataset.plotting) cannot handle
@@ -228,10 +248,45 @@ All gettable (and static gettable) parameters will be recorded, static and dynam
 	The minimum timestep is limited by time it takes to record the measurement values. If you choose small timesteps compared to the measurement speed and communication time it might affect
 	the stepsize and duration of the complete measurement. Use custom measurement scripts to perform very fast or high-precision measurements.
 
+There is also a buffered version of this script.
 
-#####################################
+#############################################
+Timetrace with Sweeps (buffered)
+#############################################
+
+Doc missing, check :ref:`API_DOC`, measurement/scripts
+
+######################################
+Pulsed Measurements (buffered)
+######################################
+
+Doc missing, check :ref:`API_DOC`, measurement/scripts
+
+
+#############################################
+Generic_Pulsed_Repeated_Measurement
+#############################################
+
+Doc missing, check :ref:`API_DOC`, measurement/scripts
+
+
+########################################
+1D Hysteresis Sweeps (buffered)
+########################################
+
+Doc missing, check :ref:`API_DOC`, measurement/scripts
+
+
+########################
+2D Sweeps buffered
+########################
+
+Doc missing, check :ref:`API_DOC`, measurement/scripts
+
+
+#################################################
 Writing your own measurement scripts (WIP)
-#####################################
+#################################################
 
 Although the generic measurement scripts coming with QuMADA can handle a lot of different measurements there are certainly cases where you want to define your own measurements.
 In general QuMADA supports all the freedom the QCoDeS Measurement Context Manager provides. However, in order to make it work with QuMADA features like the gate mapping you have
@@ -340,18 +395,14 @@ Therefore, we included some useful method in the "utils" section of QuMADA.
 
 
 
+.. _BufferedMeasurements:
+
 Buffered Measurements
-----------------------
-
-Currently, QuMADA supports only basic buffered measurements with simple 1D Sweeps and data acquisition with either the SR 830 or the Zurich Instruments MFLI lockins.
-
-#############################
-Buffered 1D Measurements
-#############################
+-------------------------------------
 
 Buffered measurements are required, as the communication between the measurement PC and the measurement hardware can slow down measurement significantly. For unbuffered measurements QuMADA has to send get and set commands to the measurement hardware for every datapoint,
 whereas buffered measurements just require communication for starting the measurement and for reading the data afterwards.
-In QuMADA buffered measurements are setup similarily to unbuffered ones. As for the gate mapping to get rid of driver specific commands for normal measurements, QuMADA comes with a generic buffer class that maps the buffer and trigger settings
+In QuMADA buffered measurements are setup similarily to unbuffered ones. You can find a working example with dummy instruments under src/examples/buffered_dummy_example.py. As for the gate mapping to get rid of driver specific commands for normal measurements, QuMADA comes with a generic buffer class that maps the buffer and trigger settings
 to the used instruments. This requires a few changes to the way the measurement station is setup:
 
 .. code-block:: python
@@ -397,8 +448,9 @@ Setting up the buffer in QuMADA is done via a settings dict (which can also be s
 trigger_mode [str]:
 		continuous, edge, tracking_edge, pulse, tracking_pulse, digital.
 
-		Note that some of those modes may not be available by some instruments. Furthermore, the trigger mode is changed automatically by the buffer class in some cases after the trigger input is assigned. For example using the trigger inputs of the MFLI
-		requires the digital trigger mode.
+		Note that some of those modes may not be available for some instruments. Furthermore, the trigger mode is changed automatically by the buffer class in some cases after the trigger input is assigned. For example using the trigger inputs of the MFLI
+		requires the digital trigger mode. Note that Qumada might automatically change the trigger_mode in case the chosen trigger input (cf. trigger mapping) is not compatible. This is for example the case for the MFLI's dedicated trigger inputs, which only support digital trigger mode.
+
 trigger_mode_polarity [str]:
 		positive,
 		negative,
@@ -407,12 +459,12 @@ trigger_mode_polarity [str]:
 		Defines if rising or falling flanks(pulses) trigger for edge triggers(pulse triggers).
 
 trigger_threshold [float]:
-		Defines the voltage level required to start trigger event. Any number, range is limited by instrument specifications.
+		Defines the voltage level required to start trigger event. Any number, range is limited by instrument specifications. Be aware that for some instruments the level cannot be set (e.g. the DecaDac)
 
 grid_interpolation [str]:
 		linear, nearest, exact
 
-		Defines the interpolation between setpoints for 2D sweeps (Details in MFLI Documentation, TODO)
+		Defines the interpolation between setpoints for 2D sweeps (Details in MFLI Documentation, only relevant for supported instruments)
 
 delay [float]:
 		Defines the time delay between the trigger signal and the start of the measurement. Some instruments (e.g. the MFLI) support negative delays. Delays can reduce available buffer size in some cases
@@ -428,6 +480,7 @@ duration [float]:
 
 burst_duration [float]:
 		Duration of each measurement burst. Right now, only one burst per measurement is possible, should be the same as duration. You can only define two of num_points, burst_duration and sampling_rate, the third one is calculated from the other two.
+		If not specified it is set to the value of "duration".
 
 For buffered measurements, the number of setpoints is defined by the num_points of the buffer settings instead of the number of points defined by the dynamic parameters in the gate_parameters. As only smooth ramps for dynamic parameters are supported at the moment,
 the num_points and the delay set in the gate_params is ignored. Only "start" and "stop" or the first and last entry of the "setpoints" is used to define the sweep. QuMADA will automatically configure the sweeps of the dynamic parameters to match the settings of the buffers.
@@ -478,7 +531,7 @@ The measurement script is then setup in almost the same way as for normal, unbuf
 	map_gates_to_instruments(station.components, script.gate_parameters)
 	map_triggers(station.components)
 
-Instead of the Generic_1D_Sweep we are now using the buffed version. It requires the buffer_settings as input argument as well as the trigger_type.
+Instead of the Generic_1D_Sweep we are now using the buffered version. It requires the buffer_settings as input argument as well as the trigger_type.
 The trigger type defines, how the measurement is started, it can be either "manual", meaning the script does not care about triggers and just starts the sweep once the script.run is executed,
 "software", which sends software triggers to all instruments or any callable, that starts a trigger signal.
 Be aware of the difference between the trigger_mode specified in the buffer settings and the trigger_type of the measurement script.
