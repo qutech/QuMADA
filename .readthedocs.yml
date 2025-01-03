@@ -12,7 +12,7 @@ build:
     python: "3.11"
   commands:
     - mkdir -p qumada/instrument/parameter_whitelists
-    
+
 # Build documentation in the "docs/" directory with Sphinx
 sphinx:
   configuration: docs/conf.py
