@@ -46,15 +46,15 @@ class Generic_1D_Sweep(MeasurementScript):
     def run(self, **dond_kwargs) -> list:
         """
         Perform 1D sweeps for all dynamic parameters, one after another.
-    
+
         Dynamic parameters that are not currently active are kept at their
         "value" value.
-    
+
         Parameters
         ----------
         **dond_kwargs : dict
             Additional keyword arguments passed to the `dond` method.
-    
+
         Attributes (via settings)
         -------------------------
         wait_time : float, optional
@@ -72,7 +72,7 @@ class Generic_1D_Sweep(MeasurementScript):
         log_idle_params : bool, optional
             If True, record dynamic parameters kept constant during sweeps.
             Default is True.
-    
+
         Returns
         -------
         list
@@ -113,12 +113,12 @@ class Generic_nD_Sweep(MeasurementScript):
     def run(self, **dond_kwargs):
         """
         Perform an n-dimensional sweep for n dynamic parameters.
-    
+
         Parameters
         ----------
         **dond_kwargs : dict
             Additional keyword arguments passed to the `dond` method.
-    
+
         Attributes (via settings)
         -------------------------
         wait_time : float, optional
@@ -133,7 +133,7 @@ class Generic_nD_Sweep(MeasurementScript):
         ramp_time : float, optional
             Maximum time (in seconds) allowed for ramping each parameter during
             initialization. Default is 10.
-    
+
         Returns
         -------
         QCoDeS dataset
@@ -181,14 +181,14 @@ class Generic_1D_parallel_Sweep(MeasurementScript):
     """
     Sweeps all dynamic parameters in parallel.
 
-    Supports different sweep rates and setpoints for different parameters. 
+    Supports different sweep rates and setpoints for different parameters.
     All parameters must have the same length.
 
     Parameters
     ----------
     **kwargs : dict
         Additional keyword arguments:
-        - `backsweep_after_break` (bool): Sweeps backwards after a break condition 
+        - `backsweep_after_break` (bool): Sweeps backwards after a break condition
           is triggered. Default is `False`.
         - `wait_time` (float): Wait time in seconds before starting the sweep. Default is `5`.
 
@@ -225,8 +225,8 @@ class Timetrace(MeasurementScript):
     """
     Timetrace measurement.
 
-    Records data over a specified duration with a given timestep. Note that 
-    the actual timesteps can vary as the recording time for each datapoint 
+    Records data over a specified duration with a given timestep. Note that
+    the actual timesteps can vary as the recording time for each datapoint
     is not constant. However, the elapsed time recorded is accurate.
 
     Parameters
@@ -275,9 +275,9 @@ class Timetrace_buffered(MeasurementScript):
     Performs a buffered timetrace measurement.
 
     The measurement duration and timestep are determined via the buffer settings.
-    Dynamic parameters are currently not supported. 
-    The method does not support "manual" triggering mode, as no ramp is started. 
-    Using "software" triggering is fine if only one buffered instrument is used; 
+    Dynamic parameters are currently not supported.
+    The method does not support "manual" triggering mode, as no ramp is started.
+    Using "software" triggering is fine if only one buffered instrument is used;
     otherwise, "hardware" triggering is recommended.
     TODO: Add duration arg
 
@@ -290,7 +290,7 @@ class Timetrace_buffered(MeasurementScript):
     trigger_reset : callable, optional
         Function to reset the trigger after measurement. Default is None.
     trigger_type : str, optional
-        Specifies the type of trigger to use. Can be "software" or "hardware". 
+        Specifies the type of trigger to use. Can be "software" or "hardware".
         Default is "software".
     auto_naming : bool, optional
         Renames measurement automatically to "Timetrace" if True.
@@ -312,7 +312,6 @@ class Timetrace_buffered(MeasurementScript):
     - Dynamic parameters are treated as "static gettable"
 
     """
-
 
     def run(self):
         self.initialize(dyn_ramp_to_val=True)
@@ -417,8 +416,8 @@ class Timetrace_with_sweeps(MeasurementScript):
     """
     Performs a timetrace measurement with dynamic sweeps.
 
-    Duration and timestep can be set as keyword arguments, both in seconds. 
-    Note that the timesteps may vary due to variable recording times per data point. 
+    Duration and timestep can be set as keyword arguments, both in seconds.
+    Note that the timesteps may vary due to variable recording times per data point.
     The elapsed time recorded is accurate.
 
     Parameters
@@ -475,8 +474,8 @@ class Timetrace_with_Sweeps_buffered(MeasurementScript):
     """
     Performs a buffered timetrace measurement with dynamic sweeps.
 
-    Duration and timestep are determined via buffer settings. 
-    This method does not support dynamic parameters and cannot use 
+    Duration and timestep are determined via buffer settings.
+    This method does not support dynamic parameters and cannot use
     "manual" triggering mode. Use "software" or "hardware" triggers.
 
     Parameters
@@ -819,53 +818,53 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
 
 class Generic_1D_Hysteresis_buffered(MeasurementScript):
     """
-     Performs a buffered 1D hysteresis measurement (back and foresweeps).
-     Each iteration corresponds to one fore- and one backsweep.
-    
-     This measurement supports dynamic and static parameters and handles multiple
-     triggering methods:
-    
-     - "software": Sends a software command to each buffer and dynamic parameters
-                    to start data acquisition and ramping. Timing might be slightly off.
-     - "hardware": Runs trigger_start to start the measurement.. Can be preconfigured
-                    or manually adjusted (requires `trigger_start` callable).
-     - "manual": Trigger setup is user-defined, useful for synchronized trigger outputs.
-    
-     Parameters
-     ----------
-     iterations : int
-         Defines how many sweeps are done. Each iteration corresponds to one fore- and one backsweep.
-     trigger_start : str or callable, optional
-         A callable to start the measurement or "manual" for user-triggered setup.
-         Default is "manual".
-     trigger_reset : callable, optional
-         A callable to reset the trigger after measurement. Default is None.
-     trigger_type : str, optional
-         Type of trigger to use ("software", "hardware", "manual"). Default is "software".
-     sync_trigger : int, optional
-         Number of the used sync trigger (QDacs only). Default is None.
-     include_gate_name : bool, optional
-         If True, appends the name of the ramped gates to the measurement name. Default is True.
-    
-     Returns
-     -------
-     datasets : list of qcodes.dataset.data_set.DataSet
-         A list of datasets containing the measurement results.
-    
-     Raises
-     ------
-     AttributeError
-         If a required method (e.g., for ramping) is missing.
-     TypeError
-         If no reset method for the trigger is defined.
-     Exception
-         If static or dynamic parameters have invalid configurations.
-    
-     Notes
-     -----
-     - This script performs back-and-forth sweeps (hysteresis) for dynamic parameters.
-     - Proper configuration of buffers and triggers is required for accurate results.
-     """
+    Performs a buffered 1D hysteresis measurement (back and foresweeps).
+    Each iteration corresponds to one fore- and one backsweep.
+
+    This measurement supports dynamic and static parameters and handles multiple
+    triggering methods:
+
+    - "software": Sends a software command to each buffer and dynamic parameters
+                   to start data acquisition and ramping. Timing might be slightly off.
+    - "hardware": Runs trigger_start to start the measurement.. Can be preconfigured
+                   or manually adjusted (requires `trigger_start` callable).
+    - "manual": Trigger setup is user-defined, useful for synchronized trigger outputs.
+
+    Parameters
+    ----------
+    iterations : int
+        Defines how many sweeps are done. Each iteration corresponds to one fore- and one backsweep.
+    trigger_start : str or callable, optional
+        A callable to start the measurement or "manual" for user-triggered setup.
+        Default is "manual".
+    trigger_reset : callable, optional
+        A callable to reset the trigger after measurement. Default is None.
+    trigger_type : str, optional
+        Type of trigger to use ("software", "hardware", "manual"). Default is "software".
+    sync_trigger : int, optional
+        Number of the used sync trigger (QDacs only). Default is None.
+    include_gate_name : bool, optional
+        If True, appends the name of the ramped gates to the measurement name. Default is True.
+
+    Returns
+    -------
+    datasets : list of qcodes.dataset.data_set.DataSet
+        A list of datasets containing the measurement results.
+
+    Raises
+    ------
+    AttributeError
+        If a required method (e.g., for ramping) is missing.
+    TypeError
+        If no reset method for the trigger is defined.
+    Exception
+        If static or dynamic parameters have invalid configurations.
+
+    Notes
+    -----
+    - This script performs back-and-forth sweeps (hysteresis) for dynamic parameters.
+    - Proper configuration of buffers and triggers is required for accurate results.
+    """
 
     def run(self):
         self.buffered = True
@@ -1278,7 +1277,7 @@ class Generic_Pulsed_Measurement(MeasurementScript):
     """
     Executes a buffered pulsed measurement with arbitrary setpoints.
     All setpoint arrays have to have the same length!
-    
+
     Triggering methods:
 
     - "software": Sends a software command to each buffer and dynamic parameters
@@ -1316,7 +1315,7 @@ class Generic_Pulsed_Measurement(MeasurementScript):
         If buffers fail to finish within the timeout duration.
     Exception
         If static or dynamic parameters have invalid configurations.
-        
+
     """
 
     def run(self):
