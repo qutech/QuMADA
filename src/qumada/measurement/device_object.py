@@ -1049,7 +1049,7 @@ class Terminal_Parameter(ABC):
         metadata : dict, optional
             Metadata for the measurement. Default is None.
         backsweep : bool, optional
-            If True, includes a backsweep to return to the starting value after 
+            If True, includes a backsweep to return to the starting value after
             reaching the target value. Default is False.
         buffered : bool, optional
             If True, performs a buffered ramp measurement. Default is False.
