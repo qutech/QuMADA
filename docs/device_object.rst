@@ -185,10 +185,10 @@ Buffered Measurements
 
 You can use the device_object to run buffered measurements in an even more comfortable way then with the measurement_script based approach.
 It is possible to store all relevant buffer settings in the device_object. The measurements will then use the stored settings by default unless you explicetly specify
-different ones. 
+different ones.
 
 The settings are identical to the ones discussed in :ref:`BufferedMeasurements`.
-Create the buffer_settings dictionary and simply set 
+Create the buffer_settings dictionary and simply set
 
 .. code:: python
 
@@ -224,9 +224,9 @@ To run a buffered measurement, simply set the "buffered" kwarg to True when runn
 
 For most scripts that can be started from the device level,
 QuMada automatically uses the buffered version of the script if you set "buffered" to True.
-If you use the arbitrary "device.run_measurement()" you obviously have to specify a buffered script yourself. Keep in mind that not all measurement scripts support buffered measurements. 
+If you use the arbitrary "device.run_measurement()" you obviously have to specify a buffered script yourself. Keep in mind that not all measurement scripts support buffered measurements.
 It is always possible to override the settings stored in the device object by explicitely passing the buffer_settings and buffer_script_setup dictioniaries as corresponding arguments
-when runing a measurement. 
+when runing a measurement.
 As it is quite common to frequently adjust the number of points recorded during a measurement, the number of points specified in the buffer_settings is overridden in case a number of points
 or a setpoint array is specified when running a measurement. QuMada will provide a warning if this happens.
 For example:
@@ -241,7 +241,7 @@ For example:
     		"delay": 0,
 	}
 	device.buffer_settings = buffer_settings
-	
+
 	device.gate1.voltage.measured_ramp(0.5,  buffered = True, num_points = 200)
 
 will record a measurement with 200 datapoints. This works only if "num_points" and either "duration" or "sampling_rate" are specified in the buffer settings.
@@ -256,7 +256,7 @@ Sensor Compensation
 Sensor compensation with the device_object works in the same way as explained in :ref:`SensorCompensation`.
 Simply set the type of the compensating gates to "compensating" (or "comp") and specify the required attributes.
 This can be done either by directly addressing them via "device.terminal.parameter.attribute_name" (recommended) or by altering the parameter dictionary and updating the device object
-as described in :ref:`UpdatingDevice`. Again, sensor compensation works only for a few measurement types. 
+as described in :ref:`UpdatingDevice`. Again, sensor compensation works only for a few measurement types.
 
 ########################
 Safety features (WIP)
