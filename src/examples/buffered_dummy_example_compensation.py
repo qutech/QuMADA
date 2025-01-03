@@ -139,7 +139,7 @@ script.setup(
 )
 
 map_terminals_gui(station.components, script.gate_parameters)
-map_triggers(station.components, script.properties, script.gate_parameters)
+map_triggers(station.components)
 
 # %% Run measurement
 script.run(insert_metadata_into_db=False)
