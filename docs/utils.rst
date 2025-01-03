@@ -5,7 +5,7 @@ Plotting with QuMada
 ---------------------------------
 
 QuMada comes with a few useful scripts for quick plotting of results and easier access to QCoDeS datasets.
-You can find the corresponding function in src/qumada/utils/plotting.py and load_from_sqlite.py. 
+You can find the corresponding function in src/qumada/utils/plotting.py and load_from_sqlite.py.
 
 The function "plot_multiple_datasets()" is useful for plotting multiple curves into one plot. Make sure to load the QCoDeS database you want to plot from in advance.
 You can either provide a list of datasets you want to plot along with the names of the parameters you want to plot,
@@ -30,4 +30,3 @@ It is possible to create a 2D plot by calling:
 
 As for plot_multiple_datasets, this will guide you through the selection of a measurement from the current database.
 Check :ref:`API_DOC` or the docstring for more information.
-
