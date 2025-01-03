@@ -418,7 +418,7 @@ trigger_mode [str]:
 		continuous, edge, tracking_edge, pulse, tracking_pulse, digital.
 
 		Note that some of those modes may not be available for some instruments. Furthermore, the trigger mode is changed automatically by the buffer class in some cases after the trigger input is assigned. For example using the trigger inputs of the MFLI
-		requires the digital trigger mode. Note that Qumada might automatically change the trigger_mode in case the chosen trigger input (cf. trigger mapping) is not compatible. This is for example the case for the MFLI's dedicated trigger inputs, which only support digital trigger mode. 
+		requires the digital trigger mode. Note that Qumada might automatically change the trigger_mode in case the chosen trigger input (cf. trigger mapping) is not compatible. This is for example the case for the MFLI's dedicated trigger inputs, which only support digital trigger mode.
 
 trigger_mode_polarity [str]:
 		positive,
