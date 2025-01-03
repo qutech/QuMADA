@@ -399,7 +399,6 @@ def plot_multiple_datasets(
         fig, ax = plt.subplots(figsize=(30, 30))
     x_labels = []
     y_labels = []
-    p = []
     for i in range(len(datasets)):
         label = datasets[i].name
         for string in exclude_string_from_legend:
@@ -426,7 +425,7 @@ def plot_multiple_datasets(
                 else:
                     marker = "v"
                     f_label = f"{label} backsweep"
-                p = plt.plot(
+                plt.plot(
                     x_s[j],
                     y_s[j],
                     marker,
@@ -434,7 +433,7 @@ def plot_multiple_datasets(
                     markersize=kwargs.get("markersize", 15),
                 )
         else:
-            p = plt.plot(
+            plt.plot(
                 x_data[i],
                 y_data[i],
                 marker=kwargs.get("marker", "."),
