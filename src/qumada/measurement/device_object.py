@@ -251,7 +251,44 @@ class QumadaDevice:
         buffer_settings: dict | None = None,
         priorize_stored_value=False,
     ):
-        """ """
+        """
+        Perform a time-trace measurement over a specified duration and timestep.
+        Uses the current values of the parameters. Can be buffered. 
+        
+        Parameters
+        ----------
+        duration : float
+            Total duration of the time-trace measurement in seconds.
+        timestep : float, optional
+            Time interval between data points in seconds. Default is 1.
+        name : str, optional
+            Measurement name. Default is None.
+        metadata : dict, optional
+            Metadata for the measurement. Default is None.
+        station : Station, optional
+            Station object associated with the measurement. Default is the station of the instance.
+        buffered : bool, optional
+            If True, performs a buffered time-trace measurement. Default is False.
+        buffer_settings : dict, optional
+            Buffer settings for the measurement. Default is the instance's buffer settings.
+        priorize_stored_value : bool, optional
+            If True, prioritizes stored values in the setup. Default is False.
+        
+        Returns
+        -------
+        data : qcodes.dataset.data_set.DataSet
+            The dataset containing the measurement results.
+        
+        Raises
+        ------
+        TypeError
+            If the provided `station` is not of type `Station`.
+        
+        Notes
+        -----
+        - Adjusts buffer settings temporarily when `buffered` is True.
+        - Uses `Timetrace_buffered` for buffered measurements and `Timetrace` for unbuffered measurements.
+        """
         if station is None:
             station = self.station
         if not isinstance(station, Station):
@@ -305,7 +342,58 @@ class QumadaDevice:
         priorize_stored_value=False,
         restore_state=True,
     ):
-        """ """
+        """
+        Perform a 2D sweep over two parameters. The current values are in the
+        center of the sweep (the sweep ranges from currentvalue - 0.5*range to
+        current value + 0.5*range). Can be buffered. 
+    
+        Parameters
+        ----------
+        slow_param : Parameter
+            The slow parameter to be swept.
+        fast_param : Parameter
+            The fast parameter to be swept.
+        slow_param_range : float
+            Range for the slow parameter sweep.
+        fast_param_range : float
+            Range for the fast parameter sweep.
+        slow_num_points : int, optional
+            Number of points for the slow parameter sweep. Default is 50.
+        fast_num_points : int, optional
+            Number of points for the fast parameter sweep. Default is 100.
+        name : str, optional
+            Measurement name. Default is None.
+        metadata : dict, optional
+            Metadata for the measurement. Default is None.
+        station : Station, optional
+            Station object associated with the measurement. Default is the station of the instance.
+        buffered : bool, optional
+            If True, performs a buffered 2D sweep. Default is False.
+        buffer_settings : dict, optional
+            Buffer settings for the measurement. Default is the instance's buffer settings.
+        priorize_stored_value : bool, optional
+            If True, prioritizes stored values in the setup. Default is False.
+        restore_state : bool, optional
+            If True, restores the original state of the parameters after the measurement. Default is True.
+    
+        Returns
+        -------
+        data : qcodes.dataset.data_set.DataSet
+            The dataset containing the measurement results.
+    
+        Raises
+        ------
+        TypeError
+            If the provided `station` is not of type `Station`.
+        Exception
+            If buffer settings are invalid or a measurement error occurs.
+    
+        Notes
+        -----
+        - Uses `Generic_2D_Sweep_buffered` for buffered measurements and `Generic_nD_Sweep` for unbuffered measurements.
+        - Temporarily modifies buffer settings if `buffered` is True.
+        - Restores the parameter state upon completion or exception.
+        """
         if station is None:
             station = self.station
         if not isinstance(station, Station):
@@ -387,6 +475,48 @@ class QumadaDevice:
         Gettable parameters and break conditions will be set according to their state in the device object.
         You can pass backsweep_after_break as a kwarg. If set to True, the sweep will continue in the opposite
         direction after a break condition is reached.
+        
+        
+        Parameters
+        ----------
+        params : list[Parameter]
+            List of parameters to be swept.
+        setpoints : list[list[float]], optional
+            A list of setpoints for each parameter. Each sublist must have the same length.
+        target_values : list[float], optional
+            Target values for each parameter. Used to generate setpoints if `setpoints` is not provided.
+        num_points : int, optional
+            Number of points for the generated setpoints. Default is 100.
+        name : str, optional
+            Measurement name. Default is None.
+        metadata : dict, optional
+            Metadata for the measurement. Default is None.
+        station : Station, optional
+            Station object associated with the measurement. Default is the station of the instance.
+        priorize_stored_value : bool, optional
+            If True, prioritizes stored values in the setup. Default is False.
+        **kwargs
+            Additional keyword arguments passed to the measurement script.
+        
+        Returns
+        -------
+        data : qcodes.dataset.data_set.DataSet
+            The dataset containing the measurement results.
+        
+        Raises
+        ------
+        TypeError
+            If the provided `station` is not of type `Station`.
+        Exception
+            If neither `setpoints` nor `target_values` are provided or both are provided.
+        AssertionError
+            If parameter or setpoint mismatches occur.
+        
+        Notes
+        -----
+        - Dynamic and static parameters are automatically configured during the measurement.
+        - The script used for the measurement is `Generic_1D_parallel_Sweep`.
+
         """
         if station is None:
             station = self.station
@@ -433,6 +563,54 @@ class QumadaDevice:
         priorize_stored_value=False,
         **kwargs,
     ):
+        
+        """
+        Perform a buffered pulsed measurement with optional repetitions.
+        Results from repetitions are averaged.
+
+        Parameters
+        ----------
+        params : list[Parameter]
+            List of parameters to be pulsed.
+        setpoints : list[list[float]]
+            A list of setpoints for each parameter. Each sublist must have the same length.
+        repetitions : int, optional
+            Number of repetitions for the measurement. Default is 1.
+        name : str, optional
+            Measurement name. Default is None.
+        metadata : dict, optional
+            Metadata for the measurement. Default is None.
+        station : Station, optional
+            Station object associated with the measurement. Default is the station of the instance.
+        buffer_settings : dict, optional
+            Buffer settings for the measurement. Must include "num_points". Default is the instance's buffer settings.
+        priorize_stored_value : bool, optional
+            If True, prioritizes stored values in the setup. Default is False.
+        **kwargs
+            Additional keyword arguments passed to the measurement script.
+
+        Returns
+        -------
+        data : qcodes.dataset.data_set.DataSet
+            The dataset containing the measurement results.
+
+        Raises
+        ------
+        TypeError
+            If the provided `station` is not of type `Station`.
+        AssertionError
+            If parameter or setpoint mismatches occur.
+        Exception
+            If buffer settings are invalid.
+
+        Notes
+        -----
+        - Configures dynamic and static parameters based on their usage in the measurement.
+        - Uses `Generic_Pulsed_Measurement` for single repetition or
+          `Generic_Pulsed_Repeated_Measurement` for multiple repetitions.
+        - Buffer settings are adjusted to match the length of the setpoints.
+        - Is always buffered (no need for buffered = True here)
+        """
         if station is None:
             station = self.station
         if not isinstance(station, Station):
@@ -853,6 +1031,53 @@ class Terminal_Parameter(ABC):
         buffer_settings: dict | None = None,
         priorize_stored_value=False,
     ):
+        """
+        Perform a ramp of the parameter value and measure all gettable parameters.
+        Can be buffered. 
+    
+        Parameters
+        ----------
+        value : float
+            Target value for the ramp.
+        num_points : int, optional
+            Number of points for the ramp. Default is 100.
+        start : float, optional
+            Starting value for the ramp. If None, the current parameter value is used. Default is None.
+        station : Station, optional
+            Station object for the measurement. Default is the station of the parent device.
+        name : str, optional
+            Measurement name. Default is None.
+        metadata : dict, optional
+            Metadata for the measurement. Default is None.
+        backsweep : bool, optional
+            If True, includes a backsweep to return to the starting value after reaching the target value. Default is False.
+        buffered : bool, optional
+            If True, performs a buffered ramp measurement. Default is False.
+        buffer_settings : dict, optional
+            Additional buffer settings for the measurement. Default is None.
+        priorize_stored_value : bool, optional
+            If True, prioritizes stored values in the setup. Default is False.
+    
+        Returns
+        -------
+        data : qcodes.dataset.data_set.DataSet
+            The dataset containing the measurement results.
+    
+        Raises
+        ------
+        TypeError
+            If the provided `station` is not of type `Station`.
+        Exception
+            If the parameter is locked or invalid buffer settings are provided.
+    
+        Notes
+        -----
+        - Uses `Generic_1D_Hysteresis_buffered` for buffered ramps with backsweep.
+        - Uses `Generic_1D_Sweep_buffered` for buffered ramps without backsweep.
+        - Uses `Generic_1D_Sweep` for unbuffered ramps.
+        - Temporarily modifies buffer settings to match the number of points if buffered.
+        - Ensures all other dynamic parameters are set to "static gettable" before the ramp.
+        """
         if station is None:
             station = self._parent_device.station
         if not isinstance(station, Station):
