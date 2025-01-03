@@ -87,9 +87,9 @@ measurements of the barrier gates whereas the Barrier gates will be set to 0 V d
 
 The 1D_Generic sweep is very useful for performing pinchoff measurements of many gates.
 
-#########################
+##################################
 Generic_1D_parallel_Sweep()
-#########################
+##################################
 
 .. py:class:: Generic_1D_parallel_Sweep(MeasurementScript)
 
@@ -248,31 +248,31 @@ All gettable (and static gettable) parameters will be recorded, static and dynam
 	The minimum timestep is limited by time it takes to record the measurement values. If you choose small timesteps compared to the measurement speed and communication time it might affect
 	the stepsize and duration of the complete measurement. Use custom measurement scripts to perform very fast or high-precision measurements.
 
-There is also a buffered version of this script.
+There is also a buffered version of this script. 
 
-####################
+#############################################
 Timetrace with Sweeps (buffered)
-####################
+#############################################
 
 Doc missing, check :ref:`API_DOC`, measurement/scripts
 
-####################
+######################################
 Pulsed Measurements (buffered)
-####################
+######################################
 
 Doc missing, check :ref:`API_DOC`, measurement/scripts
 
 
-################################
+#############################################
 Generic_Pulsed_Repeated_Measurement
-################################
+#############################################
 
 Doc missing, check :ref:`API_DOC`, measurement/scripts
 
 
-#####################
+########################################
 1D Hysteresis Sweeps (buffered)
-#####################
+########################################
 
 Doc missing, check :ref:`API_DOC`, measurement/scripts
 
@@ -284,9 +284,9 @@ Doc missing, check :ref:`API_DOC`, measurement/scripts
 Doc missing, check :ref:`API_DOC`, measurement/scripts
 
 
-#####################################
+#################################################
 Writing your own measurement scripts (WIP)
-#####################################
+#################################################
 
 Although the generic measurement scripts coming with QuMADA can handle a lot of different measurements there are certainly cases where you want to define your own measurements.
 In general QuMADA supports all the freedom the QCoDeS Measurement Context Manager provides. However, in order to make it work with QuMADA features like the gate mapping you have
@@ -396,6 +396,7 @@ Therefore, we included some useful method in the "utils" section of QuMADA.
 
 
 .. _BufferedMeasurements:
+
 Buffered Measurements
 -------------------------------------
 
@@ -448,7 +449,7 @@ trigger_mode [str]:
 		continuous, edge, tracking_edge, pulse, tracking_pulse, digital.
 
 		Note that some of those modes may not be available for some instruments. Furthermore, the trigger mode is changed automatically by the buffer class in some cases after the trigger input is assigned. For example using the trigger inputs of the MFLI
-		requires the digital trigger mode. Note that Qumada might automatically change the trigger_mode in case the chosen trigger input (cf. trigger mapping) is not compatible. This is for example the case for the MFLI's dedicated trigger inputs, which only support digital trigger mode.
+		requires the digital trigger mode. Note that Qumada might automatically change the trigger_mode in case the chosen trigger input (cf. trigger mapping) is not compatible. This is for example the case for the MFLI's dedicated trigger inputs, which only support digital trigger mode. 
 
 trigger_mode_polarity [str]:
 		positive,
@@ -530,7 +531,7 @@ The measurement script is then setup in almost the same way as for normal, unbuf
 	map_gates_to_instruments(station.components, script.gate_parameters)
 	map_triggers(station.components)
 
-Instead of the Generic_1D_Sweep we are now using the buffed version. It requires the buffer_settings as input argument as well as the trigger_type.
+Instead of the Generic_1D_Sweep we are now using the buffered version. It requires the buffer_settings as input argument as well as the trigger_type.
 The trigger type defines, how the measurement is started, it can be either "manual", meaning the script does not care about triggers and just starts the sweep once the script.run is executed,
 "software", which sends software triggers to all instruments or any callable, that starts a trigger signal.
 Be aware of the difference between the trigger_mode specified in the buffer settings and the trigger_type of the measurement script.

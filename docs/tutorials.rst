@@ -2,7 +2,7 @@ Tutorials
 =========
 
 First steps: Example Measurements
----------------------------------
+--------------------------------------------------
 
 QuMada is a QCoDeS based measurement framework that helps you to perform measurements easily and furthermore supports the QTools metadata-database (not public) for easy metadata storage.
 Note that it is not required to use the metadata-db at all to use most of the QuMada features.
@@ -51,9 +51,9 @@ This example runs with Dummy Instruments.
 	from qumada.utils.generate_sweeps import generate_sweep
 	from qumada.utils.load_from_sqlite_db import load_db
 
-#################
+##########################
 Station and Instruments
-#################
+##########################
 
 
 Now we can start with setting up the QCoDeS station object and the measurement instruments.
@@ -106,9 +106,9 @@ Adding the mapping is easily done by using the "add_mapping_to_instrument" comma
 In this sample we just add a couple of dummy instrument that come with QuMada. Be aware, that the Dummy Dmm only returns random values between
 0 and 1.
 
-#############
+###########################
 Metadata (Optional, WIP)
-#############
+###########################
 
 
 In the next step, we want to create a metadata object. The object contains all the metadata to store in the metadatabase and is furthermore used to supply
@@ -136,9 +136,9 @@ The connection to the metadabase is required for loading information of already 
 - of course - for storing the data. Right now, we are only interested in creating the metadata object for usage in our measurements.
 
 
-###########################################
+##########################################################
 Specifying the database for storing the data
-###########################################
+##########################################################
 
 In case you have not already initialized a QCoDeS database you can easily do so by using the load_db(path_to_db [optional) method, which either takes the path to the database you want to use or, when no argument is supplied,
 opens an open-file prompt allowing you to simply pick the database you want to use (be aware that the prompt might pop up behind other windows). Alternatively, you can provide a valid path and a filename as input argument
@@ -529,6 +529,7 @@ add the parameters to the _subscribed_parameters property of the buffer class.
             self._subscribed_parameters.add(parameter)
 
 .. _SensorCompensation:
+
 Sensor Compensation
 --------------------------
 
