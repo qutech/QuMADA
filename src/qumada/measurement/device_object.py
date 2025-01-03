@@ -253,8 +253,8 @@ class QumadaDevice:
     ):
         """
         Perform a time-trace measurement over a specified duration and timestep.
-        Uses the current values of the parameters. Can be buffered. 
-        
+        Uses the current values of the parameters. Can be buffered.
+
         Parameters
         ----------
         duration : float
@@ -273,17 +273,17 @@ class QumadaDevice:
             Buffer settings for the measurement. Default is the instance's buffer settings.
         priorize_stored_value : bool, optional
             If True, prioritizes stored values in the setup. Default is False.
-        
+
         Returns
         -------
         data : qcodes.dataset.data_set.DataSet
             The dataset containing the measurement results.
-        
+
         Raises
         ------
         TypeError
             If the provided `station` is not of type `Station`.
-        
+
         Notes
         -----
         - Adjusts buffer settings temporarily when `buffered` is True.
@@ -345,8 +345,8 @@ class QumadaDevice:
         """
         Perform a 2D sweep over two parameters. The current values are in the
         center of the sweep (the sweep ranges from currentvalue - 0.5*range to
-        current value + 0.5*range). Can be buffered. 
-    
+        current value + 0.5*range). Can be buffered.
+
         Parameters
         ----------
         slow_param : Parameter
@@ -375,19 +375,19 @@ class QumadaDevice:
             If True, prioritizes stored values in the setup. Default is False.
         restore_state : bool, optional
             If True, restores the original state of the parameters after the measurement. Default is True.
-    
+
         Returns
         -------
         data : qcodes.dataset.data_set.DataSet
             The dataset containing the measurement results.
-    
+
         Raises
         ------
         TypeError
             If the provided `station` is not of type `Station`.
         Exception
             If buffer settings are invalid or a measurement error occurs.
-    
+
         Notes
         -----
         - Uses `Generic_2D_Sweep_buffered` for buffered measurements and `Generic_nD_Sweep` for unbuffered measurements.
@@ -475,8 +475,8 @@ class QumadaDevice:
         Gettable parameters and break conditions will be set according to their state in the device object.
         You can pass backsweep_after_break as a kwarg. If set to True, the sweep will continue in the opposite
         direction after a break condition is reached.
-        
-        
+
+
         Parameters
         ----------
         params : list[Parameter]
@@ -497,12 +497,12 @@ class QumadaDevice:
             If True, prioritizes stored values in the setup. Default is False.
         **kwargs
             Additional keyword arguments passed to the measurement script.
-        
+
         Returns
         -------
         data : qcodes.dataset.data_set.DataSet
             The dataset containing the measurement results.
-        
+
         Raises
         ------
         TypeError
@@ -511,7 +511,7 @@ class QumadaDevice:
             If neither `setpoints` nor `target_values` are provided or both are provided.
         AssertionError
             If parameter or setpoint mismatches occur.
-        
+
         Notes
         -----
         - Dynamic and static parameters are automatically configured during the measurement.
@@ -563,7 +563,6 @@ class QumadaDevice:
         priorize_stored_value=False,
         **kwargs,
     ):
-        
         """
         Perform a buffered pulsed measurement with optional repetitions.
         Results from repetitions are averaged.
@@ -1033,8 +1032,8 @@ class Terminal_Parameter(ABC):
     ):
         """
         Perform a ramp of the parameter value and measure all gettable parameters.
-        Can be buffered. 
-    
+        Can be buffered.
+
         Parameters
         ----------
         value : float
@@ -1057,19 +1056,19 @@ class Terminal_Parameter(ABC):
             Additional buffer settings for the measurement. Default is None.
         priorize_stored_value : bool, optional
             If True, prioritizes stored values in the setup. Default is False.
-    
+
         Returns
         -------
         data : qcodes.dataset.data_set.DataSet
             The dataset containing the measurement results.
-    
+
         Raises
         ------
         TypeError
             If the provided `station` is not of type `Station`.
         Exception
             If the parameter is locked or invalid buffer settings are provided.
-    
+
         Notes
         -----
         - Uses `Generic_1D_Hysteresis_buffered` for buffered ramps with backsweep.
