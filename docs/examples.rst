@@ -248,6 +248,41 @@ All gettable (and static gettable) parameters will be recorded, static and dynam
 	The minimum timestep is limited by time it takes to record the measurement values. If you choose small timesteps compared to the measurement speed and communication time it might affect
 	the stepsize and duration of the complete measurement. Use custom measurement scripts to perform very fast or high-precision measurements.
 
+There is also a buffered version of this script. 
+
+####################
+Timetrace with Sweeps (buffered)
+####################
+
+Doc missing, check :ref:`API_DOC`, measurement/scripts
+
+####################
+Pulsed Measurements (buffered)
+####################
+
+Doc missing, check :ref:`API_DOC`, measurement/scripts
+
+
+################################
+Generic_Pulsed_Repeated_Measurement
+################################
+
+Doc missing, check :ref:`API_DOC`, measurement/scripts
+
+
+#####################
+1D Hysteresis Sweeps (buffered)
+#####################
+
+Doc missing, check :ref:`API_DOC`, measurement/scripts
+
+
+########################
+2D Sweeps buffered
+########################
+
+Doc missing, check :ref:`API_DOC`, measurement/scripts
+
 
 #####################################
 Writing your own measurement scripts (WIP)
@@ -362,12 +397,7 @@ Therefore, we included some useful method in the "utils" section of QuMADA.
 
 .. _BufferedMeasurements:
 Buffered Measurements
-----------------------
-
-
-#############################
-Buffered 1D Measurements
-#############################
+-------------------------------------
 
 Buffered measurements are required, as the communication between the measurement PC and the measurement hardware can slow down measurement significantly. For unbuffered measurements QuMADA has to send get and set commands to the measurement hardware for every datapoint,
 whereas buffered measurements just require communication for starting the measurement and for reading the data afterwards.
