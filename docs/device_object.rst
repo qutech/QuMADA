@@ -104,7 +104,7 @@ compatible with the device object.
 
 Opens the mapping GUI. The mapping is stored in device.instrument_parameters and it is possible to pass an existing mapping to
 map_terminals_gui to reuse an existing mapping. However, as the mapping is now stored in the device object, which is more
-permanent than a measurement script this is usually not necessary. 
+permanent than a measurement script this is usually not necessary.
 As for measurement scripts mappings can be saved to files and be loaded again.
 It is recommended to pass the QCoDeS station to the device (cf. "Creating from parameters dictionary"). In this case the mapping
 can simply be done via "device.mapping()", which opens up the mapping GUI without asking for additional arguments.
@@ -180,18 +180,18 @@ Storing and Loading Setpoints
 ################################
 
 Another important feature, is the possibility to save and load device working points. To store a certain configuration as your default working point,
-use 
+use
 
 .. code:: python
 
 	device.save_defaults()
 
-This stores all parameter values (of parameters that can be set). With 
+This stores all parameter values (of parameters that can be set). With
 
 .. code:: python
 
 	device.set_defaults()
-	
+
 you can reset it to the stored
 configuration. Alternatively you can use "device.save_state(name)" and "device.set_state(name)" to store and set multiple working points with
 custom names. They can also be accessed via "device.states" in case you forgot the name.
