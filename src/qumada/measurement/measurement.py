@@ -101,7 +101,6 @@ class MeasurementScript(ABC):
     The abstract function "run" has to be implemented.
     """
 
-    # TODO: Put list elsewhere! Remove names that were added as workarounds (e.g. aux_voltage) as soon as possible
     PARAMETER_NAMES: set[str] = load_param_whitelist()
 
     def __init__(self):

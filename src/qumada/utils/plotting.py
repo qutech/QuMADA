@@ -335,7 +335,7 @@ def plot_multiple_datasets(
     """
     Plot multiple datasets from a QCoDeS database into a single figure.
 
-    This function supports 2D plotting and can handle multiple datasets.
+    This function supports plotting and can handle multiple datasets.
     It automatically manages axis labels, legends, and optionally rescales the axes
     to use appropriate SI prefixes (e.g., µA, mV) instead of scientific notation.
 
