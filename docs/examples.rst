@@ -417,8 +417,9 @@ Setting up the buffer in QuMADA is done via a settings dict (which can also be s
 trigger_mode [str]:
 		continuous, edge, tracking_edge, pulse, tracking_pulse, digital.
 
-		Note that some of those modes may not be available by some instruments. Furthermore, the trigger mode is changed automatically by the buffer class in some cases after the trigger input is assigned. For example using the trigger inputs of the MFLI
-		requires the digital trigger mode.
+		Note that some of those modes may not be available for some instruments. Furthermore, the trigger mode is changed automatically by the buffer class in some cases after the trigger input is assigned. For example using the trigger inputs of the MFLI
+		requires the digital trigger mode. Note that Qumada might automatically change the trigger_mode in case the chosen trigger input (cf. trigger mapping) is not compatible. This is for example the case for the MFLI's dedicated trigger inputs, which only support digital trigger mode. 
+
 trigger_mode_polarity [str]:
 		positive,
 		negative,
@@ -427,12 +428,12 @@ trigger_mode_polarity [str]:
 		Defines if rising or falling flanks(pulses) trigger for edge triggers(pulse triggers).
 
 trigger_threshold [float]:
-		Defines the voltage level required to start trigger event. Any number, range is limited by instrument specifications.
+		Defines the voltage level required to start trigger event. Any number, range is limited by instrument specifications. Be aware that for some instruments the level cannot be set (e.g. the DecaDac)
 
 grid_interpolation [str]:
 		linear, nearest, exact
 
-		Defines the interpolation between setpoints for 2D sweeps (Details in MFLI Documentation, TODO)
+		Defines the interpolation between setpoints for 2D sweeps (Details in MFLI Documentation, only relevant for supported instruments)
 
 delay [float]:
 		Defines the time delay between the trigger signal and the start of the measurement. Some instruments (e.g. the MFLI) support negative delays. Delays can reduce available buffer size in some cases
@@ -448,6 +449,7 @@ duration [float]:
 
 burst_duration [float]:
 		Duration of each measurement burst. Right now, only one burst per measurement is possible, should be the same as duration. You can only define two of num_points, burst_duration and sampling_rate, the third one is calculated from the other two.
+		If not specified it is set to the value of "duration".
 
 For buffered measurements, the number of setpoints is defined by the num_points of the buffer settings instead of the number of points defined by the dynamic parameters in the gate_parameters. As only smooth ramps for dynamic parameters are supported at the moment,
 the num_points and the delay set in the gate_params is ignored. Only "start" and "stop" or the first and last entry of the "setpoints" is used to define the sweep. QuMADA will automatically configure the sweeps of the dynamic parameters to match the settings of the buffers.

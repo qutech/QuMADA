@@ -9,6 +9,9 @@ In analogy to the paramters dictionary, each device has terminals, which again h
 functional parts of the real devices such as gates or ohmic contacts and parameters the physical quantities that can be changed or
 measured for each of those terminals, such as voltages, currents or temperatures.
 
+To get a quick overview over the device_object's capabilities we recommend to go through the device_object_example.py, which can be found in qumada\src\examples.
+It provides a couple of examples and works with dummy instruments.
+
 
 Creating a Device
 -----------------
@@ -72,7 +75,7 @@ An existing QCoDeS station (cf. QCoDeS documentation and QuMada tutorial on meas
 	use dictionaries.
 
 
-
+.. _UpdatingDevice:
 ###########################
 Updating an existing device
 ###########################
@@ -96,6 +99,7 @@ As for measurement scripts it is required to map the device object to the availa
 compatible with the device object.
 
 .. code-block:: python
+
 	map_terminals_gui(station.components, device.instrument_parameters)
 
 Opens the mapping GUI. The mapping is stored in device.instrument_parameters and it is possible to pass an existing mapping to
@@ -107,8 +111,8 @@ can simply be done via "device.mapping()", which opens up the mapping GUI withou
 Using the device
 ----------------------
 
-###################################
-Parameters and simple measurements
+####################################
+Setting and Getting Parameters
 ####################################
 
 With the mapping done it is now possible to use the device, its terminals and parameters.
@@ -120,24 +124,32 @@ one parameter for a certain terminal) it is required to access the parameters ex
 If you try to access other attributes or methods of the voltage parameter you still have to call it explicitely. E.g. "gate_1.setpoints" will not return
 return the setpoints of the voltage!
 
+In case you want to set a parameter with a numeric value (such as a voltage), e.g gate1.voltage(1), it is ramped to the provided value and not instantly set.
+This behaviour can be changed globally by setting "device.ramp = False" (default is true) or for each parameter individually by setting "device.parameter.rampable" to True or False.
+The ramp rate of each parameter can be adjusted via "device.parameter.ramp_rate". By default, the maximum time a ramp can take is limited to 5 sec, if the ramp_rate is to low it will
+be changed to ensure a smooth ramp to the target value within this time. The ramp_time parameter can be set via the "ramp_time" argument of ramp-method of parameters.
+Independently of the settings, you can always use "terminal.parameter.ramp(target, ramp_speed)" to ramp to a certain value.
+
 It is possible to print all voltages of the device by calling "device.voltages()" for a quick overview.
 
-"gate_1.voltage.ramp(target, ramp_speed)" can be used to ramp to a certain value, "gate_1.voltage.measured_ramp(target)" will automatically
-start a new measurement (in the currently active QCoDeS database and for the currently active experiment container) ramping from the current value
+#################################
+Ramping and Simple Measurements
+#################################
+
+The device object can be used to run any kind of measurement without the need to work with parameter dictionaries.
+Most measurements can be started on the device level, furthermore it is possible to start 1D sweeps of individual parameters by calling gate.parameter.measured_ramp().
+"gate_1.voltage.measured_ramp(target)" will automatically start a new measurement (in the currently active QCoDeS database and for the currently active experiment container) ramping from the current value
 to the target. This offers a very quick and intuitive way to record measurements based on the current device working point.
 
 Note that there are a couple of optional arguments for the measured_ramp method to specify the starting point, the number of points, if the measurement
 should be buffered and its name.
 
-In case you want to set a parameter with a numeric value (such as a voltage), e.g gate1.voltage(1), it is ramped to the provided value and not instantly set.
-This behaviour can be changed globally by setting "device.ramp = False" (default is true) or for each parameter individually by setting "device.parameter.rampable" to True or False.
-The ramp rate of each parameter can be adjusted via "device.parameter.ramp_rate". By default, the maximum time a ramp can take is limited to 5 sec, if the ramp_rate is to low it will
-be changed to ensure a smooth ramp to the target value within this time. The ramp_time parameter can be set via the "ramp_time" argument of ramp-method of parameters.
-
-
 To quickly benchmark a devices stability it is possible to record a timetrace with device.timetrace(duration), 2D scans centered at the current working point
 can be recorded with device.sweep_2D(slow_param, fast_param, slow_param_range, fast_param_range). Again, both feature multiple additional arguments and can
-be buffered.
+be buffered. "device.run_measurement()" is capable of running any QuMada measurements script (including self-written ones) on device level. Thus, it is possible to use
+the full functionality of QuMada without working with parameter dictionaries!
+
+For more details on the individual available measurement types and their arguments check the measurements/device_object section of :ref:`API_DOC`.
 
 In all cases mentioned so far the working point of the device is defined by getting the current values of all mapped parameters.
 Values and setpoints defined in the parameter dictionary are not used for measurements started with built-in methods to avoid confusion. However, only parameters of
@@ -149,20 +161,99 @@ Values from the parameters dictionary are stored in device.terminal.parameter._s
 the current value of the parameter. However, in case you want to use the values and setpoints from the parameter dictionary instead of the one specified
 in the function call of measurement scripts, you can set the argument priorize_stored_values to True.
 
+################################
+Storing and Loading Setpoints
+################################
+
 Another important feature is the possibility to save and load device working points. To store a certain configuration as your default working point,
 use device.save_defaults. This stores all parameter values (of parameters that can be set). With device.set_defaults() you can reset it to the stored
 configuration. Alternatively you can use "device.save_state(name)" and "device.set_state(name)" to store and set multiple working points with
 custom names. They can also be accessed via "device.states" in case you forgot the name.
 For all of those methods the parameters are ramped to the final state by default (with the default QuMada ramp rate).
 
-To get a quick overview over the device_object's capabilities we recommend to go through the device_object_example.py, which can be found in qumada\src\examples.
-It provides a couple of examples and wors with dummy instruments.
 
+############################
+Buffered Measurements
+############################
 
+You can use the device_object to run buffered measurements in an even more comfortable way then with the measurement_script based approach.
+It is possible to store all relevant buffer settings in the device_object. The measurements will then use the stored settings by default unless you explicetly specify
+different ones. 
 
-###############
-Safety features
-###############
+The settings are identical to the ones discussed in :ref:`BufferedMeasurements`.
+Create the buffer_settings dictionary and simply set 
+
+.. code:: python
+
+	device.buffer_settings = buffer_settings
+
+The arguments usually passed to the measurement script, which define the way the buffered measurement is started (e.g. trigger_start, trigger_type, sync_trigger and trigger_reset),
+can be put into a second dictionary named " buffer_script_setup", for example:
+
+.. code-block:: python
+
+	buffer_script_settings = {
+  	  	"trigger_type": "hardware",
+   	 	"trigger_start": trigger.set,
+  	 	"trigger_reset": trigger.clear,
+	}
+	device.buffer_script_setup = buffer_script_settings
+
+.. note::
+	The distintion between those parameters might appear arbitrary at the first glance. Buffer_settings specify how the buffers and trigger of the instruments are setup,
+	whereas the buffer_script_setup tells the script how to start and handle buffered measurements. We are considering to combine the two in the future.
+
+The trigger mapping can be done as usual by running:
+
+.. code:: python
+
+	map_triggers(station.components)
+
+To run a buffered measurement, simply set the "buffered" kwarg to True when running the measurement, e.g.
+
+.. code:: python
+
+	device.timetrace(duration = 200, buffered = True)
+
+For most scripts that can be started from the device level,
+QuMada automatically uses the buffered version of the script if you set "buffered" to True.
+If you use the arbitrary "device.run_measurement()" you obviously have to specify a buffered script yourself. Keep in mind that not all measurement scripts support buffered measurements. 
+It is always possible to override the settings stored in the device object by explicitely passing the buffer_settings and buffer_script_setup dictioniaries as corresponding arguments
+when runing a measurement. 
+As it is quite common to frequently adjust the number of points recorded during a measurement, the number of points specified in the buffer_settings is overridden in case a number of points
+or a setpoint array is specified when running a measurement. QuMada will provide a warning if this happens.
+For example:
+
+.. code-block:: python
+
+	buffer_settings = {
+    		"trigger_threshold": 0.005,
+    		"trigger_mode": "digital",
+    		"sampling_rate": 20,
+   		"num_points": 100,
+    		"delay": 0,
+	}
+	device.buffer_settings = buffer_settings
+	
+	device.gate1.voltage.measured_ramp(0.5,  buffered = True, num_points = 200)
+
+will record a measurement with 200 datapoints. This works only if "num_points" and either "duration" or "sampling_rate" are specified in the buffer settings.
+If you provide "duration" and "sampling_rate" you have to ensure that the number of points matches duration x sampling_rate or an exception will occur.
+In this case, the buffer settings are overdefined and QuMada has no way of guessing your intend.
+Thus, it is recommend to specify "sampling_rate" and "num_points" in the buffer settings.
+
+###################
+Sensor Compensation
+###################
+
+Sensor compensation with the device_object works in the same way as explained in :ref:`SensorCompensation'.
+Simply set the type of the compensating gates to "compensating" (or "comp") and specify the required attributes.
+This can be done either by directly addressing them via "device.terminal.parameter.attribute_name" (recommended) or by altering the parameter dictionary and updating the device object
+as described in :ref:`UpdatingDevice`. Again, sensor compensation works only for a few measurement types. 
+
+##################
+Safety features (WIP)
+##################
 
 Maximum parameter ranges can be defined via
 

@@ -380,7 +380,7 @@ dynamic parameters are treated as "static gettable" and thus keep constant. As u
 In the first measurement, the topgate is ramped and the barriers are kept at 0.4 V. In the second measurement, the barrier are ramped from 0 V to 0.4 V and the topgate is kept constant at 0.5 V.
 
 ###########################
-3rd Measurement 2D-Sweep
+3rd Measurement: 2D-Sweep
 ###########################
 
 As last measurement in this tutorial, we will create a 2D barrier-barrier scan. For this purpose, we assume that we now have two individually controllable barriers.
@@ -528,7 +528,7 @@ add the parameters to the _subscribed_parameters property of the buffer class.
             self._device.buffer.subscribe(parameter)
             self._subscribed_parameters.add(parameter)
 
-
+.. _SensorCompensation:
 Sensor Compensation
 --------------------------
 
