@@ -248,7 +248,7 @@ All gettable (and static gettable) parameters will be recorded, static and dynam
 	The minimum timestep is limited by time it takes to record the measurement values. If you choose small timesteps compared to the measurement speed and communication time it might affect
 	the stepsize and duration of the complete measurement. Use custom measurement scripts to perform very fast or high-precision measurements.
 
-There is also a buffered version of this script.
+There is also a buffered version of this script. 
 
 ####################
 Timetrace with Sweeps (buffered)
@@ -401,7 +401,7 @@ Buffered Measurements
 
 Buffered measurements are required, as the communication between the measurement PC and the measurement hardware can slow down measurement significantly. For unbuffered measurements QuMADA has to send get and set commands to the measurement hardware for every datapoint,
 whereas buffered measurements just require communication for starting the measurement and for reading the data afterwards.
-In QuMADA buffered measurements are setup similarily to unbuffered ones. As for the gate mapping to get rid of driver specific commands for normal measurements, QuMADA comes with a generic buffer class that maps the buffer and trigger settings
+In QuMADA buffered measurements are setup similarily to unbuffered ones. You can find a working example with dummy instruments under src/examples/buffered_dummy_example.py. As for the gate mapping to get rid of driver specific commands for normal measurements, QuMADA comes with a generic buffer class that maps the buffer and trigger settings
 to the used instruments. This requires a few changes to the way the measurement station is setup:
 
 .. code-block:: python
@@ -448,7 +448,7 @@ trigger_mode [str]:
 		continuous, edge, tracking_edge, pulse, tracking_pulse, digital.
 
 		Note that some of those modes may not be available for some instruments. Furthermore, the trigger mode is changed automatically by the buffer class in some cases after the trigger input is assigned. For example using the trigger inputs of the MFLI
-		requires the digital trigger mode. Note that Qumada might automatically change the trigger_mode in case the chosen trigger input (cf. trigger mapping) is not compatible. This is for example the case for the MFLI's dedicated trigger inputs, which only support digital trigger mode.
+		requires the digital trigger mode. Note that Qumada might automatically change the trigger_mode in case the chosen trigger input (cf. trigger mapping) is not compatible. This is for example the case for the MFLI's dedicated trigger inputs, which only support digital trigger mode. 
 
 trigger_mode_polarity [str]:
 		positive,

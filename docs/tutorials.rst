@@ -563,3 +563,5 @@ Of course, the compensation has to be included in the measurement scripts. Right
 .. note::
 	For non-linear compensation one can use parameter groups, set the compensating parameters to "dynamic" and provide the corresponding setpoint arrays.
 	Currently, groups are supported by the basic qumada measurement class and handle in the initialization, but are not used in the generic measurement scripts.
+
+You can find a working example with dummy instruments under src/examples/buffered_dummy_example_compensation.py.
