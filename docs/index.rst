@@ -11,6 +11,7 @@ Welcome to QuMADA's documentation!
    device_object
    examples
    mapping_gui
+   utils
    metadata
    qumada
 
