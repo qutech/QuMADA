@@ -248,7 +248,7 @@ All gettable (and static gettable) parameters will be recorded, static and dynam
 	The minimum timestep is limited by time it takes to record the measurement values. If you choose small timesteps compared to the measurement speed and communication time it might affect
 	the stepsize and duration of the complete measurement. Use custom measurement scripts to perform very fast or high-precision measurements.
 
-There is also a buffered version of this script. 
+There is also a buffered version of this script.
 
 ####################
 Timetrace with Sweeps (buffered)
