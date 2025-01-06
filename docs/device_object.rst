@@ -235,6 +235,14 @@ The trigger mapping can be done as usual by running:
 
 	map_triggers(station.components)
 
+or by using the built-in method
+
+.. code:: python
+
+	device.map_triggers()
+
+In the latter case, the argument is optional, by default the station assigned to the device_object is used.
+
 To run a buffered measurement, simply set the "buffered" kwarg to True when running the measurement, e.g.
 
 .. code:: python

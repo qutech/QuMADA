@@ -145,7 +145,7 @@ device = QumadaDevice.create_from_dict(parameters, station=station, namespace=gl
 device.mapping()
 device.buffer_script_setup = buffer_script_settings
 device.buffer_settings = buffer_settings
-map_triggers(station.components)
+device.map_triggers()
 # %% Play around
 
 # Change parameter values by calling them
