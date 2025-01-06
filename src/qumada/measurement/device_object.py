@@ -279,10 +279,10 @@ class QumadaDevice:
         self.map_terminals(terminal_parameters, path)
             
         
-    def save_mapping(self,
+    def save_terminal_mapping(self,
                      path: str):
         """
-        Save mapping to specified file (json).
+        Save terminal mapping to specified file (json).
         """
         save_mapped_terminal_parameters(self.terminal_parameters, path)
         
