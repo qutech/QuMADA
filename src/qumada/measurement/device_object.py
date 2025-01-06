@@ -239,6 +239,39 @@ class QumadaDevice:
             raise TypeError("No valid qcodes station found. Make sure you have set the station attribute correctly!")
         map_terminals_gui(self.station.components, self.instrument_parameters, instrument_parameters)
         self.update_terminal_parameters()
+        
+    def map_triggers(
+        self,
+        components: None | dict = None,
+        skip_mapped=True,
+        path: None | str = None,
+        **kwargs,
+    ) -> None:
+        """
+        Maps the triggers of triggerable or bufferable components.
+        Uses components of assigned station by default.
+        Ignores already mapped triggers by default.
+        You can provide a path in order to load and existing mapping.
+    
+        Parameters
+        ----------
+        components : None|dict, optional
+            Components of QCoDeS station (containing instruments to be mapped).
+        skip_mapped : Bool, optional
+            If true already mapped parameters are skipped
+            Set to false if you want to remap something. The default is True.
+        path : None|str, optional
+            Provide path to a json file with trigger mapping. If not all instruments
+            are covered in the file, you will be asked to map those. Works only if
+            names in file match instrument.full_name of your current instruments.
+            The default is None.
+        """
+        if components is None:
+            components = self.station.components
+        map_triggers(components=components,
+                     skip_mapped=skip_mapped,
+                     path=path,
+                     kwargs=kwargs)
 
     def timetrace(
         self,
