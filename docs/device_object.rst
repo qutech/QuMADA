@@ -107,7 +107,7 @@ map_terminals_gui to reuse an existing mapping. However, as the mapping is now s
 permanent than a measurement script this is usually not necessary.
 As for measurement scripts mappings can be saved to files and be loaded again.
 It is recommended to pass the QCoDeS station to the device (cf. "Creating from parameters dictionary"). In this case the mapping
-can simply be done via "device.,map_terminals()", which opens up the mapping GUI without asking for additional arguments.
+can simply be done via "device.map_terminals()", which opens up the mapping GUI without asking for additional arguments.
 
 
 Using the device
