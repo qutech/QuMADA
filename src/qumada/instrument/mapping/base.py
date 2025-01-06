@@ -244,8 +244,8 @@ def _generate_mapping_stub(instrument: Instrument, path: str) -> None:
 
 def map_gates_to_instruments(
     components: Mapping[Any, Metadatable],
-    gate_parameters: TerminalParameters,
-    existing_gate_parameters: TerminalParameters | None = None,
+    terminal_parameters: TerminalParameters,
+    existing_terminal_parameters: TerminalParameters | None = None,
     *,
     metadata: Metadata | None = None,
     map_manually: bool = False,
@@ -255,23 +255,23 @@ def map_gates_to_instruments(
 
     Args:
         components (Mapping[Any, Metadatable]): Instruments/Components in QCoDeS
-        gate_parameters (TerminalParameters): Gates, as defined in the measurement script
-        existing_gate_parameters (TerminalParameters | None): Already existing mapping
+        terminal_parameters (TerminalParameters): Gates, as defined in the measurement script
+        existing_terminal_parameters (TerminalParameters | None): Already existing mapping
                 that is used to automatically create the mapping for already known gates without user input.
         metadata (Metadata | None): If provided, add mapping to the metadata object.
         map_manually (bool): If set to True, don't try to automatically map parameters to gates. Defaults to False.
     """
-    if existing_gate_parameters is None:
-        existing_gate_parameters = {}
+    if existing_terminal_parameters is None:
+        existing_terminal_parameters = {}
 
     # get all parameters in one flat list for the mapping process
     instrument_parameters = filter_flatten_parameters(components)
     # TODO: We have to distinguish multi channel/module instruments. Possible approach:
     #       [parameter]._instrument should be InstrumentChannel or InstrumentModule type
-    for key, gate in gate_parameters.items():
+    for key, gate in terminal_parameters.items():
         if isinstance(gate, Parameter):
             # TODO: map single parameter
-            # _map_gate_parameters_to_instrument_parameters({key: gate}, )
+            # _map_terminal_parameters_to_instrument_parameters({key: gate}, )
             ...
         else:
             # map gate to instrument
@@ -288,7 +288,7 @@ def map_gates_to_instruments(
                     for (
                         existing_gate,
                         existing_parameters,
-                    ) in existing_gate_parameters.items():
+                    ) in existing_terminal_parameters.items():
                         if existing_gate == key:
                             if isinstance(existing_parameters, Parameter):
                                 # TODO: single parameter
@@ -328,7 +328,7 @@ def map_gates_to_instruments(
                         # Could not map instrument, do it manually
                         # TODO: Map to multiple instruments
                         print(ex)
-                        _map_gate_parameters_to_instrument_parameters(gate, chosen_instrument_parameters)
+                        _map_terminal_parameters_to_instrument_parameters(gate, chosen_instrument_parameters)
                         # Remove mapped parameters from parameter list
                         keys_to_remove = (
                             key
@@ -340,7 +340,7 @@ def map_gates_to_instruments(
                     break
                 except (IndexError, ValueError):
                     continue
-    j = json.dumps(gate_parameters, default=lambda o: str(o))
+    j = json.dumps(terminal_parameters, default=lambda o: str(o))
     # Add mapping to metadata, if provided
     if metadata is not None:
         metadata.add_terminal_mapping(json.dumps(j), name="automatic-mapping")
@@ -368,8 +368,8 @@ def _map_gate_to_instrument(gate: Mapping[Any, Parameter], instrument_parameters
                 raise MappingError(f'No mapping candidate for "{key}" in instrument "{instrument_name}" found.')
 
 
-def _map_gate_parameters_to_instrument_parameters(
-    gate_parameters: Mapping[Any, Parameter],
+def _map_terminal_parameters_to_instrument_parameters(
+    terminal_parameters: Mapping[Any, Parameter],
     instrument_parameters: Mapping[Any, Parameter],
     append_unmapped_parameters=True,
 ) -> None:
@@ -377,7 +377,7 @@ def _map_gate_parameters_to_instrument_parameters(
     Maps the gate parameters of one specific gate to the instrument parameters of one specific instrument.
 
     Args:
-        gate_parameters (Mapping[Any, Parameter]): Gate parameters
+        terminal_parameters (Mapping[Any, Parameter]): Gate parameters
         instrument_parameters (Mapping[Any, Parameter]): Instrument parameters available for mapping
     """
     mapped_parameters = {
@@ -388,7 +388,7 @@ def _map_gate_parameters_to_instrument_parameters(
     }
 
     # This is ugly
-    for key, parameter in gate_parameters.items():
+    for key, parameter in terminal_parameters.items():
         if parameter is None:
             # Filter instrument parameters, if _mapping attribute is equal to key_gp
             # if there is no mapping provided, append those parameters to the list
@@ -407,7 +407,7 @@ def _map_gate_parameters_to_instrument_parameters(
             while True:
                 try:
                     chosen = int(input(f'Please choose an instrument parameter for gate parameter "{key}": '))
-                    gate_parameters[key] = candidates_values[int(chosen)]
+                    terminal_parameters[key] = candidates_values[int(chosen)]
                     break
                 except (IndexError, ValueError):
                     continue

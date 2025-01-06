@@ -107,7 +107,7 @@ map_terminals_gui to reuse an existing mapping. However, as the mapping is now s
 permanent than a measurement script this is usually not necessary.
 As for measurement scripts mappings can be saved to files and be loaded again.
 It is recommended to pass the QCoDeS station to the device (cf. "Creating from parameters dictionary"). In this case the mapping
-can simply be done via "device.mapping()", which opens up the mapping GUI without asking for additional arguments.
+can simply be done via "device.,map_terminals()", which opens up the mapping GUI without asking for additional arguments.
 
 
 Using the device
@@ -234,6 +234,14 @@ The trigger mapping can be done as usual by running:
 .. code:: python
 
 	map_triggers(station.components)
+
+or by using the built-in method
+
+.. code:: python
+
+	device.map_triggers()
+
+In the latter case, the argument is optional, by default the station assigned to the device_object is used.
 
 To run a buffered measurement, simply set the "buffered" kwarg to True when running the measurement, e.g.
 

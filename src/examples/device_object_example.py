@@ -142,10 +142,10 @@ parameters = {
 # and trigger mappings to from/to files (see documentation).
 
 device = QumadaDevice.create_from_dict(parameters, station=station, namespace=globals())
-device.mapping()
+device.map_terminals()
 device.buffer_script_setup = buffer_script_settings
 device.buffer_settings = buffer_settings
-map_triggers(station.components)
+device.map_triggers()
 # %% Play around
 
 # Change parameter values by calling them
@@ -241,7 +241,7 @@ script.setup(
 )
 
 # We can provide the mapping from the device object as argument to skip the mapping
-map_terminals_gui(station.components, script.gate_parameters, device.instrument_parameters)
+map_terminals_gui(station.components, script.terminal_parameters, device.terminal_parameters)
 
 script.run()
 
