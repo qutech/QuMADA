@@ -4,6 +4,7 @@ import logging
 from abc import ABC
 from copy import deepcopy
 from typing import Any
+from time import sleep
 
 import numpy as np
 from qcodes import Station
@@ -422,8 +423,136 @@ class QumadaDevice:
             map_triggers(station.components)
         data = script.run()
         return data
+    
+    def sweep_1d(
+        self,
+        params: Parameter | list[Parameter],
+        sweep_range: list[float] | list[list[float]],
+        num_points: int = 100,
+        dynamic_values: None | list[float] = None,
+        backsweep: bool = False,
+        name = None,
+        metadata = None,
+        station = None,
+        buffered = False,
+        buffer_settings: dict | None = None,
+        priorize_stored_value = False,
+        **kwargs,
+    ):
+        """
+        Performs a buffered 1D ramp for one or multiple parameters. Can take either one
+        parameter and it's setpoints (only ramp!) or lists of parameter, their setpoints(only ramps!)
+        and optionally their values. Returns to original value of parameters after measurements.
+        Returns list of measurement data (one dataset for each parameter.)
 
-    def sweep_2D(
+        Parameters
+        ----------
+        params : list[TerminalParameter] | TerminalParameter
+            List of parameters to be ramped or a single terminal parameter to be ramped.
+        setpoints : list[list[float]]
+            List of lists containing of Start and End point of sweep for each parameter, used to calculate a linear ramp!
+            If only one parameter is provided, only list with start and end points
+            For other measurements use either pulse measurement script or 1D unbuffered scan.
+        num_points: int, optional
+            Number of points measured in each sweep. Doubled if backsweep is True.
+        dynamic_values : None | list[float], optional
+            List of values for the dynamic parameters (only if a list of params is provided).
+            Ignored if only one parameter is passed. 
+            Parameters are kept at this value during the ramps of the other parameters. 
+            Current values of the parameters are used if it is None.
+            Default is None.
+        backsweep : bool, optional
+            Does a ramp back to the original value and records the data.  Default is False.
+        name : str, optional
+            Measurement name. Default is None.
+        metadata : dict, optional
+            Metadata for the measurement. Default is None.
+        station : Station, optional
+            Station object associated with the measurement. Default is the station of the instance.
+        buffer_settings : dict, optional
+            Buffer settings for the measurement. Must include "num_points". Default is the instance's buffer settings.
+        priorize_stored_value : bool, optional
+            If True, prioritizes stored values in the setup. Default is False.
+        **kwargs
+            Additional keyword arguments passed to the measurement script.
+
+        Returns
+        -------
+        data : qcodes.dataset.data_set.DataSet
+            The dataset containing the measurement results.
+
+        Raises
+        ------
+        TypeError
+            If the provided `station` is not of type `Station`.
+        AssertionError
+            If parameter or setpoint mismatches occur.
+        Exception
+            If buffer settings are invalid.
+
+        Notes
+        -----
+        - Again: This measurement can only do linear ramps!
+        - Does one measurement for each param provided. 
+        - Ignores other dynamic parameters that are not in params
+        - Records only gettable parameters.
+        """
+        data = []
+        if station is None:
+            station = self.station
+        if not isinstance(station, Station):
+            raise TypeError("No valid station assigned!")
+        if isinstance(params, list):
+            assert isinstance(sweep_range, list)
+            assert len(params) == len(sweep_range)
+            if dynamic_values is None:
+                dynamic_values = [param() for param in params]
+                assert len(params) == len(dynamic_values)
+            else: 
+                assert len(params) == len(dynamic_values)
+                for param, val in zip(params, dynamic_values):
+                    param(val)
+            for param, setpoint, val in zip(params, sweep_range, dynamic_values):
+                data.append(*param.measured_ramp(
+                    value = setpoint[-1],
+                    num_points=len(setpoint),
+                    start=setpoint[0],
+                    station=station,
+                    name=name,
+                    metadata=metadata,
+                    backsweep=backsweep,
+                    buffered=buffered,
+                    buffer_settings=buffer_settings,
+                    priorize_stored_value=priorize_stored_value,
+                    ))
+                param(val)
+                
+        elif isinstance(params, Terminal_Parameter):
+            assert dynamic_values != list
+            if dynamic_values is not None:
+                val = dynamic_values
+            else:
+                val = params()
+            data.append(*params.measured_ramp(
+                value=sweep_range[-1],
+                num_points=num_points,
+                start=sweep_range[0],
+                station=station,
+                name=name,
+                metadata=metadata,
+                backsweep=backsweep,
+                buffered=buffered,
+                buffer_settings=buffer_settings,
+                priorize_stored_value=priorize_stored_value,
+                ))
+            params(val)
+        return data
+    
+    def sweep_2D():
+        logger.exception("Deprecation Warning: sweep_2D was renamed to sweep_2d \
+                         for better naming consistency!")
+
+    def sweep_2d(
         self,
         slow_param: Parameter,
         fast_param: Parameter,
@@ -1226,7 +1355,7 @@ class Terminal_Parameter(ABC):
         mapping = self._parent_device.terminal_parameters
         map_terminals_gui(station.components, script.terminal_parameters, mapping)
         if buffered is True:
-            map_triggers(station.components, script.properties, script.terminal_parameters)
+            map_triggers(station.components)
         data = script.run()
         return data
 
