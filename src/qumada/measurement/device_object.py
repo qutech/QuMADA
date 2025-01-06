@@ -10,7 +10,7 @@ from qcodes import Station
 from qcodes.parameters import Parameter
 from qcodes.validators.validators import Numbers
 
-from qumada.instrument.buffers.buffer import map_triggers
+from qumada.instrument.buffers.buffer import map_triggers, save_trigger_mapping
 from qumada.instrument.mapping import map_terminals_gui
 from qumada.instrument.mapping.base import load_mapped_terminal_parameters, save_mapped_terminal_parameters
 from qumada.measurement.measurement import MeasurementScript, load_param_whitelist
@@ -318,6 +318,24 @@ class QumadaDevice:
                      skip_mapped=skip_mapped,
                      path=path,
                      kwargs=kwargs)
+        
+    def save_trigger_mapping(
+            self,
+            path: str):
+        """
+        Save trigger mapping to json file.
+
+        Parameters
+        ----------
+        path : str
+            Path with filename (json).
+
+        Returns
+        -------
+        None.
+
+        """
+        save_trigger_mapping(self.station.components, path)
 
     def timetrace(
         self,

@@ -142,7 +142,7 @@ parameters = {
 # and trigger mappings to from/to files (see documentation).
 
 device = QumadaDevice.create_from_dict(parameters, station=station, namespace=globals())
-device.map_terminals(path = r"C:\Users\till3\Documents\PythonScripts\Test Measurements\test_mapping.json")
+device.map_terminals()
 device.buffer_script_setup = buffer_script_settings
 device.buffer_settings = buffer_settings
 device.map_triggers()
