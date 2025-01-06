@@ -241,7 +241,7 @@ script.setup(
 )
 
 # We can provide the mapping from the device object as argument to skip the mapping
-map_terminals_gui(station.components, script.gate_parameters, device.instrument_parameters)
+map_terminals_gui(station.components, script.terminal_parameters, device.terminal_parameters)
 
 script.run()
 

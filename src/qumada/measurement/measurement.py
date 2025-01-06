@@ -113,12 +113,12 @@ class MeasurementScript(ABC):
         self.run = create_hook(self.run, self._add_current_datetime_to_metadata)
 
         self.properties: dict[Any, Any] = {}
-        self.gate_parameters: dict[Any, dict[Any, Parameter | None] | Parameter | None] = {}
+        self.terminal_parameters: dict[Any, dict[Any, Parameter | None] | Parameter | None] = {}
         self._buffered_num_points: int | None = None
 
-    def add_gate_parameter(self, parameter_name: str, gate_name: str = None, parameter: Parameter = None) -> None:
+    def add_terminal_parameter(self, parameter_name: str, gate_name: str = None, parameter: Parameter = None) -> None:
         """
-        Adds a gate parameter to self.gate_parameters.
+        Adds a gate parameter to self.terminal_parameters.
 
         Args:
             parameter_name (str): Name of the parameter. Has to be in MeasurementScript.PARAMETER_NAMES.
@@ -132,10 +132,10 @@ class MeasurementScript(ABC):
                             Allowed parameters are listed in qumada.instrument.parameter_whitelists'
             )
         if not gate_name:
-            self.gate_parameters[parameter_name] = parameter
+            self.terminal_parameters[parameter_name] = parameter
         else:
             # Create gate dict if not existing
-            gate = self.gate_parameters.setdefault(gate_name, {})
+            gate = self.terminal_parameters.setdefault(gate_name, {})
             # Raise Exception, if gate "gate_name" was populated with a parameter (or smth. else) before
             if isinstance(gate, dict):
                 gate[parameter_name] = parameter
@@ -182,7 +182,7 @@ class MeasurementScript(ABC):
         **settings: dict,
     ) -> None:
         """
-        Adds all gate_parameters that are defined in the parameters argument to
+        Adds all terminal_parameters that are defined in the parameters argument to
         the measurement. Allows to pass metadata to measurement and update the
         metadata with the script.
 
@@ -238,7 +238,7 @@ class MeasurementScript(ABC):
         for gate, vals in parameters.items():
             self.properties[gate] = vals
             for parameter, properties in vals.items():
-                self.add_gate_parameter(parameter, gate)
+                self.add_terminal_parameter(parameter, gate)
 
     def generate_lists(self) -> None:
         """
@@ -253,7 +253,7 @@ class MeasurementScript(ABC):
         The .parameters lists contain dictionaries with the keywords "gate" for the
         corresponding terminal name and "parameter" for the parameter name.
         This is usefull to get the keys for specific parameters from
-        the gate_parameters.
+        the terminal_parameters.
 
         gettable and static lists both include static gettable parameters,
         the static_gettable lists only the ones that are both, static and
@@ -285,7 +285,7 @@ class MeasurementScript(ABC):
         self.priorities: dict = {}
         self.loop: int = 0  # For usage with looped measurements
 
-        for gate, parameters in self.gate_parameters.items():
+        for gate, parameters in self.terminal_parameters.items():
             for parameter, channel in parameters.items():
                 if gate == "abstract":
                     self.abstract_parameters.append()
@@ -355,7 +355,7 @@ class MeasurementScript(ABC):
                             except AssertionError:
                                 logger.warning(
                                     f"Number of datapoints from buffer_settings\
-                                    and gate_parameters do not match. Using \
+                                    and terminal_parameters do not match. Using \
                                     the value from the buffer settings: \
                                     {self.buffered_num_points}"
                                 )
@@ -365,7 +365,7 @@ class MeasurementScript(ABC):
                             except AssertionError:
                                 logger.warning(
                                     f"Number of datapoints from buffer_settings\
-                                    and gate_parameters do not match. Using \
+                                    and terminal_parameters do not match. Using \
                                     the value from the buffer settings: \
                                     {self.buffered_num_points}"
                                 )
@@ -499,7 +499,7 @@ class MeasurementScript(ABC):
         #         raise Exception(f"{item} is not in dynamic parameters and cannot be compensated!")
         # self.dynamic_sweeps = []
         self.compensating_sweeps = []
-        for gate, parameters in self.gate_parameters.items():
+        for gate, parameters in self.terminal_parameters.items():
             for parameter, channel in parameters.items():
                 if self.properties[gate][parameter]["type"].find("static") >= 0:
                     ramp_or_set_parameter(
@@ -517,7 +517,7 @@ class MeasurementScript(ABC):
                             except AssertionError:
                                 logger.warning(
                                     f"Number of datapoints from buffer_settings\
-                                    and gate_parameters do not match. Using \
+                                    and terminal_parameters do not match. Using \
                                     the value from the buffer settings: \
                                     {self.buffered_num_points}"
                                 )
@@ -529,7 +529,7 @@ class MeasurementScript(ABC):
                             except AssertionError:
                                 logger.warning(
                                     f"Number of datapoints from buffer_settings\
-                                    and gate_parameters do not match. Using \
+                                    and terminal_parameters do not match. Using \
                                     the value from the buffer settings: \
                                     {self.buffered_num_points}"
                                 )
@@ -630,7 +630,7 @@ class MeasurementScript(ABC):
         inactive_dyn_params = []
         for ch in inactive_dyn_channels:
             inactive_dyn_params.append(self.dynamic_parameters[self.dynamic_channels.index(ch)])
-        for gate, parameters in self.gate_parameters.items():
+        for gate, parameters in self.terminal_parameters.items():
             for parameter, channel in parameters.items():
                 # This iterates over all compensating parameters
                 if self.properties[gate][parameter]["type"].find("comp") >= 0:
@@ -755,7 +755,7 @@ class MeasurementScript(ABC):
         )
         ramp_rate = self.settings.get("ramp_rate", 0.3)
         setpoint_intervall = self.settings.get("setpoint_intervall", 0.1)
-        for gate, parameters in self.gate_parameters.items():
+        for gate, parameters in self.terminal_parameters.items():
             for parameter, channel in parameters.items():
                 if self.properties[gate][parameter]["type"].find("static") >= 0:
                     ramp_or_set_parameter(
@@ -849,7 +849,7 @@ class MeasurementScript(ABC):
         corresponding name defined in the measurement script.
         Has to be done after mapping!
         """
-        for gate, parameters in self.gate_parameters.items():
+        for gate, parameters in self.terminal_parameters.items():
             for key, parameter in parameters.items():
                 parameter.label = f"{gate} {key}"
 

@@ -12,6 +12,7 @@ from qcodes.validators.validators import Numbers
 
 from qumada.instrument.buffers.buffer import map_triggers
 from qumada.instrument.mapping import map_terminals_gui
+from qumada.instrument.mapping.base import load_mapped_terminal_parameters, save_mapped_terminal_parameters
 from qumada.measurement.measurement import MeasurementScript, load_param_whitelist
 from qumada.measurement.scripts import (
     Generic_1D_Hysteresis_buffered,
@@ -46,7 +47,7 @@ class QumadaDevice:
     ):
         self.namespace = namespace
         self.terminals = {}
-        self.instrument_parameters = {}
+        self.terminal_parameters = {}
         self.station = station
         self.buffer_settings = {}
         self.buffer_script_setup = {}
@@ -81,7 +82,7 @@ class QumadaDevice:
             logger.warning(f"{terminal_name} does not exist and could not be deleted")
 
     def update_terminal_parameters(self):
-        for terminal, mapping in self.instrument_parameters.items():
+        for terminal, mapping in self.terminal_parameters.items():
             for param in mapping.keys():
                 self.terminals[terminal].update_terminal_parameter(param)
 
@@ -232,13 +233,47 @@ class QumadaDevice:
                             logger.warning(f"Couldn't find value for {terminal_name} {param_name}")
         return return_dict
 
-    def mapping(self, instrument_parameters: None | dict = None):
-        if instrument_parameters is None:
-            instrument_parameters = self.instrument_parameters
+    def mapping(self, 
+                terminal_parameters: None | dict = None, 
+                path: None | str = None
+                ):
+        """
+        Maps devices terminal parameters using map_terminals_gui. You can pass
+        an existing mapping as terminal_parameters.
+        If a path is provided it first tries to use the provided mapping file.
+        
+        Parameters
+        ----------
+        terminal_parameters : None | dict, optional
+            Already existing mapping. The default is None.
+        path : None | str, optional
+            File to load mapping from (json). The default is None.
+
+        Raises
+        ------
+        TypeError
+            In case no valid Qcodes station is assigned to the device object.
+
+        Returns
+        -------
+        None.
+
+        """
+        if terminal_parameters is None:
+            terminal_parameters = self.terminal_parameters
         if not isinstance(self.station, Station):
             raise TypeError("No valid qcodes station found. Make sure you have set the station attribute correctly!")
-        map_terminals_gui(self.station.components, self.instrument_parameters, instrument_parameters)
+        if path is not None:
+            load_mapped_terminal_parameters(terminal_parameters, self.station, path)           
+        map_terminals_gui(self.station.components, self.terminal_parameters, terminal_parameters)
         self.update_terminal_parameters()
+        
+    def save_mapping(self,
+                     path: str):
+        """
+        Save mapping to specified file (json).
+        """
+        save_mapped_terminal_parameters(self.terminal_parameters, path)
         
     def map_triggers(
         self,
@@ -352,8 +387,8 @@ class QumadaDevice:
             buffer_settings=temp_buffer_settings,
             **self.buffer_script_setup,
         )
-        mapping = self.instrument_parameters
-        map_terminals_gui(station.components, script.gate_parameters, mapping)
+        mapping = self.terminal_parameters
+        map_terminals_gui(station.components, script.terminal_parameters, mapping)
         if buffered is True:
             map_triggers(station.components)
         data = script.run()
@@ -473,8 +508,8 @@ class QumadaDevice:
                 buffer_settings=temp_buffer_settings,
                 **self.buffer_script_setup,
             )
-            mapping = self.instrument_parameters
-            map_terminals_gui(station.components, script.gate_parameters, mapping)
+            mapping = self.terminal_parameters
+            map_terminals_gui(station.components, script.terminal_parameters, mapping)
             if buffered is True:
                 map_triggers(station.components)
             data = script.run()
@@ -579,8 +614,8 @@ class QumadaDevice:
             measurement_name=name,
             **kwargs,
         )
-        mapping = self.instrument_parameters
-        map_terminals_gui(station.components, script.gate_parameters, mapping)
+        mapping = self.terminal_parameters
+        map_terminals_gui(station.components, script.terminal_parameters, mapping)
         data = script.run()
         return data
 
@@ -684,9 +719,9 @@ class QumadaDevice:
             **self.buffer_script_setup,
             **kwargs,
         )
-        mapping = self.instrument_parameters
-        map_terminals_gui(station.components, script.gate_parameters, mapping)
-        map_triggers(station.components, script.properties, script.gate_parameters)
+        mapping = self.terminal_parameters
+        map_terminals_gui(station.components, script.terminal_parameters, mapping)
+        map_triggers(station.components, script.properties, script.terminal_parameters)
         data = script.run()
         return data
 
@@ -831,8 +866,8 @@ class QumadaDevice:
             **self.buffer_script_setup,
             **kwargs,
         )
-        mapping = self.instrument_parameters
-        map_terminals_gui(station.components, script.gate_parameters, mapping)
+        mapping = self.terminal_parameters
+        map_terminals_gui(station.components, script.terminal_parameters, mapping)
         if buffered is True:
             map_triggers(station.components)
         data = script.run()
@@ -860,12 +895,12 @@ class Terminal(ABC):
         self, parameter_name: str, parameter: Parameter = None, properties: dict | None = None
     ) -> None:
         """
-        Adds a gate parameter to self.terminal_parameters.
+        Adds a terminal parameter to self.terminal_parameters.
 
         Args:
             parameter_name (str): Name of the parameter. Has to be in MeasurementScript.PARAMETER_NAMES.
-            terminal_name (str): Name of the parameter's gate. Set this, if you want to define the parameter
-                             under a specific gate. Defaults to None.
+            terminal_name (str): Name of the parameter's terminal. Set this, if you want to define the parameter
+                             under a specific terminal. Defaults to None.
             parameter (Parameter): Custom parameter. Set this, if you want to set a custom parameter. Defaults to None.
         """
         if parameter_name not in Terminal.PARAMETER_NAMES:
@@ -874,20 +909,20 @@ class Terminal(ABC):
             self.__dict__[parameter_name] = self.terminal_parameters[parameter_name] = Terminal_Parameter(
                 parameter_name, self, properties=properties
             )
-            if self.name not in self._parent.instrument_parameters.keys():
-                self._parent.instrument_parameters[self.name] = {}
-            self._parent.instrument_parameters[self.name][parameter_name] = parameter
+            if self.name not in self._parent.terminal_parameters.keys():
+                self._parent.terminal_parameters[self.name] = {}
+            self._parent.terminal_parameters[self.name][parameter_name] = parameter
         else:
             raise Parameter_Exists_Exception(f"Parameter{parameter_name} already exists")
 
     def remove_terminal_parameter(self, parameter_name: str) -> None:
         """
-        Adds a gate parameter to self.terminal_parameters.
+        Adds a terminal parameter to self.terminal_parameters.
 
         Args:
             parameter_name (str): Name of the parameter. Has to be in MeasurementScript.PARAMETER_NAMES.
-            terminal_name (str): Name of the parameter's gate. Set this, if you want to define the parameter
-                             under a specific gate. Defaults to None.
+            terminal_name (str): Name of the parameter's terminal. Set this, if you want to define the parameter
+                             under a specific terminal. Defaults to None.
             parameter (Parameter): Custom parameter. Set this, if you want to set a custom parameter. Defaults to None.
         """
         if parameter_name in self.terminal_parameters.keys():
@@ -897,7 +932,7 @@ class Terminal(ABC):
             raise Exception(f"Parameter{parameter_name} does not exist!")
 
     def update_terminal_parameter(self, parameter_name: str, parameter: Parameter | None = None) -> None:
-        self.terminal_parameters[parameter_name].instrument_parameter = self._parent.instrument_parameters[self.name][
+        self.terminal_parameters[parameter_name].instrument_parameter = self._parent.terminal_parameters[self.name][
             parameter_name
         ]
 
@@ -1159,10 +1194,10 @@ class Terminal_Parameter(ABC):
             buffer_settings=temp_buffer_settings,
             **self._parent_device.buffer_script_setup,
         )
-        mapping = self._parent_device.instrument_parameters
-        map_terminals_gui(station.components, script.gate_parameters, mapping)
+        mapping = self._parent_device.terminal_parameters
+        map_terminals_gui(station.components, script.terminal_parameters, mapping)
         if buffered is True:
-            map_triggers(station.components, script.properties, script.gate_parameters)
+            map_triggers(station.components, script.properties, script.terminal_parameters)
         data = script.run()
         return data
 

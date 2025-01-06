@@ -138,7 +138,7 @@ script.setup(
     trigger_reset=trigger.clear,
 )
 
-map_terminals_gui(station.components, script.gate_parameters)
+map_terminals_gui(station.components, script.terminal_parameters)
 map_triggers(station.components)
 
 # %% Run measurement
