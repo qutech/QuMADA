@@ -233,7 +233,7 @@ class QumadaDevice:
                             logger.warning(f"Couldn't find value for {terminal_name} {param_name}")
         return return_dict
 
-    def mapping(self, 
+    def map_terminals(self, 
                 terminal_parameters: None | dict = None, 
                 path: None | str = None
                 ):
@@ -267,6 +267,17 @@ class QumadaDevice:
             load_mapped_terminal_parameters(terminal_parameters, self.station, path)           
         map_terminals_gui(self.station.components, self.terminal_parameters, terminal_parameters)
         self.update_terminal_parameters()
+        
+    def mapping(self, 
+                terminal_parameters: None | dict = None, 
+                path: None | str = None
+            ):
+        #TODO: Remove!
+        logger.warning("Deprecation Warning: device.mapping was renamed to \
+                       device.map_terminals. Device.mapping will be removed \
+                       in a future release!")
+        self.map_terminals(terminal_parameters, path)
+            
         
     def save_mapping(self,
                      path: str):
