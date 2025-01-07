@@ -33,6 +33,7 @@ logger = logging.getLogger(__name__)
 class QDac2Mapping(InstrumentMapping):
     def __init__(self):
         super().__init__(QDAC2_MAPPING)
+        self.max_ramp_channels = 8
 
     def ramp(
         self,

@@ -31,6 +31,7 @@ from qumada.instrument.mapping.base import InstrumentMapping
 class DummyDacMapping(InstrumentMapping):
     def __init__(self):
         super().__init__(DUMMY_DAC_MAPPING)
+        self.max_ramp_channels = 4
 
     def ramp(
         self,

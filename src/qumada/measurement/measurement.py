@@ -64,19 +64,6 @@ def load_param_whitelist(folder_path=None):
                     combined_params.update(data.get(key, []))
     return combined_params
 
-def has_ramp_method(parameter: Parameter):
-    try:
-        parameter.root_instrument._qumada_ramp
-        return True
-    except AttributeError:
-        return False
-
-def has_pulse_method(parameter: Parameter):
-    try:
-        parameter.root_instrument._qumada_pulse
-        return True
-    except AttributeError:
-        return False
 
 def is_measurement_script(o):
     return inspect.isclass(o) and issubclass(o, MeasurementScript)
