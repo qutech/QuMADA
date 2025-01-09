@@ -30,7 +30,7 @@ from qumada.instrument.mapping.base import InstrumentMapping
 class QDacMapping(InstrumentMapping):
     def __init__(self):
         super().__init__(QDAC_MAPPING)
-
+        self.max_ramp_channels = 8
     def ramp(
         self,
         parameters: list[Parameter],

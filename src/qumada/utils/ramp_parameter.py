@@ -27,9 +27,23 @@ import time
 from math import isclose
 
 from qumada.utils.generate_sweeps import generate_sweep
+from copy import deepcopy
 
 LOG = logging.getLogger(__name__)
 
+def has_ramp_method(parameter):
+    try:
+        parameter.root_instrument._qumada_ramp
+        return True
+    except AttributeError:
+        return False
+
+def has_pulse_method(parameter):
+    try:
+        parameter.root_instrument._qumada_pulse
+        return True
+    except AttributeError:
+        return False
 
 class Unsweepable_parameter(Exception):
     pass
@@ -96,7 +110,7 @@ def ramp_parameter(
     LOG.debug(f"ramp rate: {ramp_rate}")
     LOG.debug(f"ramp time: {ramp_time}")
 
-    if isinstance(current_value, float):
+    if isinstance(current_value, float|int) and not isinstance(current_value, bool):
         LOG.debug(f"target: {target}")
         if isclose(current_value, target, rel_tol=tolerance):
             LOG.debug("Target value is sufficiently close to current_value, no need to ramp")
@@ -151,3 +165,55 @@ def ramp_or_set_parameter(
         ramp_parameter(parameter, target, ramp_rate, ramp_time, setpoint_intervall)
     except Unsweepable_parameter:
         parameter.set(target)
+        
+def ramp_or_set_parameters(
+        parameters: list,
+        targets: list[float],
+        ramp_rate: float | list[float] | None = 0.1,
+        ramp_time: float | list[float] | None = 5,
+        setpoint_interval: float |list[float] = 0.1,
+        tolerance: float = 1e-5,):
+    instruments = {param.root_instrument for param in parameters}
+    instruments_dict = {}
+    for instr in instruments:
+        if has_ramp_method(instr) and hasattr(instr._qumada_mapping, "max_ramp_channels"):
+            instruments_dict[instr] = []
+    for param, target in zip(parameters, targets):
+        if param._settable is False:
+            LOG.warning(f"{param} is not _settable and cannot be ramped!")
+            continue
+        
+        current_value = param.get()
+        if isinstance(current_value, float|int) and not isinstance(current_value, bool):
+            LOG.debug(f"target: {target}")
+            if isclose(current_value, target, rel_tol=tolerance):
+                LOG.debug("Target value is sufficiently close to current_value, no need to ramp")
+                continue
+        if param.root_instrument in instruments_dict.keys(): 
+                instruments_dict[param.root_instrument].append((param,target))
+        else: 
+            ramp_or_set_parameter(param, target, ramp_rate, ramp_time)
+    for instr, values in instruments_dict.items():
+        counter = 1
+        param_helper = []
+        target_helper = []
+        for param, target in values:
+            param_helper.append(param)
+            target_helper.append(target)
+            if counter%instr._qumada_mapping.max_ramp_channels == 0 or counter == len(values):
+                instr._qumada_ramp(
+                    param_helper,
+                    end_values = target_helper,
+                    ramp_time = ramp_time,
+                    sync_trigger=None
+                    )
+                param_helper = []
+                target_helper = []
+            counter +=1
+
+                    
+                    
+                
+        
+    
+    
