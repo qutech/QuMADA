@@ -472,7 +472,9 @@ class Timetrace_with_sweeps(MeasurementScript):
 
 class Timetrace_with_Sweeps_buffered(MeasurementScript):
     """
-    Performs a buffered timetrace measurement with dynamic sweeps.
+    Timetrace measurement, duration and timestep are set via the buffer settings.
+    It is fine to use software triggering here, as long as only one buffered
+    instrument is used, else you should use "hardware".
 
     Duration and timestep are determined via buffer settings.
     This method does not support dynamic parameters and cannot use
@@ -511,6 +513,7 @@ class Timetrace_with_Sweeps_buffered(MeasurementScript):
     def run(self):
         self.initialize()
         duration = self.settings.get("duration", 300)
+        buffer_timeout_multiplier = self.settings.get("buffer_timeout_multiplier", 20)
         # timestep = self.settings.get("timestep", 1)
         timer = ElapsedTimeParameter("time")
         TRIGGER_TYPES = ["software", "hardware", "manual"]
@@ -589,24 +592,31 @@ class Timetrace_with_Sweeps_buffered(MeasurementScript):
                         measurement instruments! Only recommended\
                         for debugging."
                     )
-                while not all(buffer.is_finished() for buffer in list(self.buffers)):
-                    sleep(0.1)
                 try:
-                    trigger_reset()
-                except TypeError:
-                    logger.info("No method to reset the trigger defined.")
-                results = self.readout_buffers(timestamps=True)
-                dynamic_param_results = [
-                    (dyn_channel, sweep.get_setpoints())
-                    for dyn_channel, sweep in zip(self.dynamic_channels, self.dynamic_sweeps)
-                ]
-                results.pop(-1)  # removes timestamps from results
-                datasaver.add_result(
-                    (timer, t),
-                    *dynamic_param_results,
-                    *results,
-                    *static_gettables,
-                )
+                    timeout_timer = 0.
+                    while not all(buffer.is_finished() for buffer in list(self.buffers)):
+                        timeout_timer += 0.1
+                        sleep(0.1)
+                        if timeout_timer >= buffer_timeout_multiplier * self._burst_duration:
+                            raise TimeoutError
+                    try:
+                        trigger_reset()
+                    except TypeError:
+                        logger.info("No method to reset the trigger defined.")
+                    results = self.readout_buffers(timestamps=True)
+                    dynamic_param_results = [
+                        (dyn_channel, sweep.get_setpoints()) for dyn_channel, sweep in zip(
+                            self.dynamic_channels, self.dynamic_sweeps)]
+                    results.pop(-1) #removes timestamps from results
+                    datasaver.add_result(
+                        (timer, t),
+                        *dynamic_param_results,
+                        *results,
+                        *static_gettables,
+                    )
+                except TimeoutError:
+                    logger.error(f"A timeout error occured. Skipping line at time {t}.")
+                    #results = self.readout_buffers(timestamps=True)
                 self.clean_up()
         datasets.append(datasaver.dataset)
         return datasets
