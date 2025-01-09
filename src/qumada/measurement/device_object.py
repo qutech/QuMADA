@@ -5,6 +5,8 @@ from abc import ABC
 from copy import deepcopy
 from typing import Any
 from time import sleep
+import json
+
 
 import numpy as np
 from qcodes import Station
@@ -102,10 +104,91 @@ class QumadaDevice:
         self.states[name] = self.save_to_dict(priorize_stored_value=False)
 
     def set_state(self, name: str, ramp=None, **kwargs):
+        """
+        Sets the system state to a predefined state.
+
+        Parameters
+        ----------
+        name : str
+            The name of the predefined state to be set.
+        ramp : optional
+            The ramp function to be used during the state transition. Defaults to `self.ramp`
+            (The device's setting).
+        **kwargs : dict
+            Additional keyword arguments passed to the `set_stored_values` method.
+
+        Returns
+        -------
+        None
+    """
         if ramp is None:
             ramp = self.ramp
         self.load_from_dict(self.states[name])
         self.set_stored_values(ramp=ramp, **kwargs)
+        
+    def save_state_to_file(self, name: str, path: str):
+        """
+    Saves the specified state to a json file.
+
+    Parameters
+    ----------
+    name : str
+        The name of the state to save.
+    path : str
+        The file path where the state will be saved. Has to be a json file!
+
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+    Before saving, any setpoints in terminal parameters are cleared by setting them to `None`
+    to avoid problems with json.dump.
+    """
+        for t in self.terminals:
+            for param in self.terminals[t].terminal_parameters:
+                self.terminals[t].terminal_parameters[param].properties["setpoints"] = None
+        state = self.states[name]
+        with open(file=path, mode="w") as f:
+            json.dump(state, f)        
+            
+    def load_state_from_file(self, name: str, path: str):
+        """
+        Loads a state from a json file and stores it in the device object.
+
+        Parameters
+        ----------
+        name : str
+            The name to assign to the loaded state.
+        path : str
+            The file path from which the state will be loaded.
+
+        Returns
+        -------
+        None
+        """
+        with open(file=path, mode="r") as f:
+            state = json.load(f)
+        self.states[name] = state
+        
+    def set_state_from_file(self, name: str, path: str):
+        """
+        Sets the devices state by loading it from a json file.
+
+        Parameters
+        ----------
+        name : str
+            The name to assign to the loaded state.
+        path : str
+            The file path from which the state will be loaded.
+
+        Returns
+        -------
+        None
+        """
+        self.load_state_from_file(name, path)
+        self.set_state(name)
 
     def set_stored_values(self, ramp=None, **kwargs):
         if ramp is None:
