@@ -121,6 +121,7 @@ class QumadaDevice:
         -------
         None
     """
+        self.update_terminal_parameters()
         if ramp is None:
             ramp = self.ramp
         self.load_from_dict(self.states[name])
@@ -187,6 +188,7 @@ class QumadaDevice:
         -------
         None
         """
+        self.update_terminal_parameters()
         self.load_state_from_file(name, path)
         self.set_state(name)
 
