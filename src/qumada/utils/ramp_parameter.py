@@ -48,6 +48,9 @@ def has_pulse_method(parameter):
 class Unsweepable_parameter(Exception):
     pass
 
+class Unsettable_parameter(Exception):
+    pass
+
 
 def ramp_parameter(
     parameter,
@@ -103,7 +106,7 @@ def ramp_parameter(
     """
     if parameter._settable is False:
         LOG.warning(f"{parameter} is not _settable and cannot be ramped!")
-        return False
+        raise Unsettable_parameter()
     current_value = parameter.get()
     LOG.debug(f"parameter: {parameter}")
     LOG.debug(f"current value: {current_value}")
@@ -165,6 +168,8 @@ def ramp_or_set_parameter(
         ramp_parameter(parameter, target, ramp_rate, ramp_time, setpoint_intervall)
     except Unsweepable_parameter:
         parameter.set(target)
+    except Unsettable_parameter:
+        pass
         
 def ramp_or_set_parameters(
         parameters: list,
@@ -172,12 +177,16 @@ def ramp_or_set_parameters(
         ramp_rate: float | list[float] | None = 0.1,
         ramp_time: float | list[float] | None = 5,
         setpoint_interval: float |list[float] = 0.1,
-        tolerance: float = 1e-5,):
+        tolerance: float = 1e-5,
+        trigger_start = None,
+        trigger_type = None,
+        trigger_reset = None):
     instruments = {param.root_instrument for param in parameters}
     instruments_dict = {}
-    for instr in instruments:
-        if has_ramp_method(instr) and hasattr(instr._qumada_mapping, "max_ramp_channels"):
-            instruments_dict[instr] = []
+    if trigger_type is not None:
+        for instr in instruments:
+            if has_ramp_method(instr) and hasattr(instr._qumada_mapping, "max_ramp_channels"):
+                instruments_dict[instr] = []
     for param, target in zip(parameters, targets):
         if param._settable is False:
             LOG.warning(f"{param} is not _settable and cannot be ramped!")
@@ -192,7 +201,7 @@ def ramp_or_set_parameters(
         if param.root_instrument in instruments_dict.keys(): 
                 instruments_dict[param.root_instrument].append((param,target))
         else: 
-            ramp_or_set_parameter(param, target, ramp_rate, ramp_time)
+            ramp_or_set_parameter(param, target, ramp_rate, ramp_time, setpoint_interval)
     for instr, values in instruments_dict.items():
         counter = 1
         param_helper = []
@@ -207,6 +216,23 @@ def ramp_or_set_parameters(
                     ramp_time = ramp_time,
                     sync_trigger=None
                     )
+                if trigger_type == "manual":
+                    pass
+                if trigger_type == "hardware":
+                    try:
+                        trigger_start()
+                    except AttributeError as ex:
+                        print("Please set a trigger or define a trigger_start method")
+                        raise ex
+
+                elif trigger_type == "software":
+                    pass
+                #TODO: Force trigger for AWGs/DACs?
+                time.sleep(ramp_time)
+                try:
+                    trigger_reset()
+                except TypeError:
+                    LOG.info("No method to reset the trigger defined.")
                 param_helper = []
                 target_helper = []
             counter +=1
