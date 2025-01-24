@@ -67,9 +67,6 @@ class InstrumentMapping(ABC):
         ramp_time: float,
     ) -> None:
         """Defining qumada ramp. Requires proper implementation for each instrument"""
-        raise Exception("Ramp not properly implemented for this instrument!\
-                        Try to use mapping json instead of mapping class and\
-                        use single point measurements only. (unbuffered)")
 
     def pulse(
         self,
