@@ -179,33 +179,40 @@ def ramp_or_set_parameters(
         setpoint_interval: float |list[float] = 0.1,
         tolerance: float = 1e-5,
         trigger_start = None,
-        trigger_type = None,
+        trigger_type = "software",
         trigger_reset = None):
     instruments = {param.root_instrument for param in parameters}
-    instruments_dict = {}
+    instruments_dict = {} #Will contain instruments as keys and their params with targets as vals.
+    #Check requirements for parallel ramps.
     if trigger_type is not None:
         for instr in instruments:
             if has_ramp_method(instr) and hasattr(instr._qumada_mapping, "max_ramp_channels"):
-                instruments_dict[instr] = []
+                instruments_dict[instr] = [] #Only instruments supporting ramps are added!
+    # Loop groups params according to their instruments for later execution of ramps.
     for param, target in zip(parameters, targets):
         if param._settable is False:
             LOG.warning(f"{param} is not _settable and cannot be ramped!")
             continue
         
-        current_value = param.get()
+        current_value = param.get() 
+        #TODO: Possibly further improvements with cached val or known start.
+        # Check if parameter should be ramped or set.
         if isinstance(current_value, float|int) and not isinstance(current_value, bool):
             LOG.debug(f"target: {target}")
             if isclose(current_value, target, rel_tol=tolerance):
                 LOG.debug("Target value is sufficiently close to current_value, no need to ramp")
                 continue
-        if param.root_instrument in instruments_dict.keys(): 
+        if param.root_instrument in instruments_dict.keys():  #Only instruments supporting ramps
                 instruments_dict[param.root_instrument].append((param,target))
-        else: 
+        else: #Everything that cannot be ramped with instrument ramp is ramped/set here
             ramp_or_set_parameter(param, target, ramp_rate, ramp_time, setpoint_interval)
+    # Now go through all instruments supporting ramps and start the ramps
     for instr, values in instruments_dict.items():
         counter = 1
         param_helper = []
         target_helper = []
+        #Params and targets are added until the max number of simultaneously rampable
+        #channels is reached. Then ramp is started and new params are added.
         for param, target in values:
             param_helper.append(param)
             target_helper.append(target)
