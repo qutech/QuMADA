@@ -508,13 +508,6 @@ class MeasurementScript(ABC):
         for gate, parameters in self.terminal_parameters.items():
             for parameter, channel in parameters.items():
                 if self.properties[gate][parameter]["type"].find("static") >= 0:
-                    # ramp_or_set_parameter(
-                    #     channel,
-                    #     self.properties[gate][parameter]["value"],
-                    #     ramp_rate=ramp_rate,
-                    #     ramp_time=ramp_time,
-                    #     setpoint_intervall=setpoint_intervall,
-                    # )
                     ramp_params.append(channel)
                     ramp_targets.append(self.properties[gate][parameter]["value"])
                 elif self.properties[gate][parameter]["type"].find("dynamic") >= 0:
@@ -548,97 +541,21 @@ class MeasurementScript(ABC):
                                          buffered measurement. The value from \
                                          buffer_settings is used"
                             )
-                    #     try:
-                    #         self.dynamic_sweeps.append(
-                    #             LinSweep(
-                    #                 channel,
-                    #                 self.properties[gate][parameter]["start"],
-                    #                 self.properties[gate][parameter]["stop"],
-                    #                 int(self.buffered_num_points),
-                    #                 delay=self.properties[gate][parameter].setdefault("delay", 0),
-                    #             )
-                    #         )
-                    #     except KeyError:
-                    #         self.dynamic_sweeps.append(
-                    #             CustomSweep(
-                    #                 channel,
-                    #                 self.properties[gate][parameter]["setpoints"],
-                    #                 delay=self.properties[gate][parameter].setdefault("delay", 0),
-                    #             )
-                    #         )
-                    # else:
-                    #     try:
-                    #         self.dynamic_sweeps.append(
-                    #             LinSweep(
-                    #                 channel,
-                    #                 self.properties[gate][parameter]["start"],
-                    #                 self.properties[gate][parameter]["stop"],
-                    #                 int(self.properties[gate][parameter]["num_points"]),
-                    #                 delay=self.properties[gate][parameter].setdefault("delay", 0),
-                    #             )
-                    #         )
-                    #     except KeyError:
-                    #         self.dynamic_sweeps.append(
-                    #             CustomSweep(
-                    #                 channel,
-                    #                 self.properties[gate][parameter]["setpoints"],
-                    #                 delay=self.properties[gate][parameter].setdefault("delay", 0),
-                    #             )
-                    #         )
 
                     # Handle different possibilities for starting points
+                    ramp_params.append(channel)
                     if dyn_ramp_to_val or channel in inactive_dyn_channels:
                         try:
-                            # ramp_or_set_parameter(
-                            #     channel,
-                            #     self.properties[gate][parameter]["value"],
-                            #     ramp_rate=ramp_rate,
-                            #     ramp_time=ramp_time,
-                            #     setpoint_intervall=setpoint_intervall,
-                            # )
-                            ramp_params.append(channel)
                             ramp_targets.append(self.properties[gate][parameter]["value"])
                         except KeyError:
                             try:
-                                # ramp_or_set_parameter(
-                                #     channel,
-                                #     self.properties[gate][parameter]["start"],
-                                #     ramp_rate=ramp_rate,
-                                #     ramp_time=ramp_time,
-                                #     setpoint_intervall=setpoint_intervall,
-                                # )
-                                ramp_params.append(channel)
                                 ramp_targets.append(self.properties[gate][parameter]["start"])
                             except KeyError:
-                                # ramp_or_set_parameter(
-                                #     channel,
-                                #     self.properties[gate][parameter]["setpoints"][0],
-                                #     ramp_rate=ramp_rate,
-                                #     ramp_time=ramp_time,
-                                #     setpoint_intervall=setpoint_intervall,
-                                # )
-                                ramp_params.append(channel)
                                 ramp_targets.append(self.properties[gate][parameter]["setpoints"][0])
                     else:
                         try:
-                            # ramp_or_set_parameter(
-                            #     channel,
-                            #     self.properties[gate][parameter]["start"],
-                            #     ramp_rate=ramp_rate,
-                            #     ramp_time=ramp_time,
-                            #     setpoint_intervall=setpoint_intervall,
-                            # )
-                            ramp_params.append(channel)
                             ramp_targets.append(self.properties[gate][parameter]["start"])
                         except KeyError:
-                            # ramp_or_set_parameter(
-                            #     channel,
-                            #     self.properties[gate][parameter]["setpoints"][0],
-                            #     ramp_rate=ramp_rate,
-                            #     ramp_time=ramp_time,
-                            #     setpoint_intervall=setpoint_intervall,
-                            # )
-                            ramp_params.append(channel)
                             ramp_targets.append(self.properties[gate][parameter]["setpoints"][0])
                     # Generate sweeps from parameters
         self.active_compensated_channels = []
@@ -736,13 +653,6 @@ class MeasurementScript(ABC):
                             # if min(self.compensating_sweeps[-1].get_setpoints()) < min(*self.compensating_limits[i]) \
                             #  or max(self.compensating_sweeps[-1].get_setpoints()) > max(*self.compensating_limits[i]):
                             #     raise Exception(f"Value for compensating gate {compensating_param} exceeds limits!")
-                        # ramp_or_set_parameter(
-                        #     channel,
-                        #     self.properties[gate][parameter]["value"],
-                        #     ramp_rate=ramp_rate,
-                        #     ramp_time=ramp_time,
-                        #     setpoint_intervall=setpoint_intervall,
-                        # )
                         ramp_params.append(channel)
                         ramp_targets.append(self.properties[gate][parameter]["value"])
                     except ValueError as e:
