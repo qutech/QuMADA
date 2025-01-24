@@ -135,7 +135,7 @@ def ramp_parameter(
 
         num_points = int(abs(current_value - float(target)) / (ramp_rate * setpoint_intervall)) + 2
         if ramp_time is not None and ramp_time < abs(current_value - float(target)) / ramp_rate:
-            print(
+            LOG.info(
                 f"Ramp rate of {parameter} is to low to reach target value in specified"
                 "max ramp time. Adapting ramp rate to match ramp time"
             )
@@ -162,8 +162,8 @@ def ramp_parameter(
 def ramp_or_set_parameter(
     parameter,
     target,
-    ramp_rate: float | None = 0.1,
-    ramp_time: float | None = 10,
+    ramp_rate: float | None = 0.3,
+    ramp_time: float | None = 5,
     setpoint_intervall: float = 0.1,
     **kwargs,
 ):
@@ -181,8 +181,8 @@ def ramp_or_set_parameter(
 def ramp_or_set_parameters(
         parameters: list,
         targets: list[float],
-        ramp_rate: float | list[float] | None = 0.1,
-        ramp_time: float | list[float] | None = 5,
+        ramp_rate: float | list[float] = 0.3,
+        ramp_time: float | list[float] = 5,
         setpoint_interval: float |list[float] = 0.1,
         tolerance: float = 1e-5,
         trigger_start = None,
@@ -206,7 +206,7 @@ def ramp_or_set_parameters(
         #TODO: Possibly further improvements with cached val or known start.
         # Check if parameter should be ramped or set.
         if isinstance(current_value, float|int) and not isinstance(current_value, bool):
-            LOG.debug(f"target: {target}")
+            LOG.debug(f"current value: {current_value}, target: {target}")
             if isclose(current_value, target, rel_tol=tolerance):
                 LOG.debug("Target value is sufficiently close to current_value, no need to ramp")
                 continue
@@ -236,7 +236,7 @@ def ramp_or_set_parameters(
                 instr._qumada_ramp(
                     param_helper,
                     end_values = target_helper,
-                    ramp_time = ramp_time,
+                    ramp_time = min(ramp_time, 1/ramp_rate), #TODO: Is that fine/Safe enough?
                     sync_trigger=None
                     )
                 instr.force_trigger()

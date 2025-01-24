@@ -485,14 +485,13 @@ class MeasurementScript(ABC):
                     ramped to their value instead of their sweeps starting point.
         """
         # TODO: Is there a more elegant way?
-        # TODO: Put Sweep-Generation somewhere else?
         ramp_params = []
         ramp_targets = []
         if inactive_dyn_channels is None:
             inactive_dyn_channels = []
 
-        ramp_rate = self.settings.get("ramp_rate", 0.3)
-        ramp_time = self.settings.get("ramp_time", 5)
+        ramp_rate = self.settings.get("ramp_rate", 0.5)
+        ramp_time = self.settings.get("ramp_time", 3)
         setpoint_intervall = self.settings.get("setpoint_intervall", 0.1)
         trigger_start = self.settings.get("trigger_start", "software")  # TODO: this should be set elsewhere
         trigger_reset = self.settings.get("trigger_reset", None)
