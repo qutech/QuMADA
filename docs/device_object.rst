@@ -194,7 +194,8 @@ This stores all parameter values (of parameters that can be set). With
 
 you can reset it to the stored
 configuration. Alternatively you can use "device.save_state(name)" and "device.set_state(name)" to store and set multiple working points with
-custom names. They can also be accessed via "device.states" in case you forgot the name.
+custom names. They can also be accessed via "device.states" in case you forgot the name. To store a state in json-file, use device.save_to_file(name, path), you can load it 
+via "device.load_state_from_file(name, path)" to load it (use "device.set_state(name)" afterwards to set it) or with "device.set_state_from_file(name, path)" to directly apply the configuration to the device.
 For all of those methods the parameters are ramped to the final state by default (with the default QuMada ramp rate), again depending on the "device.ramp" setting.
 
 
