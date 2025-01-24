@@ -44,6 +44,13 @@ def has_pulse_method(parameter):
         return True
     except AttributeError:
         return False
+    
+def has_force_trigger_method(parameter):
+    try:
+        parameter.root_instrument.force_trigger
+        return True
+    except AttributeError:
+        return False
 
 class Unsweepable_parameter(Exception):
     pass
@@ -180,13 +187,14 @@ def ramp_or_set_parameters(
         tolerance: float = 1e-5,
         trigger_start = None,
         trigger_type = "software",
-        trigger_reset = None):
+        trigger_reset = None,
+        sync_trigger = None):
     instruments = {param.root_instrument for param in parameters}
     instruments_dict = {} #Will contain instruments as keys and their params with targets as vals.
     #Check requirements for parallel ramps.
     if trigger_type is not None:
         for instr in instruments:
-            if has_ramp_method(instr) and hasattr(instr._qumada_mapping, "max_ramp_channels"):
+            if has_ramp_method(instr) and has_force_trigger_method(instr) and hasattr(instr._qumada_mapping, "max_ramp_channels"):
                 instruments_dict[instr] = [] #Only instruments supporting ramps are added!
     # Loop groups params according to their instruments for later execution of ramps.
     for param, target in zip(parameters, targets):
@@ -216,24 +224,22 @@ def ramp_or_set_parameters(
         for param, target in values:
             param_helper.append(param)
             target_helper.append(target)
+            #TODO: Triggering logic won't work if sync trigger is used to trigger another
+            # DAC (e.g. QDac in combination with Decadac)
             if counter%instr._qumada_mapping.max_ramp_channels == 0 or counter == len(values):
+                LOG.debug(f"Ramping {param_helper} to {target_helper}")            
+                if sync_trigger is not None:
+                    LOG.exception("You are using a sync trigger for ramps outside measurements. \
+                                  If the sync trigger is required to start an another DACs/AWGs ramp \
+                                  this will not work. (E.g. QDac and Decadac). If you only need it to \
+                                  start data acquisitions you're fine.")
                 instr._qumada_ramp(
                     param_helper,
                     end_values = target_helper,
                     ramp_time = ramp_time,
                     sync_trigger=None
                     )
-                if trigger_type == "manual":
-                    pass
-                if trigger_type == "hardware":
-                    try:
-                        trigger_start()
-                    except AttributeError as ex:
-                        print("Please set a trigger or define a trigger_start method")
-                        raise ex
-
-                elif trigger_type == "software":
-                    pass
+                instr.force_trigger()
                 #TODO: Force trigger for AWGs/DACs?
                 time.sleep(ramp_time)
                 try:
