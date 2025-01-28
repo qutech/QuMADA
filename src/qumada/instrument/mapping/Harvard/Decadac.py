@@ -34,6 +34,7 @@ class DecadacMapping(InstrumentMapping):
         super().__init__(DECADAC_MAPPING, is_triggerable=True)
         self._trigger_in: str | None = None
         self.AVAILABLE_TRIGGERS: list = ["trigger_in_1", "trigger_in_2"]
+        self.max_ramp_channels = 20
 
     def ramp(
         self,
@@ -50,7 +51,7 @@ class DecadacMapping(InstrumentMapping):
         if start_values is not None:
             assert len(parameters) == len(start_values)
 
-        if len(parameters) > 1:
+        if len(parameters) > 20:
             raise Exception("Maximum length of rampable parameters currently is 1.")
         # TODO: Test delay when ramping multiple parameters in parallel.
         # TODO: Add Trigger option?
@@ -155,3 +156,10 @@ class DecadacMapping(InstrumentMapping):
             raise Exception(f"Trigger input {trigger} not available")
         if trigger is None:
             print("No Trigger provided!")
+
+    def force_trigger(self):
+        string = ""
+        for b in range(0, 6):
+            for c in range(0,6):
+                string+=f"B{b};C{c};G0;"
+        self._instrument.write(string)
