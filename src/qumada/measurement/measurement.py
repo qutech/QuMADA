@@ -108,9 +108,9 @@ class MeasurementScript(ABC):
     def __init__(self):
         # Create function hooks for metadata
         # reverse order, so insert metadata is run second
-        self.run = create_hook(self.run, self._insert_metadata_into_db)
-        self.run = create_hook(self.run, self._add_data_to_metadata)
-        self.run = create_hook(self.run, self._add_current_datetime_to_metadata)
+        # self.run = create_hook(self.run, self._insert_metadata_into_db)
+        # self.run = create_hook(self.run, self._add_data_to_metadata)
+        # self.run = create_hook(self.run, self._add_current_datetime_to_metadata)
 
         self.properties: dict[Any, Any] = {}
         self.terminal_parameters: dict[Any, dict[Any, Parameter | None] | Parameter | None] = {}
@@ -496,7 +496,6 @@ class MeasurementScript(ABC):
         trigger_start = self.settings.get("trigger_start", "software")  # TODO: this should be set elsewhere
         trigger_reset = self.settings.get("trigger_reset", None)
         trigger_type =  self.settings.get("trigger_type", None),
-
         if not self._lists_created:
             self.generate_lists()
         # for item in self.compensated_parameters:
@@ -663,7 +662,7 @@ class MeasurementScript(ABC):
                     gettable_param.root_instrument._qumada_buffer.subscribe([gettable_param])
                 else:
                     raise Exception(f"{gettable_param} is not bufferable.")
-        
+        self.ready_triggers()
         ramp_or_set_parameters(ramp_params, ramp_targets, ramp_rate,
                                ramp_time, setpoint_intervall, trigger_start=trigger_start,
                                trigger_type=trigger_type, trigger_reset=trigger_reset)
@@ -742,10 +741,27 @@ class MeasurementScript(ABC):
     def ready_buffers(self, **kwargs) -> None:
         """
         Setup all buffers registered in the measurement and start them.
+        Also sets up triggers, although that might be removed in the future.
         """
         for buffer in self.buffers:
             buffer.setup_buffer(settings=self.buffer_settings)
             buffer.start()
+        self.ready_triggers()
+            
+    def ready_triggers(self, **kwargs):
+        """
+        Prepare trigger inputs for not buffered instruments.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            For potential later use.
+
+        Returns
+        -------
+        None.
+
+        """
         for trigger in self.trigger_ins:
             trigger.setup_trigger_in(trigger_settings=self.buffer_settings)
 
