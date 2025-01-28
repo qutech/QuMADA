@@ -178,13 +178,13 @@ class QDac2Mapping(InstrumentMapping):
         qdac.start_all()
         qdac.free_all_triggers()
 
-    def setup_trigger_in():
+    def setup_trigger_in(self):
         raise Exception(
             "QDac2 does not have a trigger input \
             not yet supported!"
         )
             
-    def force_trigger():
+    def force_trigger(self):
         pass
         # Currently no trigger inputs are supported, thus all ramps are started
         # instantly. Change if trigger inputs are supported.
