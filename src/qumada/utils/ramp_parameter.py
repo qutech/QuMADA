@@ -47,7 +47,7 @@ def has_pulse_method(parameter):
     
 def has_force_trigger_method(parameter):
     try:
-        parameter.root_instrument.force_trigger
+        parameter.root_instrument._qumada_mapping.force_trigger
         return True
     except AttributeError:
         return False
@@ -239,7 +239,7 @@ def ramp_or_set_parameters(
                     ramp_time = min(ramp_time, 1/ramp_rate), #TODO: Is that fine/Safe enough?
                     sync_trigger=None
                     )
-                instr.force_trigger()
+                instr._qumada_mapping.force_trigger()
                 #TODO: Force trigger for AWGs/DACs?
                 time.sleep(ramp_time)
                 try:
