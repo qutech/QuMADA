@@ -447,9 +447,9 @@ class MeasurementScript(ABC):
             self.buffers = {
                 channel.root_instrument._qumada_buffer for channel in self.gettable_channels if is_bufferable(channel)
             }
-            self.trigger_ins = {
-                param.root_instrument._qumada_mapping for param in self.dynamic_channels if is_triggerable(param)
-            }
+        self.trigger_ins = {
+            param.root_instrument._qumada_mapping for param in self.dynamic_channels if is_triggerable(param)
+        } #Independent of self.buffered to allow parallel ramping for unbuffered measurement initialization.
         self.sort_by_priority()
         self._lists_created = True
         self._relabel_instruments()
