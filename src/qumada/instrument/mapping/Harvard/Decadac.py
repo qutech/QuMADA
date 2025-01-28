@@ -25,6 +25,8 @@ from qcodes.instrument.parameter import Parameter
 from qumada.instrument.custom_drivers.Harvard.Decadac import Decadac
 from qumada.instrument.mapping import DECADAC_MAPPING
 from qumada.instrument.mapping.base import InstrumentMapping
+import logging
+logger = logging.getLogger(__name__)
 
 
 class DecadacMapping(InstrumentMapping):
@@ -107,7 +109,7 @@ class DecadacMapping(InstrumentMapping):
         #     "tracking_pulse": 7,
         #     "digital": 6,
         # }
-        print(
+        logger.info(
             "Warning: The Decadacs trigger level is fixed at roughly 1.69 V and cannot be changed. "
             "Please make sure that your triggers are setup accordingly"
         )
