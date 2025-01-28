@@ -676,49 +676,6 @@ class MeasurementScript(ABC):
         """
         return []
 
-    def reset(self) -> None:
-        """
-        Resets all static/dynamic parameters to their value/start value.
-        TODO: Remove! Since initialize() does only create lists one, there is no advantage of using reset().
-        """
-        logger.warning(
-            "The reset() method is deprecated and will be removed in a future release! \
-                        It is recommended to replace all calls of reset() with initialize()"
-        )
-        ramp_rate = self.settings.get("ramp_rate", 0.3)
-        setpoint_intervall = self.settings.get("setpoint_intervall", 0.1)
-        for gate, parameters in self.terminal_parameters.items():
-            for parameter, channel in parameters.items():
-                if self.properties[gate][parameter]["type"].find("static") >= 0:
-                    ramp_or_set_parameter(
-                        channel,
-                        self.properties[gate][parameter]["value"],
-                        ramp_rate=ramp_rate,
-                        setpoint_intervall=setpoint_intervall,
-                    )
-                elif self.properties[gate][parameter]["type"].find("dynamic") >= 0:
-                    try:
-                        ramp_or_set_parameter(
-                            channel,
-                            self.properties[gate][parameter]["value"],
-                            ramp_rate=ramp_rate,
-                            setpoint_intervall=setpoint_intervall,
-                        )
-                    except KeyError:
-                        try:
-                            ramp_or_set_parameter(
-                                channel,
-                                self.properties[gate][parameter]["start"],
-                                ramp_rate=ramp_rate,
-                                setpoint_intervall=setpoint_intervall,
-                            )
-                        except KeyError:
-                            ramp_or_set_parameter(
-                                channel,
-                                self.properties[gate][parameter]["setpoints"][0],
-                                ramp_rate=ramp_rate,
-                                setpoint_intervall=setpoint_intervall,
-                            )
 
     def clean_up(self, additional_actions: list[Callable] | None = None, **kwargs) -> None:
         """
