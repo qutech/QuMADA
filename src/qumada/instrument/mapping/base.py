@@ -66,7 +66,7 @@ class InstrumentMapping(ABC):
         end_values: list[float],
         ramp_time: float,
     ) -> None:
-        """Wrapper to ramp the provided parameters"""
+        """Defining qumada ramp. Requires proper implementation for each instrument"""
 
     def pulse(
         self,
@@ -76,7 +76,9 @@ class InstrumentMapping(ABC):
         delay: float,
         **kwargs,
     ) -> None:
-        """Wrapper to apply pulse of arbitrary values"""
+        """Defining qumada pulse. Requires proper implementation for each instrument"""
+        raise Exception("Pulse not properly implemented for this instrument!\
+                        You cannot use pulsed measurements with this instrument.")
 
     @abstractmethod
     def setup_trigger_in(self, trigger_settings: dict) -> None:

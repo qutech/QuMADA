@@ -36,7 +36,7 @@ from qumada.measurement.doNd_enhanced.doNd_enhanced import (
     do1d_parallel_asym,
 )
 from qumada.measurement.measurement import CustomSweep, MeasurementScript
-from qumada.utils.ramp_parameter import ramp_or_set_parameter
+from qumada.utils.ramp_parameter import ramp_or_set_parameters
 from qumada.utils.utils import _validate_mapping, naming_helper
 
 logger = logging.getLogger(__name__)
@@ -153,7 +153,7 @@ class Generic_nD_Sweep(MeasurementScript):
                 measurement_name = "measurement"
 
         for sweep in self.dynamic_sweeps:
-            ramp_or_set_parameter(sweep._param, sweep.get_setpoints()[0])
+            ramp_or_set_parameters([sweep._param], [sweep.get_setpoints()[0]])
         sleep(wait_time)
         data = dond(
             *tuple(self.dynamic_sweeps),
@@ -456,7 +456,7 @@ class Timetrace_with_sweeps(MeasurementScript):
             timer.reset_clock()
             while timer() < duration:
                 for sweep in self.dynamic_sweeps:
-                    ramp_or_set_parameter(sweep._param, sweep.get_setpoints()[0], ramp_time=timestep)
+                    ramp_or_set_parameters([sweep._param], [sweep.get_setpoints()[0]], ramp_time=timestep)
                 now = timer()
                 for i in range(0, len(self.dynamic_sweeps[0].get_setpoints())):
                     for sweep in self.dynamic_sweeps:
@@ -1169,8 +1169,8 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
             for setpoint in slow_setpoints:
                 slow_channel.set(setpoint)
                 if reset_time > 0:
-                    ramp_or_set_parameter(
-                        fast_channel, fast_sweep.get_setpoints()[0], ramp_rate=None, ramp_time=reset_time
+                    ramp_or_set_parameters(
+                        [fast_channel], [fast_sweep.get_setpoints()[0]], ramp_rate=None, ramp_time=reset_time
                     )
                 else:
                     fast_channel.set(fast_sweep.get_setpoints()[0])

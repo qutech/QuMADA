@@ -43,7 +43,7 @@ from qcodes.parameters import Parameter, ParameterBase
 
 from qumada.instrument.buffers import is_bufferable, is_triggerable
 from qumada.metadata import Metadata
-from qumada.utils.ramp_parameter import ramp_or_set_parameter
+from qumada.utils.ramp_parameter import ramp_or_set_parameter, ramp_or_set_parameters
 from qumada.utils.utils import flatten_array
 
 logger = logging.getLogger(__name__)
@@ -108,9 +108,9 @@ class MeasurementScript(ABC):
     def __init__(self):
         # Create function hooks for metadata
         # reverse order, so insert metadata is run second
-        self.run = create_hook(self.run, self._insert_metadata_into_db)
-        self.run = create_hook(self.run, self._add_data_to_metadata)
-        self.run = create_hook(self.run, self._add_current_datetime_to_metadata)
+        # self.run = create_hook(self.run, self._insert_metadata_into_db)
+        # self.run = create_hook(self.run, self._add_data_to_metadata)
+        # self.run = create_hook(self.run, self._add_current_datetime_to_metadata)
 
         self.properties: dict[Any, Any] = {}
         self.terminal_parameters: dict[Any, dict[Any, Parameter | None] | Parameter | None] = {}
@@ -447,9 +447,9 @@ class MeasurementScript(ABC):
             self.buffers = {
                 channel.root_instrument._qumada_buffer for channel in self.gettable_channels if is_bufferable(channel)
             }
-            self.trigger_ins = {
-                param.root_instrument._qumada_mapping for param in self.dynamic_channels if is_triggerable(param)
-            }
+        self.trigger_ins = {
+            param.root_instrument._qumada_mapping for param in self.dynamic_channels if is_triggerable(param)
+        } #Independent of self.buffered to allow parallel ramping for unbuffered measurement initialization.
         self.sort_by_priority()
         self._lists_created = True
         self._relabel_instruments()
@@ -485,13 +485,17 @@ class MeasurementScript(ABC):
                     ramped to their value instead of their sweeps starting point.
         """
         # TODO: Is there a more elegant way?
-        # TODO: Put Sweep-Generation somewhere else?
+        ramp_params = []
+        ramp_targets = []
         if inactive_dyn_channels is None:
             inactive_dyn_channels = []
 
-        ramp_rate = self.settings.get("ramp_rate", 0.3)
-        ramp_time = self.settings.get("ramp_time", 5)
+        ramp_rate = self.settings.get("ramp_rate", 0.5)
+        ramp_time = self.settings.get("ramp_time", 3)
         setpoint_intervall = self.settings.get("setpoint_intervall", 0.1)
+        trigger_start = self.settings.get("trigger_start", "software")  # TODO: this should be set elsewhere
+        trigger_reset = self.settings.get("trigger_reset", None)
+        trigger_type =  self.settings.get("trigger_type", None),
         if not self._lists_created:
             self.generate_lists()
         # for item in self.compensated_parameters:
@@ -502,13 +506,8 @@ class MeasurementScript(ABC):
         for gate, parameters in self.terminal_parameters.items():
             for parameter, channel in parameters.items():
                 if self.properties[gate][parameter]["type"].find("static") >= 0:
-                    ramp_or_set_parameter(
-                        channel,
-                        self.properties[gate][parameter]["value"],
-                        ramp_rate=ramp_rate,
-                        ramp_time=ramp_time,
-                        setpoint_intervall=setpoint_intervall,
-                    )
+                    ramp_params.append(channel)
+                    ramp_targets.append(self.properties[gate][parameter]["value"])
                 elif self.properties[gate][parameter]["type"].find("dynamic") >= 0:
                     if self.properties[gate][parameter].get("_is_triggered", False) and self.buffered:
                         if "num_points" in self.properties[gate][parameter].keys():
@@ -540,89 +539,22 @@ class MeasurementScript(ABC):
                                          buffered measurement. The value from \
                                          buffer_settings is used"
                             )
-                    #     try:
-                    #         self.dynamic_sweeps.append(
-                    #             LinSweep(
-                    #                 channel,
-                    #                 self.properties[gate][parameter]["start"],
-                    #                 self.properties[gate][parameter]["stop"],
-                    #                 int(self.buffered_num_points),
-                    #                 delay=self.properties[gate][parameter].setdefault("delay", 0),
-                    #             )
-                    #         )
-                    #     except KeyError:
-                    #         self.dynamic_sweeps.append(
-                    #             CustomSweep(
-                    #                 channel,
-                    #                 self.properties[gate][parameter]["setpoints"],
-                    #                 delay=self.properties[gate][parameter].setdefault("delay", 0),
-                    #             )
-                    #         )
-                    # else:
-                    #     try:
-                    #         self.dynamic_sweeps.append(
-                    #             LinSweep(
-                    #                 channel,
-                    #                 self.properties[gate][parameter]["start"],
-                    #                 self.properties[gate][parameter]["stop"],
-                    #                 int(self.properties[gate][parameter]["num_points"]),
-                    #                 delay=self.properties[gate][parameter].setdefault("delay", 0),
-                    #             )
-                    #         )
-                    #     except KeyError:
-                    #         self.dynamic_sweeps.append(
-                    #             CustomSweep(
-                    #                 channel,
-                    #                 self.properties[gate][parameter]["setpoints"],
-                    #                 delay=self.properties[gate][parameter].setdefault("delay", 0),
-                    #             )
-                    #         )
 
                     # Handle different possibilities for starting points
+                    ramp_params.append(channel)
                     if dyn_ramp_to_val or channel in inactive_dyn_channels:
                         try:
-                            ramp_or_set_parameter(
-                                channel,
-                                self.properties[gate][parameter]["value"],
-                                ramp_rate=ramp_rate,
-                                ramp_time=ramp_time,
-                                setpoint_intervall=setpoint_intervall,
-                            )
+                            ramp_targets.append(self.properties[gate][parameter]["value"])
                         except KeyError:
                             try:
-                                ramp_or_set_parameter(
-                                    channel,
-                                    self.properties[gate][parameter]["start"],
-                                    ramp_rate=ramp_rate,
-                                    ramp_time=ramp_time,
-                                    setpoint_intervall=setpoint_intervall,
-                                )
+                                ramp_targets.append(self.properties[gate][parameter]["start"])
                             except KeyError:
-                                ramp_or_set_parameter(
-                                    channel,
-                                    self.properties[gate][parameter]["setpoints"][0],
-                                    ramp_rate=ramp_rate,
-                                    ramp_time=ramp_time,
-                                    setpoint_intervall=setpoint_intervall,
-                                )
+                                ramp_targets.append(self.properties[gate][parameter]["setpoints"][0])
                     else:
                         try:
-                            ramp_or_set_parameter(
-                                channel,
-                                self.properties[gate][parameter]["start"],
-                                ramp_rate=ramp_rate,
-                                ramp_time=ramp_time,
-                                setpoint_intervall=setpoint_intervall,
-                            )
+                            ramp_targets.append(self.properties[gate][parameter]["start"])
                         except KeyError:
-                            ramp_or_set_parameter(
-                                channel,
-                                self.properties[gate][parameter]["setpoints"][0],
-                                ramp_rate=ramp_rate,
-                                ramp_time=ramp_time,
-                                setpoint_intervall=setpoint_intervall,
-                            )
-
+                            ramp_targets.append(self.properties[gate][parameter]["setpoints"][0])
                     # Generate sweeps from parameters
         self.active_compensated_channels = []
         self.active_compensating_channels = []
@@ -719,13 +651,8 @@ class MeasurementScript(ABC):
                             # if min(self.compensating_sweeps[-1].get_setpoints()) < min(*self.compensating_limits[i]) \
                             #  or max(self.compensating_sweeps[-1].get_setpoints()) > max(*self.compensating_limits[i]):
                             #     raise Exception(f"Value for compensating gate {compensating_param} exceeds limits!")
-                        ramp_or_set_parameter(
-                            channel,
-                            self.properties[gate][parameter]["value"],
-                            ramp_rate=ramp_rate,
-                            ramp_time=ramp_time,
-                            setpoint_intervall=setpoint_intervall,
-                        )
+                        ramp_params.append(channel)
+                        ramp_targets.append(self.properties[gate][parameter]["value"])
                     except ValueError as e:
                         raise e
 
@@ -735,6 +662,11 @@ class MeasurementScript(ABC):
                     gettable_param.root_instrument._qumada_buffer.subscribe([gettable_param])
                 else:
                     raise Exception(f"{gettable_param} is not bufferable.")
+        self.ready_triggers()
+        ramp_or_set_parameters(ramp_params, ramp_targets, ramp_rate,
+                               ramp_time, setpoint_intervall, trigger_start=trigger_start,
+                               trigger_type=trigger_type, trigger_reset=trigger_reset)
+
 
     @abstractmethod
     def run(self) -> list:
@@ -809,10 +741,27 @@ class MeasurementScript(ABC):
     def ready_buffers(self, **kwargs) -> None:
         """
         Setup all buffers registered in the measurement and start them.
+        Also sets up triggers, although that might be removed in the future.
         """
         for buffer in self.buffers:
             buffer.setup_buffer(settings=self.buffer_settings)
             buffer.start()
+        self.ready_triggers()
+            
+    def ready_triggers(self, **kwargs):
+        """
+        Prepare trigger inputs for not buffered instruments.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            For potential later use.
+
+        Returns
+        -------
+        None.
+
+        """
         for trigger in self.trigger_ins:
             trigger.setup_trigger_in(trigger_settings=self.buffer_settings)
 
