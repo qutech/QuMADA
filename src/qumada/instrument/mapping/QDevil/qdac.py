@@ -71,9 +71,9 @@ class QDacMapping(InstrumentMapping):
         )
         parameters[0]._instrument.sync(0)
 
-    def setup_trigger_in():
+    def setup_trigger_in(self):
         raise Exception("QDac does not have a trigger input!")
         
-    def force_trigger():
+    def force_trigger(self):
         pass
         # Not required as QDac has no trigger input and starts ramps instantly.
