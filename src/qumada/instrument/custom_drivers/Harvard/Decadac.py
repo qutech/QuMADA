@@ -430,7 +430,7 @@ class DacChannel(InstrumentChannel, DacReader):
         else:
             code = int(code)
             self._set_channel()
-            self.ask_raw(f"U65535;L0;D{code};")
+            self.ask_raw(f"S0;G0;U{code};L{code};D{code};")
 
     def _script_set_dac(self, code):
         """
@@ -442,7 +442,7 @@ class DacChannel(InstrumentChannel, DacReader):
 
         code = int(code)
         self._script_set_channel()
-        self.ask_raw(f"U65535;L0;D{code};")
+        self.ask_raw(f"S0;G0;U{code};L{code};D{code};")
 
     def write(self, cmd):
         """
