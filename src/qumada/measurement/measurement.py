@@ -33,6 +33,7 @@ from contextlib import suppress
 from datetime import datetime
 from functools import wraps
 from typing import Any, Callable
+from time import sleep
 
 import numpy as np
 import qcodes as qc
@@ -44,7 +45,7 @@ from qcodes.parameters import Parameter, ParameterBase
 from qumada.instrument.buffers import is_bufferable, is_triggerable
 from qumada.metadata import Metadata
 from qumada.utils.ramp_parameter import ramp_or_set_parameter, ramp_or_set_parameters
-from qumada.utils.utils import flatten_array
+from qumada.utils.utils import flatten_array, _validate_mapping
 
 logger = logging.getLogger(__name__)
 
@@ -785,6 +786,102 @@ class MeasurementScript(ABC):
                 metadata.save()
             except Exception as ex:
                 print(f"Metadata could not inserted into database: {ex}")
+                
+    def trigger_measurement(self, parameters, setpoints, method = "ramp" ,sync_trigger=None):
+
+        TRIGGER_TYPES = ["software", "hardware", "manual"]
+        trigger_start = self.settings.get("trigger_start", "manual")  # TODO: this should be set elsewhere
+        trigger_reset = self.settings.get("trigger_reset", None)
+        trigger_type = _validate_mapping(
+            self.settings.get("trigger_type"),
+            TRIGGER_TYPES,
+            default="software",
+            default_key_error="software",
+        )
+        if sync_trigger is None:
+            sync_trigger = ()
+        buffer_timeout_multiplier = self.settings.get("buffer_timeout_multiplier", 20)
+        # Some logic to sort instruments. Instruments with sync-triggers have to be added last,
+        # as executing _qumada_pulse/_ramp with them instantly runs the pulse/ramp, before other instruments
+        # that wait for a trigger signal are added and prepared. 
+        instruments_set = {param.root_instrument for param in parameters}
+        instruments = [instrument for instrument in instruments_set if instrument not in sync_trigger]
+        for instrument in instruments_set:
+            if instrument in sync_trigger:
+                instruments.append(instrument)
+        
+        for instr in instruments:
+            instr_params = [param for param in parameters if param.root_instrument is instr]
+            if method == "ramp":
+                try:
+                    instr._qumada_ramp(
+                        parameters=instr_params,
+                        end_values=[setpoint[-1] for setpoint in setpoints],
+                        ramp_time=self._burst_duration,
+                        sync_trigger=sync_trigger,
+                    )
+                except AttributeError as ex:
+                    logger.error(
+                        f"Exception: {instr} probably does not have a \
+                            a qumada_ramp method. Buffered measurements without \
+                            ramp method are no longer supported. \
+                            Use the unbuffered script!"
+                    )
+                    raise ex
+                
+            elif method == "pulse":
+                try:
+                    instr._qumada_pulse(
+                        parameters=instr_params,
+                        setpoints=setpoints,
+                        delay=self._burst_duration / self.buffered_num_points,
+                        sync_trigger=sync_trigger,
+                    )
+                except AttributeError as ex:
+                    logger.error(
+                        f"Exception: {instr} probably does not have a \
+                            a qumada_pulse method. Buffered measurements without \
+                            ramp method are no longer supported. \
+                            Use the unbuffered script!"
+                    )
+                    raise ex
+            else:
+                with NameError as ex:
+                    logger.error("Argument 'method' has to be eiter 'ramp' or 'pulse'")
+                    raise ex
+                    
+        if trigger_type == "manual":
+            logger.warning(
+                "You are using manual triggering. If you want to pulse parameters on multiple"
+                "instruments this can lead to delays and bad timing!"
+            )
+
+        if trigger_type == "hardware":
+            try:
+                trigger_start()
+            except NameError as ex:
+                print("Please set a trigger or define a trigger_start method")
+                raise ex
+
+        elif trigger_type == "software":
+            for buffer in self.buffers:
+                buffer.force_trigger()
+            logger.warning(
+                "You are using software trigger, which \
+                can lead to significant delays between \
+                measurement instruments! Only recommended\
+                for debugging."
+            )
+        timeout_timer = 0
+        while not all(buffer.is_finished() for buffer in list(self.buffers)):
+            timeout_timer += 0.1
+            sleep(0.1)
+            if timeout_timer >= buffer_timeout_multiplier * self._burst_duration:
+                raise TimeoutError
+        try:
+            trigger_reset()
+        except TypeError:
+            logger.info("No method to reset the trigger defined.")
 
 
 class VirtualGate:
