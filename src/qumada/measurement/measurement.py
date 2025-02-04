@@ -798,6 +798,7 @@ class MeasurementScript(ABC):
             default="software",
             default_key_error="software",
         )
+        setpoints_mapping = {param : setpoint for param, setpoint in zip(parameters, setpoints)}
         if sync_trigger is None:
             sync_trigger = ()
         buffer_timeout_multiplier = self.settings.get("buffer_timeout_multiplier", 20)
@@ -815,10 +816,10 @@ class MeasurementScript(ABC):
             if method == "ramp":
                 try:
                     instr._qumada_ramp(
-                        parameters=instr_params,
-                        end_values=[setpoint[-1] for setpoint in setpoints],
-                        ramp_time=self._burst_duration,
-                        sync_trigger=sync_trigger,
+                        parameters = instr_params,
+                        end_values = [setpoints_mapping[param][-1] for param in instr_params],
+                        ramp_time = self._burst_duration,
+                        sync_trigger = sync_trigger,
                     )
                 except AttributeError as ex:
                     logger.error(
@@ -832,10 +833,10 @@ class MeasurementScript(ABC):
             elif method == "pulse":
                 try:
                     instr._qumada_pulse(
-                        parameters=instr_params,
-                        setpoints=setpoints,
-                        delay=self._burst_duration / self.buffered_num_points,
-                        sync_trigger=sync_trigger,
+                        parameters = instr_params,
+                        setpoints = [setpoints_mapping[param] for param in instr_params],
+                        delay = self._burst_duration / self.buffered_num_points,
+                        sync_trigger = sync_trigger,
                     )
                 except AttributeError as ex:
                     logger.error(
