@@ -120,5 +120,6 @@ script.setup(
 map_terminals_gui(station.components, script.gate_parameters)
 map_triggers(station.components)
 
+load_or_create_experiment("test_exp", sample_name="dummy_sample")
 # %% Run measurement
 script.run()
