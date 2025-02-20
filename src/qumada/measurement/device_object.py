@@ -1317,7 +1317,7 @@ class Terminal_Parameter(ABC):
             self._limit_validator = Numbers(min_value=min(self.limits), max_value=max(self.limits))
             param.add_validator(self._limit_validator)
 
-    def ramp(self, value, ramp_rate: float | None = None, ramp_time: float = 5, setpoint_intervall: float = 0.01):
+    def ramp(self, value, ramp_rate: float | None = None, ramp_time: float = 2, setpoint_intervall: float = 0.1):
         if ramp_rate is None:
             ramp_rate = self.ramp_rate
         ramp_or_set_parameter(
