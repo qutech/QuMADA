@@ -396,7 +396,7 @@ def plot_multiple_datasets(
     if kwargs.get("font", None) is not None:
         matplotlib.rc("font", size=35)
     if ax is None or fig is None:
-        fig, ax = plt.subplots(figsize=(30, 30))
+        fig, ax = plt.subplots(figsize = kwargs.get("figsize", (10, 10)))
     x_labels = []
     y_labels = []
     for i in range(len(datasets)):
