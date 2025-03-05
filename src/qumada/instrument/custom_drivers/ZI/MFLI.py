@@ -42,13 +42,17 @@ class MFLI(Instrument):
     """
 
     def __init__(
-        self, name: str, device: str, serverhost: str = "localhost", existing_session: Session = None, **kwargs
+        self, name: str, device: str,
+        serverhost: str = "localhost",
+        existing_session: Session = None, 
+        allow_version_mismatch = False,
+        **kwargs
     ):
         super().__init__(name, **kwargs)
         if isinstance(existing_session, Session):
             session = existing_session
         else:
-            self.session = session = Session(serverhost)
+            self.session = session = Session(serverhost, allow_version_mismatch=allow_version_mismatch)
         self.instr = instr = session.connect_device(device)
         if instr._device_type != "MFLI":
             raise TypeError("The type of instrument you are trying to connect is not supported.")

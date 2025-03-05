@@ -106,6 +106,8 @@ def filter_flatten_parameters(node) -> dict[Any, Parameter]:
             values = [node]
         except IndexError:
             values = []
+        except TypeError:
+            values = []
         # TODO: Lines 37 and 38 are only a hotfix for problems with the MFLI,
         # The index error is raised somewhere within QCoDeS because the MFLI
         # driver just adds keys that are missing instead of raising the KeyError

@@ -321,7 +321,7 @@ class QumadaDevice:
 
     def map_terminals(self, 
                 terminal_parameters: None | dict = None, 
-                path: None | str = None
+                path: None | str = None,
                 ):
         """
         Maps devices terminal parameters using map_terminals_gui. You can pass
