@@ -88,7 +88,7 @@ def _rescale_axis(axis, data, unit, axis_type="x"):
     Rescales the axis ticks to avoid scientific notation and sets appropriate labels.
     """
     factor, scaled_unit = _get_scaled_unit_and_factor(unit, data)
-    axis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f"{x * factor:.0f}"))
+    axis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f"{x * factor:.1f}"))
     return factor, scaled_unit
 
 
@@ -139,6 +139,8 @@ def plot_2D(
     y_label=None,
     z_label=None,
     scale_axis=True,
+    save_to_file=None,
+    close=False,
     *args,
     **kwargs,
 ):
@@ -169,7 +171,7 @@ def plot_2D(
     if args:
         x_data, y_data, z_data = _handle_overload(x_data, y_data, z_data, *args, output_dimension=3)
     if ax is None or fig is None:
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize = kwargs.get("figsize", (10,10)))
 
     # Skalierung der Achsendaten und Einheiten
     x_values, y_values, z_values = x_data[1], y_data[1], z_data[1]
@@ -194,7 +196,11 @@ def plot_2D(
     # Plotten der 2D-Daten
     im = ax.pcolormesh(x, y, z, shading="auto")
     cbar = fig.colorbar(im, ax=ax)
-    cbar.set_label(f"{z_data[3]} ({z_unit})")
+    
+    if z_label is None:
+        cbar.set_label(f"{z_data[3]} ({z_unit})")
+    else:
+        cbar.set_label(f"{z_label} ({z_unit})")
 
     # Achsentitel aktualisieren
     x_label = x_label or f"{x_data[3]} ({x_unit})"
@@ -205,6 +211,10 @@ def plot_2D(
 
     plt.tight_layout()
     plt.show()
+    if save_to_file is not None:
+        plt.savefig(save_to_file)
+    if close is True:
+        plt.close()
     return fig, ax
 
 
@@ -330,6 +340,11 @@ def plot_multiple_datasets(
     scale_axis=True,
     legend=True,
     exclude_string_from_legend: list = [],
+    save_to_file = None,
+    close = False,
+    x_label = None,
+    y_label = None,
+    color_map = None,
     **kwargs,
 ):
     """
@@ -344,12 +359,12 @@ def plot_multiple_datasets(
     datasets : list, optional
         List of QCoDeS datasets to plot. If None, the function allows you to pick
         measurements from the currently loaded QCoDeS database. Default is None.
-    x_axis_parameters_name : str, optional
-        The name of the parameter to use for the x-axis. If None, you will be prompted
+    x_axis_parameters_name : str or list, optional
+        The name(s) of the parameter(s) to use for the x-axis. If None, you will be prompted
         to select it individually for each dataset if more than one parameter exists.
         Default is None.
-    y_axis_parameters_name : str, optional
-        The name of the parameter to use for the y-axis. If None, you will be prompted
+    y_axis_parameters_name : str or list, optional
+        The name(s) of the parameter(s) to use for the y-axis. If None, you will be prompted
         to select it individually for each dataset if more than one parameter exists.
         Default is None.
     plot_hysteresis : bool, optional
@@ -393,20 +408,39 @@ def plot_multiple_datasets(
     y_data = list()
     x_units = list()
     y_units = list()
-    if kwargs.get("font", None) is not None:
-        matplotlib.rc("font", size=35)
+    font = kwargs.get("font", None)
+    if font is not None:
+        matplotlib.rc("font", 30)
+    matplotlib.rc("font", size=40)
+    default_colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
     if ax is None or fig is None:
         fig, ax = plt.subplots(figsize = kwargs.get("figsize", (10, 10)))
+
     x_labels = []
     y_labels = []
     for i in range(len(datasets)):
+        if color_map is None:
+            color = default_colors[i % len(default_colors)] 
+        else:
+            color = color_map[i]
         label = datasets[i].name
         for string in exclude_string_from_legend:
-            label = label.strip(string)
+            label = label.replace(string, "")
+
+        if isinstance(x_axis_parameters_name, list):
+            x_name = x_axis_parameters_name[i]
+        else:
+            x_name = x_axis_parameters_name
+            
+        if isinstance(y_axis_parameters_name, list):
+            y_name = y_axis_parameters_name[i]
+        else:
+            y_name = y_axis_parameters_name
+        
         x, y = _handle_overload(
             *get_parameter_data(datasets[i], y_axis_parameters_name),
-            x_name=x_axis_parameters_name,
-            y_name=y_axis_parameters_name,
+            x_name=x_name,
+            y_name=y_name,
             output_dimension=2,
         )
         x_data.append(x[1])
@@ -429,33 +463,48 @@ def plot_multiple_datasets(
                     x_s[j],
                     y_s[j],
                     marker,
+                    linestyle=kwargs.get("linestyle", ""),
                     label=f_label,
-                    markersize=kwargs.get("markersize", 15),
+                    markersize=kwargs.get("markersize", 20),
+                    color = color,
                 )
         else:
             plt.plot(
                 x_data[i],
                 y_data[i],
                 marker=kwargs.get("marker", "."),
+                linestyle=kwargs.get("linestyle", ""),
                 label=label,
-                markersize=kwargs.get("markersize", 15),
+                markersize=kwargs.get("markersize", 20),
+                color = color,
             )
 
     # Scale axes and update labels
     if scale_axis is True:
         x_scaling_factor, x_units[0] = _rescale_axis(ax.xaxis, np.concatenate(x_data), x_units[0], "x")
         y_scaling_factor, y_units[0] = _rescale_axis(ax.yaxis, np.concatenate(y_data), y_units[0], "y")
-    plt.xlabel(f"{x_labels[0]} ({x_units[0]})")
-    plt.ylabel(f"{y_labels[0]} ({y_units[0]})")
+    
+    if x_label is None:
+        plt.xlabel(f"{x_labels[0]} ({x_units[0]})")
+    else:
+        plt.xlabel(f"{x_label} ({x_units[0]})")
+    if y_label is None:
+        plt.ylabel(f"{y_labels[0]} ({y_units[0]})")
+    else:
+        plt.ylabel(f"{y_label} ({y_units[0]})")
+        
     # Update x and y labels
     if legend is True:
         plt.legend(
             loc=kwargs.get("legend_position", "upper left"),
-            fontsize=kwargs.get("legend_fontsize", 15),
+            fontsize=kwargs.get("legend_fontsize", 35),
             markerscale=kwargs.get("legend_markerscale", 1),
         )
     plt.tight_layout()
-
+    if save_to_file is not None:
+        plt.savefig(save_to_file)
+    if close is True:
+        plt.close()
     return ax
 
 
