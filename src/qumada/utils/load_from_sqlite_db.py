@@ -277,6 +277,13 @@ def get_parameter_data(dataset=None, parameter_name=None, **kwargs):
     )
     return zip(params, data, units, labels)
 
+# %%
+
+def get_parameter_name_by_label(dataset=None, parameter_label=None, appendix = ""):
+    for param in dataset.get_parameters():
+        if param.label == parameter_label + appendix:
+            return param.name
+    return None
 
 # %%
 def separate_up_down(x_data, y_data):
