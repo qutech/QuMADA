@@ -145,8 +145,9 @@ def plot_2D(
     **kwargs,
 ):
     """
-    Plots 2D derivatives. Requires tuples of name and 1D arrays corresponding
+    Plots 2D scams. Requires tuples of name and 1D arrays corresponding
     to x, y, and z data as input. Supports axis and colorbar scaling.
+    Use plot_2D(*get_parameter_data()) to open interactive guide to select measurements.
 
     Parameters
     ----------
@@ -379,6 +380,20 @@ def plot_multiple_datasets(
     scale_axis : bool, optional
         If True, rescales the x- and y-axes to use SI prefixes (e.g., µ, m, k) instead
         of scientific notation for better readability. Default is True.
+    save_to_file: str|None, optional.
+        Path and Filename to save plot to. Not saved if None. Default is None.
+    close : bool, optional.
+        If true plots are closed automatically before the function exits (e.g. in case
+        you just want to save the plot to a file.) Default is False.
+    x_label : str|None, optional.
+        Overrides automatically generated x label. Units are still added automatically.
+        Default is None.
+    y_label : str|None, optional.
+        Overrides automatically generated y label. Units are still added automatically.
+        Default is None.
+    color_map : Colormap|None, optional.
+        Alternative colormap used for the plots. None uses the matplotlib default colormap.
+        Default is None.
     **kwargs : dict
         Additional keyword arguments for customizing the plot. For example:
             - font: int, font size for the plot.
@@ -386,6 +401,8 @@ def plot_multiple_datasets(
             - markersize: int, size of the markers.
             - legend_fontsize: int, font size for the legend.
             - legend_markerscale: float, scale factor for legend markers.
+            - legend_position: str, Position of legend (passed on to matplotlib).
+              Default is "upper left"
 
     Returns
     -------
