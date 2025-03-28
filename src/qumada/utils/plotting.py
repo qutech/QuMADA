@@ -145,8 +145,9 @@ def plot_2D(
     **kwargs,
 ):
     """
-    Plots 2D derivatives. Requires tuples of name and 1D arrays corresponding
+    Plots 2D scans. Requires tuples of name and 1D arrays corresponding
     to x, y, and z data as input. Supports axis and colorbar scaling.
+    Use plot_2D(*get_parameter_data()) to open interactive guide to select measurements.
 
     Parameters
     ----------
@@ -344,6 +345,7 @@ def plot_multiple_datasets(
     close = False,
     x_label = None,
     y_label = None,
+    color_map = None,
     **kwargs,
 ):
     """
@@ -378,6 +380,20 @@ def plot_multiple_datasets(
     scale_axis : bool, optional
         If True, rescales the x- and y-axes to use SI prefixes (e.g., µ, m, k) instead
         of scientific notation for better readability. Default is True.
+    save_to_file: str|None, optional.
+        Path and Filename to save plot to. Not saved if None. Default is None.
+    close : bool, optional.
+        If true plots are closed automatically before the function exits (e.g. in case
+        you just want to save the plot to a file.) Default is False.
+    x_label : str|None, optional.
+        Overrides automatically generated x label. Units are still added automatically.
+        Default is None.
+    y_label : str|None, optional.
+        Overrides automatically generated y label. Units are still added automatically.
+        Default is None.
+    color_map : Colormap|None, optional.
+        Alternative colormap used for the plots. None uses the matplotlib default colormap.
+        Default is None.
     **kwargs : dict
         Additional keyword arguments for customizing the plot. For example:
             - font: int, font size for the plot.
@@ -385,6 +401,8 @@ def plot_multiple_datasets(
             - markersize: int, size of the markers.
             - legend_fontsize: int, font size for the legend.
             - legend_markerscale: float, scale factor for legend markers.
+            - legend_position: str, Position of legend (passed on to matplotlib).
+              Default is "upper left"
 
     Returns
     -------
@@ -411,12 +429,17 @@ def plot_multiple_datasets(
     if font is not None:
         matplotlib.rc("font", 30)
     matplotlib.rc("font", size=40)
+    default_colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
     if ax is None or fig is None:
         fig, ax = plt.subplots(figsize = kwargs.get("figsize", (10, 10)))
 
     x_labels = []
     y_labels = []
     for i in range(len(datasets)):
+        if color_map is None:
+            color = default_colors[i % len(default_colors)] 
+        else:
+            color = color_map[i]
         label = datasets[i].name
         for string in exclude_string_from_legend:
             label = label.replace(string, "")
@@ -457,16 +480,20 @@ def plot_multiple_datasets(
                     x_s[j],
                     y_s[j],
                     marker,
+                    linestyle=kwargs.get("linestyle", ""),
                     label=f_label,
                     markersize=kwargs.get("markersize", 20),
+                    color = color,
                 )
         else:
             plt.plot(
                 x_data[i],
                 y_data[i],
                 marker=kwargs.get("marker", "."),
+                linestyle=kwargs.get("linestyle", ""),
                 label=label,
                 markersize=kwargs.get("markersize", 20),
+                color = color,
             )
 
     # Scale axes and update labels
