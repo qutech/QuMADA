@@ -341,7 +341,7 @@ def plot_multiple_datasets(
     fig=None,
     scale_axis=True,
     legend=True,
-    exclude_string_from_legend: list = [],
+    exclude_string_from_legend: list = ["1D Sweep"],
     save_to_file = None,
     close = False,
     x_label = None,
