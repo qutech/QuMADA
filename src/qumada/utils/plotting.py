@@ -342,6 +342,7 @@ def plot_multiple_datasets(
     scale_axis=True,
     legend=True,
     exclude_string_from_legend: list = ["1D Sweep"],
+    legend_entries: None|list = None,
     save_to_file = None,
     close = False,
     x_label = None,
@@ -384,6 +385,11 @@ def plot_multiple_datasets(
     scale_axis : bool, optional
         If True, rescales the x- and y-axes to use SI prefixes (e.g., µ, m, k) instead
         of scientific notation for better readability. Default is True.
+    legend : bool, optional
+        If True, legend is plotted. Default is True.
+    legend_entries : None|list[str], optional
+        List of custom legend entries. If None, the measurement name is used.
+        Defauls it None.
     save_to_file: str|None, optional.
         Path and Filename to save plot to. Not saved if None. Default is None.
     close : bool, optional.
@@ -448,7 +454,10 @@ def plot_multiple_datasets(
             color = default_colors[i % len(default_colors)] 
         else:
             color = color_map[i]
-        label = datasets[i].name
+        if legend_entries is None:
+            label = datasets[i].name
+        else:
+            label = legend_entries[i]
         for string in exclude_string_from_legend:
             label = label.replace(string, "")
 
@@ -496,6 +505,7 @@ def plot_multiple_datasets(
                     fill_style = "full"
                 else:
                     fill_style = "none"
+
                 plt.plot(
                     x_s[j],
                     y_s[j],
@@ -540,7 +550,7 @@ def plot_multiple_datasets(
             markerscale=kwargs.get("legend_markerscale", 1),
             ncol = kwargs.get("legend_ncols", int(len(leg_entries)/9)+1),
             columnspacing = kwargs.get("legend_columnspacing", 0.2),
-            handletextpad = kwargs.get("legend_handletextpad", -0.9),
+            handletextpad = kwargs.get("legend_handletextpad", -0.7),
         )
     plt.tight_layout()
     if save_to_file is not None:
