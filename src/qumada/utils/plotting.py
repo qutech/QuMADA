@@ -536,7 +536,7 @@ def plot_multiple_datasets(
         plt.savefig(save_to_file)
     if close is True:
         plt.close()
-    return ax
+    return fig, ax
 
 
 # %%
