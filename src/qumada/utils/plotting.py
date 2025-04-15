@@ -336,6 +336,7 @@ def plot_multiple_datasets(
     x_axis_parameters_name: str = None,
     y_axis_parameters_name: str = None,
     plot_hysteresis: bool = True,
+    optimize_hysteresis_legend: bool = True,
     ax=None,
     fig=None,
     scale_axis=True,
@@ -372,6 +373,9 @@ def plot_multiple_datasets(
         If True, separates datasets with multiple sweeps into different curves based
         on the monotonicity of the x-axis data. For example, foresweep and backsweep
         can be plotted with distinct markers. Default is True.
+    optimize_hysteresis_legend : bool, optional
+        If True, only one entry is added for each measurement instead of two for fore-
+        and backsweep. Default is True.
     ax : matplotlib.axes._axes.Axes, optional
         Matplotlib axis to plot on. If None, a new figure and axis will be created.
         Default is None.
@@ -471,11 +475,20 @@ def plot_multiple_datasets(
             x_s, y_s, signs = separate_up_down(x_data[i], y_data[i])
             for j in range(len(x_s)):
                 if signs[j] == 1:
+                    fill_style = "full"
                     marker = "^"
-                    f_label = f"{label} foresweep"
+                    f_label = f"{label}"
+                    if not optimize_hysteresis_legend:
+                        f_label += " foresweep"
                 else:
                     marker = "v"
-                    f_label = f"{label} backsweep"
+                    f_label = f"{label}"
+                    fill_style = "none"
+                    if not optimize_hysteresis_legend:
+                        f_label += " backsweep"
+                if optimize_hysteresis_legend is True:
+                    if j > 0:
+                        f_label = None
                 plt.plot(
                     x_s[j],
                     y_s[j],
@@ -484,6 +497,7 @@ def plot_multiple_datasets(
                     label=f_label,
                     markersize=kwargs.get("markersize", 20),
                     color = color,
+                    fillstyle = fill_style
                 )
         else:
             plt.plot(
