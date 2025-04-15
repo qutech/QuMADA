@@ -547,7 +547,7 @@ class MainWindow(QMainWindow):
         # Monitoring
         Monitoring_menu = menu.addMenu("Monitoring")
         self.monitoring_enable = monitoring
-        self.terminal_tree.monitoring_get_type = "get"
+        self.terminal_tree.monitoring_get_type = "cache"
         if monitoring:
             self.terminal_tree.monitoring_timer.start(1000)
 
@@ -570,8 +570,9 @@ class MainWindow(QMainWindow):
         self.use_cache_action = QAction("Only Cached values", self)
         self.use_get_action = QAction("Get command", self)
         self.use_cache_action.setCheckable(True)
+        self.use_cache_action.setChecked(True)
         self.use_get_action.setCheckable(True)
-        self.use_get_action.setChecked(True)
+        self.use_get_action.setChecked(False)
         get_type_menu.addAction(self.use_cache_action)
         get_type_menu.addAction(self.use_get_action)
         self.use_get_action.triggered.connect(self.monitoring_set_get_type)
