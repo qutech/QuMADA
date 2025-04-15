@@ -319,9 +319,11 @@ class QumadaDevice:
                             logger.warning(f"Couldn't find value for {terminal_name} {param_name}")
         return return_dict
 
+
     def map_terminals(self, 
                 terminal_parameters: None | dict = None, 
-                path: None | str = None
+                path: None | str = None,
+                skip_gui_if_mapped: bool = True,
                 ):
         """
         Maps devices terminal parameters using map_terminals_gui. You can pass
@@ -334,6 +336,9 @@ class QumadaDevice:
             Already existing mapping. The default is None.
         path : None | str, optional
             File to load mapping from (json). The default is None.
+        skip_gui_if_mapped: bool, optional
+            If true, mapping gui is not openend if all parameters are mapped.
+            Default is True.
 
         Raises
         ------
@@ -351,18 +356,22 @@ class QumadaDevice:
             raise TypeError("No valid qcodes station found. Make sure you have set the station attribute correctly!")
         if path is not None:
             load_mapped_terminal_parameters(terminal_parameters, self.station, path)           
-        map_terminals_gui(self.station.components, self.terminal_parameters, terminal_parameters)
-        self.update_terminal_parameters()
+        map_terminals_gui(self.station.components,
+                          self.terminal_parameters,
+                          terminal_parameters,
+                          skip_gui_if_mapped = skip_gui_if_mapped)
+
         
     def mapping(self, 
                 terminal_parameters: None | dict = None, 
-                path: None | str = None
+                path: None | str = None,
+                skip_gui_if_mapped = True,
             ):
         #TODO: Remove!
         logger.warning("Deprecation Warning: device.mapping was renamed to \
                        device.map_terminals. Device.mapping will be removed \
                        in a future release!")
-        self.map_terminals(terminal_parameters, path)
+        self.map_terminals(terminal_parameters, path, skip_gui_if_mapped)
             
         
     def save_terminal_mapping(self,
