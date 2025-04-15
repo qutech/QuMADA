@@ -33,6 +33,7 @@ from qcodes.dataset.data_set import DataSet
 from qcodes.dataset.plotting import plot_dataset
 
 from qumada.utils.browsefiles import browsefiles
+import re
 
 
 # %%
@@ -197,20 +198,32 @@ def pick_measurements(sample_name: str = None, preview_dialogue=False, measureme
     Returns a measurement of your choice, plots it if you want.
     Interactive, if no sample_name is provided.
     """
+
+    pattern = r"^\s*(\d+)\s*-\s*(\d+)\s*$"
     if not measurement_list:
         measurement_list = list()
     measurements = list_measurements_for_sample(sample_name=sample_name)
     for idx, measurement in enumerate(measurements):
         print(f"{idx} (Run ID {measurement.run_id}) : {measurement.name}")
+    print("Please add a measurement by selecting its number or providing a range '(Number1-Number2)'")
     while True:
         chosen = input("Please choose a measurement: ")
+        match = re.match(pattern, chosen)
         if chosen == "f":
             return measurement_list
-        if chosen == "s":
+        elif chosen == "s":
             return pick_measurements(preview_dialogue=preview_dialogue, measurement_list=measurement_list)
-        chosen = int(chosen)
-        measurement_list.append(measurements[int(chosen)])
+        elif chosen == "l":
+            load_db()
+            return pick_measurements(preview_dialogue=preview_dialogue, measurement_list=measurement_list)
+        elif re.match(pattern, chosen):
+            for i in range(int(match.group(1)), int(match.group(2))+1):
+                measurement_list.append(measurements[i])
+        else:
+            chosen = int(chosen)
+            measurement_list.append(measurements[int(chosen)])
         print("Please enter 'f' when your are finished or 's' if you want to add measurements of another sample")
+        print("Type 'l' to open the load database menu in order to select a different database.")
 
 
 # %%
