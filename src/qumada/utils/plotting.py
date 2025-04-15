@@ -407,6 +407,10 @@ def plot_multiple_datasets(
             - legend_markerscale: float, scale factor for legend markers.
             - legend_position: str, Position of legend (passed on to matplotlib).
               Default is "upper left"
+            - legend_ncols: int, Number of legend columns. Default is depending
+                            on number of entries
+            - legend_columnspacing: float, Spacing between legend columns
+            - legend_handletextpad: float, Spacing between legend text and marker.
 
     Returns
     -------
@@ -475,7 +479,6 @@ def plot_multiple_datasets(
             x_s, y_s, signs = separate_up_down(x_data[i], y_data[i])
             for j in range(len(x_s)):
                 if signs[j] == 1:
-                    fill_style = "full"
                     marker = "^"
                     f_label = f"{label}"
                     if not optimize_hysteresis_legend:
@@ -483,12 +486,16 @@ def plot_multiple_datasets(
                 else:
                     marker = "v"
                     f_label = f"{label}"
-                    fill_style = "none"
                     if not optimize_hysteresis_legend:
                         f_label += " backsweep"
                 if optimize_hysteresis_legend is True:
+                # Only one legend entry per dataset (instead of one for each fore-/backsweep)
                     if j > 0:
                         f_label = None
+                if j%2 == False: # ;-) Ensuring the first sweep marker is always filled
+                    fill_style = "full"
+                else:
+                    fill_style = "none"
                 plt.plot(
                     x_s[j],
                     y_s[j],
@@ -525,11 +532,15 @@ def plot_multiple_datasets(
         plt.ylabel(f"{y_label} ({y_units[0]})")
         
     # Update x and y labels
+    leg_entries = ax.legend().get_texts()
     if legend is True:
         plt.legend(
             loc=kwargs.get("legend_position", "upper left"),
             fontsize=kwargs.get("legend_fontsize", 35),
             markerscale=kwargs.get("legend_markerscale", 1),
+            ncol = kwargs.get("legend_ncols", int(len(leg_entries)/9)+1),
+            columnspacing = kwargs.get("legend_columnspacing", 0.2),
+            handletextpad = kwargs.get("legend_handletextpad", -0.9),
         )
     plt.tight_layout()
     if save_to_file is not None:
