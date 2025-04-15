@@ -11,6 +11,8 @@ The function "plot_multiple_datasets()" is useful for plotting multiple curves i
 You can either provide a list of datasets you want to plot along with the names of the parameters you want to plot,
 or simply leave the datasets argument (and optionally the parameter names empty).
 In the latter case, it will guide you through the process of selecting one or more measurements and the parameters you want to plot.
+Make sure to have a look at the docstring to or the detailed documentation to see all the customization options the plotting function provides.
+
 
 "plot_multiple_datasets" generates automatic legends, labels the axis correctly, can use different markers for different sweep directions, forwards kwargs for matplotlib and more.
 Check :ref:`API_DOC` or the docstring for more information. An example is shown below, each of the first three panels was created by using "plot_multiple_datasets".
