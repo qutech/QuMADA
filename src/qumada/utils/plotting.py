@@ -145,7 +145,7 @@ def plot_2D(
     **kwargs,
 ):
     """
-    Plots 2D scams. Requires tuples of name and 1D arrays corresponding
+    Plots 2D scans. Requires tuples of name and 1D arrays corresponding
     to x, y, and z data as input. Supports axis and colorbar scaling.
     Use plot_2D(*get_parameter_data()) to open interactive guide to select measurements.
 

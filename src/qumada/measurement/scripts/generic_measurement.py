@@ -559,50 +559,12 @@ class Timetrace_with_Sweeps_buffered(MeasurementScript):
                 self.ready_buffers()
                 t = time() - start
                 try:
-                    self.dynamic_channels[0].root_instrument._qumada_ramp(
-                        self.dynamic_channels,
-                        end_values=[sweep.get_setpoints()[-1] for sweep in self.dynamic_sweeps],
-                        ramp_time=self._burst_duration,
-                        sync_trigger=sync_trigger,
-                    )
-                except AttributeError as ex:
-                    logger.error(
-                        "Exception: This instrument probably does not have a \
-                          qtools_ramp method. Buffered measurements without \
-                          ramp method are no longer supported. \
-                          Use the unbuffered script!"
-                    )
-                    raise ex
-
-                if trigger_type == "manual":
-                    pass
-                if trigger_type == "hardware":
-                    try:
-                        trigger_start()
-                    except AttributeError as ex:
-                        print("Please set a trigger or define a trigger_start method")
-                        raise ex
-
-                elif trigger_type == "software":
-                    for buffer in self.buffers:
-                        buffer.force_trigger()
-                    logger.warning(
-                        "You are using software trigger, which \
-                        can lead to significant delays between \
-                        measurement instruments! Only recommended\
-                        for debugging."
-                    )
-                try:
-                    timeout_timer = 0.
-                    while not all(buffer.is_finished() for buffer in list(self.buffers)):
-                        timeout_timer += 0.1
-                        sleep(0.1)
-                        if timeout_timer >= buffer_timeout_multiplier * self._burst_duration:
-                            raise TimeoutError
-                    try:
-                        trigger_reset()
-                    except TypeError:
-                        logger.info("No method to reset the trigger defined.")
+                    self.trigger_measurement(parameters = self.dynamic_channels,
+                                             setpoints = [sweep.get_setpoints() for sweep in self.dynamic_sweeps],
+                                             method="ramp",
+                                             sync_trigger=sync_trigger,
+                                             )
+              
                     results = self.readout_buffers(timestamps=True)
                     dynamic_param_results = [
                         (dyn_channel, sweep.get_setpoints()) for dyn_channel, sweep in zip(
@@ -614,10 +576,18 @@ class Timetrace_with_Sweeps_buffered(MeasurementScript):
                         *results,
                         *static_gettables,
                     )
+                except AttributeError as ex:
+                    logger.error(
+                        "Exception: This instrument probably does not have a \
+                          qtools_ramp method. Buffered measurements without \
+                          ramp method are no longer supported. \
+                          Use the unbuffered script!"
+                    )
+                    raise ex
                 except TimeoutError:
                     logger.error(f"A timeout error occured. Skipping line at time {t}.")
                     #results = self.readout_buffers(timestamps=True)
-                self.clean_up()
+            self.clean_up()
         datasets.append(datasaver.dataset)
         return datasets
 
@@ -766,50 +736,14 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                     logger.info("No method to reset the trigger defined.")
                 results = []
                 self.ready_buffers()
-                try:
-                    dynamic_param.root_instrument._qumada_ramp(
-                        [dynamic_param, *self.active_compensating_channels],
-                        end_values=[
-                            dynamic_sweep.get_setpoints()[-1],
-                            *[sweep.get_setpoints()[-1] for sweep in active_comping_sweeps],
-                        ],
-                        ramp_time=self._burst_duration,
-                        sync_trigger=sync_trigger,
+                self.trigger_measurement(
+                    parameters = [dynamic_param, *self.active_compensating_channels],
+                    setpoints = [dynamic_sweep.get_setpoints(), 
+                                 *[sweep.get_setpoints for sweep in active_comping_sweeps]],
+                    method = "ramp",
+                    sync_trigger=sync_trigger
                     )
-                except AttributeError as ex:
-                    logger.error(
-                        "Exception: This instrument probably does not have a \
-                          a qumada_ramp method. Buffered measurements without \
-                          ramp method are no longer supported. \
-                          Use the unbuffered script!"
-                    )
-                    raise ex
-
-                if trigger_type == "manual":
-                    pass
-                if trigger_type == "hardware":
-                    try:
-                        trigger_start()
-                    except AttributeError as e:
-                        print("Please set a trigger or define a trigger_start method")
-                        raise e
-
-                elif trigger_type == "software":
-                    for buffer in self.buffers:
-                        buffer.force_trigger()
-                    logger.warning(
-                        "You are using software trigger, which \
-                        can lead to significant delays between \
-                        measurement instruments! Only recommended \
-                        for debugging."
-                    )
-                while not all(buffer.is_finished() for buffer in list(self.buffers)):
-                    sleep(0.1)
-                try:
-                    trigger_reset()
-                except TypeError:
-                    logger.info("No method to reset the trigger defined.")
-
+             
                 results = self.readout_buffers()
                 comp_results = []
                 for ch, sw in zip(self.active_compensating_channels, active_comping_sweeps):

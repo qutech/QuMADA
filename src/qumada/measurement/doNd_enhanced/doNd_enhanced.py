@@ -392,10 +392,6 @@ def do1d_parallel_asym(
                         break
                     else:
                         warnings.warn("Break condition was met.")
-                        print(
-                            "Break condition was met. This meassage pops up alone \
-                               if there is some issue with warning.warn"
-                        )
                         raise BreakConditionInterrupt("Break condition was met.")
 
     param_set[0].post_delay = original_delay

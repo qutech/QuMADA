@@ -133,7 +133,7 @@ def ramp_parameter(
             else:
                 ramp_rate = abs(current_value - float(target)) / ramp_time
 
-        num_points = int(abs(current_value - float(target)) / (ramp_rate * setpoint_intervall)) + 2
+        num_points = int(abs(current_value - float(target)) / (setpoint_intervall)) + 2
         if ramp_time is not None and ramp_time < abs(current_value - float(target)) / ramp_rate:
             LOG.info(
                 f"Ramp rate of {parameter} is to low to reach target value in specified"
@@ -152,7 +152,7 @@ def ramp_parameter(
         LOG.debug(f"sweep: {sweep}")
         for value in sweep:
             parameter.set(value)
-            time.sleep(setpoint_intervall)
+            time.sleep(ramp_time/num_points)
         return True
     else:
         raise Unsweepable_parameter("Parameter has non-float values")
