@@ -497,6 +497,8 @@ def load_mapped_terminal_parameters(terminal_parameters: TerminalParameters, sta
                         )
                     except KeyError:
                         logger.warning(
-                            "Parameter could not be loaded: QCoDeS station does not contain parameter %s",
-                            tmp_terminal_parameters[parameter_name][terminal_name],
+                            "Terminal could not be loaded: Terminal %s_%s was not found in file.",
+                            parameter_name,
+                            terminal_name,
                         )
+
