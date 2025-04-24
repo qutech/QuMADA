@@ -10,7 +10,7 @@ license-files = ["LICENSE"]
 keywords = ["quantum", "physics", "abstraction", "metadata", "data management"]
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
     "Operating System :: OS Independent",
     "Topic :: Scientific/Engineering",
     "Intended Audience :: Science/Research",
