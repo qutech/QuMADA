@@ -511,8 +511,6 @@ class QumadaDevice:
             buffer_settings=temp_buffer_settings,
             **self.buffer_script_setup,
         )
-        mapping = self.terminal_parameters
-        map_terminals_gui(station.components, script.terminal_parameters, mapping)
         if buffered is True:
             map_triggers(station.components)
         data = script.run()
@@ -866,8 +864,6 @@ class QumadaDevice:
             measurement_name=name,
             **kwargs,
         )
-        mapping = self.terminal_parameters
-        map_terminals_gui(station.components, script.terminal_parameters, mapping)
         data = script.run()
         return data
 
@@ -971,8 +967,6 @@ class QumadaDevice:
             **self.buffer_script_setup,
             **kwargs,
         )
-        mapping = self.terminal_parameters
-        map_terminals_gui(station.components, script.terminal_parameters, mapping)
         map_triggers(station.components, script.properties, script.terminal_parameters)
         data = script.run()
         return data
@@ -1118,8 +1112,6 @@ class QumadaDevice:
             **self.buffer_script_setup,
             **kwargs,
         )
-        mapping = self.terminal_parameters
-        map_terminals_gui(station.components, script.terminal_parameters, mapping)
         if buffered is True:
             map_triggers(station.components)
         data = script.run()
@@ -1446,8 +1438,6 @@ class Terminal_Parameter(ABC):
             buffer_settings=temp_buffer_settings,
             **self._parent_device.buffer_script_setup,
         )
-        mapping = self._parent_device.terminal_parameters
-        map_terminals_gui(station.components, script.terminal_parameters, mapping)
         if buffered is True:
             map_triggers(station.components)
         data = script.run()
