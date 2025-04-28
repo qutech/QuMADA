@@ -29,7 +29,7 @@ import operator
 import sys
 import time
 import warnings
-from collections.abc import Sequence
+from collections.abc import Sequence, Mapping
 from functools import partial
 from typing import Any, Callable, Optional, Union
 
@@ -47,6 +47,19 @@ from qcodes.dataset.dond.do_nd_utils import (
     _register_parameters,
     _set_write_period,
 )
+from qcodes.dataset.dond.do_nd import(
+    TogetherSweep,
+    AbstractSweep,
+    cast,
+    _parse_dond_arguments,
+    ThreadPoolParamsCaller,
+    SequentialParamsCaller,
+    catch_interrupts,
+    _Sweeper,
+    _Measurements,
+    ExitStack,
+    
+    )
 
 try:
     from qcodes.dataset.dond.do_nd_utils import _catch_interrupts
@@ -397,6 +410,256 @@ def do1d_parallel_asym(
     param_set[0].post_delay = original_delay
 
     return _handle_plotting(dataset, do_plot, interrupted())
+
+def dond_custom(
+    *params: AbstractSweep | TogetherSweep | ParamMeasT | Sequence[ParamMeasT],
+    write_period: float | None = None,
+    measurement_name: str | Sequence[str] = "",
+    exp: Experiment | Sequence[Experiment] | None = None,
+    enter_actions: ActionsT = (),
+    exit_actions: ActionsT = (),
+    do_plot: bool | None = None,
+    show_progress: bool | None = None,
+    use_threads: bool | None = None,
+    additional_setpoints: Sequence[ParameterBase] = tuple(),
+    log_info: str | None = None,
+    break_condition: BreakConditionT | None = None,
+    backsweep_after_break: bool = False,
+    wait_after_break: float = 0,
+    dataset_dependencies: Mapping[str, Sequence[ParamMeasT]] | None = None,
+    in_memory_cache: bool | None = None,
+    squeeze: bool = True,
+) -> AxesTupleListWithDataSet | MultiAxesTupleListWithDataSet:
+    """
+    Perform n-dimentional scan from slowest (first) to the fastest (last), to
+    measure m measurement parameters. The dimensions should be specified
+    as sweep objects, and after them the parameters to measure should be passed.
+
+    Args:
+        params: Instances of n sweep classes and m measurement parameters,
+            e.g. if linear sweep is considered:
+
+            .. code-block::
+
+                LinSweep(param_set_1, start_1, stop_1, num_points_1, delay_1), ...,
+                LinSweep(param_set_n, start_n, stop_n, num_points_n, delay_n),
+                param_meas_1, param_meas_2, ..., param_meas_m
+
+            If multiple DataSets creation is needed, measurement parameters should
+            be grouped, so one dataset will be created for each group. e.g.:
+
+            .. code-block::
+
+                LinSweep(param_set_1, start_1, stop_1, num_points_1, delay_1), ...,
+                LinSweep(param_set_n, start_n, stop_n, num_points_n, delay_n),
+                [param_meas_1, param_meas_2], ..., [param_meas_m]
+
+            If you want to sweep multiple parameters together.
+
+            .. code-block::
+
+                TogetherSweep(LinSweep(param_set_1, start_1, stop_1, num_points, delay_1),
+                              LinSweep(param_set_2, start_2, stop_2, num_points, delay_2))
+                param_meas_1, param_meas_2, ..., param_meas_m
+
+
+        write_period: The time after which the data is actually written to the
+            database.
+        measurement_name: Name(s) of the measurement. This will be passed down to
+            the dataset produced by the measurement. If not given, a default
+            value of 'results' is used for the dataset. If more than one is
+            given, each dataset will have an individual name.
+        exp: The experiment to use for this measurement. If you create multiple
+            measurements using groups you may also supply multiple experiments.
+        enter_actions: A list of functions taking no arguments that will be
+            called before the measurements start.
+        exit_actions: A list of functions taking no arguments that will be
+            called after the measurements ends.
+        do_plot: should png and pdf versions of the images be saved and plots
+            are shown after the run. If None the setting will be read from
+            ``qcodesrc.json``
+        show_progress: should a progress bar be displayed during the
+            measurement. If None the setting will be read from ``qcodesrc.json``
+        use_threads: If True, measurements from each instrument will be done on
+            separate threads. If you are measuring from several instruments
+            this may give a significant speedup.
+        additional_setpoints: A list of setpoint parameters to be registered in
+            the measurement but not scanned/swept-over.
+        log_info: Message that is logged during the measurement. If None a default
+            message is used.
+        break_condition: Callable that takes no arguments. If returned True,
+            measurement is interrupted.
+        dataset_dependencies: Optionally describe that measured datasets only depend
+            on a subset of the setpoint parameters. Given as a mapping from
+            measurement names to Sequence of Parameters. Note that a dataset must
+            depend on at least one parameter from each dimension but can depend
+            on one or more parameters from a dimension sweeped with a TogetherSweep.
+        in_memory_cache:
+            Should a cache of the data be kept available in memory for faster
+            plotting and exporting. Useful to disable if the data is very large
+            in order to save on memory consumption.
+            If ``None``, the value for this will be read from ``qcodesrc.json`` config file.
+        squeeze: If True, will return a tuple of QCoDeS DataSet, Matplotlib axis,
+            Matplotlib colorbar if only one group of measurements was performed
+            and a tuple of tuples of these if more than one group of measurements
+            was performed. If False, will always return a tuple where the first
+            member is a tuple of QCoDeS DataSet(s) and the second member is a tuple
+            of Matplotlib axis(es) and the third member is a tuple of Matplotlib
+            colorbar(s).
+
+    Returns:
+        A tuple of QCoDeS DataSet, Matplotlib axis, Matplotlib colorbar. If
+        more than one group of measurement parameters is supplied, the output
+        will be a tuple of tuple(QCoDeS DataSet), tuple(Matplotlib axis),
+        tuple(Matplotlib colorbar), in which each element of each sub-tuple
+        belongs to one group, and the order of elements is the order of
+        the supplied groups.
+
+    """
+    if do_plot is None:
+        do_plot = cast(bool, config.dataset.dond_plot)
+    if show_progress is None:
+        show_progress = config.dataset.dond_show_progress
+        
+    tracked_set_events = []
+
+    sweep_instances, params_meas = _parse_dond_arguments(*params)
+
+    sweeper = _Sweeper(sweep_instances, additional_setpoints)
+
+    measurements = _Measurements(
+        sweeper,
+        measurement_name,
+        params_meas,
+        enter_actions,
+        exit_actions,
+        exp,
+        write_period,
+        log_info,
+        dataset_dependencies,
+    )
+
+    LOG.info(
+        "Starting a doNd with scan with\n setpoints: %s,\n measuring: %s",
+        sweeper.all_setpoint_params,
+        measurements.measured_all,
+    )
+    LOG.debug(
+        "dond has been grouped into the following datasets:\n%s",
+        measurements.groups,
+    )
+
+    datasets = []
+    plots_axes = []
+    plots_colorbar = []
+    if use_threads is None:
+        use_threads = config.dataset.use_threads
+
+    params_meas_caller = (
+        ThreadPoolParamsCaller(*measurements.measured_all)
+        if use_threads
+        else SequentialParamsCaller(*measurements.measured_all)
+    )
+
+    datasavers = []
+    interrupted: Callable[  # noqa E731
+        [], KeyboardInterrupt | BreakConditionInterrupt | None
+    ] = lambda: None
+    try:
+        with (
+            catch_interrupts() as interrupted,
+            ExitStack() as stack,
+            params_meas_caller as call_params_meas,
+        ):
+            datasavers = [
+                stack.enter_context(
+                    group.measurement_cxt.run(in_memory_cache=in_memory_cache)
+                )
+                for group in measurements.groups
+            ]
+            additional_setpoints_data = process_params_meas(additional_setpoints)
+            for set_events in tqdm(sweeper, disable=not show_progress):
+                tracked_set_events.append(set_events)
+                LOG.debug("Processing set events: %s", set_events)
+                results: dict[ParameterBase, Any] = {}
+                for set_event in set_events:
+                    if set_event.should_set:
+                        set_event.parameter(set_event.new_value)
+                        for act in set_event.actions:
+                            act()
+                        time.sleep(set_event.delay)
+
+                    if set_event.get_after_set:
+                        results[set_event.parameter] = set_event.parameter()
+                    else:
+                        results[set_event.parameter] = set_event.new_value
+
+                meas_value_pair = call_params_meas()
+                for meas_param, value in meas_value_pair:
+                    results[meas_param] = value
+
+                for datasaver, group in zip(datasavers, measurements.groups):
+                    filtered_results_list = [
+                        (param, value)
+                        for param, value in results.items()
+                        if param in group.parameters
+                    ]
+                    datasaver.add_result(
+                        *filtered_results_list,
+                        *additional_setpoints_data,
+                    )
+
+                if callable(break_condition):
+                    if break_condition():
+                        if backsweep_after_break and sweeper.shape[0] >= 2*len(tracked_set_events):
+                            #datasaver._points_expected += len(tracked_set_events)
+                            tracked_set_events.reverse()
+                            time.sleep(wait_after_break)
+                            for set_events in tqdm(tracked_set_events, disable=not show_progress):
+                                LOG.debug("Processing set events: %s", set_events)
+                                results: dict[ParameterBase, Any] = {}
+                                for set_event in set_events:
+                                    if set_event.should_set:
+                                        set_event.parameter(set_event.new_value)
+                                        for act in set_event.actions:
+                                            act()
+                                        time.sleep(set_event.delay)
+
+                                    if set_event.get_after_set:
+                                        results[set_event.parameter] = set_event.parameter()
+                                    else:
+                                        results[set_event.parameter] = set_event.new_value
+
+                                meas_value_pair = call_params_meas()
+                                for meas_param, value in meas_value_pair:
+                                    results[meas_param] = value
+
+                                for datasaver, group in zip(datasavers, measurements.groups):
+                                    filtered_results_list = [
+                                        (param, value)
+                                        for param, value in results.items()
+                                        if param in group.parameters
+                                    ]
+                                    datasaver.add_result(
+                                        *filtered_results_list,
+                                        *additional_setpoints_data,
+                                    )
+                                    
+                        raise BreakConditionInterrupt("Break condition was met.")
+                        
+    finally:
+        for datasaver in datasavers:
+            ds, plot_axis, plot_color = _handle_plotting(
+                datasaver.dataset, do_plot, interrupted()
+            )
+            datasets.append(ds)
+            plots_axes.append(plot_axis)
+            plots_colorbar.append(plot_color)
+
+    if len(measurements.groups) == 1 and squeeze is True:
+        return datasets[0], plots_axes[0], plots_colorbar[0]
+    else:
+        return tuple(datasets), tuple(plots_axes), tuple(plots_colorbar)
 
 
 def _interpret_breaks(break_conditions: list, **kwargs) -> Callable[[], bool] | None:

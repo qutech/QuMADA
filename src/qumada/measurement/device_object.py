@@ -511,6 +511,8 @@ class QumadaDevice:
             buffer_settings=temp_buffer_settings,
             **self.buffer_script_setup,
         )
+        mapping = self.terminal_parameters
+        map_terminals_gui(station.components, script.terminal_parameters, mapping)
         if buffered is True:
             map_triggers(station.components)
         data = script.run()
@@ -529,6 +531,7 @@ class QumadaDevice:
         buffered = False,
         buffer_settings: dict | None = None,
         priorize_stored_value = False,
+        backsweep_after_break = False,
         **kwargs,
     ):
         """
@@ -616,6 +619,7 @@ class QumadaDevice:
                     buffered=buffered,
                     buffer_settings=buffer_settings,
                     priorize_stored_value=priorize_stored_value,
+                    backsweep_after_break = backsweep_after_break,
                     ))
                 param(val)
                 
@@ -636,6 +640,7 @@ class QumadaDevice:
                 buffered=buffered,
                 buffer_settings=buffer_settings,
                 priorize_stored_value=priorize_stored_value,
+                backsweep_after_break = backsweep_after_break,
                 ))
             params(val)
         return data
@@ -864,6 +869,8 @@ class QumadaDevice:
             measurement_name=name,
             **kwargs,
         )
+        mapping = self.terminal_parameters
+        map_terminals_gui(station.components, script.terminal_parameters, mapping)
         data = script.run()
         return data
 
@@ -967,6 +974,8 @@ class QumadaDevice:
             **self.buffer_script_setup,
             **kwargs,
         )
+        mapping = self.terminal_parameters
+        map_terminals_gui(station.components, script.terminal_parameters, mapping)
         map_triggers(station.components, script.properties, script.terminal_parameters)
         data = script.run()
         return data
@@ -1112,6 +1121,8 @@ class QumadaDevice:
             **self.buffer_script_setup,
             **kwargs,
         )
+        mapping = self.terminal_parameters
+        map_terminals_gui(station.components, script.terminal_parameters, mapping)
         if buffered is True:
             map_triggers(station.components)
         data = script.run()
@@ -1341,6 +1352,7 @@ class Terminal_Parameter(ABC):
         buffered=False,
         buffer_settings: dict | None = None,
         priorize_stored_value=False,
+        backsweep_after_break = False,
     ):
         """
         Perform a ramp of the parameter value and measure all gettable parameters.
@@ -1437,7 +1449,10 @@ class Terminal_Parameter(ABC):
             iterations=1,
             buffer_settings=temp_buffer_settings,
             **self._parent_device.buffer_script_setup,
+            backsweep_after_break=backsweep_after_break,
         )
+        mapping = self._parent_device.terminal_parameters
+        map_terminals_gui(station.components, script.terminal_parameters, mapping)
         if buffered is True:
             map_triggers(station.components)
         data = script.run()
