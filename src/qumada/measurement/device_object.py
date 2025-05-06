@@ -568,6 +568,10 @@ class QumadaDevice:
             Buffer settings for the measurement. Must include "num_points". Default is the instance's buffer settings.
         priorize_stored_value : bool, optional
             If True, prioritizes stored values in the setup. Default is False.
+        backsweep_after_break : bool, optional
+            If True, parameter will be ramped through the setpoints set so far 
+            in reverse order once a break condition is triggered. For normal ramps,
+            this results in a backsweep to the starting point. Default is False.
         **kwargs
             Additional keyword arguments passed to the measurement script.
 
@@ -1381,6 +1385,11 @@ class Terminal_Parameter(ABC):
             Additional buffer settings for the measurement. Default is None.
         priorize_stored_value : bool, optional
             If True, prioritizes stored values in the setup. Default is False.
+        backsweep_after_break : bool, optional
+            If True, parameter will be ramped through the setpoints set so far 
+            in reverse order once a break condition is triggered. For normal ramps,
+            this results in a backsweep to the starting point. Default is False.
+
 
         Returns
         -------

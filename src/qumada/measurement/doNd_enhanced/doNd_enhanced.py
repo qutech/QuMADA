@@ -151,7 +151,7 @@ def do1d_parallel(
         backsweep_after_break: If true, after a break condition is fulfilled a
             reversed sweep starting from the measurement point at which the
             condition was fulfilled and stopping at the first setpoint of the
-            measurement is performed.
+            measurement is performed. Default is False.
 
     Returns:
         The QCoDeS dataset.
