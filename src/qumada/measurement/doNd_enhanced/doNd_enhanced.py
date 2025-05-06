@@ -506,6 +506,11 @@ def dond_custom(
             member is a tuple of QCoDeS DataSet(s) and the second member is a tuple
             of Matplotlib axis(es) and the third member is a tuple of Matplotlib
             colorbar(s).
+        backsweep_after_break : bool, optional
+            If True, parameter will be ramped through the setpoints set so far 
+            in reverse order once a break condition is triggered. For normal ramps,
+            this results in a backsweep to the starting point. Default is True.
+
 
     Returns:
         A tuple of QCoDeS DataSet, Matplotlib axis, Matplotlib colorbar. If
@@ -611,8 +616,7 @@ def dond_custom(
 
                 if callable(break_condition):
                     if break_condition():
-                        if backsweep_after_break and sweeper.shape[0] >= 2*len(tracked_set_events):
-                            #datasaver._points_expected += len(tracked_set_events)
+                        if backsweep_after_break:
                             tracked_set_events.reverse()
                             time.sleep(wait_after_break)
                             for set_events in tqdm(tracked_set_events, disable=not show_progress):

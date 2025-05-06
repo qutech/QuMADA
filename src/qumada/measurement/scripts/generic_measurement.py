@@ -73,6 +73,10 @@ class Generic_1D_Sweep(MeasurementScript):
         log_idle_params : bool, optional
             If True, record dynamic parameters kept constant during sweeps.
             Default is True.
+        backsweep_after_break : bool, optional
+            If True, parameter will be ramped through the setpoints set so far 
+            in reverse order once a break condition is triggered. For normal ramps,
+            this results in a backsweep to the starting point. Default is True.
 
         Returns
         -------
