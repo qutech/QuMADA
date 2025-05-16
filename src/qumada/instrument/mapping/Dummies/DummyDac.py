@@ -15,7 +15,7 @@
 #
 # Contributors:
 # - Daniel Grothe
-# - Till Huckeman
+# - Till Huckemann
 
 
 from __future__ import annotations
