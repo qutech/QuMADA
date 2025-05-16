@@ -45,7 +45,7 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.package-data]
 'qumada' = [
     "**/*.json",
-    "instrument/parameter_whitelists/*"
+    "**/*.yaml"
 	]
 
 [tool.versioningit]
