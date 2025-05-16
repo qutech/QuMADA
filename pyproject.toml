@@ -43,7 +43,7 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.package-data]
-qumada = [
+'qumada' = [
     "*.json",
     "instrument/parameter_whitelists/*"
 	]
