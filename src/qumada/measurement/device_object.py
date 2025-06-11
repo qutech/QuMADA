@@ -858,6 +858,7 @@ class QumadaDevice:
             assert len(params) == len(target_values)
             setpoints = [np.linspace(param(), target, num_points) for param, target in zip(params, target_values)]
         assert len(params) == len(setpoints)
+        assert all(isinstance(param, Terminal_Parameter) for param in params)
         assert all([len(setpoint) == len(setpoints[0]) for setpoint in setpoints])
 
         for terminal in self.terminals.values():
