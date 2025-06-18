@@ -23,7 +23,7 @@ jobs:
           # Otherwise, `git describe` is not working
           fetch-depth: 0
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
@@ -38,7 +38,7 @@ jobs:
           coverage run -m pytest --junit-xml=test-results.xml src/tests
           coverage xml
       - name: Upload test results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: pytest-results-${{ matrix.python-version }}
           path: test-results.xml
@@ -61,7 +61,7 @@ jobs:
 
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: artifacts
       - name: Publish test results
