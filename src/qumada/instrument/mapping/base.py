@@ -25,7 +25,7 @@ from __future__ import annotations
 import json
 import logging
 from abc import ABC, abstractmethod
-from collections.abc import Iterable, Mapping, MutableMapping
+from collections.abc import Iterable, Mapping, MutableMapping, Sequence
 from typing import Any, Union
 
 import jsonschema
@@ -93,39 +93,41 @@ def filter_flatten_parameters(node) -> dict[Any, Parameter]:
         Dict[Any, Parameter]: Flat dict of parameters
     """
 
-    def recurse(node) -> None:
+    def recurse(current) -> None:
         """Recursive part of the function. Fills instrument_parameters dict."""
-        # TODO: Handle InstrumentChannel
-        # TODO: Change this try-except-phrase to match-case, when switched to Python3.10
-        try:
-            values = list(node.values()) if isinstance(node, dict) else list(node)
-        except KeyError:
-            values = [node]
-        except IndexError:
-            values = []
-        # TODO: Lines 37 and 38 are only a hotfix for problems with the MFLI,
-        # The index error is raised somewhere within QCoDeS because the MFLI
-        # driver just adds keys that are missing instead of raising the KeyError
-        # properly. We should look into this later...
-        for value in values:
-            if isinstance(value, Parameter):
-                instrument_parameters[value.full_name] = value
-            else:
-                if isinstance(value, Iterable) and not isinstance(value, str):
-                    recurse(value)
-                elif isinstance(value, Metadatable):
-                    # Object of some Metadatable type, try to get __dict__ and _filter_flatten_parameters
-                    try:
-                        value_hash = hash(value)
-                        if value_hash not in seen:
-                            seen.add(value_hash)
-                            recurse(vars(value))
-                    except TypeError:
-                        # End of tree
-                        pass
+        if isinstance(current, str):
+            return
+
+        elif isinstance(current, dict):
+            for val in current.values():
+                recurse(val)
+
+        elif isinstance(current, (Iterable, Sequence)):
+            # we need Iterable and Sequence here because not all Sequence implementations provide __iter__
+            for val in current:
+                recurse(val)
+
+        elif isinstance(current, Parameter):
+            instrument_parameters[current.full_name] = current
+
+        elif isinstance(current, Metadatable):
+            try:
+                if current in seen:
+                    return
+                else:
+                    seen.add(current)
+            except TypeError:
+                # not hashable -> recurse over all children
+                pass
+
+            recurse(vars(current))
+
+        else:
+            # unhandled -> silently ignored
+            pass
 
     instrument_parameters: dict[Any, Parameter] = {}
-    seen: set[int] = set()
+    seen: set[Metadatable] = set()
     recurse(node)
     return instrument_parameters
 
