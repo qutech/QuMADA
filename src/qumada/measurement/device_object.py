@@ -1195,9 +1195,9 @@ class Terminal(ABC):
             parameter_name
         ]
 
-    def __call__(self, value=None):
+    def __call__(self, value=None, ramp=None):
         if "voltage" in self.terminal_parameters.keys():
-            return self.voltage(value)
+            return self.voltage(value, ramp=ramp)
         else:
             raise TypeError
 
@@ -1508,6 +1508,8 @@ class Terminal_Parameter(ABC):
             logger.warning(f"No stored value set for parameter {self.name}")
 
     def __call__(self, value=None, ramp=None):
+        if ramp is None:
+            ramp = self._parent_device.ramp
         if value is None:
             return self.value
         else:
