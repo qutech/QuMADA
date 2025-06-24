@@ -1,5 +1,5 @@
 import contextlib
-from typing import Sequence
+from collections.abc import Sequence
 
 from qcodes import Measurement
 from qcodes.parameters import ParameterBase
@@ -10,10 +10,8 @@ class MeasurementAndPlot:
         self.qcodes_measurement = Measurement(name=name)
 
     def register_parameter(
-        self,
-        parameter: ParameterBase,
-        setpoints: Sequence[str | ParameterBase] | None = None,
-        **kwargs):
+        self, parameter: ParameterBase, setpoints: Sequence[str | ParameterBase] | None = None, **kwargs
+    ):
         self.qcodes_measurement.register_parameter(parameter, setpoints, **kwargs)
 
     @contextlib.contextmanager
@@ -29,4 +27,3 @@ class DataSaverAndPlotter:
 
     def add_result(self, *args):
         self.qcodes_datasaver.add_result(*args)
-
