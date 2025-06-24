@@ -5,11 +5,11 @@ readme = "README.md"
 authors = [
     {name = "JARA Institute for Quantum Information"},
 ]
-license = {text = "GPLv3+"}
+license = "LGPL-3.0-or-later"
+license-files = ["LICENSE"]
 keywords = ["quantum", "physics", "abstraction", "metadata", "data management"]
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     "Operating System :: OS Independent",
     "Topic :: Scientific/Engineering",
     "Intended Audience :: Science/Research",
