@@ -360,6 +360,7 @@ class QumadaDevice:
                           self.terminal_parameters,
                           terminal_parameters,
                           skip_gui_if_mapped = skip_gui_if_mapped)
+        self.update_terminal_parameters()
 
         
     def mapping(self, 
@@ -1192,7 +1193,7 @@ class Terminal(ABC):
         if "voltage" in self.terminal_parameters.keys():
             return self.voltage(value, ramp=ramp)
         else:
-            raise TypeError
+            raise TypeError("Calling a terminal is only possible, if the terminal has a voltage parameter.")
 
 
 class Terminal_Parameter(ABC):
@@ -1249,29 +1250,16 @@ class Terminal_Parameter(ABC):
 
         if isinstance(value, float):
             self._value = self.scaling * value
-            try:
-                self.instrument_parameter(self.scaling * value)
-            except TypeError:
-                self._parent_device.update_terminal_parameters()
-                self.instrument_parameter(self.scaling * value)
+            self.instrument_parameter(self.scaling * value)
         else:
             self._value = value
-            # TODO: Replace Try/Except block, update_terminal_parameters() should be called by mapping function
-            try:
-                self.instrument_parameter(value)
-            except TypeError:
-                self._parent_device.update_terminal_parameters()
-                self.instrument_parameter(value)
+            self.instrument_parameter(value)
+
 
     @value.getter
     def value(self):
-        # TODO: Replace Try/Except block, update_terminal_parameters() should be called by mapping function
-        try:
-            return self.instrument_parameter()
-        except TypeError:
-            self._parent_device.update_terminal_parameters()
-            return self.instrument_parameter()
-
+        return self.instrument_parameter()
+    
     @property
     def instrument_parameter(self):
         return self._instrument_parameter
