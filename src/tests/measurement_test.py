@@ -1,11 +1,9 @@
 import dataclasses
 import tempfile
-
-import pytest
-
 import threading
 
 import numpy as np
+import pytest
 import yaml
 from qcodes.dataset import (
     Measurement,
@@ -71,9 +69,9 @@ def measurement_test_data():
     add_mapping_to_instrument(dac, mapping=DummyDacMapping())
     station.add_component(dac)
 
-
     yield MeasurementTestData(trigger, station, dmm, dac)
     station.close_all_registered_instruments()
+
 
 @pytest.fixture
 def buffer_settings():
@@ -83,6 +81,7 @@ def buffer_settings():
         "burst_duration": 1e-3,
         "delay": 0,
     }
+
 
 @pytest.fixture
 def parameters():
@@ -95,6 +94,7 @@ def parameters():
         "gate2": {"voltage": {"type": "dynamic", "setpoints": np.linspace(0, np.pi, 12), "value": 0}},
     }
 
+
 @pytest.fixture
 def db():
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -102,6 +102,7 @@ def db():
         load_db(db_path)
         load_or_create_experiment("test", "dummy_sample")
         yield db_path
+
 
 def test_1d_buffered(measurement_test_data, buffer_settings, parameters, db):
     script = Generic_1D_Sweep_buffered()
@@ -115,12 +116,16 @@ def test_1d_buffered(measurement_test_data, buffer_settings, parameters, db):
     )
 
     mapping = {
-        'ohmic': {
-                     'voltage': measurement_test_data.dmm.voltage,
-                     'current': measurement_test_data.dmm.current,
+        "ohmic": {
+            "voltage": measurement_test_data.dmm.voltage,
+            "current": measurement_test_data.dmm.current,
         },
-        'gate1': {'voltage': measurement_test_data.dac.ch01.voltage,},
-        'gate2': {'voltage': measurement_test_data.dac.ch01.voltage,},
+        "gate1": {
+            "voltage": measurement_test_data.dac.ch01.voltage,
+        },
+        "gate2": {
+            "voltage": measurement_test_data.dac.ch01.voltage,
+        },
     }
     script.gate_parameters = mapping
     tmp = script.run()
