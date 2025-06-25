@@ -67,16 +67,10 @@ def parameters():
     }
 
 
-@pytest.fixture
-def db():
-    with tempfile.TemporaryDirectory() as tmpdir:
-        db_path = tmpdir + "test.db"
-        load_db(db_path)
-        load_or_create_experiment("test", "dummy_sample")
-        yield db_path
 
 
-def test_1d_buffered(measurement_test_setup, buffer_settings, parameters, db):
+
+def test_1d_buffered(measurement_test_setup, buffer_settings, parameters):
     script = Generic_1D_Sweep_buffered()
     script.setup(
         parameters,
@@ -96,7 +90,7 @@ def test_1d_buffered(measurement_test_setup, buffer_settings, parameters, db):
             "voltage": measurement_test_setup.dac.ch01.voltage,
         },
         "gate2": {
-            "voltage": measurement_test_setup.dac.ch01.voltage,
+            "voltage": measurement_test_setup.dac.ch02.voltage,
         },
     }
     script.gate_parameters = mapping

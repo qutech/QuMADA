@@ -1,8 +1,13 @@
 import dataclasses
 import threading
+import tempfile
+import pathlib
+import time
 
 import pytest
 from qcodes.station import Station
+from qumada.utils.load_from_sqlite_db import load_db
+from qcodes.dataset.experiment_container import load_or_create_experiment
 
 from qumada.instrument.buffered_instruments import BufferedDummyDMM as DummyDmm
 from qumada.instrument.custom_drivers.Dummies.dummy_dac import DummyDac
@@ -21,9 +26,11 @@ class MeasurementTestSetup:
     dmm: DummyDmm
     dac: DummyDac
 
+    db_path: pathlib.Path
+
 
 @pytest.fixture
-def measurement_test_setup():
+def measurement_test_setup(tmp_path):
     trigger = threading.Event()
 
     # Setup qcodes station
@@ -40,5 +47,9 @@ def measurement_test_setup():
     add_mapping_to_instrument(dac, mapping=DummyDacMapping())
     station.add_component(dac)
 
-    yield MeasurementTestSetup(trigger, station, dmm, dac)
+    db_path = tmp_path / "test.db"
+    load_db(str(db_path))
+    load_or_create_experiment("test", "dummy_sample")
+
+    yield MeasurementTestSetup(trigger, station, dmm, dac, db_path)
     station.close_all_registered_instruments()
