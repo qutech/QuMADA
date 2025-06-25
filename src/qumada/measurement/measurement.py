@@ -45,6 +45,7 @@ from qumada.instrument.buffers import is_bufferable, is_triggerable
 from qumada.metadata import Metadata
 from qumada.utils.ramp_parameter import ramp_or_set_parameter, ramp_or_set_parameters
 from qumada.utils.utils import flatten_array, _validate_mapping
+from qumada.utils.liveplot import MeasurementAndPlot
 
 logger = logging.getLogger(__name__)
 
@@ -104,6 +105,7 @@ class MeasurementScript(ABC):
     """
 
     PARAMETER_NAMES: set[str] = load_param_whitelist()
+    DEFAULT_LIVE_PLOTTER: callable = None
 
     def __init__(self):
         # Create function hooks for metadata
@@ -112,9 +114,14 @@ class MeasurementScript(ABC):
         self.run = create_hook(self.run, self._add_data_to_metadata)
         self.run = create_hook(self.run, self._add_current_datetime_to_metadata)
 
+        self.live_plotter = self.DEFAULT_LIVE_PLOTTER
+
         self.properties: dict[Any, Any] = {}
         self.terminal_parameters: dict[Any, dict[Any, Parameter | None] | Parameter | None] = {}
         self._buffered_num_points: int | None = None
+
+    def _new_measurement(self, name) -> MeasurementAndPlot:
+        return MeasurementAndPlot(name=name, gui=self.live_plotter)
 
     def add_terminal_parameter(self, parameter_name: str, gate_name: str = None, parameter: Parameter = None) -> None:
         """
@@ -704,7 +711,7 @@ class MeasurementScript(ABC):
             buffer.setup_buffer(settings=self.buffer_settings)
             buffer.start()
         self.ready_triggers()
-            
+
     def ready_triggers(self, **kwargs):
         """
         Prepare trigger inputs for not buffered instruments.
@@ -785,7 +792,7 @@ class MeasurementScript(ABC):
                 metadata.save()
             except Exception as ex:
                 print(f"Metadata could not inserted into database: {ex}")
-                
+
     def trigger_measurement(self, parameters, setpoints, method = "ramp" ,sync_trigger=None):
 
         TRIGGER_TYPES = ["software", "hardware", "manual"]
@@ -803,13 +810,13 @@ class MeasurementScript(ABC):
         buffer_timeout_multiplier = self.settings.get("buffer_timeout_multiplier", 20)
         # Some logic to sort instruments. Instruments with sync-triggers have to be added last,
         # as executing _qumada_pulse/_ramp with them instantly runs the pulse/ramp, before other instruments
-        # that wait for a trigger signal are added and prepared. 
+        # that wait for a trigger signal are added and prepared.
         instruments_set = {param.root_instrument for param in parameters}
         instruments = [instrument for instrument in instruments_set if instrument not in sync_trigger]
         for instrument in instruments_set:
             if instrument in sync_trigger:
                 instruments.append(instrument)
-        
+
         for instr in instruments:
             instr_params = [param for param in parameters if param.root_instrument is instr]
             if method == "ramp":
@@ -828,7 +835,7 @@ class MeasurementScript(ABC):
                             Use the unbuffered script!"
                     )
                     raise ex
-                
+
             elif method == "pulse":
                 try:
                     instr._qumada_pulse(
@@ -849,7 +856,7 @@ class MeasurementScript(ABC):
                 with NameError as ex:
                     logger.error("Argument 'method' has to be eiter 'ramp' or 'pulse'")
                     raise ex
-                    
+
         if trigger_type == "manual":
             logger.warning(
                 "You are using manual triggering. If you want to pulse parameters on multiple"
