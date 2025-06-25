@@ -37,7 +37,7 @@ from qumada.measurement.doNd_enhanced.doNd_enhanced import (
 from qumada.measurement.measurement import CustomSweep, MeasurementScript
 from qumada.utils.ramp_parameter import ramp_or_set_parameters
 from qumada.utils.utils import _validate_mapping, naming_helper
-from qumada.utils.generate_sweeps import split_into_segments
+from qumada.utils.generate_sweeps import split_into_segments, split_by_pattern
 
 logger = logging.getLogger(__name__)
 
@@ -726,11 +726,20 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                     dynamic_sweep.get_setpoints(), 
                     max_difference
                     )
-                
+                acs_split_setpoints = [split_by_pattern(j._setpoints, split_setpoints) for j in active_comping_sweeps]
+                    
                 for n, setpoints_segment in enumerate(split_setpoints):
                     self.buffer_settings["num_points"] = len(setpoints_segment)
                     dynamic_sweep._setpoints = setpoints_segment
                     dynamic_sweep._num_points = len(setpoints_segment)
+                    for acs in active_comping_sweeps:
+                        acs._setpoints = acs_split_setpoints[n]
+                        acs._num_points = len(setpoints_segment)
+                    active_static_gettables = []
+                    for sg in static_gettables:
+                        sgs = [list(sg)[1][0] for _ in range(len(setpoints_segment))]
+                        active_static_gettables.append((list(sg)[0], sgs))
+                    
                     
                     try:
                         trigger_reset()
@@ -754,7 +763,7 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                         (dynamic_param, dynamic_sweep.get_setpoints()),
                         *comp_results,
                         *results,
-                        *static_gettables,
+                        *active_static_gettables,
                     )
                 datasets.append(datasaver.dataset)
                 self.properties[dynamic_parameter["gate"]][dynamic_parameter["parameter"]]["_is_triggered"] = False
@@ -1627,3 +1636,4 @@ class Generic_Pulsed_Repeated_Measurement(MeasurementScript):
         datasets.append(datasaver.dataset)
         self.clean_up()
         return datasets
+

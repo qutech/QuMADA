@@ -106,8 +106,6 @@ def split_into_segments(setpoints, max_difference, segment_on_direction_change=T
 
     """
     segmented_setpoints = []
-    if max_difference is None:
-        max_difference = np.inf
     if segment_on_direction_change is True:
         setpoints = separate_up_down(setpoints)[0]
     else:
@@ -129,3 +127,11 @@ def split_into_segments(setpoints, max_difference, segment_on_direction_change=T
         i+=1
     return segmented_setpoints
     
+
+def split_by_pattern(data, pattern):
+    split_data = [[] for _ in pattern]
+    start_marker = 0
+    for i in range(len(pattern)):
+        split_data[i] = data[start_marker:start_marker+len(pattern[i])]
+        start_marker+=len(pattern[i])
+    return split_data
