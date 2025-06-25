@@ -298,23 +298,39 @@ def get_parameter_name_by_label(dataset=None, parameter_label=None, appendix = "
     return None
 
 # %%
-def separate_up_down(x_data, y_data):
+def separate_up_down(x_data, *y_data):
+    """
+    Separates data arrays/lists into multiple arrays depending on the direction of
+    the x_data. Every change of monotony will result in a new sublist, e.g.
+    x_data = [1,2,3,2,1] would result in [[1,2,3], [2,1]]. All y_data data are 
+    separated at the same spots as the x_data. 
+
+    Parameters
+    ----------
+    x_data : Array/List type. Used to define where the data should be split.
+    *y_data : Array/List type. Split at the same positions as x_data.
+
+    Returns tuple: split x_data, split_y_data, list with sign of each segment.
+
+    """
     grad = np.gradient(x_data)
     curr_sign = np.sign(grad[0])
     data_list_x = list()
-    data_list_y = list()
+    data_list_y = [list() for _ in y_data]
     direction = list()
     direction.append(curr_sign)
     start_helper = 0
     for i in range(0, len(grad)):
-        if np.sign(grad[i]) != curr_sign:
+        if np.sign(grad[i]) != curr_sign and np.sign(grad[i]) != 0:
             data_list_x.append(x_data[start_helper:i])
-            data_list_y.append(y_data[start_helper:i])
-            start_helper = i + 1
+            for j in range(len(y_data)):
+                data_list_y[j].append(y_data[j][start_helper:i])
+            start_helper = i
             curr_sign = np.sign(grad[i])
             direction.append(curr_sign)
     data_list_x.append(x_data[start_helper : len(grad)])
-    data_list_y.append(y_data[start_helper : len(grad)])
+    for j in range(len(y_data)):
+        data_list_y[j].append(y_data[j][start_helper:len(grad)])
     if len(direction) == 0:
         direction.append(1)
-    return data_list_x, data_list_y, direction
+    return data_list_x, *data_list_y, direction
