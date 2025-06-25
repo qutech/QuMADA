@@ -37,6 +37,7 @@ from qumada.measurement.doNd_enhanced.doNd_enhanced import (
 from qumada.measurement.measurement import CustomSweep, MeasurementScript
 from qumada.utils.ramp_parameter import ramp_or_set_parameters
 from qumada.utils.utils import _validate_mapping, naming_helper
+from qumada.utils.generate_sweeps import split_into_segments
 
 logger = logging.getLogger(__name__)
 
@@ -637,21 +638,13 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
 
     def run(self):
         self.buffered = True
-        TRIGGER_TYPES = ["software", "hardware", "manual"]
-        trigger_start = self.settings.get("trigger_start", "manual")  # TODO: this should be set elsewhere
         trigger_reset = self.settings.get("trigger_reset", None)
-        trigger_type = _validate_mapping(
-            self.settings.get("trigger_type"),
-            TRIGGER_TYPES,
-            default="software",
-            default_key_error="software",
-        )
         include_gate_name = self.settings.get("include_gate_name", True)
         sync_trigger = self.settings.get("sync_trigger", None)
+        max_difference = self.settings.get("max_difference", None)
         datasets = []
         self.generate_lists()
         measurement_name = naming_helper(self, default_name="1D Sweep")
-        # meas.register_parameter(timer)
 
         for i in range(len(self.dynamic_sweeps.copy())):
             # dynamic_sweep and dynamic_parameter are from copy and not
@@ -729,30 +722,40 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
             with meas.run() as datasaver:
 
                 dynamic_sweep = self.dynamic_sweeps[i]
-                try:
-                    trigger_reset()
-                except TypeError:
-                    logger.info("No method to reset the trigger defined.")
-                results = []
-                self.ready_buffers()
-                self.trigger_measurement(
-                    parameters = [dynamic_param, *self.active_compensating_channels],
-                    setpoints = [dynamic_sweep.get_setpoints(), 
-                                 *[sweep.get_setpoints for sweep in active_comping_sweeps]],
-                    method = "ramp",
-                    sync_trigger=sync_trigger
+                split_setpoints = split_into_segments(
+                    dynamic_sweep.get_setpoints(), 
+                    max_difference
                     )
-             
-                results = self.readout_buffers()
-                comp_results = []
-                for ch, sw in zip(self.active_compensating_channels, active_comping_sweeps):
-                    comp_results.append((ch, sw.get_setpoints()))
-                datasaver.add_result(
-                    (dynamic_param, dynamic_sweep.get_setpoints()),
-                    *comp_results,
-                    *results,
-                    *static_gettables,
-                )
+                
+                for n, setpoints_segment in enumerate(split_setpoints):
+                    self.buffer_settings["num_points"] = len(setpoints_segment)
+                    dynamic_sweep._setpoints = setpoints_segment
+                    dynamic_sweep._num_points = len(setpoints_segment)
+                    
+                    try:
+                        trigger_reset()
+                    except TypeError:
+                        logger.info("No method to reset the trigger defined.")
+                    results = []
+                    self.ready_buffers()
+                    self.trigger_measurement(
+                        parameters = [dynamic_param, *self.active_compensating_channels],
+                        setpoints = [dynamic_sweep.get_setpoints(), 
+                                     *[sweep.get_setpoints for sweep in active_comping_sweeps]],
+                        method = "ramp",
+                        sync_trigger=sync_trigger
+                        )
+                 
+                    results = self.readout_buffers()
+                    comp_results = []
+                    for ch, sw in zip(self.active_compensating_channels, active_comping_sweeps):
+                        comp_results.append((ch, sw.get_setpoints()))
+                    datasaver.add_result(
+                        (dynamic_param, dynamic_sweep.get_setpoints()),
+                        *comp_results,
+                        *results,
+                        *static_gettables,
+                    )
                 datasets.append(datasaver.dataset)
                 self.properties[dynamic_parameter["gate"]][dynamic_parameter["parameter"]]["_is_triggered"] = False
                 self.clean_up()
