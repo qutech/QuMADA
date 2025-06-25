@@ -4,15 +4,14 @@ from collections.abc import Sequence
 from typing import Protocol
 
 from qcodes import Measurement
-from qcodes.parameters import ParameterBase
 from qcodes.dataset.data_set import DataSet
+from qcodes.parameters import ParameterBase
 
 
 class MeasurementAndPlot:
-    def __init__(self, *, name: str, gui = None):
+    def __init__(self, *, name: str, gui=None):
         self.qcodes_measurement = Measurement(name=name)
         self.gui = gui
-
 
     def register_parameter(
         self, parameter: ParameterBase, setpoints: Sequence[str | ParameterBase] | None = None, **kwargs

@@ -42,9 +42,9 @@ from qcodes.parameters import Parameter, ParameterBase
 
 from qumada.instrument.buffers import is_bufferable, is_triggerable
 from qumada.metadata import Metadata
+from qumada.utils.liveplot import MeasurementAndPlot
 from qumada.utils.ramp_parameter import ramp_or_set_parameter
 from qumada.utils.utils import flatten_array
-from qumada.utils.liveplot import MeasurementAndPlot
 
 logger = logging.getLogger(__name__)
 
