@@ -44,6 +44,7 @@ from qumada.instrument.buffers import is_bufferable, is_triggerable
 from qumada.metadata import Metadata
 from qumada.utils.ramp_parameter import ramp_or_set_parameter
 from qumada.utils.utils import flatten_array
+from qumada.utils.liveplot import MeasurementAndPlot
 
 logger = logging.getLogger(__name__)
 
@@ -103,6 +104,7 @@ class MeasurementScript(ABC):
     """
 
     PARAMETER_NAMES: set[str] = load_param_whitelist()
+    DEFAULT_LIVE_PLOTTER: callable = None
 
     def __init__(self):
         # Create function hooks for metadata
@@ -111,9 +113,14 @@ class MeasurementScript(ABC):
         self.run = create_hook(self.run, self._add_data_to_metadata)
         self.run = create_hook(self.run, self._add_current_datetime_to_metadata)
 
+        self.live_plotter = self.DEFAULT_LIVE_PLOTTER
+
         self.properties: dict[Any, Any] = {}
         self.gate_parameters: dict[Any, dict[Any, Parameter | None] | Parameter | None] = {}
         self._buffered_num_points: int | None = None
+
+    def _new_measurement(self, name) -> MeasurementAndPlot:
+        return MeasurementAndPlot(name=name, gui=self.live_plotter)
 
     def add_gate_parameter(self, parameter_name: str, gate_name: str = None, parameter: Parameter = None) -> None:
         """

@@ -26,7 +26,6 @@ from time import sleep, time
 
 import numpy as np
 from qcodes.dataset import dond
-from qcodes.dataset.measurements import Measurement
 from qcodes.parameters.specialized_parameters import ElapsedTimeParameter
 
 from qumada.instrument.buffers import is_bufferable
@@ -248,7 +247,7 @@ class Timetrace(MeasurementScript):
         timestep = self.settings.get("timestep", 1)
         timer = ElapsedTimeParameter("time")
         naming_helper(self, default_name="Timetrace")
-        meas = Measurement(name=self.measurement_name)
+        meas = self._new_measurement(name=self.measurement_name)
         meas.register_parameter(timer)
         for parameter in [*self.gettable_channels, *self.dynamic_channels]:
             meas.register_parameter(
@@ -331,7 +330,7 @@ class Timetrace_buffered(MeasurementScript):
 
         self.generate_lists()
         naming_helper(self, default_name="Timetrace")
-        meas = Measurement(name=self.measurement_name)
+        meas = self._new_measurement(name=self.measurement_name)
 
         meas.register_parameter(timer)
         for parameter in [*self.gettable_channels, *self.dynamic_channels]:
@@ -443,7 +442,7 @@ class Timetrace_with_sweeps(MeasurementScript):
         timestep = self.settings.get("timestep", 1)
         # backsweeps = self.settings.get("backsweeps", False)
         timer = ElapsedTimeParameter("time")
-        meas = Measurement(name=self.metadata.measurement.name or "timetrace")
+        meas = self._new_measurement(name=self.metadata.measurement.name or "timetrace")
         meas.register_parameter(timer)
         setpoints = [timer]
         for parameter in self.dynamic_channels:
@@ -526,7 +525,7 @@ class Timetrace_with_Sweeps_buffered(MeasurementScript):
         datasets = []
         self.generate_lists()
         naming_helper(self, default_name="Timetrace with sweeps")
-        meas = Measurement(name=self.measurement_name)
+        meas = self._new_measurement(name=self.measurement_name)
         meas.register_parameter(timer)
 
         for dynamic_param in self.dynamic_parameters:
@@ -685,7 +684,7 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
             dynamic_param = self.dynamic_sweeps[i].param
             inactive_channels = [chan for chan in self.dynamic_channels if chan != dynamic_param]
             self.initialize(inactive_dyn_channels=inactive_channels)
-            meas = Measurement(name=self.measurement_name)
+            meas = self._new_measurement(name=self.measurement_name)
             meas.register_parameter(dynamic_param)
             for c_param in self.active_compensating_channels:
                 meas.register_parameter(
@@ -890,7 +889,7 @@ class Generic_1D_Hysteresis_buffered(MeasurementScript):
                 self.measurement_name += f" {dynamic_parameter['gate']}"
             self.properties[dynamic_parameter["gate"]][dynamic_parameter["parameter"]]["_is_triggered"] = True
             dynamic_param = dynamic_sweep.param
-            meas = Measurement(name=self.measurement_name)
+            meas = self._new_measurement(name=self.measurement_name)
             meas.register_parameter(dynamic_param)
             # This next block is required to log static and idle dynamic
             # parameters that cannot be buffered.
@@ -1083,7 +1082,7 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
             gate_names = [gate["gate"] for gate in self.dynamic_parameters]
             self.measurement_name += f" {gate_names}"
 
-        meas = Measurement(name=self.measurement_name)
+        meas = self._new_measurement(name=self.measurement_name)
 
         if reverse_param_order:
             slow_param = self.dynamic_parameters[1]
@@ -1339,7 +1338,7 @@ class Generic_Pulsed_Measurement(MeasurementScript):
             gate_names = [gate["gate"] for gate in self.dynamic_parameters]
             self.measurement_name += f" {gate_names}"
 
-        meas = Measurement(name=self.measurement_name)
+        meas = self._new_measurement(name=self.measurement_name)
         meas.register_parameter(timer)
         for parameter in self.dynamic_parameters:
             self.properties[parameter["gate"]][parameter["parameter"]]["_is_triggered"] = True
@@ -1542,7 +1541,7 @@ class Generic_Pulsed_Repeated_Measurement(MeasurementScript):
             gate_names = [gate["gate"] for gate in self.dynamic_parameters]
             self.measurement_name += f" {gate_names}"
 
-        meas = Measurement(name=self.measurement_name)
+        meas = self._new_measurement(name=self.measurement_name)
         meas.register_parameter(timer)
         for parameter in self.dynamic_parameters:
             self.properties[parameter["gate"]][parameter["parameter"]]["_is_triggered"] = True
