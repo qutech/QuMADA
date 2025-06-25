@@ -106,6 +106,8 @@ def split_into_segments(setpoints, max_difference, segment_on_direction_change=T
 
     """
     segmented_setpoints = []
+    if max_difference is None:
+        max_difference = np.inf
     if segment_on_direction_change is True:
         setpoints = separate_up_down(setpoints)[0]
     else:
