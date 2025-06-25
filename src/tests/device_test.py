@@ -1,7 +1,7 @@
 import dataclasses
 
-import pytest
 import numpy as np
+import pytest
 
 from qumada.measurement.device_object import QumadaDevice
 
@@ -75,7 +75,7 @@ def device_test_setup(measurement_test_setup):
 
     # map_triggers(station.components) ???
     measurement_test_setup.dac._qumada_mapping.trigger_in = None
-    measurement_test_setup.dmm._qumada_buffer.trigger, = measurement_test_setup.dmm._qumada_buffer.AVAILABLE_TRIGGERS
+    (measurement_test_setup.dmm._qumada_buffer.trigger,) = measurement_test_setup.dmm._qumada_buffer.AVAILABLE_TRIGGERS
 
     return DeviceTestSetup(
         measurement_test_setup,
@@ -88,7 +88,7 @@ def device_test_setup(measurement_test_setup):
 def test_measured_ramp(device_test_setup):
     gate1 = device_test_setup.namespace["gate1"]
 
-    qcodes_data, = gate1.voltage.measured_ramp(0.4, start=-0.3, buffered=True)
+    (qcodes_data,) = gate1.voltage.measured_ramp(0.4, start=-0.3, buffered=True)
     assert gate1.voltage() == pytest.approx(0.4, abs=0.001)
 
     xarr = qcodes_data.to_xarray_dataset()
