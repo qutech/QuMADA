@@ -77,8 +77,8 @@ def measurement_test_data():
 def buffer_settings():
     return {
         "sampling_rate": 512,
-        "duration": 1e-3,
-        "burst_duration": 1e-3,
+        "duration": 12 / 512,
+        "burst_duration": 12 / 512,
         "delay": 0,
     }
 
@@ -90,7 +90,7 @@ def parameters():
             "voltage": {"type": "gettable"},
             "current": {"type": "gettable"},
         },
-        "gate1": {"voltage": {"type": "dynamic", "setpoints": np.linspace(0, np.pi, 7), "value": 0}},
+        "gate1": {"voltage": {"type": "dynamic", "setpoints": np.linspace(0, np.pi, 12), "value": 0}},
         "gate2": {"voltage": {"type": "dynamic", "setpoints": np.linspace(0, np.pi, 12), "value": 0}},
     }
 
@@ -128,4 +128,15 @@ def test_1d_buffered(measurement_test_data, buffer_settings, parameters, db):
         },
     }
     script.gate_parameters = mapping
-    tmp = script.run()
+    ds1, ds2 = script.run()
+    ds1 = ds1.to_xarray_dataset()
+    ds2 = ds2.to_xarray_dataset()
+
+    np.testing.assert_almost_equal(
+        parameters["gate1"]["voltage"]["setpoints"],
+        ds1.dac_ch01_voltage.values,
+    )
+    np.testing.assert_almost_equal(
+        parameters["gate2"]["voltage"]["setpoints"],
+        ds2.dac_ch01_voltage.values,
+    )
