@@ -104,5 +104,5 @@ def test_1d_buffered(measurement_test_setup, buffer_settings, parameters):
     )
     np.testing.assert_almost_equal(
         parameters["gate2"]["voltage"]["setpoints"],
-        ds2.dac_ch01_voltage.values,
+        ds2.dac_ch02_voltage.values,
     )
