@@ -1,13 +1,12 @@
 import dataclasses
-import threading
-import tempfile
 import pathlib
+import tempfile
+import threading
 import time
 
 import pytest
-from qcodes.station import Station
-from qumada.utils.load_from_sqlite_db import load_db
 from qcodes.dataset.experiment_container import load_or_create_experiment
+from qcodes.station import Station
 
 from qumada.instrument.buffered_instruments import BufferedDummyDMM as DummyDmm
 from qumada.instrument.custom_drivers.Dummies.dummy_dac import DummyDac
@@ -16,6 +15,7 @@ from qumada.instrument.mapping import (
     add_mapping_to_instrument,
 )
 from qumada.instrument.mapping.Dummies.DummyDac import DummyDacMapping
+from qumada.utils.load_from_sqlite_db import load_db
 
 
 @dataclasses.dataclass

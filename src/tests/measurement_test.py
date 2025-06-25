@@ -42,9 +42,6 @@ from qumada.utils.load_from_sqlite_db import load_db
 from qumada.utils.ramp_parameter import *
 
 
-
-
-
 @pytest.fixture
 def buffer_settings():
     return {
@@ -65,9 +62,6 @@ def parameters():
         "gate1": {"voltage": {"type": "dynamic", "setpoints": np.linspace(0, np.pi, 12), "value": 0}},
         "gate2": {"voltage": {"type": "dynamic", "setpoints": np.linspace(0, np.pi, 12), "value": 0}},
     }
-
-
-
 
 
 def test_1d_buffered(measurement_test_setup, buffer_settings, parameters):
