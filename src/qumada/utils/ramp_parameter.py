@@ -23,12 +23,13 @@ from __future__ import annotations
 
 import logging
 import time
+from copy import deepcopy
 from math import isclose
 
 from qumada.utils.generate_sweeps import generate_sweep
-from copy import deepcopy
 
 LOG = logging.getLogger(__name__)
+
 
 def has_ramp_method(parameter):
     try:
@@ -37,13 +38,15 @@ def has_ramp_method(parameter):
     except AttributeError:
         return False
 
+
 def has_pulse_method(parameter):
     try:
         parameter.root_instrument._qumada_pulse
         return True
     except AttributeError:
         return False
-    
+
+
 def has_force_trigger_method(parameter):
     try:
         parameter.root_instrument._qumada_mapping.force_trigger
@@ -51,8 +54,10 @@ def has_force_trigger_method(parameter):
     except AttributeError:
         return False
 
+
 class Unsweepable_parameter(Exception):
     pass
+
 
 class Unsettable_parameter(Exception):
     pass
@@ -119,7 +124,7 @@ def ramp_parameter(
     LOG.debug(f"ramp rate: {ramp_rate}")
     LOG.debug(f"ramp time: {ramp_time}")
 
-    if isinstance(current_value, float|int) and not isinstance(current_value, bool):
+    if isinstance(current_value, float | int) and not isinstance(current_value, bool):
         LOG.debug(f"target: {target}")
         if isclose(current_value, target, rel_tol=tolerance):
             LOG.debug("Target value is sufficiently close to current_value, no need to ramp")
@@ -151,7 +156,7 @@ def ramp_parameter(
         LOG.debug(f"sweep: {sweep}")
         for value in sweep:
             parameter.set(value)
-            time.sleep(ramp_time/num_points)
+            time.sleep(ramp_time / num_points)
         return True
     else:
         raise Unsweepable_parameter("Parameter has non-float values")
@@ -176,70 +181,78 @@ def ramp_or_set_parameter(
         parameter.set(target)
     except Unsettable_parameter:
         pass
-        
+
+
 def ramp_or_set_parameters(
-        parameters: list,
-        targets: list[float],
-        ramp_rate: float | list[float] = 0.3,
-        ramp_time: float | list[float] = 5,
-        setpoint_interval: float |list[float] = 0.1,
-        tolerance: float = 1e-5,
-        trigger_start = None,
-        trigger_type = "software",
-        trigger_reset = None,
-        sync_trigger = None):
+    parameters: list,
+    targets: list[float],
+    ramp_rate: float | list[float] = 0.3,
+    ramp_time: float | list[float] = 5,
+    setpoint_interval: float | list[float] = 0.1,
+    tolerance: float = 1e-5,
+    trigger_start=None,
+    trigger_type="software",
+    trigger_reset=None,
+    sync_trigger=None,
+):
     instruments = {param.root_instrument for param in parameters}
-    instruments_dict = {} #Will contain instruments as keys and their params with targets as vals.
-    #Check requirements for parallel ramps.
+    instruments_dict = {}  # Will contain instruments as keys and their params with targets as vals.
+    # Check requirements for parallel ramps.
     if trigger_type is not None:
         for instr in instruments:
-            if has_ramp_method(instr) and has_force_trigger_method(instr) and hasattr(instr._qumada_mapping, "max_ramp_channels"):
-                instruments_dict[instr] = [] #Only instruments supporting ramps are added!
+            if (
+                has_ramp_method(instr)
+                and has_force_trigger_method(instr)
+                and hasattr(instr._qumada_mapping, "max_ramp_channels")
+            ):
+                instruments_dict[instr] = []  # Only instruments supporting ramps are added!
     # Loop groups params according to their instruments for later execution of ramps.
     for param, target in zip(parameters, targets):
         if param._settable is False:
             LOG.warning(f"{param} is not _settable and cannot be ramped!")
             continue
-        
-        current_value = param.get() 
-        #TODO: Possibly further improvements with cached val or known start.
+
+        current_value = param.get()
+        # TODO: Possibly further improvements with cached val or known start.
         # Check if parameter should be ramped or set.
-        if isinstance(current_value, float|int) and not isinstance(current_value, bool):
+        if isinstance(current_value, float | int) and not isinstance(current_value, bool):
             LOG.debug(f"current value: {current_value}, target: {target}")
             if isclose(current_value, target, rel_tol=tolerance):
                 LOG.debug("Target value is sufficiently close to current_value, no need to ramp")
                 continue
-        if param.root_instrument in instruments_dict.keys():  #Only instruments supporting ramps
-                instruments_dict[param.root_instrument].append((param,target))
-        else: #Everything that cannot be ramped with instrument ramp is ramped/set here
+        if param.root_instrument in instruments_dict.keys():  # Only instruments supporting ramps
+            instruments_dict[param.root_instrument].append((param, target))
+        else:  # Everything that cannot be ramped with instrument ramp is ramped/set here
             ramp_or_set_parameter(param, target, ramp_rate, ramp_time, setpoint_interval)
     # Now go through all instruments supporting ramps and start the ramps
     for instr, values in instruments_dict.items():
         counter = 1
         param_helper = []
         target_helper = []
-        #Params and targets are added until the max number of simultaneously rampable
-        #channels is reached. Then ramp is started and new params are added.
+        # Params and targets are added until the max number of simultaneously rampable
+        # channels is reached. Then ramp is started and new params are added.
         for param, target in values:
             param_helper.append(param)
             target_helper.append(target)
-            #TODO: Triggering logic won't work if sync trigger is used to trigger another
+            # TODO: Triggering logic won't work if sync trigger is used to trigger another
             # DAC (e.g. QDac in combination with Decadac)
-            if counter%instr._qumada_mapping.max_ramp_channels == 0 or counter == len(values):
-                LOG.debug(f"Ramping {param_helper} to {target_helper}")            
+            if counter % instr._qumada_mapping.max_ramp_channels == 0 or counter == len(values):
+                LOG.debug(f"Ramping {param_helper} to {target_helper}")
                 if sync_trigger is not None:
-                    LOG.exception("You are using a sync trigger for ramps outside measurements. \
+                    LOG.exception(
+                        "You are using a sync trigger for ramps outside measurements. \
                                   If the sync trigger is required to start an another DACs/AWGs ramp \
                                   this will not work. (E.g. QDac and Decadac). If you only need it to \
-                                  start data acquisitions you're fine.")
+                                  start data acquisitions you're fine."
+                    )
                 instr._qumada_ramp(
                     param_helper,
-                    end_values = target_helper,
-                    ramp_time = min(ramp_time, 1/ramp_rate), #TODO: Is that fine/Safe enough?
-                    sync_trigger=None
-                    )
+                    end_values=target_helper,
+                    ramp_time=min(ramp_time, 1 / ramp_rate),  # TODO: Is that fine/Safe enough?
+                    sync_trigger=None,
+                )
                 instr._qumada_mapping.force_trigger()
-                #TODO: Force trigger for AWGs/DACs?
+                # TODO: Force trigger for AWGs/DACs?
                 time.sleep(ramp_time)
                 try:
                     trigger_reset()
@@ -247,11 +260,4 @@ def ramp_or_set_parameters(
                     LOG.info("No method to reset the trigger defined.")
                 param_helper = []
                 target_helper = []
-            counter +=1
-
-                    
-                    
-                
-        
-    
-    
+            counter += 1
