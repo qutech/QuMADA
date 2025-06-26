@@ -95,7 +95,7 @@ class Generic_1D_Sweep(MeasurementScript):
             self.initialize(inactive_dyn_channels=inactive_channels)
             sleep(wait_time)
             data.append(
-                dond(
+                self._dond(
                     sweep,
                     *measured_channels,
                     measurement_name=self._measurement_name,
@@ -153,7 +153,7 @@ class Generic_nD_Sweep(MeasurementScript):
         for sweep in self.dynamic_sweeps:
             ramp_or_set_parameter(sweep._param, sweep.get_setpoints()[0])
         sleep(wait_time)
-        data = dond(
+        data = self._dond(
             *tuple(self.dynamic_sweeps),
             *tuple(self.gettable_channels),
             measurement_name=measurement_name,

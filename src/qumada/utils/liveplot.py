@@ -9,8 +9,8 @@ from qcodes.parameters import ParameterBase
 
 
 class MeasurementAndPlot:
-    def __init__(self, *, name: str, gui=None):
-        self.qcodes_measurement = Measurement(name=name)
+    def __init__(self, *, name: str, gui=None, **kwargs):
+        self.qcodes_measurement = Measurement(name=name, **kwargs)
         self.gui = gui
 
     def register_parameter(
@@ -18,15 +18,18 @@ class MeasurementAndPlot:
     ):
         self.qcodes_measurement.register_parameter(parameter, setpoints, **kwargs)
 
+    def set_shapes(self, shapes):
+        self.qcodes_measurement.set_shapes(shapes=shapes)
+
     @contextlib.contextmanager
-    def run(self):
+    def run(self, **kwargs):
         if self.gui is not None:
             # here we could add some more arguments in the future
             plot_target = self.gui
         else:
             plot_target = None
 
-        with self.qcodes_measurement.run() as qcodes_datasaver:
+        with self.qcodes_measurement.run(**kwargs) as qcodes_datasaver:
             yield DataSaverAndPlotter(self, qcodes_datasaver, plot_target)
 
 
