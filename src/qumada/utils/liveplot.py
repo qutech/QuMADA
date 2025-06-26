@@ -1,7 +1,7 @@
 import contextlib
 import functools
 from collections.abc import Sequence
-from typing import Protocol
+from typing import Protocol, Optional, Union
 
 from qcodes import Measurement
 from qcodes.dataset.data_set import DataSet
@@ -14,7 +14,7 @@ class MeasurementAndPlot:
         self.gui = gui
 
     def register_parameter(
-        self, parameter: ParameterBase, setpoints: Sequence[str | ParameterBase] | None = None, **kwargs
+        self, parameter: ParameterBase, setpoints: Optional[Sequence[Union[str, ParameterBase]]] = None, **kwargs
     ):
         self.qcodes_measurement.register_parameter(parameter, setpoints, **kwargs)
 
