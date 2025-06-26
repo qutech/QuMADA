@@ -42,6 +42,10 @@ class DataSaverAndPlotter:
     def add_result(self, *args):
         self.qcodes_datasaver.add_result(*args)
         if self.plot_target is not None:
+            # TODO: we can either
+            #  - flush always
+            #  - use datasaver write period for plot update
+            self.qcodes_datasaver.flush_data_to_database()
             self.plot_target(self.dataset.to_xarray_dataset())
 
     @property
