@@ -23,11 +23,11 @@ from __future__ import annotations
 
 import copy
 import functools
+import importlib
 import inspect
 import json
 import logging
 import os
-import importlib
 from abc import ABC, abstractmethod
 from collections.abc import MutableSequence
 from contextlib import suppress
