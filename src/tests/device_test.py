@@ -23,7 +23,6 @@ def device_test_setup(measurement_test_setup):
 
     parameters = {
         "ohmic": {
-            "voltage": {"type": "gettable"},
             "current": {"type": "gettable"},
         },
         "gate1": {"voltage": {"type": "static"}},
@@ -40,7 +39,6 @@ def device_test_setup(measurement_test_setup):
 
     mapping = {
         "ohmic": {
-            "voltage": measurement_test_setup.dmm.voltage,
             "current": measurement_test_setup.dmm.current,
         },
         "gate1": {
@@ -97,11 +95,6 @@ def device_test_setup(measurement_test_setup):
 )
 def test_measured_ramp(device_test_setup, buffered, backsweep):
     gate1 = device_test_setup.namespace["gate1"]
-
-    if not buffered:
-        # TODO: Why is this necessary? Should be handled automatically
-        device_test_setup.measurement_test_setup.dmm.buffer_n_points.set(1)
-        device_test_setup.measurement_test_setup.dmm.buffer_SR.set(1)
 
     (qcodes_data,) = gate1.voltage.measured_ramp(0.4, start=-0.3, buffered=buffered, backsweep=backsweep)
     if backsweep:
