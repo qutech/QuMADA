@@ -60,8 +60,8 @@ class DummyDacMapping(InstrumentMapping):
 
         if not start_values:
             start_values = [param.get() for param in parameters]
-            
-        print("Ramping...")    
+
+        print("Ramping...")
         instrument._triggered_ramp_channels(
             [param._instrument for param in parameters], start_values, end_values, ramp_time, num_points
         )
@@ -96,7 +96,7 @@ class DummyDacMapping(InstrumentMapping):
 
     def setup_trigger_in():
         pass
-    
+
     def force_trigger(self):
         self._instrument.force_trigger()
         self._instrument._is_triggered.clear()

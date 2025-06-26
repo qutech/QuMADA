@@ -30,6 +30,7 @@ class QDacMapping(InstrumentMapping):
     def __init__(self):
         super().__init__(QDAC_MAPPING)
         self.max_ramp_channels = 8
+
     def ramp(
         self,
         parameters: list[Parameter],
@@ -72,7 +73,7 @@ class QDacMapping(InstrumentMapping):
 
     def setup_trigger_in(self):
         raise Exception("QDac does not have a trigger input!")
-        
+
     def force_trigger(self):
         pass
         # Not required as QDac has no trigger input and starts ramps instantly.

@@ -171,7 +171,7 @@ def plot_2D(
     if args:
         x_data, y_data, z_data = _handle_overload(x_data, y_data, z_data, *args, output_dimension=3)
     if ax is None or fig is None:
-        fig, ax = plt.subplots(figsize = kwargs.get("figsize", (10,10)))
+        fig, ax = plt.subplots(figsize=kwargs.get("figsize", (10, 10)))
 
     # Skalierung der Achsendaten und Einheiten
     x_values, y_values, z_values = x_data[1], y_data[1], z_data[1]
@@ -196,7 +196,7 @@ def plot_2D(
     # Plotten der 2D-Daten
     im = ax.pcolormesh(x, y, z, shading="auto")
     cbar = fig.colorbar(im, ax=ax)
-    
+
     if z_label is None:
         cbar.set_label(f"{z_data[3]} ({z_unit})")
     else:
@@ -341,12 +341,12 @@ def plot_multiple_datasets(
     scale_axis=True,
     legend=True,
     exclude_string_from_legend: list = ["1D Sweep"],
-    legend_entries: None|list = None,
-    save_to_file = None,
-    close = False,
-    x_label = None,
-    y_label = None,
-    color_map = None,
+    legend_entries: None | list = None,
+    save_to_file=None,
+    close=False,
+    x_label=None,
+    y_label=None,
+    color_map=None,
     **kwargs,
 ):
     """
@@ -442,15 +442,15 @@ def plot_multiple_datasets(
     if font is not None:
         matplotlib.rc("font", 30)
     matplotlib.rc("font", size=40)
-    default_colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+    default_colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
     if ax is None or fig is None:
-        fig, ax = plt.subplots(figsize = kwargs.get("figsize", (10, 10)))
+        fig, ax = plt.subplots(figsize=kwargs.get("figsize", (10, 10)))
 
     x_labels = []
     y_labels = []
     for i in range(len(datasets)):
         if color_map is None:
-            color = default_colors[i % len(default_colors)] 
+            color = default_colors[i % len(default_colors)]
         else:
             color = color_map[i]
         if legend_entries is None:
@@ -464,12 +464,12 @@ def plot_multiple_datasets(
             x_name = x_axis_parameters_name[i]
         else:
             x_name = x_axis_parameters_name
-            
+
         if isinstance(y_axis_parameters_name, list):
             y_name = y_axis_parameters_name[i]
         else:
             y_name = y_axis_parameters_name
-        
+
         x, y = _handle_overload(
             *get_parameter_data(datasets[i], y_axis_parameters_name),
             x_name=x_name,
@@ -497,10 +497,10 @@ def plot_multiple_datasets(
                     if not optimize_hysteresis_legend:
                         f_label += " backsweep"
                 if optimize_hysteresis_legend is True:
-                # Only one legend entry per dataset (instead of one for each fore-/backsweep)
+                    # Only one legend entry per dataset (instead of one for each fore-/backsweep)
                     if j > 0:
                         f_label = None
-                if j%2 == False: # ;-) Ensuring the first sweep marker is always filled
+                if j % 2 == False:  # ;-) Ensuring the first sweep marker is always filled
                     fill_style = "full"
                 else:
                     fill_style = "none"
@@ -512,8 +512,8 @@ def plot_multiple_datasets(
                     linestyle=kwargs.get("linestyle", ""),
                     label=f_label,
                     markersize=kwargs.get("markersize", 20),
-                    color = color,
-                    fillstyle = fill_style
+                    color=color,
+                    fillstyle=fill_style,
                 )
         else:
             plt.plot(
@@ -523,14 +523,14 @@ def plot_multiple_datasets(
                 linestyle=kwargs.get("linestyle", ""),
                 label=label,
                 markersize=kwargs.get("markersize", 20),
-                color = color,
+                color=color,
             )
 
     # Scale axes and update labels
     if scale_axis is True:
         x_scaling_factor, x_units[0] = _rescale_axis(ax.xaxis, np.concatenate(x_data), x_units[0], "x")
         y_scaling_factor, y_units[0] = _rescale_axis(ax.yaxis, np.concatenate(y_data), y_units[0], "y")
-    
+
     if x_label is None:
         plt.xlabel(f"{x_labels[0]} ({x_units[0]})")
     else:
@@ -539,7 +539,7 @@ def plot_multiple_datasets(
         plt.ylabel(f"{y_labels[0]} ({y_units[0]})")
     else:
         plt.ylabel(f"{y_label} ({y_units[0]})")
-        
+
     # Update x and y labels
     leg_entries = ax.legend().get_texts()
     if legend is True:
@@ -547,9 +547,9 @@ def plot_multiple_datasets(
             loc=kwargs.get("legend_position", "upper left"),
             fontsize=kwargs.get("legend_fontsize", 35),
             markerscale=kwargs.get("legend_markerscale", 1),
-            ncol = kwargs.get("legend_ncols", int(len(leg_entries)/9)+1),
-            columnspacing = kwargs.get("legend_columnspacing", 0.2),
-            handletextpad = kwargs.get("legend_handletextpad", -0.7),
+            ncol=kwargs.get("legend_ncols", int(len(leg_entries) / 9) + 1),
+            columnspacing=kwargs.get("legend_columnspacing", 0.2),
+            handletextpad=kwargs.get("legend_handletextpad", -0.7),
         )
     plt.tight_layout()
     if save_to_file is not None:
