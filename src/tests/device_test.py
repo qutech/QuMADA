@@ -1,4 +1,5 @@
 import dataclasses
+import itertools
 
 import numpy as np
 import pytest
@@ -85,15 +86,40 @@ def device_test_setup(measurement_test_setup):
     )
 
 
-def test_measured_ramp(device_test_setup):
+
+
+
+@pytest.mark.parametrize("buffered,backsweep", itertools.product(
+    # buffered
+    [True, False],
+    # backsweep
+    [False, True],
+))
+def test_measured_ramp(device_test_setup, buffered, backsweep):
     gate1 = device_test_setup.namespace["gate1"]
 
-    (qcodes_data,) = gate1.voltage.measured_ramp(0.4, start=-0.3, buffered=True)
-    assert gate1.voltage() == pytest.approx(0.4, abs=0.001)
+    if not buffered:
+        # TODO: Why is this necessary? Should be handled automatically
+        device_test_setup.measurement_test_setup.dmm.buffer_n_points.set(1)
+        device_test_setup.measurement_test_setup.dmm.buffer_SR.set(1)
 
+    (qcodes_data,) = gate1.voltage.measured_ramp(0.4, start=-0.3, buffered=buffered, backsweep=backsweep)
+    if backsweep:
+        assert gate1.voltage() == pytest.approx(-0.3, abs=0.001)
+    else:
+        assert gate1.voltage() == pytest.approx(0.4, abs=0.001)
+
+    if not buffered:
+        # TODO: Why is this necessary???
+        (qcodes_data, _, _) = qcodes_data
     xarr = qcodes_data.to_xarray_dataset()
 
     set_points = xarr.dac_ch01_voltage.values
 
-    expected = np.linspace(-0.3, 0.4, len(set_points))
+    if backsweep:
+        fwd = np.linspace(-0.3, 0.4, len(set_points) // 2)
+        expected = np.concatenate((fwd, fwd[::-1]))
+    else:
+        expected = np.linspace(-0.3, 0.4, len(set_points))
+
     np.testing.assert_almost_equal(expected, set_points)
