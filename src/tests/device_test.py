@@ -86,15 +86,15 @@ def device_test_setup(measurement_test_setup):
     )
 
 
-
-
-
-@pytest.mark.parametrize("buffered,backsweep", itertools.product(
-    # buffered
-    [True, False],
-    # backsweep
-    [False, True],
-))
+@pytest.mark.parametrize(
+    "buffered,backsweep",
+    itertools.product(
+        # buffered
+        [True, False],
+        # backsweep
+        [False, True],
+    ),
+)
 def test_measured_ramp(device_test_setup, buffered, backsweep):
     gate1 = device_test_setup.namespace["gate1"]
 
