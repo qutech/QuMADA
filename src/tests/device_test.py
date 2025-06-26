@@ -66,13 +66,13 @@ def device_test_setup(measurement_test_setup):
     device.buffer_script_setup = buffer_script_settings
     device.buffer_settings = buffer_settings
 
-    # device.mapping()
+    # device.map_terminals()
     #  - map_terminals_gui(self.station.components, self.instrument_parameters, instrument_parameters)
-    device.instrument_parameters = mapping
+    device.terminal_parameters = mapping
     #  - self.update_terminal_parameters()
     device.update_terminal_parameters()
 
-    # map_triggers(station.components) ???
+    # device.map_triggers()
     measurement_test_setup.dac._qumada_mapping.trigger_in = None
     (measurement_test_setup.dmm._qumada_buffer.trigger,) = measurement_test_setup.dmm._qumada_buffer.AVAILABLE_TRIGGERS
 
