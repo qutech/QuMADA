@@ -182,7 +182,7 @@ class QDac2Mapping(InstrumentMapping):
             "QDac2 does not have a trigger input \
             not yet supported!"
         )
-            
+
     def force_trigger(self):
         pass
         # Currently no trigger inputs are supported, thus all ramps are started

@@ -41,11 +41,13 @@ class MFLI(Instrument):
     """
 
     def __init__(
-        self, name: str, device: str,
+        self,
+        name: str,
+        device: str,
         serverhost: str = "localhost",
-        existing_session: Session = None, 
-        allow_version_mismatch = False,
-        **kwargs
+        existing_session: Session = None,
+        allow_version_mismatch=False,
+        **kwargs,
     ):
         super().__init__(name, **kwargs)
         if isinstance(existing_session, Session):
