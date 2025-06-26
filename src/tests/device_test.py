@@ -96,6 +96,13 @@ def device_test_setup(measurement_test_setup):
 def test_measured_ramp(device_test_setup, buffered, backsweep):
     gate1 = device_test_setup.namespace["gate1"]
 
+    plot_args = []
+    def plot_backend(*args, **kwargs):
+        plot_args.append((args, kwargs))
+
+    from qumada.measurement.measurement import MeasurementScript
+    MeasurementScript.DEFAULT_LIVE_PLOTTER = plot_backend
+
     (qcodes_data,) = gate1.voltage.measured_ramp(0.4, start=-0.3, buffered=buffered, backsweep=backsweep)
     if backsweep:
         assert gate1.voltage() == pytest.approx(-0.3, abs=0.001)
@@ -114,5 +121,10 @@ def test_measured_ramp(device_test_setup, buffered, backsweep):
         expected = np.concatenate((fwd, fwd[::-1]))
     else:
         expected = np.linspace(-0.3, 0.4, len(set_points))
+
+    if buffered:
+        assert len(plot_args) == 1 + int(backsweep)
+    else:
+        assert len(plot_args) == len(set_points)
 
     np.testing.assert_almost_equal(expected, set_points)
