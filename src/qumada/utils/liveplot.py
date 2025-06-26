@@ -1,7 +1,7 @@
 import contextlib
 import functools
 from collections.abc import Sequence
-from typing import Protocol, Optional, Union
+from typing import Optional, Protocol, Union
 
 from qcodes import Measurement
 from qcodes.dataset.data_set import DataSet
