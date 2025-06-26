@@ -97,10 +97,12 @@ def test_measured_ramp(device_test_setup, buffered, backsweep):
     gate1 = device_test_setup.namespace["gate1"]
 
     plot_args = []
+
     def plot_backend(*args, **kwargs):
         plot_args.append((args, kwargs))
 
     from qumada.measurement.measurement import MeasurementScript
+
     MeasurementScript.DEFAULT_LIVE_PLOTTER = plot_backend
 
     (qcodes_data,) = gate1.voltage.measured_ramp(0.4, start=-0.3, buffered=buffered, backsweep=backsweep)
