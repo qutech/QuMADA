@@ -22,10 +22,12 @@
 from __future__ import annotations
 
 import copy
+import functools
 import inspect
 import json
 import logging
 import os
+import importlib
 from abc import ABC, abstractmethod
 from collections.abc import MutableSequence
 from contextlib import suppress
@@ -122,6 +124,18 @@ class MeasurementScript(ABC):
 
     def _new_measurement(self, name) -> MeasurementAndPlot:
         return MeasurementAndPlot(name=name, gui=self.live_plotter)
+
+    def _dond(self, *args, **kwargs):
+        """This is a wrapper around qcodes dond function that monkeypatches the live plotter in the datasaver"""
+        # we need to use importlib here because the dond function shadows the qcodes.dataset.dond package
+        do_nd = importlib.import_module("qcodes.dataset.dond.do_nd")
+
+        prev_meas_cls = do_nd.Measurement
+        try:
+            do_nd.Measurement = functools.partial(MeasurementAndPlot, gui=self.live_plotter)
+            return do_nd.dond(*args, **kwargs)
+        finally:
+            do_nd.Measurement = prev_meas_cls
 
     def add_terminal_parameter(self, parameter_name: str, gate_name: str = None, parameter: Parameter = None) -> None:
         """
