@@ -41,6 +41,7 @@ import qcodes as qc
 from qcodes import Station
 from qcodes.dataset import AbstractSweep, LinSweep
 from qcodes.dataset.dond.do_nd_utils import ActionsT
+from qcodes.dataset.measurements import Measurement as QCoDeSMeasurement
 from qcodes.parameters import Parameter, ParameterBase
 
 from qumada.instrument.buffers import is_bufferable, is_triggerable
@@ -122,8 +123,11 @@ class MeasurementScript(ABC):
         self.terminal_parameters: dict[Any, dict[Any, Parameter | None] | Parameter | None] = {}
         self._buffered_num_points: int | None = None
 
-    def _new_measurement(self, name) -> MeasurementAndPlot:
-        return MeasurementAndPlot(name=name, gui=self.live_plotter)
+    def _new_measurement(self, name, **kwargs) -> Union[MeasurementAndPlot, QCoDeSMeasurement]:
+        if self.live_plotter is None:
+            return QCoDeSMeasurement(name=name, **kwargs)
+        else:
+            return MeasurementAndPlot(name=name, gui=self.live_plotter, **kwargs)
 
     def _dond(self, *args, **kwargs):
         """This is a wrapper around qcodes dond function that monkeypatches the live plotter in the datasaver"""
@@ -132,7 +136,7 @@ class MeasurementScript(ABC):
 
         prev_meas_cls = do_nd.Measurement
         try:
-            do_nd.Measurement = functools.partial(MeasurementAndPlot, gui=self.live_plotter)
+            do_nd.Measurement = self._new_measurement
             return do_nd.dond(*args, **kwargs)
         finally:
             do_nd.Measurement = prev_meas_cls
