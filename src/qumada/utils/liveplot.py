@@ -12,7 +12,7 @@ from qcodes.parameters import ParameterBase
 class MeasurementAndPlot:
     UPDATE_PERIOD = 0.01
 
-    def __init__(self, *, script: 'MeasurementScript', name: str, gui=None, **kwargs):
+    def __init__(self, *, script: "MeasurementScript", name: str, gui=None, **kwargs):
         self.qcodes_measurement = Measurement(name=name, **kwargs)
         self.qcodes_measurement.write_period = self.UPDATE_PERIOD
         self.gui = gui
@@ -64,11 +64,13 @@ class DataSaverAndPlotter:
         if self.plot_target is not None:
             # the following logic only generates a dataset and sends data to the plotter
             # if the QCoDeS internal _last_save_time attribute was updated.
-            last_save_time = getattr(self.qcodes_datasaver, '_last_save_time', None)
+            last_save_time = getattr(self.qcodes_datasaver, "_last_save_time", None)
             if last_save_time is None:
-                warnings.warn("Current QCoDeS version is not compatible with efficient live plotting. "
-                              "The plot is updated even if the data did not change.",
-                              category=RuntimeWarning)
+                warnings.warn(
+                    "Current QCoDeS version is not compatible with efficient live plotting. "
+                    "The plot is updated even if the data did not change.",
+                    category=RuntimeWarning,
+                )
                 update_plot = True
             elif last_save_time != self._last_plot_call:
                 update_plot = True
