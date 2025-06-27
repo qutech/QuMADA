@@ -127,7 +127,7 @@ class MeasurementScript(ABC):
         if self.live_plotter is None:
             return QCoDeSMeasurement(name=name, **kwargs)
         else:
-            return MeasurementAndPlot(name=name, gui=self.live_plotter, **kwargs)
+            return MeasurementAndPlot(script=self, name=name, gui=self.live_plotter, **kwargs)
 
     def _dond(self, *args,
               dond_module_path="qcodes.dataset.dond.do_nd",
