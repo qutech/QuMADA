@@ -52,34 +52,38 @@ from qumada.instrument.mapping.mapping_gui import MainWindow
 from qumada.measurement.scripts.generic_measurement import Generic_1D_Sweep
 
 
-@pytest.fixture(name="dmm", scope="session")
+@pytest.fixture(name="dmm")
 def fixture_dmm():
     dmm = DummyDmm("dmm")
     add_mapping_to_instrument(dmm, mapping=mapping.DUMMY_DMM_MAPPING)
-    return dmm
+    yield dmm
+    dmm.close()
 
 
-@pytest.fixture(name="dac", scope="session")
+@pytest.fixture(name="dac")
 def fixture_dac():
     dac = DummyDac("dac")
     add_mapping_to_instrument(dac, mapping=DummyDacMapping())
-    return dac
+    yield dac
+    dac.close()
 
 
-@pytest.fixture(name="dci", scope="session")
+@pytest.fixture(name="dci")
 def fixture_dci():
     dci = DummyChannelInstrument("dci")
     add_mapping_to_instrument(dci, mapping=mapping.DUMMY_CHANNEL_MAPPING)
-    return dci
+    yield dci
+    dci.close()
 
 
-@pytest.fixture(name="station_with_instruments", scope="session")
+@pytest.fixture(name="station_with_instruments")
 def fixture_station_with_instruments(dmm, dac, dci):
     station = Station()
     station.add_component(dmm)
     station.add_component(dac)
     station.add_component(dci)
-    return station
+    yield station
+    station.close_all_registered_instruments()
 
 
 @pytest.fixture(name="script")

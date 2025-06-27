@@ -76,8 +76,10 @@ class InstrumentMapping(ABC):
         **kwargs,
     ) -> None:
         """Defining qumada pulse. Requires proper implementation for each instrument"""
-        raise Exception("Pulse not properly implemented for this instrument!\
-                        You cannot use pulsed measurements with this instrument.")
+        raise Exception(
+            "Pulse not properly implemented for this instrument!\
+                        You cannot use pulsed measurements with this instrument."
+        )
 
     @abstractmethod
     def setup_trigger_in(self, trigger_settings: dict) -> None:

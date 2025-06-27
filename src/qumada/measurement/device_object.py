@@ -1,12 +1,11 @@
 from __future__ import annotations
 
+import json
 import logging
 from abc import ABC
 from copy import deepcopy
-from typing import Any
 from time import sleep
-import json
-
+from typing import Any
 
 import numpy as np
 from qcodes import Station
@@ -15,7 +14,10 @@ from qcodes.validators.validators import Numbers
 
 from qumada.instrument.buffers.buffer import map_triggers, save_trigger_mapping
 from qumada.instrument.mapping import map_terminals_gui
-from qumada.instrument.mapping.base import load_mapped_terminal_parameters, save_mapped_terminal_parameters
+from qumada.instrument.mapping.base import (
+    load_mapped_terminal_parameters,
+    save_mapped_terminal_parameters,
+)
 from qumada.measurement.measurement import MeasurementScript, load_param_whitelist
 from qumada.measurement.scripts import (
     Generic_1D_Hysteresis_buffered,
@@ -120,40 +122,40 @@ class QumadaDevice:
         Returns
         -------
         None
-    """
+        """
         self.update_terminal_parameters()
         if ramp is None:
             ramp = self.ramp
         self.load_from_dict(self.states[name])
         self.set_stored_values(ramp=ramp, **kwargs)
-        
+
     def save_state_to_file(self, name: str, path: str):
         """
-    Saves the specified state to a json file.
+        Saves the specified state to a json file.
 
-    Parameters
-    ----------
-    name : str
-        The name of the state to save.
-    path : str
-        The file path where the state will be saved. Has to be a json file!
+        Parameters
+        ----------
+        name : str
+            The name of the state to save.
+        path : str
+            The file path where the state will be saved. Has to be a json file!
 
-    Returns
-    -------
-    None
+        Returns
+        -------
+        None
 
-    Notes
-    -----
-    Before saving, any setpoints in terminal parameters are cleared by setting them to `None`
-    to avoid problems with json.dump.
-    """
+        Notes
+        -----
+        Before saving, any setpoints in terminal parameters are cleared by setting them to `None`
+        to avoid problems with json.dump.
+        """
         for t in self.terminals:
             for param in self.terminals[t].terminal_parameters:
                 self.terminals[t].terminal_parameters[param].properties["setpoints"] = None
         state = self.states[name]
         with open(file=path, mode="w") as f:
-            json.dump(state, f)        
-            
+            json.dump(state, f)
+
     def load_state_from_file(self, name: str, path: str):
         """
         Loads a state from a json file and stores it in the device object.
@@ -169,10 +171,10 @@ class QumadaDevice:
         -------
         None
         """
-        with open(file=path, mode="r") as f:
+        with open(file=path) as f:
             state = json.load(f)
         self.states[name] = state
-        
+
     def set_state_from_file(self, name: str, path: str):
         """
         Sets the devices state by loading it from a json file.
@@ -319,17 +321,17 @@ class QumadaDevice:
                             logger.warning(f"Couldn't find value for {terminal_name} {param_name}")
         return return_dict
 
-
-    def map_terminals(self, 
-                terminal_parameters: None | dict = None, 
-                path: None | str = None,
-                skip_gui_if_mapped: bool = True,
-                ):
+    def map_terminals(
+        self,
+        terminal_parameters: None | dict = None,
+        path: None | str = None,
+        skip_gui_if_mapped: bool = True,
+    ):
         """
         Maps devices terminal parameters using map_terminals_gui. You can pass
         an existing mapping as terminal_parameters.
         If a path is provided it first tries to use the provided mapping file.
-        
+
         Parameters
         ----------
         terminal_parameters : None | dict, optional
@@ -355,33 +357,35 @@ class QumadaDevice:
         if not isinstance(self.station, Station):
             raise TypeError("No valid qcodes station found. Make sure you have set the station attribute correctly!")
         if path is not None:
-            load_mapped_terminal_parameters(terminal_parameters, self.station, path)           
-        map_terminals_gui(self.station.components,
-                          self.terminal_parameters,
-                          terminal_parameters,
-                          skip_gui_if_mapped = skip_gui_if_mapped)
+            load_mapped_terminal_parameters(terminal_parameters, self.station, path)
+        map_terminals_gui(
+            self.station.components,
+            self.terminal_parameters,
+            terminal_parameters,
+            skip_gui_if_mapped=skip_gui_if_mapped,
+        )
         self.update_terminal_parameters()
 
-        
-    def mapping(self, 
-                terminal_parameters: None | dict = None, 
-                path: None | str = None,
-                skip_gui_if_mapped = True,
-            ):
-        #TODO: Remove!
-        logger.warning("Deprecation Warning: device.mapping was renamed to \
+    def mapping(
+        self,
+        terminal_parameters: None | dict = None,
+        path: None | str = None,
+        skip_gui_if_mapped=True,
+    ):
+        # TODO: Remove!
+        logger.warning(
+            "Deprecation Warning: device.mapping was renamed to \
                        device.map_terminals. Device.mapping will be removed \
-                       in a future release!")
+                       in a future release!"
+        )
         self.map_terminals(terminal_parameters, path, skip_gui_if_mapped)
-            
-        
-    def save_terminal_mapping(self,
-                     path: str):
+
+    def save_terminal_mapping(self, path: str):
         """
         Save terminal mapping to specified file (json).
         """
         save_mapped_terminal_parameters(self.terminal_parameters, path)
-        
+
     def map_triggers(
         self,
         components: None | dict = None,
@@ -394,7 +398,7 @@ class QumadaDevice:
         Uses components of assigned station by default.
         Ignores already mapped triggers by default.
         You can provide a path in order to load and existing mapping.
-    
+
         Parameters
         ----------
         components : None|dict, optional
@@ -410,14 +414,9 @@ class QumadaDevice:
         """
         if components is None:
             components = self.station.components
-        map_triggers(components=components,
-                     skip_mapped=skip_mapped,
-                     path=path,
-                     kwargs=kwargs)
-        
-    def save_trigger_mapping(
-            self,
-            path: str):
+        map_triggers(components=components, skip_mapped=skip_mapped, path=path, kwargs=kwargs)
+
+    def save_trigger_mapping(self, path: str):
         """
         Save trigger mapping to json file.
 
@@ -518,7 +517,7 @@ class QumadaDevice:
             map_triggers(station.components)
         data = script.run()
         return data
-    
+
     def sweep_1d(
         self,
         params: Parameter | list[Parameter],
@@ -526,12 +525,12 @@ class QumadaDevice:
         num_points: int = 100,
         dynamic_values: None | list[float] = None,
         backsweep: bool = False,
-        name = None,
-        metadata = None,
-        station = None,
-        buffered = False,
+        name=None,
+        metadata=None,
+        station=None,
+        buffered=False,
         buffer_settings: dict | None = None,
-        priorize_stored_value = False,
+        priorize_stored_value=False,
         **kwargs,
     ):
         """
@@ -552,8 +551,8 @@ class QumadaDevice:
             Number of points measured in each sweep. Doubled if backsweep is True.
         dynamic_values : None | list[float], optional
             List of values for the dynamic parameters (only if a list of params is provided).
-            Ignored if only one parameter is passed. 
-            Parameters are kept at this value during the ramps of the other parameters. 
+            Ignored if only one parameter is passed.
+            Parameters are kept at this value during the ramps of the other parameters.
             Current values of the parameters are used if it is None.
             Default is None.
         backsweep : bool, optional
@@ -588,7 +587,7 @@ class QumadaDevice:
         Notes
         -----
         - Again: This measurement can only do linear ramps!
-        - Does one measurement for each param provided. 
+        - Does one measurement for each param provided.
         - Ignores other dynamic parameters that are not in params
         - Records only gettable parameters.
         """
@@ -603,15 +602,38 @@ class QumadaDevice:
             if dynamic_values is None:
                 dynamic_values = [param() for param in params]
                 assert len(params) == len(dynamic_values)
-            else: 
+            else:
                 assert len(params) == len(dynamic_values)
                 for param, val in zip(params, dynamic_values):
                     param(val)
             for param, setpoint, val in zip(params, sweep_range, dynamic_values):
-                data.append(*param.measured_ramp(
-                    value = setpoint[-1],
-                    num_points=len(setpoint),
-                    start=setpoint[0],
+                data.append(
+                    *param.measured_ramp(
+                        value=setpoint[-1],
+                        num_points=len(setpoint),
+                        start=setpoint[0],
+                        station=station,
+                        name=name,
+                        metadata=metadata,
+                        backsweep=backsweep,
+                        buffered=buffered,
+                        buffer_settings=buffer_settings,
+                        priorize_stored_value=priorize_stored_value,
+                    )
+                )
+                param(val)
+
+        elif isinstance(params, Terminal_Parameter):
+            assert dynamic_values != list
+            if dynamic_values is not None:
+                val = dynamic_values
+            else:
+                val = params()
+            data.append(
+                *params.measured_ramp(
+                    value=sweep_range[-1],
+                    num_points=num_points,
+                    start=sweep_range[0],
                     station=station,
                     name=name,
                     metadata=metadata,
@@ -619,33 +641,16 @@ class QumadaDevice:
                     buffered=buffered,
                     buffer_settings=buffer_settings,
                     priorize_stored_value=priorize_stored_value,
-                    ))
-                param(val)
-                
-        elif isinstance(params, Terminal_Parameter):
-            assert dynamic_values != list
-            if dynamic_values is not None:
-                val = dynamic_values
-            else:
-                val = params()
-            data.append(*params.measured_ramp(
-                value=sweep_range[-1],
-                num_points=num_points,
-                start=sweep_range[0],
-                station=station,
-                name=name,
-                metadata=metadata,
-                backsweep=backsweep,
-                buffered=buffered,
-                buffer_settings=buffer_settings,
-                priorize_stored_value=priorize_stored_value,
-                ))
+                )
+            )
             params(val)
         return data
-    
+
     def sweep_2D():
-        logger.exception("Deprecation Warning: sweep_2D was renamed to sweep_2d \
-                         for better naming consistency!")
+        logger.exception(
+            "Deprecation Warning: sweep_2D was renamed to sweep_2d \
+                         for better naming consistency!"
+        )
 
     def sweep_2d(
         self,
@@ -1256,11 +1261,10 @@ class Terminal_Parameter(ABC):
             self._value = value
             self.instrument_parameter(value)
 
-
     @value.getter
     def value(self):
         return self.instrument_parameter()
-    
+
     @property
     def instrument_parameter(self):
         return self._instrument_parameter
