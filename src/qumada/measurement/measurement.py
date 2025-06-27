@@ -127,7 +127,7 @@ class MeasurementScript(ABC):
         if self.live_plotter is None:
             return QCoDeSMeasurement(name=name, **kwargs)
         else:
-            return MeasurementAndPlot(name=name, gui=self.live_plotter, **kwargs)
+            return MeasurementAndPlot(script=self, name=name, gui=self.live_plotter, **kwargs)
 
     def _dond(self, *args, **kwargs):
         """This is a wrapper around qcodes dond function that monkeypatches the live plotter in the datasaver"""
