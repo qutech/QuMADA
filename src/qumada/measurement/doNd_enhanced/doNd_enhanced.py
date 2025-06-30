@@ -457,6 +457,76 @@ def _interpret_breaks(break_conditions: list, **kwargs) -> Callable[[], bool] | 
 
     return partial(check_conditions, conditions) if conditions else None
 
+def _interpret_breaks_data(break_conditions: list, data: list) -> Callable[[], bool] | None:
+    """
+    Translates break conditions and returns callable to check them.
+    In difference to "normal" _interpret_breaks" it checks the break conditions
+    for all elements of a provided dataset..
+
+    Parameters
+    ----------
+    break_conditions : List of dictionaries containing:
+            "channel": Gettable parameter to check
+            "break_condition": String specifying the break condition.
+                    Syntax:
+                        Parameter to check: only "val" supported so far.
+                        Comparator: "<",">" or "=="
+                        Value: float
+                    The parts have to be separated by blanks.
+    data: List of tuples.
+        First Element of each tuple has to be a parameter, the second one has to be the
+        corresponding data array. The parameter is matched to the parameter of the break
+        conditions.
+
+
+    Returns
+    -------
+    Callable
+        Function, that returns a boolean, True if break conditions are fulfilled.
+
+    """
+
+    def eval_binary_expr(op1: Any, oper: str, op2: Any) -> bool:
+        # evaluates the string "op1 [operator] op2
+        # supports <, > and == as operators
+        ops = {
+            ">": operator.gt,
+            "<": operator.lt,
+            "==": operator.eq,
+        }
+        # Why convert explicitly to float?
+        # op1, op2 = float(op1), float(op2)
+        return ops[oper](op1, op2)
+
+    def f(ops, data):
+        value = float(ops[2])
+        comparator = ops[1]
+        return any(eval_binary_expr(d, comparator, value) for d in data)
+
+    def check_conditions(conditions: list[Callable[[], bool]], data):
+        relevant_data = None
+        for cond in conditions:
+            for d in data:
+                if d[0] == cond[0]["channel"]:
+                    relevant_data = d[1]
+                    break
+            if f(cond[1], relevant_data):
+                return True
+        return False
+
+    conditions = []
+
+    # Create break condition callables
+    for cond in break_conditions:
+        ops = cond["break_condition"].split(" ")
+        if ops[0] != "val":
+            raise NotImplementedError(
+                'Only parameter values can be used for breaks in this version. Use "val" for the break condition.'
+            )
+        conditions.append([cond, ops])
+        
+    return partial(check_conditions, conditions, data) if conditions else None
+
 
 def _dev_interpret_breaks(break_conditions: list, sweep_values: dict, **kwargs) -> Callable[[], bool] | None:
     """

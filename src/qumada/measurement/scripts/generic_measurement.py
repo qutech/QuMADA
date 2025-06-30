@@ -32,6 +32,7 @@ from qcodes.parameters.specialized_parameters import ElapsedTimeParameter
 from qumada.instrument.buffers import is_bufferable
 from qumada.measurement.doNd_enhanced.doNd_enhanced import (
     _interpret_breaks,
+    _interpret_breaks_data,
     do1d_parallel_asym,
 )
 from qumada.measurement.measurement import CustomSweep, MeasurementScript
@@ -600,6 +601,9 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                    Timing might have slight offsets.
     - "hardware": Runs trigger_start to start the measurement., either preconfigured or started manually.
     - "manual"  : User-controlled trigger setup, useful for synchronized trigger outputs (e.g., with QDac).
+    
+    Can be split into multiple segments if max_difference is set. In this case, break conditions are supported
+    and checked after each segment.
 
     Parameters
     ----------
@@ -614,6 +618,15 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
         If True, appends the name of the ramped gates to the measurement name. Default is True.
     sync_trigger : int, optional
         Number of the used sync trigger (QDacs only). Default is None.
+    max_difference: float|None, optional
+        Maximum allowed difference of the the swept parameters value within one segment of partly buffered
+        sweeps. The complete sweep is segmented to fullfill that condition. If None, the complete
+        measurement will be executed in one go.
+        Example: 
+            param1 should be swept from 0 to 0.2 V. If max_difference= 0.05,
+            the sweep will be split into 4 segments covering 0.05 V each. 
+            Break conditions are checked after each segment.
+        Default is None.
 
     Returns
     -------
@@ -765,6 +778,10 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                         *results,
                         *active_static_gettables,
                     )
+                    if self.break_conditions is not None and self.break_conditions != []:
+                        if _interpret_breaks_data(self.break_conditions, results)() is True:
+                            print("Break condition fulfilled, stopping measurment")
+                            break
                 datasets.append(datasaver.dataset)
                 self.properties[dynamic_parameter["gate"]][dynamic_parameter["parameter"]]["_is_triggered"] = False
                 self.clean_up()
