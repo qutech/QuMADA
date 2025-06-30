@@ -526,6 +526,7 @@ class QumadaDevice:
         num_points: int = 100,
         dynamic_values: None | list[float] = None,
         backsweep: bool = False,
+        max_difference: float|None = None,
         name = None,
         metadata = None,
         station = None,
@@ -568,6 +569,15 @@ class QumadaDevice:
             Buffer settings for the measurement. Must include "num_points". Default is the instance's buffer settings.
         priorize_stored_value : bool, optional
             If True, prioritizes stored values in the setup. Default is False.
+        max_difference: float|None, optional
+            Maximum allowed difference of the the swept parameters value within one segment of partly buffered
+            sweeps. The complete sweep is segmented to fullfill that condition. If None, the complete
+            measurement will be executed in one go.
+            Example: 
+                param1 should be swept from 0 to 0.2 V. If max_difference= 0.05,
+                the sweep will be split into 4 segments covering 0.05 V each. 
+                Break conditions are checked after each segment.
+            Default is None.     
         **kwargs
             Additional keyword arguments passed to the measurement script.
 
@@ -614,6 +624,7 @@ class QumadaDevice:
                     start=setpoint[0],
                     station=station,
                     name=name,
+                    max_difference=max_difference,
                     metadata=metadata,
                     backsweep=backsweep,
                     buffered=buffered,
@@ -636,6 +647,7 @@ class QumadaDevice:
                 name=name,
                 metadata=metadata,
                 backsweep=backsweep,
+                max_difference=max_difference,
                 buffered=buffered,
                 buffer_settings=buffer_settings,
                 priorize_stored_value=priorize_stored_value,
@@ -1338,6 +1350,7 @@ class Terminal_Parameter(ABC):
         buffered=False,
         buffer_settings: dict | None = None,
         priorize_stored_value=False,
+        max_difference=None,
     ):
         """
         Perform a ramp of the parameter value and measure all gettable parameters.
@@ -1366,6 +1379,15 @@ class Terminal_Parameter(ABC):
             Additional buffer settings for the measurement. Default is None.
         priorize_stored_value : bool, optional
             If True, prioritizes stored values in the setup. Default is False.
+        max_difference: float|None, optional
+            Maximum allowed difference of the the swept parameters value within one segment of partly buffered
+            sweeps. The complete sweep is segmented to fullfill that condition. If None, the complete
+            measurement will be executed in one go. Only relevant for buffered measurements.
+            Example: 
+                param1 should be swept from 0 to 0.2 V. If max_difference= 0.05,
+                the sweep will be split into 4 segments covering 0.05 V each. 
+                Break conditions are checked after each segment.
+            Default is None. 
 
         Returns
         -------
@@ -1402,10 +1424,7 @@ class Terminal_Parameter(ABC):
         if start is None:
             start = self()
         if backsweep is True:
-            if buffered is False:
-                self.setpoints = [*np.linspace(start, value, num_points), *np.linspace(value, start, num_points)]
-            else:
-                self.setpoints = np.linspace(start, value, num_points)
+            self.setpoints = [*np.linspace(start, value, num_points), *np.linspace(value, start, num_points)]
         else:
             self.setpoints = np.linspace(start, value, num_points)
         temp_buffer_settings = deepcopy(self._parent_device.buffer_settings)
@@ -1421,17 +1440,14 @@ class Terminal_Parameter(ABC):
                     "Num_points not specified in buffer settings! fast_num_points value is \
                         ignored and buffer settings are used to specify measurement!"
                 )
-            if backsweep is True:
-                script = Generic_1D_Hysteresis_buffered()
-            else:
-                script = Generic_1D_Sweep_buffered()
+            script = Generic_1D_Sweep_buffered()
         else:
             script = Generic_1D_Sweep()
         script.setup(
             self._parent_device.save_to_dict(priorize_stored_value=priorize_stored_value),
             metadata=metadata,
-            name=name,
-            iterations=1,
+            measurement_name=name,
+            max_difference=max_difference,
             buffer_settings=temp_buffer_settings,
             **self._parent_device.buffer_script_setup,
         )
