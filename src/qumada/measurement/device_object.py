@@ -533,6 +533,7 @@ class QumadaDevice:
         buffered = False,
         buffer_settings: dict | None = None,
         priorize_stored_value = False,
+        backsweep_after_break = False,
         **kwargs,
     ):
         """
@@ -569,6 +570,7 @@ class QumadaDevice:
             Buffer settings for the measurement. Must include "num_points". Default is the instance's buffer settings.
         priorize_stored_value : bool, optional
             If True, prioritizes stored values in the setup. Default is False.
+<<<<<<< HEAD
         max_difference: float|None, optional
             Maximum allowed difference of the the swept parameters value within one segment of partly buffered
             sweeps. The complete sweep is segmented to fullfill that condition. If None, the complete
@@ -578,6 +580,12 @@ class QumadaDevice:
                 the sweep will be split into 4 segments covering 0.05 V each. 
                 Break conditions are checked after each segment.
             Default is None.     
+=======
+        backsweep_after_break : bool, optional
+            If True, parameter will be ramped through the setpoints set so far 
+            in reverse order once a break condition is triggered. For normal ramps,
+            this results in a backsweep to the starting point. Default is False.
+>>>>>>> feature/backsweep_after_break_1D
         **kwargs
             Additional keyword arguments passed to the measurement script.
 
@@ -630,6 +638,7 @@ class QumadaDevice:
                     buffered=buffered,
                     buffer_settings=buffer_settings,
                     priorize_stored_value=priorize_stored_value,
+                    backsweep_after_break = backsweep_after_break,
                     ))
                 param(val)
                 
@@ -651,6 +660,7 @@ class QumadaDevice:
                 buffered=buffered,
                 buffer_settings=buffer_settings,
                 priorize_stored_value=priorize_stored_value,
+                backsweep_after_break = backsweep_after_break,
                 ))
             params(val)
         return data
@@ -1389,6 +1399,10 @@ class Terminal_Parameter(ABC):
                 the sweep will be split into 4 segments covering 0.05 V each. 
                 Break conditions are checked after each segment.
             Default is None. 
+        backsweep_after_break : bool, optional
+            If True, parameter will be ramped through the setpoints set so far 
+            in reverse order once a break condition is triggered. For normal ramps,
+            this results in a backsweep to the starting point. Default is False.
 
         Returns
         -------
@@ -1449,7 +1463,7 @@ class Terminal_Parameter(ABC):
             metadata=metadata,
             measurement_name=name,
             max_difference=max_difference,
-            backsweep_after_break = backsweep_after_break,
+            backsweep_after_break=backsweep_after_break,
             buffer_settings=temp_buffer_settings,
             **self._parent_device.buffer_script_setup,
         )

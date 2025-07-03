@@ -35,6 +35,7 @@ from qumada.measurement.doNd_enhanced.doNd_enhanced import (
     _interpret_breaks,
     _interpret_breaks_data,
     do1d_parallel_asym,
+    dond_custom,
 )
 from qumada.measurement.measurement import CustomSweep, MeasurementScript
 from qumada.utils.ramp_parameter import ramp_or_set_parameters
@@ -74,6 +75,10 @@ class Generic_1D_Sweep(MeasurementScript):
         log_idle_params : bool, optional
             If True, record dynamic parameters kept constant during sweeps.
             Default is True.
+        backsweep_after_break : bool, optional
+            If True, parameter will be ramped through the setpoints set so far 
+            in reverse order once a break condition is triggered. For normal ramps,
+            this results in a backsweep to the starting point. Default is False.
 
         Returns
         -------
@@ -81,6 +86,7 @@ class Generic_1D_Sweep(MeasurementScript):
             A list of QCoDeS datasets for each sweep.
         """
         wait_time = self.settings.get("wait_time", 5)
+        backsweep_after_break = self.settings.get("backsweep_after_break", False)
         include_gate_name = self.settings.get("include_gate_name", True)
         naming_helper(self, default_name="1D Sweep")
         data = list()
@@ -98,15 +104,20 @@ class Generic_1D_Sweep(MeasurementScript):
             inactive_channels = [chan for chan in self.dynamic_channels if chan != sweep.param]
             self.initialize(inactive_dyn_channels=inactive_channels)
             sleep(wait_time)
+            if backsweep_after_break:
+                sweep._setpoints = np.array([*sweep._setpoints, *sweep._setpoints[::-1]])
+                sweep._num_points = len(sweep._setpoints)
             data.append(
-                dond(
+                dond_custom(
                     sweep,
                     *measured_channels,
                     measurement_name=self._measurement_name,
                     break_condition=_interpret_breaks(self.break_conditions),
+                    backsweep_after_break=backsweep_after_break,
                     **dond_kwargs,
                 )
             )
+
         self.clean_up()
         return data
 
