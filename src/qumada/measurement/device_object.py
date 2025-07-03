@@ -1347,6 +1347,7 @@ class Terminal_Parameter(ABC):
         name=None,
         metadata=None,
         backsweep=False,
+        backsweep_after_break=False,
         buffered=False,
         buffer_settings: dict | None = None,
         priorize_stored_value=False,
@@ -1448,6 +1449,7 @@ class Terminal_Parameter(ABC):
             metadata=metadata,
             measurement_name=name,
             max_difference=max_difference,
+            backsweep_after_break = backsweep_after_break,
             buffer_settings=temp_buffer_settings,
             **self._parent_device.buffer_script_setup,
         )

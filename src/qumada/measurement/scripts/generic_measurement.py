@@ -25,6 +25,7 @@ import logging
 from time import sleep, time
 
 import numpy as np
+from copy import copy
 from qcodes.dataset import dond
 from qcodes.dataset.measurements import Measurement
 from qcodes.parameters.specialized_parameters import ElapsedTimeParameter
@@ -655,6 +656,7 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
         include_gate_name = self.settings.get("include_gate_name", True)
         sync_trigger = self.settings.get("sync_trigger", None)
         max_difference = self.settings.get("max_difference", None)
+        backsweep_after_break = self.settings.get("backsweep_after_break", False)
         datasets = []
         self.generate_lists()
         measurement_name = naming_helper(self, default_name="1D Sweep")
@@ -733,6 +735,11 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
             meas.write_period = 0.5
 
             with meas.run() as datasaver:
+                
+                if backsweep_after_break is True:
+                    dynamic_backsweeps = []
+                    active_comping_backsweeps = []
+                    active_static_gettables_backsweeps = []
 
                 dynamic_sweep = self.dynamic_sweeps[i]
                 split_setpoints = split_into_segments(
@@ -745,47 +752,102 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                     self.buffer_settings["num_points"] = len(setpoints_segment)
                     dynamic_sweep._setpoints = setpoints_segment
                     dynamic_sweep._num_points = len(setpoints_segment)
+                    
                     for acs in active_comping_sweeps:
                         acs._setpoints = acs_split_setpoints[n]
                         acs._num_points = len(setpoints_segment)
+                    
                     active_static_gettables = []
                     for sg in static_gettables:
                         sgs = [list(sg)[1][0] for _ in range(len(setpoints_segment))]
                         active_static_gettables.append((list(sg)[0], sgs))
+                    if backsweep_after_break is True:
+                        dynamic_backsweeps.append(copy(dynamic_sweep))
+                        active_comping_backsweeps.append(copy(active_comping_sweeps))
+                        active_static_gettables_backsweeps.append(copy(active_static_gettables))
+                    results = _run_buffered_measurement(script = self,
+                                              datasaver = datasaver, 
+                                              sweeps = [dynamic_sweep, *active_comping_sweeps],
+                                              static_gettables = active_static_gettables,
+                                              )
                     
-                    
-                    try:
-                        trigger_reset()
-                    except TypeError:
-                        logger.info("No method to reset the trigger defined.")
-                    results = []
-                    self.ready_buffers()
-                    self.trigger_measurement(
-                        parameters = [dynamic_param, *self.active_compensating_channels],
-                        setpoints = [dynamic_sweep.get_setpoints(), 
-                                     *[sweep.get_setpoints for sweep in active_comping_sweeps]],
-                        method = "ramp",
-                        sync_trigger=sync_trigger
-                        )
-                 
-                    results = self.readout_buffers()
-                    comp_results = []
-                    for ch, sw in zip(self.active_compensating_channels, active_comping_sweeps):
-                        comp_results.append((ch, sw.get_setpoints()))
-                    datasaver.add_result(
-                        (dynamic_param, dynamic_sweep.get_setpoints()),
-                        *comp_results,
-                        *results,
-                        *active_static_gettables,
-                    )
                     if self.break_conditions is not None and self.break_conditions != []:
                         if _interpret_breaks_data(self.break_conditions, results)() is True:
-                            print("Break condition fulfilled, stopping measurment")
-                            break
+                            if backsweep_after_break is False:
+                                print("Break condition fulfilled, stopping measurment")
+                                break
+                            elif backsweep_after_break is True:
+                                backsweeps = []
+                                print("Break condition fulfilled, sweeping back")
+                                for dynamic_bs, comping_bs, static_gettables_bs in zip(
+                                        dynamic_backsweeps[::-1],
+                                        active_comping_backsweeps[::-1],
+                                        active_static_gettables_backsweeps[::-1],):
+                                    backsweeps.append([dynamic_bs, *comping_bs])
+                                for sweeps in backsweeps:
+                                    for sweep in sweeps:
+                                        sweep._setpoints = sweep.get_setpoints()[::-1]
+                                    results = _run_buffered_measurement(script = self,
+                                                              datasaver = datasaver, 
+                                                              sweeps = sweeps,
+                                                              static_gettables = static_gettables_bs,
+                                                                  )
+                                break
+                            
                 datasets.append(datasaver.dataset)
                 self.properties[dynamic_parameter["gate"]][dynamic_parameter["parameter"]]["_is_triggered"] = False
                 self.clean_up()
         return datasets
+
+def _run_buffered_measurement(script, datasaver, sweeps, static_gettables = [], **kwargs):
+    """
+    Wrapping up buffered measurements a bit.
+
+    Parameters
+    ----------
+    script : TYPE
+        DESCRIPTION.
+    datasaver : TYPE
+        DESCRIPTION.
+    sweeps : TYPE
+        DESCRIPTION.
+    static_gettable : TYPE, optional
+        DESCRIPTION. The default is None.
+    **kwargs : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    None.
+
+    """
+    trigger_reset = script.settings.get("trigger_reset", None)
+    sync_trigger = script.settings.get("sync_trigger", None)
+    try:
+        trigger_reset()
+    except TypeError:
+        logger.info("No method to reset the trigger defined.")
+    results = []
+    script.ready_buffers()
+    script.trigger_measurement(
+        parameters = [sweep.param for sweep in sweeps],
+        setpoints = [sweep.get_setpoints() for sweep in sweeps],
+        method = "ramp",
+        sync_trigger=sync_trigger
+        )
+ 
+    results = script.readout_buffers()
+    sweep_results = []
+    for sweep in sweeps:
+        sweep_results.append((sweep.param, sweep.get_setpoints()))
+        
+    datasaver.add_result(
+        *sweep_results,
+        *results,
+        *static_gettables,
+    )
+    
+    return results
 
 
 class Generic_1D_Hysteresis_buffered(MeasurementScript):
