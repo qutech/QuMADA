@@ -72,7 +72,7 @@ class Generic_1D_Sweep(MeasurementScript):
             If True, record dynamic parameters kept constant during sweeps.
             Default is True.
         backsweep_after_break : bool, optional
-            If True, parameter will be ramped through the setpoints set so far 
+            If True, parameter will be ramped through the setpoints set so far
             in reverse order once a break condition is triggered. For normal ramps,
             this results in a backsweep to the starting point. Default is False.
 
@@ -104,12 +104,14 @@ class Generic_1D_Sweep(MeasurementScript):
                 sweep._setpoints = np.array([*sweep._setpoints, *sweep._setpoints[::-1]])
                 sweep._num_points = len(sweep._setpoints)
             data.append(
-                dond_custom(
+                self._dond(
                     sweep,
                     *measured_channels,
                     measurement_name=self._measurement_name,
                     break_condition=_interpret_breaks(self.break_conditions),
                     backsweep_after_break=backsweep_after_break,
+                    dond_module_path="qumada.measurement.doNd_enhanced.doNd_enhanced",
+                    dond_fn_name="dond_custom",
                     **dond_kwargs,
                 )
             )
