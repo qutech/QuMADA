@@ -111,7 +111,8 @@ class Generic_1D_Sweep(MeasurementScript):
                     break_condition=_interpret_breaks(self.break_conditions),
                     backsweep_after_break=backsweep_after_break,
                     dond_module_path="qumada.measurement.doNd_enhanced.doNd_enhanced",
-                    dond_fn_name="dond_custom",
+                    modules_to_patch=("qcodes.dataset.dond.do_nd", "qumada.measurement.doNd_enhanced.doNd_enhanced"),
+                    dond_fn_fname="dond_custom",
                     **dond_kwargs,
                 )
             )
@@ -218,7 +219,7 @@ class Generic_1D_parallel_Sweep(MeasurementScript):
         for sweep in self.dynamic_sweeps:
             dynamic_params.append(sweep.param)
         sleep(wait_time)
-        data = do1d_parallel_asym(
+        data = self._dond(
             *tuple(self.gettable_channels),
             param_set=dynamic_params,
             setpoints=[sweep.get_setpoints() for sweep in self.dynamic_sweeps],
@@ -226,6 +227,8 @@ class Generic_1D_parallel_Sweep(MeasurementScript):
             measurement_name=self.measurement_name,
             break_condition=_interpret_breaks(self.break_conditions),
             backsweep_after_break=backsweep_after_break,
+            dond_module_path="qumada.measurement.doNd_enhanced.doNd_enhanced",
+            dond_fn_fname="do1d_parallel_asym",
             **do1d_kwargs,
         )
         self.clean_up()

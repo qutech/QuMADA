@@ -131,18 +131,25 @@ class MeasurementScript(ABC):
 
     def _dond(self, *args,
               dond_module_path="qcodes.dataset.dond.do_nd",
+              modules_to_patch=None,
               dond_fn_fname="dond", **kwargs,):
         """This is a wrapper around qcodes dond function that monkeypatches the live plotter in the datasaver"""
         # we need to use importlib here because the dond function shadows the qcodes.dataset.dond package
         do_nd = importlib.import_module(dond_module_path)
+        if modules_to_patch is None:
+            modules_to_patch = (dond_module_path,)
+        meas_modules = [importlib.import_module(module_name) for module_name in modules_to_patch]
 
-        prev_meas_cls = do_nd.Measurement
+        prev_meas_cls = [meas_module.Measurement for meas_module in meas_modules]
         try:
-            do_nd.Measurement = self._new_measurement
+            for meas_module in meas_modules:
+                meas_module.Measurement = self._new_measurement
+
             do_nd_fn = getattr(do_nd, dond_fn_fname)
             return do_nd_fn(*args, **kwargs)
         finally:
-            do_nd.Measurement = prev_meas_cls
+            for meas_module, prev in zip(meas_modules, prev_meas_cls):
+                meas_module.Measurement = prev
 
     def add_terminal_parameter(self, parameter_name: str, gate_name: str = None, parameter: Parameter = None) -> None:
         """
