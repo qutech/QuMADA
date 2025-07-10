@@ -1,12 +1,20 @@
 import contextlib
 import functools
+import math
 import warnings
 from collections.abc import Sequence
 from typing import Optional, Protocol, Union
 
+import numpy as np
 from qcodes import Measurement
 from qcodes.dataset.data_set import DataSet
+from qcodes.dataset.descriptions.rundescriber import RunDescriber
+from qcodes.dataset.descriptions.param_spec import ParamSpecBase
 from qcodes.parameters import ParameterBase
+
+import matplotlib.pyplot as plt
+
+import xarray as xr
 
 
 class MeasurementAndPlot:
@@ -48,7 +56,10 @@ class DataSaverAndPlotter:
         self._shapes = shapes
         self._last_plot_call = None
 
-    def _process_xarr(self, xarr):
+        self._xarray_builder_error = None
+        self._xarray_builder = None
+
+    def _process_xarr(self, xarr, description: RunDescriber = None):
         terminal_parameters = self._parent.script.terminal_parameters
         rename_dict = {
             parameter.full_name: parameter.label
@@ -61,7 +72,29 @@ class DataSaverAndPlotter:
 
     def add_result(self, *args):
         self.qcodes_datasaver.add_result(*args)
+
+        if self._xarray_builder_error is None and self._xarray_builder is None:
+            try:
+                self._xarray_builder = XArrayBuilder(self.dataset.description)
+            except Exception as e:
+                warnings.warn(f"Could not build xarray dataset: {e}")
+                self._xarray_builder_error = e
+                raise # TODO: remove debug
+
+        if self._xarray_builder_error is None and self._xarray_builder is not None:
+            try:
+                self._xarray_builder.add_result(*args)
+            except Exception as e:
+                warnings.warn(f"Could not add result to xarray dataset: {e}")
+                self._xarray_builder_error = e
+                raise # TODO: remove debug
+
         if self.plot_target is not None:
+            if self._xarray_builder_error is None and self._xarray_builder is not None:
+                xarr = self._xarray_builder.xarr
+                self.plot_target(xarr)
+                return
+
             # the following logic only generates a dataset and sends data to the plotter
             # if the QCoDeS internal _last_save_time attribute was updated.
             last_save_time = getattr(self.qcodes_datasaver, "_last_save_time", None)
@@ -86,3 +119,102 @@ class DataSaverAndPlotter:
     @property
     def dataset(self) -> DataSet:
         return self.qcodes_datasaver.dataset
+
+
+def _empty_variable_from_spec(param_spec: ParamSpecBase, shape: tuple, dims: Sequence[str]):
+    if param_spec.type != 'numeric':
+        warnings.warn(f"Unhandled parameter type: {param_spec.type!r}")
+
+    assert len(shape) == len(dims)
+
+    empty_data = np.full(shape=shape, fill_value=np.nan)
+    attrs = {
+        "long_name": param_spec.label,
+        "standard_name": param_spec.name,
+        "units": param_spec.unit,
+    }
+    return xr.Variable(
+        dims=dims,
+        data=empty_data,
+        attrs=attrs,
+    )
+
+
+def _empty_xarray_from_description(description: RunDescriber):
+    if description.interdeps.standalones:
+        raise NotImplementedError("standalone parameters are not supported yet", description.interdeps.standalones)
+
+    if description.interdeps.inferences:
+        raise NotImplementedError("inferred parameters are not supported yet", description.interdeps.inferences)
+
+    coords = {}
+    data_vars = {}
+    for measured, dependencies in description.interdeps.dependencies.items():
+
+        shape = description.shapes[measured.name]
+        measured_dims = []
+
+        assert len(shape) == len(dependencies)
+        for dep, size in zip(dependencies, shape):
+            dim_name = dep.name
+            if dim_name in coords:
+                if len(coords[dim_name]) != size:
+                    raise NotImplementedError("different sizes (and values)"
+                                              "for the same parameter are not supported yet")
+            else:
+                coords[dim_name] = _empty_variable_from_spec(dep, (size,), (dim_name,))
+            measured_dims.append(dim_name)
+
+        measured_var = _empty_variable_from_spec(measured, shape, measured_dims)
+        data_vars[measured.name] = measured_var
+
+    xarr = xr.Dataset(data_vars=data_vars, coords=coords)
+    return xarr
+
+class XArrayBuilder:
+    def __init__(self, description: RunDescriber):
+        self.description = description
+        self.xarr = _empty_xarray_from_description(description)
+
+        self._counts = {name: 0 for name in self.xarr.keys()}
+        self._index_values = {
+            name: coord.values for name, coord in self.xarr.coords.items()
+        }
+
+    def add_result(self, *args):
+        values = {parameter.full_name: value for parameter, value in args}
+        if len(values) != len(args):
+            raise ValueError("duplicate parameter names")
+
+        for measure_param in self.xarr.keys():
+            if measure_param not in values:
+                continue
+            count = self._counts[measure_param]
+
+            measure_data = self.xarr[measure_param]
+            measure_values = measure_data.values
+            shape = measure_values.shape
+
+            # this is faster than np.unravel_index
+            idx = []
+            remaining = count
+            for dim in shape:
+                dim_idx, remaining = divmod(remaining, dim)
+                idx.append(dim_idx)
+            idx = tuple(idx)
+            measure_values[idx] = values[measure_param]
+
+            to_update = {}
+            for dim_idx, dim_var in zip(idx, measure_data.coords.values()):
+                dim_name = dim_var.name
+                new_val = values[dim_name]
+                dim_values = self._index_values[dim_name]
+                old_val = dim_values[dim_idx]
+                if old_val != old_val:
+                    # old value is nan
+                    dim_values[dim_idx] = new_val
+                    to_update[dim_name] = dim_values
+            if to_update:
+                measure_data.assign_coords(to_update)
+            self._counts[measure_param] += 1
+
