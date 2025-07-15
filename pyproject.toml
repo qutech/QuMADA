@@ -24,12 +24,14 @@ dependencies = [
     "jsonschema",
     "zhinst-toolkit >= 0.3.3",
     "pyqt5",
+    "shapely",
     "versioningit ~= 2.2.0",
 ]
 
 [project.optional-dependencies]
 gui = ["plottr"]
 spyder = ["spyder"]
+monitor = ["dash", "ezdxf", "dash-extensions"]
 
 [project.urls]
 Repository = "https://github.com/qutech/qumada"
