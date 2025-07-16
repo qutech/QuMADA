@@ -120,7 +120,6 @@ def gates_to_figure(gates: list[Gate], voltages: list[dict], colorscale):
         yaxis=dict(visible=False),
         margin=dict(l=0, r=0, t=0, b=0),
         plot_bgcolor="white",
-        uirevision=gates,
     )
     return fig
 
@@ -213,14 +212,21 @@ def make_app(ws_url: str) -> Dash:
         Input("gate-geometry", "data"),
         Input("voltages", "data"),
         Input("colorscale-dropdown", "value"),
-        prevent_initial_call=True,
     )
     def _draw_layout(geom_str, volts, colorscale_selected):
         if geom_str is None or volts is None:
-            raise dash.exceptions.PreventUpdate
+            fig = go.Figure()
+        else:
+            gates = string_to_gate_list(geom_str)
+            fig = gates_to_figure(gates, volts, colorscale_selected)
 
-        gates = string_to_gate_list(geom_str)
-        fig = gates_to_figure(gates, volts, colorscale_selected)
+        fig.update_layout(
+            xaxis=dict(scaleanchor="y", visible=False),
+            yaxis=dict(visible=False),
+            margin=dict(l=0, r=0, t=0, b=0),
+            plot_bgcolor="white",
+            uirevision=hash(geom_str),
+        )
         return fig
 
     return app
