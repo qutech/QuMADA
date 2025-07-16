@@ -132,7 +132,8 @@ def get_gates_from_cropped_region(
     return chosen
 
 
-def _connect_all_touching(gates: list[Gate], grid_size: float):
+def _connect_all_touching(gates: list[Gate], grid_size: float) -> list[Gate]:
+    """Iteratively connects all touching gates "or"-ing their label positions."""
     assert len({gate.layer for gate in gates}) == 1
 
     result = []
@@ -331,6 +332,6 @@ if __name__ == "__main__":
     doc = ezdxf.readfile(args.dxf_path)
     raw_gates = get_gates_from_cropped_region(doc)
     merged_gates = auto_merge(raw_gates)
-    gates = label_gates(merged_gates)
+    resulting_gates = label_gates(merged_gates)
     plt.show(block=True)
-    store_to_file(gates, args.json_path)
+    store_to_file(resulting_gates, args.json_path)
