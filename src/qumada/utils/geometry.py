@@ -7,13 +7,18 @@ from shapely import wkt
 
 @dataclasses.dataclass
 class Gate:
+    """Representation of a gate electrode with the geometric properties and annotation information."""
     polygon: Polygon
     path: list[str]
     layer: str
     label: str | None
     label_position: tuple[float, float]
 
+
 def gate_list_to_string(gates: list[Gate]) -> str:
+    """Serialize a list of gates to a JSON string.
+
+    The geometric information is stored in WKT format (well known text)."""
     def to_json(o):
         if isinstance(o, Gate):
             return dataclasses.asdict(o)
@@ -27,6 +32,9 @@ def gate_list_to_string(gates: list[Gate]) -> str:
 
 
 def string_to_gate_list(txt: str) -> list[Gate]:
+    """Deserialize a JSON string produced by :py:`.gate_list_to_string` to a list of gates.
+    """
+
     data = json.loads(txt)
     assert isinstance(data, list)
 
@@ -39,12 +47,14 @@ def string_to_gate_list(txt: str) -> list[Gate]:
 
 
 def store_to_file(gates: list[Gate], path: pathlib.Path):
+    """Store a list of gates in a file in json format."""
     path = pathlib.Path(path)
     txt = gate_list_to_string(gates)
     path.write_text(txt)
 
 
 def load_from_file(path: pathlib.Path):
+    """Load a list of gates from a JSON file produced with :py:`.store_to_file`."""
     path = pathlib.Path(path)
     txt = path.read_text()
     return string_to_gate_list(txt)
