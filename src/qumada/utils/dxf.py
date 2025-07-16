@@ -1,14 +1,19 @@
 import argparse
 import copy
+import math
+import operator
 import pathlib
 import re
 import logging
 import subprocess
 import sys
+import warnings
+from copy import deepcopy
 from typing import Tuple
 
 import ezdxf.document
 import matplotlib.widgets
+import shapely
 from matplotlib import pyplot as plt
 from shapely.geometry import (
     MultiLineString
@@ -62,7 +67,15 @@ def get_gates_from_cropped_region(
     x_rng: Tuple[float, float] = (-3., 3.),
     y_rng: Tuple[float, float] = (-1.5, 1.5),
     layer_regex: str = r".*BEAM\_L.",
+    grid_size: float = 1e-3,
 ) -> list[Gate]:
+    """Selects all polygons (POLYLINE entities) from the selected region that live in a layer matched by the given
+    regular expression. The polygons are cropped to the region and returned as :py:`.Gate` objects.
+
+    :py:attr:`.Gate.label_position` is only assigned to gates that touch the boundary.
+
+    In some cases, continuous gates are returned in multiple pieces. Use :py:`.auto_merge` to merge overlapping gates in the same layer.
+    """
     regex = re.compile(layer_regex)
 
     keep_layer = {
@@ -85,13 +98,15 @@ def get_gates_from_cropped_region(
             if raw_geom is None:
                 continue
 
-            geom = Polygon(raw_geom).simplify(1e-3)
+            geom = Polygon(raw_geom).simplify(grid_size)
             geom_roi = geom.intersection(roi_poly)
             if geom_roi == roi_poly:
                 continue
 
             if geom_roi.is_empty:
                 continue
+
+            geom_roi = shapely.set_precision(geom_roi, grid_size=grid_size)
 
             boundary = geom.intersection(roi_poly.boundary)
 
@@ -117,48 +132,60 @@ def get_gates_from_cropped_region(
     return chosen
 
 
-def auto_merge(gates: list[Gate]):
-    # merge touching gates that do not touch the boundary
-    connected = []
-    unconnected = []
+def _connect_all_touching(gates: list[Gate], grid_size: float):
+    assert len({gate.layer for gate in gates}) == 1
+
+    result = []
+    not_intersecting = []
+    intersecting = []
     for gate in gates:
-        if gate.label_position:
-            connected.append(gate)
-        else:
-            unconnected.append(gate)
-
-    logger.info("Connected: %d", len(connected))
-    logger.info("Unconnected: %d", len(unconnected))
-
-    while unconnected:
-        temp = []
-        for gate in unconnected:
-            for con_gate in connected:
-                if gate.layer != con_gate.layer:
-                    continue
-                boundary = gate.polygon.intersection(con_gate.polygon, grid_size=1e-3)
-                if boundary.is_empty:
-                    continue
-
-                new_geom = gate.polygon.union(con_gate.polygon)
-                con_gate.polygon = new_geom
-                break
+        not_intersecting.clear()
+        intersecting.clear()
+        for other in result:
+            # boundary = gate.polygon.intersection(other.polygon, grid_size=grid_size)
+            if gate.polygon.intersects(other.polygon):
+                intersecting.append(other)
             else:
-                temp.append(gate)
-        if len(temp) == len(unconnected):
-            break
-        unconnected = temp
+                not_intersecting.append(other)
+        result.clear()
 
-    logger.info("Unconnected after auto-merge: %d", len(unconnected))
-    for u in unconnected:
-        logger.debug("Unconnected %s in layer %r: %r", u.label, u.layer, u.polygon)
-        u.label_position = u.polygon.centroid.x, u.polygon.centroid.y
+        if intersecting:
+            intersecting.append(gate)
+            label_position = None
+            for g in intersecting:
+                label_position = label_position or g.label_position 
+            new_poly = shapely.union_all([g.polygon for g in intersecting], grid_size=grid_size)
+            to_append = intersecting[0]
+            to_append.polygon = new_poly
+            to_append.label_position = label_position
 
-    return connected + unconnected
+            result.append(to_append)
+        else:
+            result.append(copy.copy(gate))
+
+        result.extend(not_intersecting)
+    return result
+
+
+def auto_merge(gates: list[Gate], grid_size: float = 1e-3):
+    """Merges touching gates in the same layer"""
+
+    by_layer = {}
+    for gate in gates:
+        by_layer.setdefault(gate.layer, []).append(gate)
+
+    for layer, layer_gates in by_layer.items():
+        connected = _connect_all_touching(layer_gates, grid_size)
+        by_layer[layer] = connected
+
+    result = sum(by_layer.values(), start=[])
+    return result
 
 
 def label_gates(gates: list[Gate]) -> list[Gate]:
     gates = [copy.deepcopy(gate) for gate in gates]
+
+    gates = sorted(gates, key=lambda gate: 0.0 if gate.label_position is None else math.atan2(*gate.label_position))
 
     axd = plt.figure(layout="constrained").subplot_mosaic(
         """
