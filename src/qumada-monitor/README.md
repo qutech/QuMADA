@@ -1,6 +1,7 @@
 # QuMADA Device Monitor
 
-This is a dash app that is intended to monitor a qumada device.
+This is a dash app that is intended to monitor a qumada device. To use it you need to install the `monitor` dependencies for example via 
+`pip install qumada[monitor]` or with a local editable install `pip install -e .[monitor]`.
 
 The feature that separates it from the qcodes monitor is the ability to display a proper layout.
 
