@@ -24,6 +24,7 @@ Loading data from Database
 """
 from __future__ import annotations
 
+import re
 from os import path
 
 import numpy as np
@@ -32,7 +33,6 @@ from qcodes.dataset.data_set import DataSet
 from qcodes.dataset.plotting import plot_dataset
 
 from qumada.utils.browsefiles import browsefiles
-import re
 
 
 # %%
@@ -216,7 +216,7 @@ def pick_measurements(sample_name: str = None, preview_dialogue=False, measureme
             load_db()
             return pick_measurements(preview_dialogue=preview_dialogue, measurement_list=measurement_list)
         elif re.match(pattern, chosen):
-            for i in range(int(match.group(1)), int(match.group(2))+1):
+            for i in range(int(match.group(1)), int(match.group(2)) + 1):
                 measurement_list.append(measurements[i])
         else:
             chosen = int(chosen)
@@ -289,13 +289,16 @@ def get_parameter_data(dataset=None, parameter_name=None, **kwargs):
     )
     return zip(params, data, units, labels)
 
+
 # %%
 
-def get_parameter_name_by_label(dataset=None, parameter_label=None, appendix = ""):
+
+def get_parameter_name_by_label(dataset=None, parameter_label=None, appendix=""):
     for param in dataset.get_parameters():
         if param.label == parameter_label + appendix:
             return param.name
     return None
+
 
 # %%
 def separate_up_down(x_data, y_data):

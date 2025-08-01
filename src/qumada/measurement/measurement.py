@@ -31,8 +31,8 @@ from collections.abc import MutableSequence
 from contextlib import suppress
 from datetime import datetime
 from functools import wraps
-from typing import Any, Callable
 from time import sleep
+from typing import Any, Callable
 
 import numpy as np
 import qcodes as qc
@@ -44,7 +44,7 @@ from qcodes.parameters import Parameter, ParameterBase
 from qumada.instrument.buffers import is_bufferable, is_triggerable
 from qumada.metadata import Metadata
 from qumada.utils.ramp_parameter import ramp_or_set_parameter, ramp_or_set_parameters
-from qumada.utils.utils import flatten_array, _validate_mapping
+from qumada.utils.utils import _validate_mapping, flatten_array
 
 logger = logging.getLogger(__name__)
 
@@ -449,7 +449,7 @@ class MeasurementScript(ABC):
             }
         self.trigger_ins = {
             param.root_instrument._qumada_mapping for param in self.dynamic_channels if is_triggerable(param)
-        } #Independent of self.buffered to allow parallel ramping for unbuffered measurement initialization.
+        }  # Independent of self.buffered to allow parallel ramping for unbuffered measurement initialization.
         self.sort_by_priority()
         self._lists_created = True
         self._relabel_instruments()
@@ -495,7 +495,7 @@ class MeasurementScript(ABC):
         setpoint_intervall = self.settings.get("setpoint_intervall", 0.1)
         trigger_start = self.settings.get("trigger_start", "software")  # TODO: this should be set elsewhere
         trigger_reset = self.settings.get("trigger_reset", None)
-        trigger_type =  self.settings.get("trigger_type", None),
+        trigger_type = (self.settings.get("trigger_type", None),)
         if not self._lists_created:
             self.generate_lists()
         # for item in self.compensated_parameters:
@@ -663,10 +663,16 @@ class MeasurementScript(ABC):
                 else:
                     raise Exception(f"{gettable_param} is not bufferable.")
         self.ready_triggers()
-        ramp_or_set_parameters(ramp_params, ramp_targets, ramp_rate,
-                               ramp_time, setpoint_intervall, trigger_start=trigger_start,
-                               trigger_type=trigger_type, trigger_reset=trigger_reset)
-
+        ramp_or_set_parameters(
+            ramp_params,
+            ramp_targets,
+            ramp_rate,
+            ramp_time,
+            setpoint_intervall,
+            trigger_start=trigger_start,
+            trigger_type=trigger_type,
+            trigger_reset=trigger_reset,
+        )
 
     @abstractmethod
     def run(self) -> list:
@@ -675,7 +681,6 @@ class MeasurementScript(ABC):
         Abstract method.
         """
         return []
-
 
     def clean_up(self, additional_actions: list[Callable] | None = None, **kwargs) -> None:
         """
@@ -704,7 +709,7 @@ class MeasurementScript(ABC):
             buffer.setup_buffer(settings=self.buffer_settings)
             buffer.start()
         self.ready_triggers()
-            
+
     def ready_triggers(self, **kwargs):
         """
         Prepare trigger inputs for not buffered instruments.
@@ -785,8 +790,8 @@ class MeasurementScript(ABC):
                 metadata.save()
             except Exception as ex:
                 print(f"Metadata could not inserted into database: {ex}")
-                
-    def trigger_measurement(self, parameters, setpoints, method = "ramp" ,sync_trigger=None):
+
+    def trigger_measurement(self, parameters, setpoints, method="ramp", sync_trigger=None):
 
         TRIGGER_TYPES = ["software", "hardware", "manual"]
         trigger_start = self.settings.get("trigger_start", "manual")  # TODO: this should be set elsewhere
@@ -797,28 +802,28 @@ class MeasurementScript(ABC):
             default="software",
             default_key_error="software",
         )
-        setpoints_mapping = {param : setpoint for param, setpoint in zip(parameters, setpoints)}
+        setpoints_mapping = {param: setpoint for param, setpoint in zip(parameters, setpoints)}
         if sync_trigger is None:
             sync_trigger = ()
         buffer_timeout_multiplier = self.settings.get("buffer_timeout_multiplier", 20)
         # Some logic to sort instruments. Instruments with sync-triggers have to be added last,
         # as executing _qumada_pulse/_ramp with them instantly runs the pulse/ramp, before other instruments
-        # that wait for a trigger signal are added and prepared. 
+        # that wait for a trigger signal are added and prepared.
         instruments_set = {param.root_instrument for param in parameters}
         instruments = [instrument for instrument in instruments_set if instrument not in sync_trigger]
         for instrument in instruments_set:
             if instrument in sync_trigger:
                 instruments.append(instrument)
-        
+
         for instr in instruments:
             instr_params = [param for param in parameters if param.root_instrument is instr]
             if method == "ramp":
                 try:
                     instr._qumada_ramp(
-                        parameters = instr_params,
-                        end_values = [setpoints_mapping[param][-1] for param in instr_params],
-                        ramp_time = self._burst_duration,
-                        sync_trigger = sync_trigger,
+                        parameters=instr_params,
+                        end_values=[setpoints_mapping[param][-1] for param in instr_params],
+                        ramp_time=self._burst_duration,
+                        sync_trigger=sync_trigger,
                     )
                 except AttributeError as ex:
                     logger.error(
@@ -828,14 +833,14 @@ class MeasurementScript(ABC):
                             Use the unbuffered script!"
                     )
                     raise ex
-                
+
             elif method == "pulse":
                 try:
                     instr._qumada_pulse(
-                        parameters = instr_params,
-                        setpoints = [setpoints_mapping[param] for param in instr_params],
-                        delay = self._burst_duration / self.buffered_num_points,
-                        sync_trigger = sync_trigger,
+                        parameters=instr_params,
+                        setpoints=[setpoints_mapping[param] for param in instr_params],
+                        delay=self._burst_duration / self.buffered_num_points,
+                        sync_trigger=sync_trigger,
                     )
                 except AttributeError as ex:
                     logger.error(
@@ -849,7 +854,7 @@ class MeasurementScript(ABC):
                 with NameError as ex:
                     logger.error("Argument 'method' has to be eiter 'ramp' or 'pulse'")
                     raise ex
-                    
+
         if trigger_type == "manual":
             logger.warning(
                 "You are using manual triggering. If you want to pulse parameters on multiple"

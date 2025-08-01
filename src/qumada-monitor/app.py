@@ -5,20 +5,23 @@ Live quantum‑device monitor: geometry + voltages ➜ interactive SVG plot.
 Start with:
     python dash_device_monitor.py --ws ws://localhost:8765 --colorscale Cividis
 """
-import argparse, json, itertools, os, warnings
+import argparse
+import itertools
+import json
+import os
+import warnings
 from collections import defaultdict
 
-import plotly.graph_objects as go
+import dash.exceptions
 import plotly.express as px
+import plotly.graph_objects as go
+from dash import Dash, Input, Output, State, dash_table, dcc, html, no_update
+from dash_extensions import WebSocket  # pip install dash-extensions
 from plotly.colors import sample_colorscale
 from shapely.geometry import Polygon
 
-import dash.exceptions
-from dash import Dash, html, dcc, dash_table, Input, Output, State, no_update
-from dash_extensions import WebSocket                         # pip install dash-extensions
-
 # ---------------- helpers -------------------------------------------------- #
-from qumada.utils.geometry import string_to_gate_list, Gate
+from qumada.utils.geometry import Gate, string_to_gate_list
 
 
 def layer_palette(layers):
@@ -28,9 +31,9 @@ def layer_palette(layers):
 
 
 def voltage_colour(v, vabs_max, colorscale):
-    """Map voltage to rgba string using the chosen Plotly colourscale."""        # flat value
+    """Map voltage to rgba string using the chosen Plotly colourscale."""  # flat value
     ratio = 0.5 + v / vabs_max / 2
-    return sample_colorscale(colorscale, [ratio])[0]              # :contentReference[oaicite:9]{index=9}
+    return sample_colorscale(colorscale, [ratio])[0]  # :contentReference[oaicite:9]{index=9}
 
 
 def _set_alpha(color: str, value) -> str:
@@ -62,16 +65,14 @@ def gates_to_figure(gates: list[Gate], voltages: list[dict], colorscale):
             if len(candidates) > 1:
                 data = min(candidates, key=lambda d: d["label"])
             else:
-                data, = candidates
+                (data,) = candidates
             gate_runtime_info.append(data)
 
     # 1) derive colour mapping
-    v_values = [info["value"]
-                for info in gate_runtime_info
-                if info is not None]
+    v_values = [info["value"] for info in gate_runtime_info if info is not None]
     vabs_max = max(map(abs, v_values + [1.0]))
     layers = sorted({g.layer for g in gates})
-    border_col = layer_palette(layers)                             # :contentReference[oaicite:10]{index=10}
+    border_col = layer_palette(layers)  # :contentReference[oaicite:10]{index=10}
 
     fig = go.Figure()
     for gate, info in zip(gates, gate_runtime_info):
@@ -98,22 +99,19 @@ def gates_to_figure(gates: list[Gate], voltages: list[dict], colorscale):
             go.Scatter(
                 x=x,
                 y=y,
-                fill="toself",                                     # polygon fill trick :contentReference[oaicite:11]{index=11}
+                fill="toself",  # polygon fill trick :contentReference[oaicite:11]{index=11}
                 fillcolor=fill_col,
                 line=dict(color=line_col, width=1),
                 hoverinfo="text",
                 text=text,
                 showlegend=False,
-                mode='lines',
+                mode="lines",
             )
         )
         # add static label at predefined position
         if getattr(gate, "label_position", None):
             lx, ly = gate.label_position
-            fig.add_annotation(x=lx, y=ly,
-                               text=text,
-                               showarrow=False,
-                               font=dict(size=10, color="black"))
+            fig.add_annotation(x=lx, y=ly, text=text, showarrow=False, font=dict(size=10, color="black"))
 
     fig.update_layout(
         xaxis=dict(scaleanchor="y", visible=False),
@@ -146,12 +144,13 @@ def make_app(ws_url: str) -> Dash:
             html.Hr(),
             dash_table.DataTable(
                 id="parameter-table",
-                columns=[{"name": "Label", "id": "label"},
-                         {"name": "Value", "id": "value"},
-                         {"name": "Unit", "id": "unit"},
-                         {"name": "Timestamp", "id": "timestamp"},
-                         {"name": "Name", "id": "name"},
-                         ],
+                columns=[
+                    {"name": "Label", "id": "label"},
+                    {"name": "Value", "id": "value"},
+                    {"name": "Unit", "id": "unit"},
+                    {"name": "Timestamp", "id": "timestamp"},
+                    {"name": "Name", "id": "name"},
+                ],
                 style_cell={"fontFamily": "monospace", "padding": "2px 6px"},
                 style_table={"max-height": "400px", "overflowY": "auto"},
             ),
@@ -202,10 +201,7 @@ def make_app(ws_url: str) -> Dash:
             return []
 
         cols = ["label", "value", "unit", "timestamp", "name"]
-        return [
-            {col: parameter[col] for col in cols}
-            for parameter in parameters
-        ]
+        return [{col: parameter[col] for col in cols} for parameter in parameters]
 
     @app.callback(
         Output("layout-graph", "figure"),
@@ -230,4 +226,3 @@ def make_app(ws_url: str) -> Dash:
         return fig
 
     return app
-
