@@ -1,13 +1,15 @@
 import dataclasses
-import pathlib
 import json
+import pathlib
 
-from shapely.geometry import Point, LineString, Polygon
 from shapely import wkt
+from shapely.geometry import LineString, Point, Polygon
+
 
 @dataclasses.dataclass
 class Gate:
     """Representation of a gate electrode with the geometric properties and annotation information."""
+
     polygon: Polygon
     path: list[str]
     layer: str
@@ -19,6 +21,7 @@ def gate_list_to_string(gates: list[Gate]) -> str:
     """Serialize a list of gates to a JSON string.
 
     The geometric information is stored in WKT format (well known text)."""
+
     def to_json(o):
         if isinstance(o, Gate):
             return dataclasses.asdict(o)
@@ -32,8 +35,7 @@ def gate_list_to_string(gates: list[Gate]) -> str:
 
 
 def string_to_gate_list(txt: str) -> list[Gate]:
-    """Deserialize a JSON string produced by :py:`.gate_list_to_string` to a list of gates.
-    """
+    """Deserialize a JSON string produced by :py:`.gate_list_to_string` to a list of gates."""
 
     data = json.loads(txt)
     assert isinstance(data, list)

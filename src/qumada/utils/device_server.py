@@ -1,19 +1,18 @@
 import asyncio
 import copy
 import datetime
+import json
+import logging
 import pathlib
 import threading
 import time
-import logging
-import json
 
 import websockets
+from qcodes.instrument.parameter import Parameter
 from websockets.asyncio.server import ServerConnection
 
-from qcodes.instrument.parameter import Parameter
-
 from qumada.measurement.device_object import QumadaDevice
-from qumada.utils.geometry import gate_list_to_string, Gate, load_from_file
+from qumada.utils.geometry import Gate, gate_list_to_string, load_from_file
 
 logger = logging.getLogger(__name__)
 
@@ -42,9 +41,7 @@ def _collect_data(*parameters: Parameter, cache_only: bool = True):
         try:
             parameter_data = _get_parameter_data(parameter, cache_only=cache_only)
         except Exception as e:
-            parameter_data = {
-                "exception": str(e)
-            }
+            parameter_data = {"exception": str(e)}
         data.append(parameter_data)
 
     return {
@@ -66,9 +63,9 @@ class DataCollector:
         # an async lock is the more robust option in case the surrounding code changes.
         async with self.lock:
             if self._data is None:
-                delta = float('inf')
+                delta = float("inf")
             else:
-                delta = time.time() - self._data['timestamp']
+                delta = time.time() - self._data["timestamp"]
             if delta >= self.minimal_update_delta:
                 self._data = _collect_data(*self.parameters, cache_only=self.cache_only)
             return self._data
@@ -87,7 +84,7 @@ class DeviceWebSocket(threading.Thread):
         self._loop_control_future = threading.Event()
 
         #: data is re-sent after this time even if nothing changed
-        self.maximal_update_interval = 1.
+        self.maximal_update_interval = 1.0
 
     @property
     def address(self):
@@ -138,7 +135,7 @@ class DeviceWebSocket(threading.Thread):
             await server.wait_closed()
             logger.info("WebSocket server closed")
 
-    def join(self, timeout = None):
+    def join(self, timeout=None):
         if self.is_alive():
             self.stop()
         super().join(timeout)
@@ -177,12 +174,11 @@ class DeviceWebSocket(threading.Thread):
                 break
         logger.info("Connection terminated")
 
-
         self.monitor_socket = None
 
 
 def start_monitor_socket(device_object: QumadaDevice, gate_geometry: list[Gate] | str | pathlib.Path = None):
-    if getattr(device_object, 'monitor_socket', None) is not None:
+    if getattr(device_object, "monitor_socket", None) is not None:
         logger.info("Monitor socket already present. Restarting.")
         device_object.monitor_socket.join()
     parameters = [param for parameters in device_object.terminal_parameters.values() for param in parameters.values()]
@@ -194,6 +190,7 @@ def start_monitor_socket(device_object: QumadaDevice, gate_geometry: list[Gate] 
     if gate_geometry is not None:
         if not isinstance(gate_geometry, list):
             from qumada.utils.dxf import load_convert_and_cache
+
             gate_geometry = load_convert_and_cache(gate_geometry)
 
         device_object.monitor_socket.gate_geometry = gate_geometry

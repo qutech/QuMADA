@@ -1,10 +1,10 @@
 import argparse
 import copy
+import logging
 import math
 import operator
 import pathlib
 import re
-import logging
 import subprocess
 import sys
 import warnings
@@ -15,13 +15,10 @@ import ezdxf.document
 import matplotlib.widgets
 import shapely
 from matplotlib import pyplot as plt
-from shapely.geometry import (
-    MultiLineString
-)
-from shapely.geometry import box, Polygon, LineString
+from shapely.geometry import LineString, MultiLineString, Polygon, box
 from shapely.plotting import plot_polygon
 
-from qumada.utils.geometry import Gate, store_to_file, load_from_file
+from qumada.utils.geometry import Gate, load_from_file, store_to_file
 
 SELECT_ALPHA = 0.3
 
@@ -48,8 +45,7 @@ def entity_to_geom(e):
     raise NotImplementedError(e.dxftype())
 
 
-
-def iterate_all_entities(e, path = None):
+def iterate_all_entities(e, path=None):
     if path is None:
         path = []
     if e.dxftype() == "INSERT":
@@ -61,11 +57,10 @@ def iterate_all_entities(e, path = None):
         yield e, list(path)
 
 
-
 def get_gates_from_cropped_region(
     doc: ezdxf.document.Drawing,
-    x_rng: Tuple[float, float] = (-3., 3.),
-    y_rng: Tuple[float, float] = (-1.5, 1.5),
+    x_rng: tuple[float, float] = (-3.0, 3.0),
+    y_rng: tuple[float, float] = (-1.5, 1.5),
     layer_regex: str = r".*BEAM\_L.",
     grid_size: float = 1e-3,
 ) -> list[Gate]:
@@ -78,13 +73,10 @@ def get_gates_from_cropped_region(
     """
     regex = re.compile(layer_regex)
 
-    keep_layer = {
-        layer.dxf.name: bool(regex.search(layer.dxf.name))
-        for layer in doc.layers
-    }
+    keep_layer = {layer.dxf.name: bool(regex.search(layer.dxf.name)) for layer in doc.layers}
 
-    xmin, xmax =  x_rng
-    ymin, ymax =  y_rng
+    xmin, xmax = x_rng
+    ymin, ymax = y_rng
     roi_poly = Polygon(box(xmin, ymin, xmax, ymax))
 
     chosen = []
@@ -115,11 +107,11 @@ def get_gates_from_cropped_region(
                 label_position = label_position_point.x, label_position_point.y
             else:
                 label_position = None
-            
+
             label = f"G{len(chosen)}"
             if label == "G36":
                 pass
-                
+
             gate = Gate(
                 polygon=geom_roi,
                 label_position=label_position,
@@ -128,7 +120,7 @@ def get_gates_from_cropped_region(
                 layer=layer,
             )
             chosen.append(gate)
-    
+
     return chosen
 
 
@@ -154,7 +146,7 @@ def _connect_all_touching(gates: list[Gate], grid_size: float) -> list[Gate]:
             intersecting.append(gate)
             label_position = None
             for g in intersecting:
-                label_position = label_position or g.label_position 
+                label_position = label_position or g.label_position
             new_poly = shapely.union_all([g.polygon for g in intersecting], grid_size=grid_size)
             to_append = intersecting[0]
             to_append.polygon = new_poly
@@ -193,7 +185,7 @@ def label_gates(gates: list[Gate]) -> list[Gate]:
         AAAA
         BCDE
         """,
-        height_ratios=[1, 0.1]
+        height_ratios=[1, 0.1],
     )
     ax = axd["A"]
     fig = ax.get_figure()
@@ -201,29 +193,22 @@ def label_gates(gates: list[Gate]) -> list[Gate]:
     txt = matplotlib.widgets.TextBox(ax=axd["C"], label="Name")
     apply = matplotlib.widgets.Button(ax=axd["D"], label="Apply")
     nxt = matplotlib.widgets.Button(ax=axd["E"], label="Next")
-    
+
     layers = {gate.layer for gate in gates}
-    color_iter = iter(plt.rcParams['axes.prop_cycle'].by_key()['color'])
+    color_iter = iter(plt.rcParams["axes.prop_cycle"].by_key()["color"])
     layer_colors = dict(zip(layers, color_iter))
-    
 
     plots = []
     for idx, gate in enumerate(gates):
         color = layer_colors[gate.layer]
-        poly_patch = plot_polygon(
-            gate.polygon,
-            facecolor="none",
-            color=color,
-            add_points=False,
-            ax=ax)
-        
+        poly_patch = plot_polygon(gate.polygon, facecolor="none", color=color, add_points=False, ax=ax)
+
         poly_patch.gate_index = idx
         poly_patch.set_picker(True)
-        
-        label_plot = ax.annotate(str(gate.label),
-                                 gate.label_position,
-                                 bbox=dict(boxstyle="round", fc="0.8"),
-                                 ha="center", va="center")
+
+        label_plot = ax.annotate(
+            str(gate.label), gate.label_position, bbox=dict(boxstyle="round", fc="0.8"), ha="center", va="center"
+        )
         plots.append((poly_patch, label_plot))
 
     def deselect_gate(idx):
@@ -241,9 +226,9 @@ def label_gates(gates: list[Gate]) -> list[Gate]:
             txt.set_val(str(gate.label))
         plt.draw()
 
-
     current_gate = 0
     select_gate(current_gate)
+
     def apply_action(*_):
         gate = gates[current_gate]
         _, label_plot = plots[current_gate]
@@ -266,7 +251,7 @@ def label_gates(gates: list[Gate]) -> list[Gate]:
         if current_gate == len(gates):
             current_gate -= len(gates)
         select_gate(current_gate)
-    
+
     def pick_handler(event):
         nonlocal current_gate
         artist = event.artist
@@ -278,12 +263,12 @@ def label_gates(gates: list[Gate]) -> list[Gate]:
                 select_gate(current_gate)
         else:
             raise NotImplementedError(event)
-    
+
     prv.on_clicked(prev_action)
     apply.on_clicked(apply_action)
     nxt.on_clicked(next_action)
-    fig.canvas.mpl_connect('pick_event', pick_handler)
-    
+    fig.canvas.mpl_connect("pick_event", pick_handler)
+
     widgets = [prv, apply, nxt, txt]
     fig.widgets = widgets
 
@@ -301,9 +286,7 @@ def load_convert_and_cache(path: pathlib.Path | str) -> list[Gate]:
         json_path = path.with_suffix(".json")
 
         if not json_path.exists():
-            subprocess.check_call([
-                sys.executable, "-m", "qumada.utils.dxf", dxf_path])
-
+            subprocess.check_call([sys.executable, "-m", "qumada.utils.dxf", dxf_path])
 
     elif path.suffix == ".json":
         json_path = path
@@ -316,9 +299,15 @@ def load_convert_and_cache(path: pathlib.Path | str) -> list[Gate]:
 
 def get_parser():
     import argparse
+
     parser = argparse.ArgumentParser(description="Qumada dxf labeler")
     parser.add_argument("dxf_path", type=pathlib.Path, help="path to dxf file")
-    parser.add_argument("--json-path", type=pathlib.Path, help="path to json file. default is the same as dxf with other ending", default=None)
+    parser.add_argument(
+        "--json-path",
+        type=pathlib.Path,
+        help="path to json file. default is the same as dxf with other ending",
+        default=None,
+    )
     return parser
 
 
