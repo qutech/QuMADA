@@ -23,6 +23,7 @@ from qumada.measurement.scripts import (
     Generic_1D_Sweep,
     Generic_1D_Sweep_buffered,
     Generic_2D_Sweep_buffered,
+    Generic_2D_Sweep_Parallel_buffered,
     Generic_nD_Sweep,
     Generic_Pulsed_Measurement,
     Generic_Pulsed_Repeated_Measurement,
@@ -665,7 +666,7 @@ class QumadaDevice:
             params(val)
         return data
     
-    def sweep_2D():
+    def sweep_2D(*args, **kwargs):
         logger.exception("Deprecation Warning: sweep_2D was renamed to sweep_2d \
                          for better naming consistency!")
 
@@ -751,9 +752,9 @@ class QumadaDevice:
             slow_param.setpoints = np.linspace(
                 slow_param.value - slow_param_range / 2.0, slow_param.value + slow_param_range / 2.0, slow_num_points
             )
-            slow_param.group = 1
+            slow_param.group = 0
             fast_param.type = "dynamic"
-            fast_param.group = 2
+            fast_param.group = 1
             fast_param.setpoints = np.linspace(
                 fast_param.value - fast_param_range / 2.0, fast_param.value + fast_param_range / 2.0, fast_num_points
             )
@@ -774,6 +775,138 @@ class QumadaDevice:
                     )
 
                 script = Generic_2D_Sweep_buffered()
+            else:
+                script = Generic_nD_Sweep()
+            script.setup(
+                self.save_to_dict(priorize_stored_value=priorize_stored_value),
+                metadata=metadata,
+                measurement_name=name,
+                buffer_settings=temp_buffer_settings,
+                **self.buffer_script_setup,
+            )
+            mapping = self.terminal_parameters
+            map_terminals_gui(station.components, script.terminal_parameters, mapping)
+            if buffered is True:
+                map_triggers(station.components)
+            data = script.run()
+        except Exception as e:
+            print(self.states["_temp_2D"])
+            self.set_state("_temp_2D")
+            raise e
+        finally:
+            print(self.states["_temp_2D"])
+            self.set_state("_temp_2D")
+            del self.states["_temp_2D"]
+        return data
+    
+    def sweep_2d_parallel(
+        self,
+        slow_params: list[Parameter],
+        fast_params: list[Parameter],
+        slow_param_ranges: float,
+        fast_param_ranges: float,
+        slow_num_points: int = 50,
+        fast_num_points: int = 100,
+        name=None,
+        metadata=None,
+        station=None,
+        buffered=False,
+        buffer_settings: dict | None = None,
+        priorize_stored_value=False,
+        restore_state=True,
+    ):
+        """
+        Perform a 2D sweep over two parameters. The current values are in the
+        center of the sweep (the sweep ranges from currentvalue - 0.5*range to
+        current value + 0.5*range). Can be buffered.
+
+        Parameters
+        ----------
+        slow_param : Parameter
+            The slow parameter to be swept.
+        fast_param : Parameter
+            The fast parameter to be swept.
+        slow_param_range : float
+            Range for the slow parameter sweep.
+        fast_param_range : float
+            Range for the fast parameter sweep.
+        slow_num_points : int, optional
+            Number of points for the slow parameter sweep. Default is 50.
+        fast_num_points : int, optional
+            Number of points for the fast parameter sweep. Default is 100.
+        name : str, optional
+            Measurement name. Default is None.
+        metadata : dict, optional
+            Metadata for the measurement. Default is None.
+        station : Station, optional
+            Station object associated with the measurement. Default is the station of the instance.
+        buffered : bool, optional
+            If True, performs a buffered 2D sweep. Default is False.
+        buffer_settings : dict, optional
+            Buffer settings for the measurement. Default is the instance's buffer settings.
+        priorize_stored_value : bool, optional
+            If True, prioritizes stored values in the setup. Default is False.
+        restore_state : bool, optional
+            If True, restores the original state of the parameters after the measurement. Default is True.
+
+        Returns
+        -------
+        data : qcodes.dataset.data_set.DataSet
+            The dataset containing the measurement results.
+
+        Raises
+        ------
+        TypeError
+            If the provided `station` is not of type `Station`.
+        Exception
+            If buffer settings are invalid or a measurement error occurs.
+
+        Notes
+        -----
+        - Uses `Generic_2D_Sweep_buffered` for buffered measurements and `Generic_nD_Sweep` for unbuffered measurements.
+        - Temporarily modifies buffer settings if `buffered` is True.
+        - Restores the parameter state upon completion or exception.
+        """
+        if station is None:
+            station = self.station
+        if not isinstance(station, Station):
+            raise TypeError("No valid station assigned!")
+        self.save_state("_temp_2D")
+        try:
+            for terminal in self.terminals.values():
+                for parameter in terminal.terminal_parameters.values():
+                    if parameter.type == "dynamic":
+                        parameter.type = "static gettable"
+            for slow_param, slow_param_range in zip(slow_params, slow_param_ranges):
+                slow_param.type = "dynamic"
+                slow_param.setpoints = np.linspace(
+                    slow_param.value - slow_param_range / 2.0, slow_param.value + slow_param_range / 2.0, slow_num_points
+                )
+                slow_param.group = 0
+            for fast_param, fast_param_range in zip(fast_params, fast_param_ranges):
+                fast_param.type = "dynamic"
+                fast_param.setpoints = np.linspace(
+                    fast_param.value - fast_param_range / 2.0, fast_param.value + fast_param_range / 2.0, fast_num_points
+                )
+                fast_param.group = 1
+
+            if buffer_settings is None:
+                buffer_settings = self.buffer_settings
+            temp_buffer_settings = deepcopy(buffer_settings)
+            if buffered is True:
+                if "num_points" in temp_buffer_settings.keys():
+                    temp_buffer_settings["num_points"] = fast_num_points
+                    logger.warning(
+                        f"Temporarily changed buffer settings to match the \
+                        number of points specified {fast_num_points=}"
+                    )
+                else:
+                    logger.warning(
+                        "Num_points not specified in buffer settings! fast_num_points value is \
+                        ignored and buffer settings are used to specify measurement!"
+                    )
+
+                script = Generic_2D_Sweep_Parallel_buffered()
             else:
                 script = Generic_nD_Sweep()
             script.setup(

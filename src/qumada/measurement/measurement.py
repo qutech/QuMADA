@@ -420,9 +420,10 @@ class MeasurementScript(ABC):
                     if "group" in self.properties[gate][parameter].keys():
                         group = self.properties[gate][parameter]["group"]
                         if group not in self.groups.keys():
-                            self.groups[group] = {"channels": [], "parameters": [], "priority": None}
+                            self.groups[group] = {"channels": [], "parameters": [], "sweeps": [], "priority": None}
                         self.groups[group]["channels"].append(channel)
                         self.groups[group]["parameters"].append({"gate": gate, "parameter": parameter})
+                        self.groups[group]["sweeps"].append(self.dynamic_sweeps[-1])
                         if self.groups[group]["priority"] is None:
                             if "priority" in self.properties[gate][parameter].keys():
                                 if self.groups[group]["priority"] in self.priorities.keys():

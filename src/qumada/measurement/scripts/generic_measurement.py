@@ -810,7 +810,8 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                 self.clean_up()
         return datasets
 
-def _run_buffered_measurement(script, datasaver, sweeps, static_gettables = [], **kwargs):
+def _run_buffered_measurement(script, datasaver, sweeps, static_gettables = [], 
+                              additional_setpoints = [] ,**kwargs):
     """
     Wrapping up buffered measurements a bit.
 
@@ -856,6 +857,7 @@ def _run_buffered_measurement(script, datasaver, sweeps, static_gettables = [], 
         *sweep_results,
         *results,
         *static_gettables,
+        *additional_setpoints,
     )
     
     return results
@@ -1313,6 +1315,216 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
                     *results,
                     *static_gettables,
                 )
+        datasets.append(datasaver.dataset)
+        self.clean_up()
+        return datasets
+    
+class Generic_2D_Sweep_Parallel_buffered(MeasurementScript):
+    """
+    Executes a buffered 2D sweep measurement. Supports compensation.
+    By default fist dynamic parameter is stepped (unbuffered) and the second one
+    ramped.
+
+    This script supports two dynamic parameters and multiple triggering methods:
+
+    - "software": Sends a software command to each buffer and dynamic parameters
+                   to start data acquisition and ramping. Timing might be slightly off.
+    - "hardware": Runs trigger_start to start the measurement.. Can be preconfigured
+                   or manually adjusted (requires `trigger_start` callable).
+    - "manual": Trigger setup is user-defined, useful for synchronized trigger outputs.
+
+    Parameters
+    ----------
+    trigger_start : str or callable, optional
+        A callable to start the measurement.
+    trigger_reset : callable, optional
+        A callable to reset the trigger after measurement. Default is None.
+    trigger_type : str, optional
+        Type of trigger to use ("software", "hardware", "manual"). Default is "software".
+    include_gate_name : bool, optional
+        If True, appends the names of the ramped gates to the measurement name. Default is True.
+    reset_time : float, optional
+        Time to ramp the fast parameter back to the start value. Default is 0.
+    reverse_param_order : bool, optional
+        If True, switches the order of slow and fast parameters. Default is False.
+    buffer_timeout_multiplier : int, optional
+        Multiplier for buffer timeout duration relative to burst duration. Default is 20.
+
+    Returns
+    -------
+    datasets : list of qcodes.dataset.data_set.DataSet
+        A list of datasets containing the measurement results.
+
+    Raises
+    ------
+    AttributeError
+        If a required method (e.g., for ramping) is missing.
+    TimeoutError
+        If buffers fail to finish within the timeout duration.
+    Exception
+        If static or dynamic parameters have invalid configurations.
+
+    Notes
+    -----
+    - Proper configuration of buffers and triggers is required for accurate results.
+    """
+
+    def run(self):
+        self.buffered = True
+        TRIGGER_TYPES = ["software", "hardware", "manual"]
+        trigger_start = self.settings.get("trigger_start", "manual")  # TODO: this should be set elsewhere
+        trigger_reset = self.settings.get("trigger_reset", None)
+        trigger_type = _validate_mapping(
+            self.settings.get("trigger_type"),
+            TRIGGER_TYPES,
+            default="software",
+            default_key_error="software",
+        )
+        include_gate_name = self.settings.get("include_gate_name", True)
+        sync_trigger = self.settings.get("sync_trigger", None)
+        reverse_param_order = self.settings.get("reverse_param_order", False)
+        reset_time = self.settings.get("reset_time", 0)
+        buffer_timeout_multiplier = self.settings.get("buffer_timeout_multiplier", 20)
+        datasets = []
+
+        self.generate_lists()
+
+        if len(self.groups) != 2:
+            raise Exception("The 2D workflow takes exactly two groups of parameters! ")
+        self.measurement_name = naming_helper(self, default_name="2D Sweep")
+        if include_gate_name:
+            for group in self.groups.values():
+                gate_names = [gate["gate"] for gate in group["parameters"]]
+                self.measurement_name += f" {gate_names}"
+
+        meas = Measurement(name=self.measurement_name)
+
+            
+        slow_params = self.priorities[0]["parameters"]
+        slow_channels = self.priorities[0]["channels"]
+        slow_sweeps = self.priorities[0]["sweeps"]
+        fast_params = self.priorities[1]["parameters"]
+        fast_channels = self.priorities[1]["channels"]
+        fast_sweeps = self.priorities[1]["sweeps"]
+        # TODO: Check if this can be moved to the param itself.
+        for param in fast_params:
+            self.properties[param["gate"]][param["parameter"]][
+                "_is_triggered"
+            ] = True
+            
+        
+        
+
+        for dynamic_param in self.dynamic_channels:
+            meas.register_parameter(dynamic_param)
+        # -------------------
+        static_gettables = []
+        del_channels = []
+        del_params = []
+        for parameter, channel in zip(self.gettable_parameters, self.gettable_channels):
+            if is_bufferable(channel):
+                meas.register_parameter(
+                    channel,
+                    setpoints=[
+                        *slow_channels,
+                        *fast_channels,
+                    ],
+                )
+            elif channel in self.static_channels:
+                del_channels.append(channel)
+                del_params.append(parameter)
+                meas.register_parameter(
+                    channel,
+                    setpoints=[
+                        *slow_channels,
+                        *fast_channels,
+                    ],
+                )
+                parameter_value = self.properties[parameter["gate"]][parameter["parameter"]]["value"]
+                static_gettables.append((channel, [parameter_value for _ in range(int(self.buffered_num_points))]))
+        for channel in del_channels:
+            self.gettable_channels.remove(channel)
+        for param in del_params:
+            self.gettable_parameters.remove(param)
+        # --------------------------
+        self.initialize()
+        # ####################Sensor compensation#####################
+        for c_param in self.active_compensating_channels:
+            meas.register_parameter(
+                c_param,
+                setpoints=[
+                        *slow_channels,
+                        *fast_channels,
+                ],
+            )
+        try:
+            trigger_reset()
+        except TypeError:
+            logger.info("No method to reset the trigger defined.")
+        with meas.run() as datasaver:
+            results = []
+            # Below is a very short and hard to read way to check if all params have the same number of setpoints.
+            # This is obviously pointless as this comment to explain it makes everything longer again,
+            # but it's fun...
+            # Understand this as a lesson to write readable code instead of trying to be fancy
+            assert len(set(map(len, [sweep.get_setpoints() for sweep in slow_sweeps]))) == 1
+            for i in range(len(slow_sweeps[0].get_setpoints())):    
+                additional_setpoints = []
+                for slow_channel, slow_sweep in zip(slow_channels, slow_sweeps):
+                    setpoint = slow_sweep.get_setpoints()[i]
+                    slow_channel.set(setpoint)
+                    additional_setpoints.append((slow_channel, setpoint))
+                # TODO: Fix part below to avoid jumps
+                # if reset_time > 0:
+                #     ramp_or_set_parameters(
+                #         [fast_channel], [fast_sweep.get_setpoints()[0]], ramp_rate=None, ramp_time=reset_time
+                #     )
+                # else:
+                #     fast_channel.set(fast_sweep.get_setpoints()[0])
+                # if reset_time < slow_sweep._delay:
+                #     sleep(slow_sweep._delay - reset_time)
+                # TODO: Make compensation part work again after rest is tested
+                comping_results = []
+                active_comping_sweeps = []
+                # for j in range(len(self.active_compensating_channels)):
+                #     index = self.compensating_parameters.index(self.active_compensating_parameters[j])
+                #     active_comping_setpoints = np.array(
+                #         [self.compensating_parameters_values[index] for _ in range(len(fast_sweep.get_setpoints()))],
+                #         dtype=float,
+                #     )
+                #     try:
+                #         slow_index = self.compensated_parameters[j].index(slow_param)
+                #         active_comping_setpoints -= float(self.compensating_leverarms[j][slow_index]) * (
+                #             float(setpoint) - float(slow_sweep.get_setpoints()[0])
+                #         )
+                #     except ValueError:
+                #         pass
+                #     try:
+                #         fast_index = self.compensated_parameters[j].index(fast_param)
+                #         active_comping_setpoints += self.compensating_sweeps[j][fast_index].get_setpoints()
+                #     except ValueError:
+                #         pass
+
+                #     if min(active_comping_setpoints) < min(self.compensating_limits[index]) or max(
+                #         active_comping_setpoints
+                #     ) > max(self.compensating_limits[index]):
+                #         raise Exception(f"Setpoints of {self.compensating_parameters[index]} exceed limits!")
+                #     sweep_delay = self.compensating_sweeps[j][-1]._delay
+                #     active_comping_sweeps.append(
+                #         CustomSweep(
+                #             param=self.active_compensating_channels[j],
+                #             setpoints=active_comping_setpoints,
+                #             delay=sweep_delay,
+                #         )
+                #     )
+                #     comping_results.append((self.active_compensating_channels[j], active_comping_setpoints))
+
+                self.ready_buffers()
+                _run_buffered_measurement(self, datasaver, 
+                                          fast_sweeps+active_comping_sweeps, 
+                                          additional_setpoints=additional_setpoints)
+                
+                
         datasets.append(datasaver.dataset)
         self.clean_up()
         return datasets
