@@ -811,7 +811,7 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
         return datasets
 
 def _run_buffered_measurement(script, datasaver, sweeps, static_gettables = [], 
-                              additional_setpoints = [] ,**kwargs):
+                              additional_setpoints = [], method = "ramp" ,**kwargs):
     """
     Wrapping up buffered measurements a bit.
 
@@ -844,7 +844,7 @@ def _run_buffered_measurement(script, datasaver, sweeps, static_gettables = [],
     script.trigger_measurement(
         parameters = [sweep.param for sweep in sweeps],
         setpoints = [sweep.get_setpoints() for sweep in sweeps],
-        method = "ramp",
+        method = method,
         sync_trigger=sync_trigger
         )
  
@@ -1321,8 +1321,9 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
     
 class Generic_2D_Sweep_Parallel_buffered(MeasurementScript):
     """
-    Executes a buffered 2D sweep measurement. Supports compensation.
-    By default fist dynamic parameter is stepped (unbuffered) and the second one
+    Executes a buffered 2D sweep measurement. Does not support compensation ath moment.
+    Can have multiple parameters on each axis. Parameters are grouped together according
+    to their group (or priority). Priority 0 parameters are stepped, priority 1 parameters
     ramped.
 
     This script supports two dynamic parameters and multiple triggering methods:
@@ -1345,8 +1346,6 @@ class Generic_2D_Sweep_Parallel_buffered(MeasurementScript):
         If True, appends the names of the ramped gates to the measurement name. Default is True.
     reset_time : float, optional
         Time to ramp the fast parameter back to the start value. Default is 0.
-    reverse_param_order : bool, optional
-        If True, switches the order of slow and fast parameters. Default is False.
     buffer_timeout_multiplier : int, optional
         Multiplier for buffer timeout duration relative to burst duration. Default is 20.
 
