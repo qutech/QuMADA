@@ -19,12 +19,14 @@
 # - Till Huckeman
 
 
+import logging
+
 from qcodes.instrument.parameter import Parameter
 
 from qumada.instrument.custom_drivers.Harvard.Decadac import Decadac
 from qumada.instrument.mapping import DECADAC_MAPPING
 from qumada.instrument.mapping.base import InstrumentMapping
-import logging
+
 logger = logging.getLogger(__name__)
 
 
@@ -159,6 +161,6 @@ class DecadacMapping(InstrumentMapping):
     def force_trigger(self):
         string = ""
         for b in range(0, 6):
-            for c in range(0,6):
-                string+=f"B{b};C{c};G0;"
+            for c in range(0, 6):
+                string += f"B{b};C{c};G0;"
         self._instrument.write(string)

@@ -572,17 +572,19 @@ class Timetrace_with_Sweeps_buffered(MeasurementScript):
                 self.ready_buffers()
                 t = time() - start
                 try:
-                    self.trigger_measurement(parameters = self.dynamic_channels,
-                                             setpoints = [sweep.get_setpoints() for sweep in self.dynamic_sweeps],
-                                             method="ramp",
-                                             sync_trigger=sync_trigger,
-                                             )
-              
+                    self.trigger_measurement(
+                        parameters=self.dynamic_channels,
+                        setpoints=[sweep.get_setpoints() for sweep in self.dynamic_sweeps],
+                        method="ramp",
+                        sync_trigger=sync_trigger,
+                    )
+
                     results = self.readout_buffers(timestamps=True)
                     dynamic_param_results = [
-                        (dyn_channel, sweep.get_setpoints()) for dyn_channel, sweep in zip(
-                            self.dynamic_channels, self.dynamic_sweeps)]
-                    results.pop(-1) #removes timestamps from results
+                        (dyn_channel, sweep.get_setpoints())
+                        for dyn_channel, sweep in zip(self.dynamic_channels, self.dynamic_sweeps)
+                    ]
+                    results.pop(-1)  # removes timestamps from results
                     datasaver.add_result(
                         (timer, t),
                         *dynamic_param_results,
@@ -599,7 +601,7 @@ class Timetrace_with_Sweeps_buffered(MeasurementScript):
                     raise ex
                 except TimeoutError:
                     logger.error(f"A timeout error occured. Skipping line at time {t}.")
-                    #results = self.readout_buffers(timestamps=True)
+                    # results = self.readout_buffers(timestamps=True)
             self.clean_up()
         datasets.append(datasaver.dataset)
         return datasets
@@ -803,8 +805,7 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                                                               sweeps = sweeps,
                                                               static_gettables = static_gettables_bs,
                                                                   )
-                                break
-                            
+                                break                    
                 datasets.append(datasaver.dataset)
                 self.properties[dynamic_parameter["gate"]][dynamic_parameter["parameter"]]["_is_triggered"] = False
                 self.clean_up()

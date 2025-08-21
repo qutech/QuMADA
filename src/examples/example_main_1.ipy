@@ -37,7 +37,7 @@ from qumada.measurement.scripts import (
 from qumada.utils.generate_sweeps import generate_sweep
 from qumada.utils.load_from_sqlite_db import load_db
 
-# %% Only required to simulate buffered instruments
+# %% It is only required to simulate buffered instruments
 # As we have only dummy instruments that are not connected, we have to use a global
 # trigger event for triggering.
 
