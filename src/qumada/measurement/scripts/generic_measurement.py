@@ -800,6 +800,7 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                                 for sweeps in backsweeps:
                                     for sweep in sweeps:
                                         sweep._setpoints = sweep.get_setpoints()[::-1]
+                                    self.buffer_settings["num_points"] = len(sweep._setpoints)
                                     results = _run_buffered_measurement(script = self,
                                                               datasaver = datasaver, 
                                                               sweeps = sweeps,
