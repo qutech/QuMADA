@@ -660,29 +660,8 @@ class QumadaDevice:
                     priorize_stored_value=priorize_stored_value,
                     backsweep_after_break = backsweep_after_break,
                     ))
-                param(val)
+            param(val)
                 
-        elif isinstance(params, Terminal_Parameter):
-            assert dynamic_values != list
-            if dynamic_values is not None:
-                val = dynamic_values
-            else:
-                val = params()
-            data.append(*params.measured_ramp(
-                value=sweep_range[-1],
-                num_points=num_points,
-                start=sweep_range[0],
-                station=station,
-                name=name,
-                metadata=metadata,
-                backsweep=backsweep,
-                max_difference=max_difference,
-                buffered=buffered,
-                buffer_settings=buffer_settings,
-                priorize_stored_value=priorize_stored_value,
-                backsweep_after_break = backsweep_after_break,
-                ))
-            params(val)
         return data
     
     def sweep_2D(*args, **kwargs):
