@@ -815,7 +815,7 @@ class MeasurementScript(ABC):
         for instrument in instruments_set:
             if instrument in sync_trigger:
                 instruments.append(instrument)
-
+        self._set_buffered_num_points()
         for instr in instruments:
             instr_params = [param for param in parameters if param.root_instrument is instr]
             if method == "ramp":
