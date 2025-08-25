@@ -23,7 +23,13 @@ import json
 from collections.abc import Iterable, Mapping
 from typing import Any
 
-from qtpy.QtCore import QItemSelectionModel, Qt, QTimer, Signal as pyqtSignal, Slot as pyqtSlot
+from qcodes.instrument.channel import InstrumentModule
+from qcodes.instrument.instrument import Instrument
+from qcodes.instrument.parameter import Parameter
+from qcodes.utils.metadata import Metadatable
+from qtpy.QtCore import QItemSelectionModel, Qt, QTimer
+from qtpy.QtCore import Signal as pyqtSignal
+from qtpy.QtCore import Slot as pyqtSlot
 from qtpy.QtGui import (
     QBrush,
     QColor,
@@ -50,10 +56,6 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from qcodes.instrument.channel import InstrumentModule
-from qcodes.instrument.instrument import Instrument
-from qcodes.instrument.parameter import Parameter
-from qcodes.utils.metadata import Metadatable
 
 from qumada.instrument.mapping.base import TerminalParameters, filter_flatten_parameters
 from qumada.metadata import Metadata

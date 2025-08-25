@@ -28,8 +28,6 @@ from random import random
 
 import pytest
 from jsonschema import ValidationError
-from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QApplication, QMessageBox
 from pytest_cases import fixture_ref, parametrize
 from pytest_mock import MockerFixture
 from qcodes.instrument_drivers.mock_instruments import (
@@ -37,6 +35,8 @@ from qcodes.instrument_drivers.mock_instruments import (
     DummyInstrument,
 )
 from qcodes.station import Station
+from qtpy.QtCore import Qt
+from qtpy.QtWidgets import QApplication, QMessageBox
 
 import qumada.instrument.mapping as mapping
 from qumada.instrument.custom_drivers.Dummies.dummy_dac import DummyDac
