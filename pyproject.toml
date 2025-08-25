@@ -24,6 +24,7 @@ dependencies = [
     "jsonschema",
     "zhinst-toolkit >= 0.3.3",
     "qtpy",
+    "pyside6",
     "versioningit ~= 2.2.0",
 ]
 
