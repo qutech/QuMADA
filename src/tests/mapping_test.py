@@ -28,8 +28,8 @@ from random import random
 
 import pytest
 from jsonschema import ValidationError
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QMessageBox
+from qtpy.QtCore import Qt
+from qtpy.QtWidgets import QApplication, QMessageBox
 from pytest_cases import fixture_ref, parametrize
 from pytest_mock import MockerFixture
 from qcodes.instrument_drivers.mock_instruments import (

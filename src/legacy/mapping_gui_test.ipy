@@ -84,7 +84,7 @@ script.setup(
 
 
 # %%
-from PyQt5.QtWidgets import QApplication
+from qtpy.QtWidgets import QApplication
 
 # %%
 print(QApplication.instance())

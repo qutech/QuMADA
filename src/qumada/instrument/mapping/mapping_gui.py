@@ -23,8 +23,8 @@ import json
 from collections.abc import Iterable, Mapping
 from typing import Any
 
-from PyQt5.QtCore import QItemSelectionModel, Qt, QTimer, pyqtSignal, pyqtSlot
-from PyQt5.QtGui import (
+from qtpy.QtCore import QItemSelectionModel, Qt, QTimer, Signal as pyqtSignal, Slot as pyqtSlot
+from qtpy.QtGui import (
     QBrush,
     QColor,
     QDropEvent,
@@ -34,10 +34,9 @@ from PyQt5.QtGui import (
     QStandardItem,
     QStandardItemModel,
 )
-from PyQt5.QtWidgets import (
+from qtpy.QtWidgets import (
     QAction,
     QApplication,
-    QDesktopWidget,
     QHBoxLayout,
     QInputDialog,
     QLabel,
@@ -203,7 +202,8 @@ class TerminalTreeView(QTreeView):
 
     def import_data(self, terminal_parameters: TerminalParameters) -> None:
         """Build up tree with provided terminal parameters."""
-        root = self.model().invisibleRootItem()
+        model = self.model()
+        root = model.invisibleRootItem()
         self.terminal_parameters = terminal_parameters
         for terminal_name, terminal_params in terminal_parameters.items():
             item = QStandardItem(terminal_name)
@@ -221,13 +221,18 @@ class TerminalTreeView(QTreeView):
                 item.appendRow(subitem)
 
             qidx = item.index()
-            self.model().setData(qidx.siblingAtColumn(1), QBrush(RED), Qt.BackgroundRole)
-            self.model().insertColumn(1, qidx)
-            self.model().insertColumn(2, qidx)
+            model.setData(qidx.siblingAtColumn(1), QBrush(RED), Qt.BackgroundRole)
+            model.insertColumn(1, qidx)
+            model.insertColumn(2, qidx)
+
             for i in range(len(terminal_params.keys())):
-                self.model().setData(qidx.child(i, 1), "")
-                self.model().setData(qidx.child(i, 1), QBrush(RED), Qt.BackgroundRole)
-                self.model().setData(qidx.child(i, 2), "")
+                # this is written with questionable LLM support
+                idx1 = model.index(i, 1, qidx)
+                idx2 = model.index(i, 2, qidx)
+
+                self.model().setData(idx1, "")
+                self.model().setData(idx1, QBrush(RED), Qt.BackgroundRole)
+                self.model().setData(idx2, "")
 
             self.setColumnHidden(2, not self.monitoring_enable)
 
@@ -590,7 +595,10 @@ class MainWindow(QMainWindow):
         idx = self.terminal_tree.model().invisibleRootItem().child(0, 0).index()
         self.terminal_tree.selectionModel().select(idx, QItemSelectionModel.SelectionFlag.ClearAndSelect)
         self.terminal_tree.setCurrentIndex(idx)
-        self.resize(QDesktopWidget().availableGeometry(self).size() * 0.45)
+
+        screen = self.screen() or QApplication.primaryScreen()
+        new_size = screen.availableGeometry().size() * 0.45
+        self.resize(new_size)
 
         self.terminal_parameters = terminal_parameters
 
