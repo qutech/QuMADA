@@ -23,7 +23,8 @@ dependencies = [
     "matplotlib",
     "jsonschema",
     "zhinst-toolkit >= 0.3.3",
-    "pyqt5",
+    "qtpy",
+    "pyside6",
     "versioningit ~= 2.2.0",
 ]
 
@@ -59,7 +60,6 @@ build-file = "qumada/_version.py"
 addopts = [
     "--import-mode=importlib",
 ]
-qt_api = "pyqt5"
 
 [tool.coverage.run]
 source = [

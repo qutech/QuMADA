@@ -3,17 +3,17 @@ import multiprocessing as mp
 import sys
 import threading
 
-from PyQt5.QtCore import (
+from qtpy.QtCore import (
     Q_ARG,
     QMetaObject,
     QObject,
     Qt,
     QThread,
     QTimer,
-    pyqtSignal,
-    pyqtSlot,
 )
-from PyQt5.QtWidgets import (
+from qtpy.QtCore import Signal as pyqtSignal
+from qtpy.QtCore import Slot as pyqtSlot
+from qtpy.QtWidgets import (
     QApplication,
     QLabel,
     QPushButton,
