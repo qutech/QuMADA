@@ -5,16 +5,19 @@ It does not test actual functionality. It just tests that the module device_GUI.
 paths don't raise an exception.
 """
 
-
 import multiprocessing as mp
 import types
+
 import pytest
-from qtpy.QtCore import Qt, QObject, Signal as pyqtSignal
+from qtpy.QtCore import QObject, Qt
+from qtpy.QtCore import Signal as pyqtSignal
+
 import qumada.utils.device_GUI as device_GUI
 
 
 class DummyWorker(QObject):
     """Deterministic replacement for device_GUI.Worker used in most tests."""
+
     data_ready = pyqtSignal(list)
 
     def __init__(self, interval, parameters):
@@ -51,10 +54,7 @@ def gui(qtbot, parameters, monkeypatch):
 
 
 def _col_texts(table, col):
-    return [
-        (table.item(r, col).text() if table.item(r, col) is not None else "")
-        for r in range(table.rowCount())
-    ]
+    return [(table.item(r, col).text() if table.item(r, col) is not None else "") for r in range(table.rowCount())]
 
 
 def test_initial_table_population(gui, parameters):
