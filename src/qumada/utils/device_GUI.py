@@ -10,9 +10,9 @@ from qtpy.QtCore import (
     Qt,
     QThread,
     QTimer,
-    Signal as pyqtSignal,
-    Slot as pyqtSlot,
 )
+from qtpy.QtCore import Signal as pyqtSignal
+from qtpy.QtCore import Slot as pyqtSlot
 from qtpy.QtWidgets import (
     QApplication,
     QLabel,
