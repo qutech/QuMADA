@@ -6,10 +6,9 @@ paths don't raise an exception.
 """
 
 import multiprocessing as mp
-import types
 
 import pytest
-from qtpy.QtCore import QObject, Qt
+from qtpy.QtCore import QObject
 from qtpy.QtCore import Signal as pyqtSignal
 
 import qumada.utils.device_GUI as device_GUI
