@@ -286,7 +286,12 @@ def load_convert_and_cache(path: pathlib.Path | str) -> list[Gate]:
         json_path = path.with_suffix(".json")
 
         if not json_path.exists():
-            subprocess.check_call([sys.executable, "-m", "qumada.utils.dxf", dxf_path])
+            try:
+                _ = subprocess.run([sys.executable, "-m", "qumada.utils.dxf", dxf_path], check=True, stderr=subprocess.PIPE)
+            except subprocess.CalledProcessError as err:
+                err_msg = err.stderr.decode(errors='replace')
+                print("File conversion failed:\n", err_msg, file=sys.stderr)
+                raise
 
     elif path.suffix == ".json":
         json_path = path
