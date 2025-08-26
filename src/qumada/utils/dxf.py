@@ -317,7 +317,7 @@ def get_parser():
 
 
 if __name__ == "__main__":
-    matplotlib.use("Qt5Agg")
+    matplotlib.use("qtagg")
     parser = get_parser()
     args = parser.parse_args()
     if args.json_path is None:
