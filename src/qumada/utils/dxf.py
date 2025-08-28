@@ -1,5 +1,6 @@
 import argparse
 import copy
+import itertools
 import logging
 import math
 import operator
@@ -13,6 +14,8 @@ from typing import Tuple
 
 import ezdxf.document
 import matplotlib.widgets
+import numpy as np
+
 import shapely.affinity
 from matplotlib import pyplot as plt
 from shapely.geometry import LineString, MultiLineString, Polygon, box
@@ -37,14 +40,25 @@ def entity_to_geom(e):
     if e.dxftype() == "LINE":
         return LineString([e.dxf.start, e.dxf.end])
 
-    if e.dxftype() in {"LWPOLYLINE", "POLYLINE"}:
-        if hasattr(e, "get_points"):
-            points = e.get_points()
+    if e.dxftype() == "LWPOLYLINE":
+        vertices = [(x, y)
+                    for x, y, *_ in e.vertices_in_wcs()]
+        closed = bool(e.closed) if hasattr(e, "closed") else vertices[0] == vertices[-1]
+        if closed:
+            return Polygon(vertices)
         else:
-            points = e.points_in_wcs()
-        pts = [tuple(p)[:2] for p in points]  # ignore bulge for now
-        closed = bool(e.closed) if hasattr(e, "closed") else pts[0] == pts[-1]
-        return Polygon(pts) if closed else LineString(pts)
+            return LineString(vertices)
+
+    if e.dxftype() == "POLYLINE":
+        points = [
+            (x, y)
+            for x, y, *_ in e.points_in_wcs()
+        ]
+        closed = bool(e.closed) if hasattr(e, "closed") else points[0] == points[-1]
+        if closed:
+            return Polygon(points)
+        else:
+            return LineString(points)
 
     raise NotImplementedError(e.dxftype())
 
@@ -78,13 +92,64 @@ def _get_all_entity_bounding_box(doc: ezdxf.document.Drawing) -> tuple[float, fl
     return minx, miny, maxx, maxy
 
 
+def _auto_cropping_box(doc: ezdxf.document.Drawing,
+                       keep_layer: dict[str, bool],
+                       feature_size: float,
+                       max_cropping_box_size: float,
+                       grid_size: float,
+                       ) -> tuple[float, float, float, float] | None:
+    edge_set = []
+
+    for model in doc.modelspace():
+        for e, _ in iterate_all_entities(model):
+            if not keep_layer[e.dxf.layer]:
+                continue
+
+            raw_geom = entity_to_geom(e)
+            if raw_geom is None:
+                continue
+            geom = Polygon(raw_geom).simplify(grid_size)
+
+            points = np.array(geom.boundary.xy).T.tolist()
+
+            if not points:
+                continue
+
+            points.append(points[0])
+            for (x0, y0), (x1, y1) in itertools.pairwise(points):
+                if x0 == x1 and x1 == y1:
+                    continue
+
+                if (x0 - x1)**2 + (y0 - y1)**2 <= feature_size**2:
+                    edge_set.append(
+                        [
+                            [x0, y0],
+                            [x1, y1]
+                        ]
+                    )
+    if not edge_set:
+        return None
+
+    edge_set = np.array(edge_set)
+
+    edge_center = np.mean(edge_set, axis=(0, 1))
+    logger.debug("edge_center: %r", edge_center)
+    edge_distance = np.min(np.linalg.norm(edge_set - edge_center, axis=2), axis=1)
+    edge_mask = edge_distance <= max_cropping_box_size * 5
+    included_edges = edge_set[edge_mask]
+
+    minx, miny = np.min(included_edges, axis=(0, 1)).tolist()
+    maxx, maxy = np.max(included_edges, axis=(0, 1)).tolist()
+    return minx, miny, maxx, maxy
+
+
 def get_gates_from_cropped_region(
     doc: ezdxf.document.Drawing,
     x_rng: tuple[float, float] = DEFAULT_X_RNG,
     y_rng: tuple[float, float] = DEFAULT_Y_RNG,
     layer_regex: str = DEFAULT_LAYER_REGEX,
     grid_size: float = DEFAULT_GRID_SIZE,
-    recenter_coordinates: bool = False,
+    auto_adjust_cropping: bool = False,
 ) -> list[Gate]:
     """Selects all polygons (POLYLINE entities) from the selected region that live in a layer matched by the given
     regular expression. The polygons are cropped to the region and returned as :py:`.Gate` objects.
@@ -101,25 +166,27 @@ def get_gates_from_cropped_region(
     xmin, xmax = x_rng
     ymin, ymax = y_rng
 
-    if recenter_coordinates:
-        doc_bounds = _get_all_entity_bounding_box(doc)
-        if not doc_bounds:
-            logger.warning("No entities in document")
-            return []
+    if auto_adjust_cropping:
+        feature_size = min(xmax - xmin, ymax - ymin) / 3.
+        max_box_size = math.sqrt((xmax - xmin)**2 + (ymax - ymin)**2)
+        auto_xmin, auto_ymin, auto_xmax, auto_ymax = _auto_cropping_box(doc,
+                                                                        keep_layer=keep_layer,
+                                                                        feature_size=feature_size,
+                                                                        max_cropping_box_size=max_box_size,
+                                                                        grid_size=grid_size,
+                                                                        )
 
-        doc_minx, doc_miny, doc_maxx, doc_maxy = doc_bounds
-        x_offset = (doc_miny + doc_maxy) / 2
-        y_offset = (doc_minx + doc_maxx) / 2
+        x_center = (auto_xmax + auto_xmin) / 2.0
+        y_center = (auto_ymax + auto_ymin) / 2.0
+        offset = (x_center, y_center)
 
-        xmin += x_offset
-        xmax += x_offset
-        ymin += y_offset
-        ymax += y_offset
+        logger.info("Shifting box by %r", offset)
 
-        offset = (x_offset, y_offset)
-        logger.info("Added offset of %r to the cropping ranges", offset)
-    else:
-        offset = None
+        # shift initial box
+        xmin += x_center
+        xmax += x_center
+        ymin += y_center
+        ymax += y_center
 
     logger.info("Using x cropping range: %r and y cropping range %r", (xmin, xmax), (ymin, ymax))
 
@@ -166,13 +233,6 @@ def get_gates_from_cropped_region(
                 layer=layer,
             )
             chosen.append(gate)
-
-    if offset is not None and offset != (0.0, 0.0):
-        xoff = -offset[0]
-        yoff = -offset[1]
-
-        for gate in chosen:
-            gate.polygon = shapely.affinity.translate(gate.polygon, xoff, yoff)
 
     return chosen
 
@@ -407,19 +467,19 @@ def get_parser():
         "--x-rng",
         help="The gates are cropped to this range in x coordinates",
         type=to_range,
-        metavar="[X_MIN]:[X_MAX]",
+        metavar="[X_MIN={}]:[X_MAX={}]".format(*DEFAULT_X_RNG),
         default=":".join(map(str, DEFAULT_X_RNG)),
     )
     parser.add_argument(
         "--y-rng",
         help="The gates are cropped to this range in y coordinates",
         type=to_range,
-        metavar="[Y_MIN]:[Y_MAX]",
-        default=":".join(map(str, DEFAULT_X_RNG)),
+        metavar="[Y_MIN={}]:[Y_MAX={}]".format(*DEFAULT_Y_RNG),
+        default=":".join(map(str, DEFAULT_Y_RNG)),
     )
     parser.add_argument(
         "--layer-regex",
-        help="Only gates from layers where the name matches this regex are considered",
+        help=f"Only gates from layers where the name matches this regex are considered. (Default: \"{DEFAULT_LAYER_REGEX}\")",
         default=DEFAULT_LAYER_REGEX,
     )
     parser.add_argument(
@@ -429,10 +489,10 @@ def get_parser():
         default="INFO",
     )
     parser.add_argument(
-        "--recenter-coordinates",
-        help="If true(default), the cropping ranges are relative to the center of the bounding box of all objects in the file.",
+        "--auto-adjust-cropping",
+        help="If true(default), the cropping ranges are adjusted based on some unstable feature detection algorithm.",
         choices=[True, False],
-        type=bool,
+        type=lambda x: x.lower() == "true",
         default=True,
     )
 
@@ -455,7 +515,7 @@ def _main(
     x_rng: tuple[float, float],
     y_rng: tuple[float, float],
     expected_gate_number: slice,
-    recenter_coordinates: bool,
+    auto_adjust_cropping: bool,
 ):
     matplotlib.use("qtagg")
     doc = ezdxf.readfile(dxf_path)
@@ -464,7 +524,7 @@ def _main(
         layer_regex=layer_regex,
         x_rng=x_rng,
         y_rng=y_rng,
-        recenter_coordinates=recenter_coordinates
+        auto_adjust_cropping=auto_adjust_cropping
     )
     logger.info(f"{len(raw_gates)} raw gates extracted.")
 
@@ -493,7 +553,8 @@ if __name__ == "__main__":
     if args.json_path is None:
         args.json_path = args.dxf_path.with_suffix(".json")
 
-    logging.basicConfig(level=args.log_level)
+    logging.basicConfig()
+    logger.setLevel(args.log_level)
 
     _main(args.dxf_path, args.json_path, args.layer_regex, args.x_rng, args.y_rng,
-          args.expected_gate_number, args.recenter_coordinates)
+          args.expected_gate_number, auto_adjust_cropping=args.auto_adjust_cropping)
