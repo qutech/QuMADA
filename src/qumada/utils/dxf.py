@@ -15,7 +15,6 @@ from typing import Tuple
 import ezdxf.document
 import matplotlib.widgets
 import numpy as np
-
 import shapely.affinity
 from matplotlib import pyplot as plt
 from shapely.geometry import LineString, MultiLineString, Polygon, box
@@ -41,8 +40,7 @@ def entity_to_geom(e):
         return LineString([e.dxf.start, e.dxf.end])
 
     if e.dxftype() == "LWPOLYLINE":
-        vertices = [(x, y)
-                    for x, y, *_ in e.vertices_in_wcs()]
+        vertices = [(x, y) for x, y, *_ in e.vertices_in_wcs()]
         closed = bool(e.closed) if hasattr(e, "closed") else vertices[0] == vertices[-1]
         if closed:
             return Polygon(vertices)
@@ -50,10 +48,7 @@ def entity_to_geom(e):
             return LineString(vertices)
 
     if e.dxftype() == "POLYLINE":
-        points = [
-            (x, y)
-            for x, y, *_ in e.points_in_wcs()
-        ]
+        points = [(x, y) for x, y, *_ in e.points_in_wcs()]
         closed = bool(e.closed) if hasattr(e, "closed") else points[0] == points[-1]
         if closed:
             return Polygon(points)
@@ -92,12 +87,13 @@ def _get_all_entity_bounding_box(doc: ezdxf.document.Drawing) -> tuple[float, fl
     return minx, miny, maxx, maxy
 
 
-def _auto_cropping_box(doc: ezdxf.document.Drawing,
-                       keep_layer: dict[str, bool],
-                       feature_size: float,
-                       max_cropping_box_size: float,
-                       grid_size: float,
-                       ) -> tuple[float, float, float, float] | None:
+def _auto_cropping_box(
+    doc: ezdxf.document.Drawing,
+    keep_layer: dict[str, bool],
+    feature_size: float,
+    max_cropping_box_size: float,
+    grid_size: float,
+) -> tuple[float, float, float, float] | None:
     edge_set = []
 
     for model in doc.modelspace():
@@ -120,13 +116,8 @@ def _auto_cropping_box(doc: ezdxf.document.Drawing,
                 if x0 == x1 and x1 == y1:
                     continue
 
-                if (x0 - x1)**2 + (y0 - y1)**2 <= feature_size**2:
-                    edge_set.append(
-                        [
-                            [x0, y0],
-                            [x1, y1]
-                        ]
-                    )
+                if (x0 - x1) ** 2 + (y0 - y1) ** 2 <= feature_size**2:
+                    edge_set.append([[x0, y0], [x1, y1]])
     if not edge_set:
         return None
 
@@ -167,14 +158,15 @@ def get_gates_from_cropped_region(
     ymin, ymax = y_rng
 
     if auto_adjust_cropping:
-        feature_size = min(xmax - xmin, ymax - ymin) / 3.
-        max_box_size = math.sqrt((xmax - xmin)**2 + (ymax - ymin)**2)
-        auto_xmin, auto_ymin, auto_xmax, auto_ymax = _auto_cropping_box(doc,
-                                                                        keep_layer=keep_layer,
-                                                                        feature_size=feature_size,
-                                                                        max_cropping_box_size=max_box_size,
-                                                                        grid_size=grid_size,
-                                                                        )
+        feature_size = min(xmax - xmin, ymax - ymin) / 3.0
+        max_box_size = math.sqrt((xmax - xmin) ** 2 + (ymax - ymin) ** 2)
+        auto_xmin, auto_ymin, auto_xmax, auto_ymax = _auto_cropping_box(
+            doc,
+            keep_layer=keep_layer,
+            feature_size=feature_size,
+            max_cropping_box_size=max_box_size,
+            grid_size=grid_size,
+        )
 
         x_center = (auto_xmax + auto_xmin) / 2.0
         y_center = (auto_ymax + auto_ymin) / 2.0
@@ -479,7 +471,7 @@ def get_parser():
     )
     parser.add_argument(
         "--layer-regex",
-        help=f"Only gates from layers where the name matches this regex are considered. (Default: \"{DEFAULT_LAYER_REGEX}\")",
+        help=f'Only gates from layers where the name matches this regex are considered. (Default: "{DEFAULT_LAYER_REGEX}")',
         default=DEFAULT_LAYER_REGEX,
     )
     parser.add_argument(
@@ -552,5 +544,12 @@ if __name__ == "__main__":
     logging.basicConfig()
     logger.setLevel(args.log_level)
 
-    _main(args.dxf_path, args.json_path, args.layer_regex, args.x_rng, args.y_rng,
-          args.expected_gate_number, auto_adjust_cropping=args.auto_adjust_cropping)
+    _main(
+        args.dxf_path,
+        args.json_path,
+        args.layer_regex,
+        args.x_rng,
+        args.y_rng,
+        args.expected_gate_number,
+        auto_adjust_cropping=args.auto_adjust_cropping,
+    )
