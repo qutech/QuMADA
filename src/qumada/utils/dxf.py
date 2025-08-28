@@ -21,6 +21,10 @@ from shapely.plotting import plot_polygon
 from qumada.utils.geometry import Gate, load_from_file, store_to_file
 
 SELECT_ALPHA = 0.3
+DEFAULT_X_RNG = (-3.0, 3.0)
+DEFAULT_Y_RNG = (-1.5, 1.5)
+DEFAULT_LAYER_REGEX = r".*BEAM\_L."
+DEFAULT_GRID_SIZE = 1e-3
 
 logger = logging.getLogger(__name__)
 
@@ -59,10 +63,10 @@ def iterate_all_entities(e, path=None):
 
 def get_gates_from_cropped_region(
     doc: ezdxf.document.Drawing,
-    x_rng: tuple[float, float] = (-3.0, 3.0),
-    y_rng: tuple[float, float] = (-1.5, 1.5),
-    layer_regex: str = r".*BEAM\_L.",
-    grid_size: float = 1e-3,
+    x_rng: tuple[float, float] = DEFAULT_X_RNG,
+    y_rng: tuple[float, float] = DEFAULT_Y_RNG,
+    layer_regex: str = DEFAULT_LAYER_REGEX,
+    grid_size: float = DEFAULT_GRID_SIZE,
 ) -> list[Gate]:
     """Selects all polygons (POLYLINE entities) from the selected region that live in a layer matched by the given
     regular expression. The polygons are cropped to the region and returned as :py:`.Gate` objects.
@@ -275,7 +279,7 @@ def label_gates(gates: list[Gate]) -> list[Gate]:
     return gates
 
 
-def load_convert_and_cache(path: pathlib.Path | str) -> list[Gate]:
+def load_convert_and_cache(path: pathlib.Path | str, expected_number_of_gates: int | range | slice = slice(1, None)) -> list[Gate]:
     path = pathlib.Path(path)
 
     if not path.exists():
@@ -302,8 +306,39 @@ def load_convert_and_cache(path: pathlib.Path | str) -> list[Gate]:
     return load_from_file(json_path)
 
 
+
+
+
 def get_parser():
     import argparse
+
+    def to_range(s: str):
+        try:
+            min_s, max_s = s.split(":")
+            if not min_s:
+                min_s = "-inf"
+            if not max_s:
+                max_s = "inf"
+            return float(min_s), float(max_s)
+        except Exception as err:
+            raise argparse.ArgumentTypeError(
+                "Argument must be a 'min:max' pair of python floats or empty strings separated by a colon.") from err
+
+    def to_slice(s: str):
+        try:
+            start, stop = s.split(":")
+            if start:
+                start = int(start)
+            else:
+                start = None
+            if stop:
+                stop = int(stop)
+            else:
+                stop = None
+            return slice(start, stop)
+        except Exception as err:
+            raise argparse.ArgumentTypeError(
+                "Argument must be a 'start:stop' pair of python integers or empty strings separated by a colon.") from err
 
     parser = argparse.ArgumentParser(description="Qumada dxf labeler")
     parser.add_argument("dxf_path", type=pathlib.Path, help="path to dxf file")
@@ -313,19 +348,55 @@ def get_parser():
         help="path to json file. default is the same as dxf with other ending",
         default=None,
     )
+    parser.add_argument("--x-rng",
+                        help="The gates are cropped to this range in x coordinates",
+                        type=to_range,
+                        metavar="[X_MIN]:[X_MAX]",
+                        default=':'.join(map(str, DEFAULT_X_RNG)),
+                        )
+    parser.add_argument("--y-rng",
+                        help="The gates are cropped to this range in y coordinates",
+                        type=to_range,
+                        metavar="[Y_MIN]:[Y_MAX]",
+                        default=':'.join(map(str, DEFAULT_X_RNG)),
+                        )
+    parser.add_argument("--layer-regex",
+                        help="Only gates from layers where the name matches this regex are considered",
+                        default=DEFAULT_LAYER_REGEX)
+
+    parser.add_argument("--expected-gate-number",
+                        help="Expected number of gates in integer slice notation (excluding end). "
+                             "The default will result in an error if there are no gates extracted",
+                        metavar="[START]:[STOP]",
+                        type=to_slice,
+                        default="1:")
+
     return parser
 
 
-if __name__ == "__main__":
+def _main(dxf_path: str, json_path: str, layer_regex: str, x_rng: tuple[float, float], y_rng: tuple[float, float], expected_gate_number: slice):
     matplotlib.use("qtagg")
+    doc = ezdxf.readfile(dxf_path)
+    raw_gates = get_gates_from_cropped_region(doc, layer_regex=layer_regex, x_rng=x_rng, y_rng=y_rng)
+    print(f"{len(raw_gates)} raw gates extracted.")
+
+    merged_gates = auto_merge(raw_gates)
+    print(f"{len(merged_gates)} gates left after merging.")
+
+    if expected_gate_number.start is not None and len(merged_gates) < expected_gate_number.start:
+        raise ValueError(f"Only {len(merged_gates)} gates extracted but >= {expected_gate_number.start} were expected.")
+    if expected_gate_number.stop is not None and len(merged_gates) >= expected_gate_number.stop:
+        raise ValueError(f"Only {len(merged_gates)} gates extracted but < {expected_gate_number.stop} were expected.")
+
+    resulting_gates = label_gates(merged_gates)
+    plt.show(block=True)
+    store_to_file(resulting_gates, json_path)
+
+
+if __name__ == "__main__":
     parser = get_parser()
     args = parser.parse_args()
     if args.json_path is None:
         args.json_path = args.dxf_path.with_suffix(".json")
-
-    doc = ezdxf.readfile(args.dxf_path)
-    raw_gates = get_gates_from_cropped_region(doc)
-    merged_gates = auto_merge(raw_gates)
-    resulting_gates = label_gates(merged_gates)
-    plt.show(block=True)
-    store_to_file(resulting_gates, args.json_path)
+    _main(args.dxf_path, args.json_path, args.layer_regex, args.x_rng, args.y_rng,
+          args.expected_gate_number)
