@@ -13,7 +13,7 @@ from typing import Tuple
 
 import ezdxf.document
 import matplotlib.widgets
-import shapely
+import shapely.affinity
 from matplotlib import pyplot as plt
 from shapely.geometry import LineString, MultiLineString, Polygon, box
 from shapely.plotting import plot_polygon
@@ -61,12 +61,30 @@ def iterate_all_entities(e, path=None):
         yield e, list(path)
 
 
+def _get_all_entity_bounding_box(doc: ezdxf.document.Drawing) -> tuple[float, float, float, float] | None:
+    minx = miny = maxx = maxy = float('nan')
+
+    for model in doc.modelspace():
+        for e, _ in iterate_all_entities(model):
+            e_minx, e_miny, e_maxx, e_maxy = entity_to_geom(e).bounds
+            minx = min(e_minx, minx)
+            miny = min(e_miny, miny)
+            maxx = max(e_maxx, maxx)
+            maxy = max(e_maxy, maxy)
+
+    if math.isnan(minx):
+        return None
+
+    return minx, miny, maxx, maxy
+
+
 def get_gates_from_cropped_region(
     doc: ezdxf.document.Drawing,
     x_rng: tuple[float, float] = DEFAULT_X_RNG,
     y_rng: tuple[float, float] = DEFAULT_Y_RNG,
     layer_regex: str = DEFAULT_LAYER_REGEX,
     grid_size: float = DEFAULT_GRID_SIZE,
+    recenter_coordinates: bool = False,
 ) -> list[Gate]:
     """Selects all polygons (POLYLINE entities) from the selected region that live in a layer matched by the given
     regular expression. The polygons are cropped to the region and returned as :py:`.Gate` objects.
@@ -76,11 +94,35 @@ def get_gates_from_cropped_region(
     In some cases, continuous gates are returned in multiple pieces. Use :py:`.auto_merge` to merge overlapping gates in the same layer.
     """
     regex = re.compile(layer_regex)
+    logger.debug("Using regular expression %r for layer selection", layer_regex)
 
     keep_layer = {layer.dxf.name: bool(regex.search(layer.dxf.name)) for layer in doc.layers}
 
     xmin, xmax = x_rng
     ymin, ymax = y_rng
+
+    if recenter_coordinates:
+        doc_bounds = _get_all_entity_bounding_box(doc)
+        if not doc_bounds:
+            logger.warning("No entities in document")
+            return []
+
+        doc_minx, doc_miny, doc_maxx, doc_maxy = doc_bounds
+        x_offset = (doc_miny + doc_maxy) / 2
+        y_offset = (doc_minx + doc_maxx) / 2
+
+        xmin += x_offset
+        xmax += x_offset
+        ymin += y_offset
+        ymax += y_offset
+
+        offset = (x_offset, y_offset)
+        logger.info("Added offset of %r to the cropping ranges", offset)
+    else:
+        offset = None
+
+    logger.info("Using x cropping range: %r and y cropping range %r", (xmin, xmax), (ymin, ymax))
+
     roi_poly = Polygon(box(xmin, ymin, xmax, ymax))
 
     chosen = []
@@ -124,6 +166,13 @@ def get_gates_from_cropped_region(
                 layer=layer,
             )
             chosen.append(gate)
+
+    if offset is not None and offset != (0.0, 0.0):
+        xoff = -offset[0]
+        yoff = -offset[1]
+
+        for gate in chosen:
+            gate.polygon = shapely.affinity.translate(gate.polygon, xoff, yoff)
 
     return chosen
 
@@ -373,6 +422,19 @@ def get_parser():
         help="Only gates from layers where the name matches this regex are considered",
         default=DEFAULT_LAYER_REGEX,
     )
+    parser.add_argument(
+        "--log-level",
+        help="Logging level",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        default="INFO",
+    )
+    parser.add_argument(
+        "--recenter-coordinates",
+        help="If true(default), the cropping ranges are relative to the center of the bounding box of all objects in the file.",
+        choices=[True, False],
+        type=bool,
+        default=True,
+    )
 
     parser.add_argument(
         "--expected-gate-number",
@@ -393,14 +455,21 @@ def _main(
     x_rng: tuple[float, float],
     y_rng: tuple[float, float],
     expected_gate_number: slice,
+    recenter_coordinates: bool,
 ):
     matplotlib.use("qtagg")
     doc = ezdxf.readfile(dxf_path)
-    raw_gates = get_gates_from_cropped_region(doc, layer_regex=layer_regex, x_rng=x_rng, y_rng=y_rng)
-    print(f"{len(raw_gates)} raw gates extracted.")
+    raw_gates = get_gates_from_cropped_region(
+        doc,
+        layer_regex=layer_regex,
+        x_rng=x_rng,
+        y_rng=y_rng,
+        recenter_coordinates=recenter_coordinates
+    )
+    logger.info(f"{len(raw_gates)} raw gates extracted.")
 
     merged_gates = auto_merge(raw_gates)
-    print(f"{len(merged_gates)} gates left after merging.")
+    logger.info(f"{len(merged_gates)} gates left after merging.")
 
     if expected_gate_number.start is not None and len(merged_gates) < expected_gate_number.start:
         raise ValueError(f"Only {len(merged_gates)} gates extracted but >= {expected_gate_number.start} were expected.")
@@ -409,7 +478,7 @@ def _main(
 
     if not merged_gates:
         # this is apparently explicitly allowed by the user cause otherwise the expected_gate_number check should fail
-        print("No gates extracted. Storing empty gates in json path")
+        logger.info("No gates extracted. Storing empty gates in json path")
         store_to_file([], json_path)
         return
 
@@ -423,4 +492,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.json_path is None:
         args.json_path = args.dxf_path.with_suffix(".json")
-    _main(args.dxf_path, args.json_path, args.layer_regex, args.x_rng, args.y_rng, args.expected_gate_number)
+
+    logging.basicConfig(level=args.log_level)
+
+    _main(args.dxf_path, args.json_path, args.layer_regex, args.x_rng, args.y_rng,
+          args.expected_gate_number, args.recenter_coordinates)
