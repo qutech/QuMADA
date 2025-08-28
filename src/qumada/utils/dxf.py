@@ -180,6 +180,9 @@ def auto_merge(gates: list[Gate], grid_size: float = 1e-3):
 
 
 def label_gates(gates: list[Gate]) -> list[Gate]:
+    if not gates:
+        return []
+
     gates = [copy.deepcopy(gate) for gate in gates]
 
     gates = sorted(gates, key=lambda gate: 0.0 if gate.label_position is None else math.atan2(*gate.label_position))
@@ -387,6 +390,12 @@ def _main(dxf_path: str, json_path: str, layer_regex: str, x_rng: tuple[float, f
         raise ValueError(f"Only {len(merged_gates)} gates extracted but >= {expected_gate_number.start} were expected.")
     if expected_gate_number.stop is not None and len(merged_gates) >= expected_gate_number.stop:
         raise ValueError(f"Only {len(merged_gates)} gates extracted but < {expected_gate_number.stop} were expected.")
+
+    if not merged_gates:
+        # this is apparently explicitly allowed by the user cause otherwise the expected_gate_number check should fail
+        print("No gates extracted. Storing empty gates in json path")
+        store_to_file([], json_path)
+        return
 
     resulting_gates = label_gates(merged_gates)
     plt.show(block=True)
