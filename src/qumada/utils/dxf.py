@@ -62,7 +62,7 @@ def iterate_all_entities(e, path=None):
 
 
 def _get_all_entity_bounding_box(doc: ezdxf.document.Drawing) -> tuple[float, float, float, float] | None:
-    minx = miny = maxx = maxy = float('nan')
+    minx = miny = maxx = maxy = float("nan")
 
     for model in doc.modelspace():
         for e, _ in iterate_all_entities(model):
@@ -460,11 +460,7 @@ def _main(
     matplotlib.use("qtagg")
     doc = ezdxf.readfile(dxf_path)
     raw_gates = get_gates_from_cropped_region(
-        doc,
-        layer_regex=layer_regex,
-        x_rng=x_rng,
-        y_rng=y_rng,
-        recenter_coordinates=recenter_coordinates
+        doc, layer_regex=layer_regex, x_rng=x_rng, y_rng=y_rng, recenter_coordinates=recenter_coordinates
     )
     logger.info(f"{len(raw_gates)} raw gates extracted.")
 
@@ -495,5 +491,12 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=args.log_level)
 
-    _main(args.dxf_path, args.json_path, args.layer_regex, args.x_rng, args.y_rng,
-          args.expected_gate_number, args.recenter_coordinates)
+    _main(
+        args.dxf_path,
+        args.json_path,
+        args.layer_regex,
+        args.x_rng,
+        args.y_rng,
+        args.expected_gate_number,
+        args.recenter_coordinates,
+    )
