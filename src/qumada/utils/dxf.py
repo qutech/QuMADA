@@ -282,7 +282,9 @@ def label_gates(gates: list[Gate]) -> list[Gate]:
     return gates
 
 
-def load_convert_and_cache(path: pathlib.Path | str, expected_number_of_gates: int | range | slice = slice(1, None)) -> list[Gate]:
+def load_convert_and_cache(
+    path: pathlib.Path | str, expected_number_of_gates: int | range | slice = slice(1, None)
+) -> list[Gate]:
     path = pathlib.Path(path)
 
     if not path.exists():
@@ -311,9 +313,6 @@ def load_convert_and_cache(path: pathlib.Path | str, expected_number_of_gates: i
     return load_from_file(json_path)
 
 
-
-
-
 def get_parser():
     import argparse
 
@@ -327,7 +326,8 @@ def get_parser():
             return float(min_s), float(max_s)
         except Exception as err:
             raise argparse.ArgumentTypeError(
-                "Argument must be a 'min:max' pair of python floats or empty strings separated by a colon.") from err
+                "Argument must be a 'min:max' pair of python floats or empty strings separated by a colon."
+            ) from err
 
     def to_slice(s: str):
         try:
@@ -343,7 +343,8 @@ def get_parser():
             return slice(start, stop)
         except Exception as err:
             raise argparse.ArgumentTypeError(
-                "Argument must be a 'start:stop' pair of python integers or empty strings separated by a colon.") from err
+                "Argument must be a 'start:stop' pair of python integers or empty strings separated by a colon."
+            ) from err
 
     parser = argparse.ArgumentParser(description="Qumada dxf labeler")
     parser.add_argument("dxf_path", type=pathlib.Path, help="path to dxf file")
@@ -353,33 +354,46 @@ def get_parser():
         help="path to json file. default is the same as dxf with other ending",
         default=None,
     )
-    parser.add_argument("--x-rng",
-                        help="The gates are cropped to this range in x coordinates",
-                        type=to_range,
-                        metavar="[X_MIN]:[X_MAX]",
-                        default=':'.join(map(str, DEFAULT_X_RNG)),
-                        )
-    parser.add_argument("--y-rng",
-                        help="The gates are cropped to this range in y coordinates",
-                        type=to_range,
-                        metavar="[Y_MIN]:[Y_MAX]",
-                        default=':'.join(map(str, DEFAULT_X_RNG)),
-                        )
-    parser.add_argument("--layer-regex",
-                        help="Only gates from layers where the name matches this regex are considered",
-                        default=DEFAULT_LAYER_REGEX)
+    parser.add_argument(
+        "--x-rng",
+        help="The gates are cropped to this range in x coordinates",
+        type=to_range,
+        metavar="[X_MIN]:[X_MAX]",
+        default=":".join(map(str, DEFAULT_X_RNG)),
+    )
+    parser.add_argument(
+        "--y-rng",
+        help="The gates are cropped to this range in y coordinates",
+        type=to_range,
+        metavar="[Y_MIN]:[Y_MAX]",
+        default=":".join(map(str, DEFAULT_X_RNG)),
+    )
+    parser.add_argument(
+        "--layer-regex",
+        help="Only gates from layers where the name matches this regex are considered",
+        default=DEFAULT_LAYER_REGEX,
+    )
 
-    parser.add_argument("--expected-gate-number",
-                        help="Expected number of gates in integer slice notation (excluding end). "
-                             "The default will result in an error if there are no gates extracted",
-                        metavar="[START]:[STOP]",
-                        type=to_slice,
-                        default="1:")
+    parser.add_argument(
+        "--expected-gate-number",
+        help="Expected number of gates in integer slice notation (excluding end). "
+        "The default will result in an error if there are no gates extracted",
+        metavar="[START]:[STOP]",
+        type=to_slice,
+        default="1:",
+    )
 
     return parser
 
 
-def _main(dxf_path: str, json_path: str, layer_regex: str, x_rng: tuple[float, float], y_rng: tuple[float, float], expected_gate_number: slice):
+def _main(
+    dxf_path: str,
+    json_path: str,
+    layer_regex: str,
+    x_rng: tuple[float, float],
+    y_rng: tuple[float, float],
+    expected_gate_number: slice,
+):
     matplotlib.use("qtagg")
     doc = ezdxf.readfile(dxf_path)
     raw_gates = get_gates_from_cropped_region(doc, layer_regex=layer_regex, x_rng=x_rng, y_rng=y_rng)
@@ -409,5 +423,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.json_path is None:
         args.json_path = args.dxf_path.with_suffix(".json")
-    _main(args.dxf_path, args.json_path, args.layer_regex, args.x_rng, args.y_rng,
-          args.expected_gate_number)
+    _main(args.dxf_path, args.json_path, args.layer_regex, args.x_rng, args.y_rng, args.expected_gate_number)
