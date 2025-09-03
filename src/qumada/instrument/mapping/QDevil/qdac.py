@@ -31,14 +31,13 @@ class QDacMapping(InstrumentMapping):
         super().__init__(QDAC_MAPPING)
         self.max_ramp_channels = 8
 
-    def ramp(
+    def _ramp(
         self,
         parameters: list[Parameter],
-        *,
-        start_values: list[float] | None = None,
         end_values: list[float],
         ramp_time: float,
         sync_trigger=None,
+        start_values: list[float] | None = None,
         **kwargs,
     ) -> None:
         assert len(parameters) == len(end_values)

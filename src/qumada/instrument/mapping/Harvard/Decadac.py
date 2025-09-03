@@ -37,16 +37,15 @@ class DecadacMapping(InstrumentMapping):
         self.AVAILABLE_TRIGGERS: list = ["trigger_in_1", "trigger_in_2"]
         self.max_ramp_channels = 20
 
-    def ramp(
+    def _ramp(
         self,
         parameters: list[Parameter],
-        *,
-        start_values: list[float] | None = None,
         end_values: list[float],
         ramp_time: float,
         block: bool = False,
         sync_trigger=None,
         sync_trigger_level=2,
+        start_values: list[float] | None = None,
     ) -> None:
         assert len(parameters) == len(end_values)
         if start_values is not None:

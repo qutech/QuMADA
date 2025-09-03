@@ -32,13 +32,12 @@ class DummyDacMapping(InstrumentMapping):
         super().__init__(DUMMY_DAC_MAPPING)
         self.max_ramp_channels = 4
 
-    def ramp(
+    def _ramp(
         self,
         parameters: list[Parameter],
-        *,
-        start_values: list[float] | None = None,
         end_values: list[float],
         ramp_time: float,
+        start_values: list[float] | None = None,
         **kwargs,
     ) -> None:
         num_points = kwargs.get("num_points", 100 * ramp_time)

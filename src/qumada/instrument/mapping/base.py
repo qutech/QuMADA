@@ -55,17 +55,41 @@ class InstrumentMapping(ABC):
     @property
     def mapping(self) -> dict:
         return self._mapping
-
+    
     @abstractmethod
+    def _ramp(
+            self,
+            parameters: list[Parameter],
+            end_values: list[float],
+            ramp_time: float,
+            start_values: list[float] | None = None,
+            **kwargs
+        ) -> None:
+            """Defining qumada ramp. 
+            Requires proper implementation for each instrument"""
+
+    
     def ramp(
         self,
         parameters: list[Parameter],
-        *,
-        start_values: list[float] | None = None,
         end_values: list[float],
         ramp_time: float,
+        start_values: list[float] | None = None,
+        **kwargs
     ) -> None:
-        """Defining qumada ramp. Requires proper implementation for each instrument"""
+        """
+        Runs ramp and makes sure that the max allowed age for ramped parameters
+        is set so short, that the parameters are updated after the ramp
+        """
+        self._ramp(
+              parameters,
+              end_values,
+              ramp_time,
+              start_values,
+              **kwargs)
+        for param in parameters:
+            param.max_val_age = ramp_time
+        
 
     def pulse(
         self,
