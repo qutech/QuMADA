@@ -17,7 +17,7 @@ from qumada.utils.geometry import Gate, gate_list_to_string, load_from_file
 logger = logging.getLogger(__name__)
 
 
-def _get_parameter_data(parameter: Parameter, cache_only: bool = True):
+def _get_parameter_data(parameter: Parameter, cache_only):
     value = parameter.cache.get(get_if_invalid=not cache_only)
     timestamp = parameter.cache.timestamp
 
@@ -35,7 +35,7 @@ def _get_parameter_data(parameter: Parameter, cache_only: bool = True):
     }
 
 
-def _collect_data(*parameters: Parameter, cache_only: bool = True):
+def _collect_data(*parameters: Parameter, cache_only):
     data = []
     for parameter in parameters:
         try:
@@ -51,7 +51,7 @@ def _collect_data(*parameters: Parameter, cache_only: bool = True):
 
 
 class DataCollector:
-    def __init__(self, *parameters: Parameter, cache_only: bool = True, minimal_update_delta: float = 1 / 30):
+    def __init__(self, *parameters: Parameter, cache_only: bool = False, minimal_update_delta: float = 1 / 30):
         self.lock = asyncio.Lock()
         self.parameters = parameters
         self.cache_only = cache_only
