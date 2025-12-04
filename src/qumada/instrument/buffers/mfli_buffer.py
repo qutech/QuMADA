@@ -16,6 +16,7 @@
 # Contributors:
 # - Daniel Grothe
 # - Till Huckeman
+# - Simon Humpohl
 
 from __future__ import annotations
 
@@ -83,7 +84,8 @@ class MFLIBuffer(Buffer):
         self._daq.type(self.TRIGGER_MODE_MAPPING[settings.get("trigger_mode", "edge")])
         self._daq.edge(self.TRIGGER_MODE_POLARITY_MAPPING[settings.get("trigger_mode_polarity", "positive")])
         self._daq.grid.mode(self.GRID_INTERPOLATION_MAPPING[settings.get("grid_interpolation", "linear")])
-        self.trigger = self.trigger  # Don't delete me, I am important!
+        # flush internal settings in case they were changed externally
+        self._set_trigger_mode(self._trigger)
         if "trigger_threshold" in settings:
             # TODO: better way to distinguish, which trigger level to set
             self._daq.level(settings["trigger_threshold"])
@@ -94,6 +96,29 @@ class MFLIBuffer(Buffer):
         self._set_num_points()
         self._daq.delay = settings.get("delay", 0)
 
+    def _set_trigger_mode(self, trigger: str | None):
+        if trigger is None:
+            logger.info("No Trigger provided! Setting trigger to continuous.")
+            self._daq.type(0)
+        elif trigger in self.AVAILABLE_TRIGGERS:
+            sample_node = self._device.demods[self._channel].sample
+            if trigger == "trigger_in_1":
+                self._daq.triggernode(sample_node.TrigIn1)
+                self._daq.type(6)
+            elif trigger == "trigger_in_2":
+                self._daq.triggernode(sample_node.TrigIn2)
+                self._daq.type(6)
+            elif trigger == "aux_in_1":
+                self._daq.triggernode(sample_node.AuxIn0)
+                if self._daq.type() not in (1, 3, 4, 7):
+                    self._daq.type(1)
+            elif trigger == "aux_in_2":
+                self._daq.triggernode(sample_node.AuxIn1)
+                if self._daq.type() not in (1, 3, 4, 7):
+                    self._daq.type(1)
+        else:
+            raise BufferException(f"Trigger input '{trigger}' is not supported.")
+
     @property
     def trigger(self):
         return self._trigger
@@ -102,28 +127,7 @@ class MFLIBuffer(Buffer):
     def trigger(self, trigger: str | None) -> None:
         # TODO: Inform user about automatic changes of settings
         # TODO: This is done BEFORE the setup_buffer, so changes to trigger type will be overriden anyway?
-        # print(f"Running trigger setter with: {trigger}")
-        if trigger is None:
-            logger.info("No Trigger provided! Setting trigger to continuous.")
-            self._daq.type(0)
-        elif trigger in self.AVAILABLE_TRIGGERS:
-            samplenode = self._device.demods[self._channel].sample
-            if trigger == "trigger_in_1":
-                self._daq.triggernode(samplenode.TrigIn1)
-                self._daq.type(6)
-            elif trigger == "trigger_in_2":
-                self._daq.triggernode(samplenode.TrigIn2)
-                self._daq.type(6)
-            elif trigger == "aux_in_1":
-                self._daq.triggernode(samplenode.AuxIn0)
-                if self._daq.type() not in (1, 3, 4, 7):
-                    self._daq.type(1)
-            elif trigger == "aux_in_2":
-                self._daq.triggernode(samplenode.AuxIn1)
-                if self._daq.type() not in (1, 3, 4, 7):
-                    self._daq.type(1)
-        else:
-            raise BufferException(f"Trigger input '{trigger}' is not supported.")
+        self._set_trigger_mode(trigger)
         self._trigger = trigger
 
     def force_trigger(self) -> None:
