@@ -146,10 +146,8 @@ class QDac2Mapping(InstrumentMapping):
                 assert parameter._short_name == "dc_constant_V"
         instruments = {parameter.root_instrument for parameter in parameters}
         if len(instruments) > 1:
-            raise Exception(
-                "Parameters are from more than one instrument. \
-                This would lead to non synchronized ramps."
-            )
+            raise Exception("Parameters are from more than one instrument. \
+                This would lead to non synchronized ramps.")
         qdac: QDac2 = instruments.pop()
         assert isinstance(qdac, QDac2)
         if delay < 1e-6:
@@ -177,10 +175,8 @@ class QDac2Mapping(InstrumentMapping):
         qdac.free_all_triggers()
 
     def setup_trigger_in():
-        raise Exception(
-            "QDac2 does not have a trigger input \
-            not yet supported!"
-        )
+        raise Exception("QDac2 does not have a trigger input \
+            not yet supported!")
 
     def clean_generators(self):
         for dc_list in self.dc_lists:
@@ -192,10 +188,8 @@ class QDac2Mapping(InstrumentMapping):
         """Check if all parameters are from the same instrument"""
         instruments = {parameter.root_instrument for parameter in parameters}
         if len(instruments) > 1:
-            raise Exception(
-                "Parameters are from more than one instrument. \
-                This would lead to non synchronized ramps."
-            )
+            raise Exception("Parameters are from more than one instrument. \
+                This would lead to non synchronized ramps.")
         qdac: QDac2 = instruments.pop()
         assert isinstance(qdac, QDac2)
         return qdac
