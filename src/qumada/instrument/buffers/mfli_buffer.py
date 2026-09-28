@@ -136,10 +136,8 @@ class MFLIBuffer(Buffer):
     @num_points.setter
     def num_points(self, num_points) -> None:
         if num_points > 8_388_608:
-            raise BufferException(
-                "Buffer is to small for this measurement. \
-                                  Please reduce the number of data points"
-            )
+            raise BufferException("Buffer is to small for this measurement. \
+                                  Please reduce the number of data points")
         self._num_points = int(num_points)
 
     # TODO: Define setter for other settings (e.g. burst_duration, num_bursts etc)
@@ -179,10 +177,8 @@ class MFLIBuffer(Buffer):
                 self._num_bursts = int(self.settings["num_bursts"])
                 self._burst_duration = self.settings["duration"] / self._num_bursts
             else:
-                logger.info(
-                    "You have specified neither burst_duration nor num_bursts. \
-                      Using duration as burst_duration!"
-                )
+                logger.info("You have specified neither burst_duration nor num_bursts. \
+                      Using duration as burst_duration!")
                 self._burst_duration = self.settings["duration"]
 
         if "num_points" in self.settings:
