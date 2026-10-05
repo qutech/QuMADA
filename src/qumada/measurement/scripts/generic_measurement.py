@@ -168,12 +168,10 @@ class Generic_nD_Sweep(MeasurementScript):
 
 class Generic_1D_parallel_asymm_Sweep(MeasurementScript):
     def run(self):
-        raise Exception(
-            "This script was renamed to Generic_1D_parallel_Sweep \
+        raise Exception("This script was renamed to Generic_1D_parallel_Sweep \
                         and is no longer available. \
                         Please use  Generic_1D_parallel_Sweep instead! \
-                        No measurement was started."
-        )
+                        No measurement was started.")
 
 
 class Generic_1D_parallel_Sweep(MeasurementScript):
@@ -562,12 +560,10 @@ class Timetrace_with_Sweeps_buffered(MeasurementScript):
                         sync_trigger=sync_trigger,
                     )
                 except AttributeError as ex:
-                    logger.error(
-                        "Exception: This instrument probably does not have a \
+                    logger.error("Exception: This instrument probably does not have a \
                           qtools_ramp method. Buffered measurements without \
                           ramp method are no longer supported. \
-                          Use the unbuffered script!"
-                    )
+                          Use the unbuffered script!")
                     raise ex
 
                 if trigger_type == "manual":
@@ -582,12 +578,10 @@ class Timetrace_with_Sweeps_buffered(MeasurementScript):
                 elif trigger_type == "software":
                     for buffer in self.buffers:
                         buffer.force_trigger()
-                    logger.warning(
-                        "You are using software trigger, which \
+                    logger.warning("You are using software trigger, which \
                         can lead to significant delays between \
                         measurement instruments! Only recommended\
-                        for debugging."
-                    )
+                        for debugging.")
                 while not all(buffer.is_finished() for buffer in list(self.buffers)):
                     sleep(0.1)
                 try:
@@ -712,10 +706,8 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                     try:
                         parameter_value = self.properties[parameter["gate"]][parameter["parameter"]]["value"]
                     except KeyError:
-                        logger.error(
-                            "An idle dynamic parameter has no value assigned\
-                              and cannot be logged!"
-                        )
+                        logger.error("An idle dynamic parameter has no value assigned\
+                              and cannot be logged!")
                         break
                     static_gettables.append((channel, [parameter_value for _ in range(int(self.buffered_num_points))]))
             for param in static_gettables:
@@ -766,12 +758,10 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                         sync_trigger=sync_trigger,
                     )
                 except AttributeError as ex:
-                    logger.error(
-                        "Exception: This instrument probably does not have a \
+                    logger.error("Exception: This instrument probably does not have a \
                           a qumada_ramp method. Buffered measurements without \
                           ramp method are no longer supported. \
-                          Use the unbuffered script!"
-                    )
+                          Use the unbuffered script!")
                     raise ex
 
                 if trigger_type == "manual":
@@ -786,12 +776,10 @@ class Generic_1D_Sweep_buffered(MeasurementScript):
                 elif trigger_type == "software":
                     for buffer in self.buffers:
                         buffer.force_trigger()
-                    logger.warning(
-                        "You are using software trigger, which \
+                    logger.warning("You are using software trigger, which \
                         can lead to significant delays between \
                         measurement instruments! Only recommended \
-                        for debugging."
-                    )
+                        for debugging.")
                 while not all(buffer.is_finished() for buffer in list(self.buffers)):
                     sleep(0.1)
                 try:
@@ -915,10 +903,8 @@ class Generic_1D_Hysteresis_buffered(MeasurementScript):
                     try:
                         parameter_value = self.properties[parameter["gate"]][parameter["parameter"]]["value"]
                     except KeyError:
-                        logger.error(
-                            "An idle dynamic parameter has no value assigned\
-                              and cannot be logged!"
-                        )
+                        logger.error("An idle dynamic parameter has no value assigned\
+                              and cannot be logged!")
                         break
                     static_gettables.append((channel, [parameter_value for _ in range(int(self.buffered_num_points))]))
             for param in static_gettables:
@@ -961,12 +947,10 @@ class Generic_1D_Hysteresis_buffered(MeasurementScript):
                             sync_trigger=sync_trigger,
                         )
                     except AttributeError as ex:
-                        logger.error(
-                            "Exception: This instrument probably does not have a \
+                        logger.error("Exception: This instrument probably does not have a \
                               a qumada_ramp method. Buffered measurements without \
                               ramp method are no longer supported. \
-                              Use the unbuffered script!"
-                        )
+                              Use the unbuffered script!")
                         raise ex
 
                     if trigger_type == "manual":
@@ -981,12 +965,10 @@ class Generic_1D_Hysteresis_buffered(MeasurementScript):
                     elif trigger_type == "software":
                         for buffer in self.buffers:
                             buffer.force_trigger()
-                        logger.info(
-                            "You are using software trigger, which \
+                        logger.info("You are using software trigger, which \
                                         can lead to significant delays between \
                                         measurement instruments! Only recommended\
-                                        for debugging."
-                        )
+                                        for debugging.")
                     while not all(buffer.is_finished() for buffer in list(self.buffers)):
                         sleep(0.1)
                     try:
@@ -1217,12 +1199,10 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
                         sync_trigger=sync_trigger,
                     )
                 except AttributeError as ex:
-                    logger.error(
-                        "Exception: This instrument probably does not have a \
+                    logger.error("Exception: This instrument probably does not have a \
                           a qumada_ramp method. Buffered measurements without \
                           ramp method are no longer supported. \
-                          Use the unbuffered script!"
-                    )
+                          Use the unbuffered script!")
                     raise ex
 
                 if trigger_type == "manual":
@@ -1238,12 +1218,10 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
                 elif trigger_type == "software":
                     for buffer in self.buffers:
                         buffer.force_trigger()
-                    logger.warning(
-                        "You are using software trigger, which \
+                    logger.warning("You are using software trigger, which \
                         can lead to significant delays between \
                         measurement instruments! Only recommended\
-                        for debugging."
-                    )
+                        for debugging.")
                 timer = 0
                 while not all(buffer.is_finished() for buffer in list(self.buffers)):
                     timer += 0.1
@@ -1253,11 +1231,9 @@ class Generic_2D_Sweep_buffered(MeasurementScript):
                 try:
                     trigger_reset()
                 except TypeError:
-                    logger.info(
-                        "No method to reset the trigger defined. \
+                    logger.info("No method to reset the trigger defined. \
                         As you are doing a 2D Sweep, this can have undesired \
-                        consequences!"
-                    )
+                        consequences!")
 
                 results = self.readout_buffers()
                 datasaver.add_result(
@@ -1418,12 +1394,10 @@ class Generic_Pulsed_Measurement(MeasurementScript):
                         sync_trigger=sync_trigger,
                     )
                 except AttributeError as ex:
-                    logger.error(
-                        f"Exception: {instr} probably does not have a \
+                    logger.error(f"Exception: {instr} probably does not have a \
                             a qumada_pulse method. Buffered measurements without \
                             ramp method are no longer supported. \
-                            Use the unbuffered script!"
-                    )
+                            Use the unbuffered script!")
                     raise ex
 
             if trigger_type == "manual":
@@ -1442,12 +1416,10 @@ class Generic_Pulsed_Measurement(MeasurementScript):
             elif trigger_type == "software":
                 for buffer in self.buffers:
                     buffer.force_trigger()
-                logger.warning(
-                    "You are using software trigger, which \
+                logger.warning("You are using software trigger, which \
                     can lead to significant delays between \
                     measurement instruments! Only recommended\
-                    for debugging."
-                )
+                    for debugging.")
             timeout_timer = 0
             while not all(buffer.is_finished() for buffer in list(self.buffers)):
                 timeout_timer += 0.1
@@ -1623,12 +1595,10 @@ class Generic_Pulsed_Repeated_Measurement(MeasurementScript):
                             sync_trigger=sync_trigger,
                         )
                     except AttributeError as ex:
-                        logger.error(
-                            f"Exception: {instr} probably does not have a \
+                        logger.error(f"Exception: {instr} probably does not have a \
                                 a qumada_pulse method. Buffered measurements without \
                                 ramp method are no longer supported. \
-                                Use the unbuffered script!"
-                        )
+                                Use the unbuffered script!")
                         raise ex
 
                 if trigger_type == "manual":
@@ -1647,12 +1617,10 @@ class Generic_Pulsed_Repeated_Measurement(MeasurementScript):
                 elif trigger_type == "software":
                     for buffer in self.buffers:
                         buffer.force_trigger()
-                    logger.warning(
-                        "You are using software trigger, which \
+                    logger.warning("You are using software trigger, which \
                         can lead to significant delays between \
                         measurement instruments! Only recommended\
-                        for debugging."
-                    )
+                        for debugging.")
 
                 while not all(buffer.is_finished() for buffer in list(self.buffers)):
                     sleep(0.1)
