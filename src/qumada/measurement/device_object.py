@@ -66,10 +66,8 @@ class QumadaDevice:
                 self.namespace[terminal_name.replace(" ", "_")] = self.terminals[terminal_name]
                 logger.warning(f"Added {terminal_name} to global namespace!")
             else:
-                raise Terminal_Exists_Exception(
-                    f"Terminal {terminal_name} already exists in global namespace. \
-                        Please remove it first!"
-                )
+                raise Terminal_Exists_Exception(f"Terminal {terminal_name} already exists in global namespace. \
+                        Please remove it first!")
 
     def remove_terminal(self, terminal_name: str):
         if terminal_name in self.terminals.keys():
@@ -420,15 +418,11 @@ class QumadaDevice:
             if buffered is True:
                 if "num_points" in temp_buffer_settings.keys():
                     temp_buffer_settings["num_points"] = fast_num_points
-                    logger.warning(
-                        f"Temporarily changed buffer settings to match the \
-                        number of points specified {fast_num_points=}"
-                    )
+                    logger.warning(f"Temporarily changed buffer settings to match the \
+                        number of points specified {fast_num_points=}")
                 else:
-                    logger.warning(
-                        "Num_points not specified in buffer settings! fast_num_points value is \
-                        ignored and buffer settings are used to specify measurement!"
-                    )
+                    logger.warning("Num_points not specified in buffer settings! fast_num_points value is \
+                        ignored and buffer settings are used to specify measurement!")
 
                 script = Generic_2D_Sweep_buffered()
             else:
@@ -623,10 +617,8 @@ class QumadaDevice:
 
         if "num_points" in temp_buffer_settings.keys():
             temp_buffer_settings["num_points"] = len(setpoints[0])
-            logger.warning(
-                "Temporarily changed buffer settings to match the \
-                number of points specified in the setpoints"
-            )
+            logger.warning("Temporarily changed buffer settings to match the \
+                number of points specified in the setpoints")
         else:
             raise Exception(
                 "For this kind of measurement, you have to specify the number of points in the buffer settings!"
@@ -761,10 +753,8 @@ class QumadaDevice:
 
         if "num_points" in temp_buffer_settings.keys():
             temp_buffer_settings["num_points"] = len(setpoints[0])
-            logger.warning(
-                "Temporarily changed buffer settings to match the \
-                number of points specified in the setpoints"
-            )
+            logger.warning("Temporarily changed buffer settings to match the \
+                number of points specified in the setpoints")
         else:
             raise Exception(
                 "For this kind of measurement, you have to specify the number of points in the buffer settings!"
@@ -992,10 +982,8 @@ class Terminal_Parameter(ABC):
             raise ValueError(f"Invalid limits provided for {self._parent.name} {self.name}")
         param = self.instrument_parameter
         if not isinstance(param, Parameter):
-            logger.exception(
-                f"Cannot set limits to {self._parent.name} {self.name} \
-                             as no valid instrument parameter was assigned to it!"
-            )
+            logger.exception(f"Cannot set limits to {self._parent.name} {self.name} \
+                             as no valid instrument parameter was assigned to it!")
         else:
             try:
                 if self._limit_validator in param.validators:
@@ -1108,10 +1096,8 @@ class Terminal_Parameter(ABC):
                     f"Temporarily changed buffer settings to match the number of points specified {num_points=}"
                 )
             else:
-                logger.warning(
-                    "Num_points not specified in buffer settings! fast_num_points value is \
-                        ignored and buffer settings are used to specify measurement!"
-                )
+                logger.warning("Num_points not specified in buffer settings! fast_num_points value is \
+                        ignored and buffer settings are used to specify measurement!")
             if backsweep is True:
                 script = Generic_1D_Hysteresis_buffered()
             else:

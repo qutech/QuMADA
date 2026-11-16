@@ -22,6 +22,7 @@ Created on Tue Jan  3 15:20:07 2023
 
 @author: till3
 """
+
 from __future__ import annotations
 
 import numpy as np

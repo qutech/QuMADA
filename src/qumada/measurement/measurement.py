@@ -126,10 +126,8 @@ class MeasurementScript(ABC):
             parameter (Parameter): Custom parameter. Set this, if you want to set a custom parameter. Defaults to None.
         """
         if parameter_name not in MeasurementScript.PARAMETER_NAMES:
-            raise NameError(
-                f'parameter_name "{parameter_name}" not in MeasurementScript.PARAMETER_NAMES. \
-                            Allowed parameters are listed in qumada.instrument.parameter_whitelists'
-            )
+            raise NameError(f'parameter_name "{parameter_name}" not in MeasurementScript.PARAMETER_NAMES. \
+                            Allowed parameters are listed in qumada.instrument.parameter_whitelists')
         if not gate_name:
             self.gate_parameters[parameter_name] = parameter
         else:
@@ -309,10 +307,8 @@ class MeasurementScript(ABC):
                     try:
                         self.compensating_parameters_values.append(self.properties[gate][parameter]["value"])
                     except KeyError as e:
-                        print(
-                            f"No value assigned for compensating parameter \
-                              {self.compensating_parameters[-1]}"
-                        )
+                        print(f"No value assigned for compensating parameter \
+                              {self.compensating_parameters[-1]}")
                         raise e
                     try:
                         leverarms = self.properties[gate][parameter]["leverarms"]
@@ -328,20 +324,16 @@ class MeasurementScript(ABC):
                             comp_list.append({"gate": entry["terminal"], "parameter": entry["parameter"]})
                         self.compensated_parameters.append(comp_list)
                     except KeyError as e:
-                        print(
-                            f"The terminal to be compensated for with {self.compensating_parameters[-1]} \
+                        print(f"The terminal to be compensated for with {self.compensating_parameters[-1]} \
                             is not properly specified! Make sure to define a dictionary with \
-                            terminal and parameter as keys."
-                        )
+                            terminal and parameter as keys.")
                         raise e
                     try:
                         limits = self.properties[gate][parameter]["limits"]
                         self.compensating_limits.append(limits)
                     except KeyError as e:
-                        print(
-                            f"No limits assigned to compensating parameter \
-                              {self.compensating_parameters[-1]}!"
-                        )
+                        print(f"No limits assigned to compensating parameter \
+                              {self.compensating_parameters[-1]}!")
                         raise e
 
                 elif self.properties[gate][parameter]["type"].find("dynamic") >= 0:
@@ -352,29 +344,23 @@ class MeasurementScript(ABC):
                             try:
                                 assert self.properties[gate][parameter]["num_points"] == self.buffered_num_points
                             except AssertionError:
-                                logger.warning(
-                                    f"Number of datapoints from buffer_settings\
+                                logger.warning(f"Number of datapoints from buffer_settings\
                                     and gate_parameters do not match. Using \
                                     the value from the buffer settings: \
-                                    {self.buffered_num_points}"
-                                )
+                                    {self.buffered_num_points}")
                         elif "setpoints" in self.properties[gate][parameter].keys():
                             try:
                                 assert len(self.properties[gate][parameter]["setpoints"]) == self.buffered_num_points
                             except AssertionError:
-                                logger.warning(
-                                    f"Number of datapoints from buffer_settings\
+                                logger.warning(f"Number of datapoints from buffer_settings\
                                     and gate_parameters do not match. Using \
                                     the value from the buffer settings: \
-                                    {self.buffered_num_points}"
-                                )
+                                    {self.buffered_num_points}")
 
                         else:
-                            logger.info(
-                                "No num_points or setpoints given for\
+                            logger.info("No num_points or setpoints given for\
                                          buffered measurement. The value from \
-                                         buffer_settings is used"
-                            )
+                                         buffer_settings is used")
                         try:
                             self.dynamic_sweeps.append(
                                 LinSweep(
@@ -514,31 +500,25 @@ class MeasurementScript(ABC):
                             try:
                                 assert self.properties[gate][parameter]["num_points"] == self.buffered_num_points
                             except AssertionError:
-                                logger.warning(
-                                    f"Number of datapoints from buffer_settings\
+                                logger.warning(f"Number of datapoints from buffer_settings\
                                     and gate_parameters do not match. Using \
                                     the value from the buffer settings: \
-                                    {self.buffered_num_points}"
-                                )
+                                    {self.buffered_num_points}")
                                 self.properties[gate][parameter]["num_points"] = self.buffered_num_points
 
                         elif "setpoints" in self.properties[gate][parameter].keys():
                             try:
                                 assert len(self.properties[gate][parameter]["setpoints"]) == self.buffered_num_points
                             except AssertionError:
-                                logger.warning(
-                                    f"Number of datapoints from buffer_settings\
+                                logger.warning(f"Number of datapoints from buffer_settings\
                                     and gate_parameters do not match. Using \
                                     the value from the buffer settings: \
-                                    {self.buffered_num_points}"
-                                )
+                                    {self.buffered_num_points}")
 
                         else:
-                            logger.info(
-                                "No num_points or setpoints given for\
+                            logger.info("No num_points or setpoints given for\
                                          buffered measurement. The value from \
-                                         buffer_settings is used"
-                            )
+                                         buffer_settings is used")
                     #     try:
                     #         self.dynamic_sweeps.append(
                     #             LinSweep(
@@ -748,10 +728,8 @@ class MeasurementScript(ABC):
         Resets all static/dynamic parameters to their value/start value.
         TODO: Remove! Since initialize() does only create lists one, there is no advantage of using reset().
         """
-        logger.warning(
-            "The reset() method is deprecated and will be removed in a future release! \
-                        It is recommended to replace all calls of reset() with initialize()"
-        )
+        logger.warning("The reset() method is deprecated and will be removed in a future release! \
+                        It is recommended to replace all calls of reset() with initialize()")
         ramp_rate = self.settings.get("ramp_rate", 0.3)
         setpoint_intervall = self.settings.get("setpoint_intervall", 0.1)
         for gate, parameters in self.gate_parameters.items():
